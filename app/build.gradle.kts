@@ -34,6 +34,10 @@ android {
 	kotlinOptions {
 		jvmTarget = "11"
 	}
+
+	buildFeatures {
+		viewBinding = true   // 추가: findViewById 대신 ViewBinding 사용
+	}
 }
 
 dependencies {
@@ -54,4 +58,7 @@ dependencies {
 	testImplementation(libs.junit)
 	androidTestImplementation(libs.androidx.junit)
 	androidTestImplementation(libs.androidx.espresso.core)
+
+	implementation(libs.androidx.recyclerview)
+	implementation(libs.androidx.lifecycle.runtime.ktx)
 }

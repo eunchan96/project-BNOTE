@@ -1,13 +1,17 @@
 package com.chan.bnote
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.chan.bnote.data.BibleBooks
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.BibleSeeder
+import com.chan.bnote.ui.SimpleListAdapter
 import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
@@ -21,10 +25,25 @@ class MainActivity : AppCompatActivity() {
 			insets
 		}
 
+		val recyclerView =
+			findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.recycler_books)
+		recyclerView.layoutManager = LinearLayoutManager(this)
+
 		val db = BibleDatabase.getInstance(applicationContext)
 		lifecycleScope.launch {
 			BibleSeeder.seedIfEmpty(applicationContext, db)
-			// TODO: 여기서 db.bibleDao().getBooks() 호출해서 리스트로 화면에 뿌리기
+
+			val bookIds = db.bibleDao().getBookIds()
+			val bookNames = bookIds.map { BibleBooks.nameOf(it) }
+
+			recyclerView.adapter = SimpleListAdapter(bookNames) { position ->
+				val bookId = bookIds[position]
+				val bookName = bookNames[position]
+				val intent = Intent(this@MainActivity, ChapterListActivity::class.java)
+				intent.putExtra("bookId", bookId)
+				intent.putExtra("bookName", bookName)
+				startActivity(intent)
+			}
 		}
 	}
 }
