@@ -10,18 +10,18 @@ interface BibleDao {
 	@Insert
 	suspend fun insertAll(verses: List<BibleVerse>)
 
-	@Query("SELECT COUNT(*) FROM bible_verses")
-	suspend fun count(): Int
+	@Query("SELECT COUNT(*) FROM bible_verses WHERE translation = :translation")
+	suspend fun countForTranslation(translation: String): Int
 
-	@Query("SELECT DISTINCT bookId FROM bible_verses ORDER BY bookId")
-	suspend fun getBookIds(): List<Int>
+	@Query("SELECT DISTINCT bookId FROM bible_verses WHERE translation = :translation ORDER BY bookId")
+	suspend fun getBookIds(translation: String): List<Int>
 
-	@Query("SELECT DISTINCT chapter FROM bible_verses WHERE bookId = :bookId ORDER BY chapter")
-	suspend fun getChapters(bookId: Int): List<Int>
+	@Query("SELECT DISTINCT chapter FROM bible_verses WHERE translation = :translation AND bookId = :bookId ORDER BY chapter")
+	suspend fun getChapters(translation: String, bookId: Int): List<Int>
 
-	@Query("SELECT * FROM bible_verses WHERE bookId = :bookId AND chapter = :chapter ORDER BY verse")
-	suspend fun getVerses(bookId: Int, chapter: Int): List<BibleVerse>
+	@Query("SELECT * FROM bible_verses WHERE translation = :translation AND bookId = :bookId AND chapter = :chapter ORDER BY verse")
+	suspend fun getVerses(translation: String, bookId: Int, chapter: Int): List<BibleVerse>
 
-	@Query("SELECT MAX(chapter) FROM bible_verses WHERE bookId = :bookId")
-	suspend fun getMaxChapter(bookId: Int): Int
+	@Query("SELECT MAX(chapter) FROM bible_verses WHERE translation = :translation AND bookId = :bookId")
+	suspend fun getMaxChapter(translation: String, bookId: Int): Int
 }

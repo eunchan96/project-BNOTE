@@ -14,6 +14,7 @@ import com.chan.bnote.data.BibleBookmark
 import com.chan.bnote.data.BibleBooks
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.BibleSeeder
+import com.chan.bnote.data.Translation
 import com.chan.bnote.ui.VerseAdapter
 import kotlinx.coroutines.launch
 
@@ -21,10 +22,12 @@ class MainActivity : AppCompatActivity() {
 
 	private lateinit var adapter: VerseAdapter
 	private lateinit var textCurrentLocation: TextView
+	private lateinit var btnTranslation: TextView
 
-	// 현재 보고 있는 위치 (기본값: 창세기 1장)
 	private var currentBookId = 1
 	private var currentChapter = 1
+	private var primaryTranslation: Translation = Translation.GAEYEOK
+	private var secondaryTranslation: Translation? = null
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
@@ -37,6 +40,8 @@ class MainActivity : AppCompatActivity() {
 		}
 
 		textCurrentLocation = findViewById(R.id.text_current_location)
+		btnTranslation = findViewById(R.id.btn_translation)
+		btnTranslation.text = primaryTranslation.displayName
 
 		val recyclerView = findViewById<RecyclerView>(R.id.recycler_verses)
 		recyclerView.layoutManager = LinearLayoutManager(this)
@@ -52,45 +57,41 @@ class MainActivity : AppCompatActivity() {
 	}
 
 	private fun setupTopBarActions() {
-		findViewById<TextView>(R.id.text_current_location).setOnClickListener {
-			val sheet = com.chan.bnote.ui.BookChapterPickerBottomSheet()
+		textCurrentLocation.setOnClickListener {
+			val sheet = com.chan.bnote.ui.BookChapterPickerBottomSheet(primaryTranslation.code)
 			sheet.onVerseSelected = { bookId, chapter, verse ->
 				loadChapter(bookId, chapter, scrollToVerse = verse)
 			}
 			sheet.show(supportFragmentManager, "book_chapter_picker")
 		}
 
-		// 대역본 선택 BottomSheet
-		findViewById<TextView>(R.id.btn_translation).setOnClickListener {
-			Toast.makeText(this, "대역본 선택 (추후 구현)", Toast.LENGTH_SHORT).show()
+		btnTranslation.setOnClickListener {
+			val sheet = com.chan.bnote.ui.TranslationPickerBottomSheet(primaryTranslation)
+			sheet.onTranslationsSelected = { primary, secondary ->
+				primaryTranslation = primary
+				secondaryTranslation = secondary
+				btnTranslation.text = primary.displayName
+				loadChapter(currentBookId, currentChapter)
+			}
+			sheet.show(supportFragmentManager, "translation_picker")
 		}
-		// 검색 화면/BottomSheet
+
 		findViewById<TextView>(R.id.btn_search).setOnClickListener {
 			Toast.makeText(this, "검색 (추후 구현)", Toast.LENGTH_SHORT).show()
 		}
-		// 즐겨찾기 목록 BottomSheet
 		findViewById<TextView>(R.id.btn_favorites).setOnClickListener {
 			val sheet = com.chan.bnote.ui.FavoritesBottomSheet()
-			sheet.onVerseSelected = { bookId, chapter ->
-				loadChapter(bookId, chapter)
-			}
+			sheet.onVerseSelected = { bookId, chapter -> loadChapter(bookId, chapter) }
 			sheet.show(supportFragmentManager, "favorites_list")
 		}
-		// 햄버거 메뉴
 		findViewById<TextView>(R.id.btn_menu).setOnClickListener {
 			Toast.makeText(this, "메뉴 (추후 구현)", Toast.LENGTH_SHORT).show()
 		}
 	}
 
 	private fun setupBottomNavActions() {
-		findViewById<android.widget.ImageView>(R.id.btn_prev_chapter).setOnClickListener {
-			goToPreviousChapter()
-		}
-		findViewById<android.widget.ImageView>(R.id.btn_next_chapter).setOnClickListener {
-			goToNextChapter()
-		}
-
-		// TODO: 설교/마이페이지 탭 (추후 구현). 지금은 "성경" 탭만 동작.
+		findViewById<android.widget.ImageView>(R.id.btn_prev_chapter).setOnClickListener { goToPreviousChapter() }
+		findViewById<android.widget.ImageView>(R.id.btn_next_chapter).setOnClickListener { goToNextChapter() }
 		findViewById<android.widget.ImageView>(R.id.nav_sermon).setOnClickListener {
 			Toast.makeText(this, "설교 탭 (추후 구현)", Toast.LENGTH_SHORT).show()
 		}
@@ -106,7 +107,7 @@ class MainActivity : AppCompatActivity() {
 				currentChapter > 1 -> loadChapter(currentBookId, currentChapter - 1)
 				currentBookId > 1 -> {
 					val prevBook = currentBookId - 1
-					val maxChapter = db.bibleDao().getMaxChapter(prevBook)
+					val maxChapter = db.bibleDao().getMaxChapter(primaryTranslation.code, prevBook)
 					loadChapter(prevBook, maxChapter)
 				}
 
@@ -118,7 +119,7 @@ class MainActivity : AppCompatActivity() {
 	private fun goToNextChapter() {
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(applicationContext)
-			val maxChapter = db.bibleDao().getMaxChapter(currentBookId)
+			val maxChapter = db.bibleDao().getMaxChapter(primaryTranslation.code, currentBookId)
 			when {
 				currentChapter < maxChapter -> loadChapter(currentBookId, currentChapter + 1)
 				currentBookId < 66 -> loadChapter(currentBookId + 1, 1)
@@ -134,12 +135,16 @@ class MainActivity : AppCompatActivity() {
 
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(applicationContext)
-			val verses = db.bibleDao().getVerses(bookId, chapter)
+			val verses = db.bibleDao().getVerses(primaryTranslation.code, bookId, chapter)
+			val secondaryMap = secondaryTranslation?.let { sec ->
+				db.bibleDao().getVerses(sec.code, bookId, chapter).associate { it.verse to it.text }
+			}
 			val bookmarkMap = db.bookmarkDao().getBookmarksForChapter(bookId, chapter)
 				.associateBy { it.verse }.toMutableMap()
 
 			adapter = VerseAdapter(
 				verses = verses,
+				secondaryTextByVerse = secondaryMap,
 				bookmarks = bookmarkMap
 			) { verseNum, current ->
 				val verseText = verses.firstOrNull { it.verse == verseNum }?.text ?: ""
@@ -162,9 +167,9 @@ class MainActivity : AppCompatActivity() {
 
 			scrollToVerse?.let { verseNum ->
 				val index = verses.indexOfFirst { it.verse == verseNum }
-				if (index >= 0) {
-					findViewById<RecyclerView>(R.id.recycler_verses).scrollToPosition(index)
-				}
+				if (index >= 0) findViewById<RecyclerView>(R.id.recycler_verses).scrollToPosition(
+					index
+				)
 			}
 		}
 	}

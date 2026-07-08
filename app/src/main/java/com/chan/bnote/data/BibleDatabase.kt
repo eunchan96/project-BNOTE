@@ -6,8 +6,8 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 
 @Database(
-	entities = [BibleVerse::class, BibleBookmark::class], // BibleBookmark 추가
-	version = 2, // 1 -> 2
+	entities = [BibleVerse::class, BibleBookmark::class],
+	version = 3, // 2 -> 3
 	exportSchema = false
 )
 abstract class BibleDatabase : RoomDatabase() {

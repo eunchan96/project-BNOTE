@@ -18,7 +18,9 @@ import com.chan.bnote.data.BibleDatabase
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import kotlinx.coroutines.launch
 
-class BookChapterPickerBottomSheet : BottomSheetDialogFragment() {
+class BookChapterPickerBottomSheet(
+	private val translation: String
+) : BottomSheetDialogFragment() {
 
 	// bookId, chapter, verse 순서로 전달
 	var onVerseSelected: ((bookId: Int, chapter: Int, verse: Int) -> Unit)? = null
@@ -101,7 +103,7 @@ class BookChapterPickerBottomSheet : BottomSheetDialogFragment() {
 
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(requireContext().applicationContext)
-			val chapters = db.bibleDao().getChapters(selectedBookId)
+			val chapters = db.bibleDao().getChapters(translation, selectedBookId)
 
 			recyclerView.adapter = GridNumberAdapter(chapters) { position ->
 				selectedChapter = chapters[position]
@@ -120,7 +122,8 @@ class BookChapterPickerBottomSheet : BottomSheetDialogFragment() {
 
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(requireContext().applicationContext)
-			val verseNumbers = db.bibleDao().getVerses(selectedBookId, chapter).map { it.verse }
+			val verseNumbers =
+				db.bibleDao().getVerses(translation, selectedBookId, chapter).map { it.verse }
 
 			recyclerView.adapter = GridNumberAdapter(verseNumbers) { position ->
 				onVerseSelected?.invoke(selectedBookId, chapter, verseNumbers[position])
