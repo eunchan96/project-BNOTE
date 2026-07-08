@@ -83,12 +83,47 @@ class MainActivity : AppCompatActivity() {
 	}
 
 	private fun setupBottomNavActions() {
+		findViewById<android.widget.ImageView>(R.id.btn_prev_chapter).setOnClickListener {
+			goToPreviousChapter()
+		}
+		findViewById<android.widget.ImageView>(R.id.btn_next_chapter).setOnClickListener {
+			goToNextChapter()
+		}
+
 		// TODO: 설교/마이페이지 탭 (추후 구현). 지금은 "성경" 탭만 동작.
-		findViewById<TextView>(R.id.nav_sermon).setOnClickListener {
+		findViewById<android.widget.ImageView>(R.id.nav_sermon).setOnClickListener {
 			Toast.makeText(this, "설교 탭 (추후 구현)", Toast.LENGTH_SHORT).show()
 		}
-		findViewById<TextView>(R.id.nav_mypage).setOnClickListener {
+		findViewById<android.widget.ImageView>(R.id.nav_mypage).setOnClickListener {
 			Toast.makeText(this, "마이페이지 탭 (추후 구현)", Toast.LENGTH_SHORT).show()
+		}
+	}
+
+	private fun goToPreviousChapter() {
+		lifecycleScope.launch {
+			val db = BibleDatabase.getInstance(applicationContext)
+			when {
+				currentChapter > 1 -> loadChapter(currentBookId, currentChapter - 1)
+				currentBookId > 1 -> {
+					val prevBook = currentBookId - 1
+					val maxChapter = db.bibleDao().getMaxChapter(prevBook)
+					loadChapter(prevBook, maxChapter)
+				}
+
+				else -> Toast.makeText(this@MainActivity, "첫 장입니다", Toast.LENGTH_SHORT).show()
+			}
+		}
+	}
+
+	private fun goToNextChapter() {
+		lifecycleScope.launch {
+			val db = BibleDatabase.getInstance(applicationContext)
+			val maxChapter = db.bibleDao().getMaxChapter(currentBookId)
+			when {
+				currentChapter < maxChapter -> loadChapter(currentBookId, currentChapter + 1)
+				currentBookId < 66 -> loadChapter(currentBookId + 1, 1)
+				else -> Toast.makeText(this@MainActivity, "마지막 장입니다", Toast.LENGTH_SHORT).show()
+			}
 		}
 	}
 

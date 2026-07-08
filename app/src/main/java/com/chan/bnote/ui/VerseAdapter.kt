@@ -19,7 +19,6 @@ class VerseAdapter(
 		val root: android.view.View = view.findViewById(R.id.item_root)
 		val number: TextView = view.findViewById(R.id.text_verse_number)
 		val content: TextView = view.findViewById(R.id.text_verse_content)
-		val star: TextView = view.findViewById(R.id.text_favorite_star)
 	}
 
 	override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -38,9 +37,6 @@ class VerseAdapter(
 		holder.root.setBackgroundColor(
 			if (bookmark?.isHighlighted == true) Color.parseColor("#FFF9C4") else Color.TRANSPARENT
 		)
-		holder.star.visibility =
-			if (bookmark?.isFavorite == true) android.view.View.VISIBLE else android.view.View.GONE
-		holder.star.setTextColor(Color.parseColor("#FFC107"))
 
 		holder.root.setOnLongClickListener {
 			onLongPress(verseItem.verse, bookmarks[verseItem.verse])

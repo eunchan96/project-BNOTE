@@ -21,4 +21,7 @@ interface BibleDao {
 
 	@Query("SELECT * FROM bible_verses WHERE bookId = :bookId AND chapter = :chapter ORDER BY verse")
 	suspend fun getVerses(bookId: Int, chapter: Int): List<BibleVerse>
+
+	@Query("SELECT MAX(chapter) FROM bible_verses WHERE bookId = :bookId")
+	suspend fun getMaxChapter(bookId: Int): Int
 }

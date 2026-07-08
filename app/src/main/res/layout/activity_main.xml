@@ -97,7 +97,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- 하단바 -->
+    <!-- 하단바 배경 + 구분선 -->
     <LinearLayout
         android:id="@+id/bottom_nav"
         android:layout_width="0dp"
@@ -114,50 +114,83 @@
             android:background="@color/divider_light" />
     </LinearLayout>
 
+    <!-- 하단바 콘텐츠: 좌측 이전/다음 장 + 우측 아이콘 3개 -->
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="52dp"
         android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="4dp"
+        android:paddingEnd="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <TextView
+        <ImageView
+            android:id="@+id/btn_prev_chapter"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:padding="8dp"
+            android:src="@drawable/ic_chevron_left"
+            android:contentDescription="이전 장"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:focusable="true" />
+
+        <ImageView
+            android:id="@+id/btn_next_chapter"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:padding="8dp"
+            android:src="@drawable/ic_chevron_right"
+            android:contentDescription="다음 장"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:focusable="true" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <ImageView
             android:id="@+id/nav_sermon"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:text="설교"
-            android:textColor="@color/bottom_nav_unselected"
-            android:background="?attr/selectableItemBackground"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:padding="8dp"
+            android:layout_marginEnd="12dp"
+            android:src="@drawable/ic_mic"
+            android:contentDescription="설교"
+            app:tint="@color/bottom_nav_unselected"
+            android:background="?attr/selectableItemBackgroundBorderless"
             android:clickable="true"
             android:focusable="true" />
 
-        <TextView
+        <ImageView
             android:id="@+id/nav_bible"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:text="성경"
-            android:textColor="@color/bottom_nav_selected"
-            android:textStyle="bold"
-            android:background="?attr/selectableItemBackground"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:padding="8dp"
+            android:layout_marginEnd="12dp"
+            android:src="@drawable/ic_book"
+            android:contentDescription="성경"
+            app:tint="@color/bottom_nav_selected"
+            android:background="?attr/selectableItemBackgroundBorderless"
             android:clickable="true"
             android:focusable="true" />
 
-        <TextView
+        <ImageView
             android:id="@+id/nav_mypage"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:text="마이페이지"
-            android:textColor="@color/bottom_nav_unselected"
-            android:background="?attr/selectableItemBackground"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:padding="8dp"
+            android:src="@drawable/ic_person"
+            android:contentDescription="마이페이지"
+            app:tint="@color/bottom_nav_unselected"
+            android:background="?attr/selectableItemBackgroundBorderless"
             android:clickable="true"
             android:focusable="true" />
+
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
