@@ -77,7 +77,11 @@ class MainActivity : AppCompatActivity() {
 		}
 
 		findViewById<TextView>(R.id.btn_search).setOnClickListener {
-			Toast.makeText(this, "검색 (추후 구현)", Toast.LENGTH_SHORT).show()
+			val sheet = com.chan.bnote.ui.SearchBottomSheet(primaryTranslation.code)
+			sheet.onResultSelected = { bookId, chapter, verse ->
+				loadChapter(bookId, chapter, scrollToVerse = verse)
+			}
+			sheet.show(supportFragmentManager, "search")
 		}
 		findViewById<TextView>(R.id.btn_favorites).setOnClickListener {
 			val sheet = com.chan.bnote.ui.FavoritesBottomSheet()
