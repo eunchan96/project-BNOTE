@@ -6,8 +6,8 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 
 @Database(
-	entities = [BibleVerse::class, BibleBookmark::class, ReadingProgress::class],
-	version = 4, // 3 -> 4
+	entities = [BibleVerse::class, BibleBookmark::class, ReadingProgress::class, Sermon::class],
+	version = 5, // 4 -> 5
 	exportSchema = false
 )
 abstract class BibleDatabase : RoomDatabase() {
@@ -15,6 +15,7 @@ abstract class BibleDatabase : RoomDatabase() {
 	abstract fun bibleDao(): BibleDao
 	abstract fun bookmarkDao(): BookmarkDao
 	abstract fun readingProgressDao(): ReadingProgressDao
+	abstract fun sermonDao(): SermonDao
 
 	companion object {
 		@Volatile

@@ -4,23 +4,59 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
 import androidx.fragment.app.Fragment
 import com.chan.bnote.R
 
 class SermonFragment : Fragment(), TopBarActionHandler {
 
+	private lateinit var subtabCalendar: TextView
+	private lateinit var subtabByBook: TextView
+	private lateinit var subtabByPreacher: TextView
+
 	override fun onCreateView(
 		inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
 	): View {
-		return inflater.inflate(R.layout.fragment_placeholder, container, false)
+		return inflater.inflate(R.layout.fragment_sermon, container, false)
 	}
 
 	override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 		super.onViewCreated(view, savedInstanceState)
-		view.findViewById<android.widget.TextView>(R.id.text_placeholder).text =
-			"설교 탭 (캘린더/성경별/설교자 - C단계 예정)"
+
+		subtabCalendar = view.findViewById(R.id.subtab_calendar)
+		subtabByBook = view.findViewById(R.id.subtab_by_book)
+		subtabByPreacher = view.findViewById(R.id.subtab_by_preacher)
+
+		subtabCalendar.setOnClickListener { switchSubTab(CalendarSermonFragment(), subtabCalendar) }
+		subtabByBook.setOnClickListener { switchSubTab(SermonByBookFragment(), subtabByBook) }
+		subtabByPreacher.setOnClickListener {
+			switchSubTab(
+				SermonByPreacherFragment(),
+				subtabByPreacher
+			)
+		}
+
+		if (savedInstanceState == null) {
+			switchSubTab(CalendarSermonFragment(), subtabCalendar)
+		}
 	}
 
-	// TODO C단계: 캘린더 / 성경별 / 설교자 서브탭
+	private fun switchSubTab(fragment: Fragment, selected: TextView) {
+		childFragmentManager.beginTransaction()
+			.replace(R.id.sermon_sub_container, fragment)
+			.commit()
+
+		listOf(subtabCalendar, subtabByBook, subtabByPreacher).forEach {
+			val isSelected = it == selected
+			it.setTextColor(
+				resources.getColor(
+					if (isSelected) R.color.brown_primary else R.color.bottom_nav_unselected,
+					null
+				)
+			)
+		}
+	}
+
+	// 설교 탭은 상단바에 성경 탭 전용 버튼들이 필요 없음
 	override fun getTopBarConfig() = TopBarConfig(title = "설교")
 }
