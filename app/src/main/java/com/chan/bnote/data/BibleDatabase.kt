@@ -5,10 +5,15 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-@Database(entities = [BibleVerse::class], version = 1, exportSchema = false)
+@Database(
+	entities = [BibleVerse::class, BibleBookmark::class], // BibleBookmark 추가
+	version = 2, // 1 -> 2
+	exportSchema = false
+)
 abstract class BibleDatabase : RoomDatabase() {
 
 	abstract fun bibleDao(): BibleDao
+	abstract fun bookmarkDao(): BookmarkDao // 추가
 
 	companion object {
 		@Volatile
@@ -20,7 +25,9 @@ abstract class BibleDatabase : RoomDatabase() {
 					context.applicationContext,
 					BibleDatabase::class.java,
 					"bnote.db"
-				).build()
+				)
+					.fallbackToDestructiveMigration()
+					.build()
 				INSTANCE = instance
 				instance
 			}

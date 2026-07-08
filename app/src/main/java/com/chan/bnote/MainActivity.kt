@@ -46,4 +46,17 @@ class MainActivity : AppCompatActivity() {
 			}
 		}
 	}
+
+	override fun onCreateOptionsMenu(menu: android.view.Menu): Boolean {
+		menu.add(0, 1, 0, "즐겨찾기").setShowAsAction(android.view.MenuItem.SHOW_AS_ACTION_ALWAYS)
+		return true
+	}
+
+	override fun onOptionsItemSelected(item: android.view.MenuItem): Boolean {
+		if (item.itemId == 1) {
+			startActivity(Intent(this, FavoritesActivity::class.java))
+			return true
+		}
+		return super.onOptionsItemSelected(item)
+	}
 }
