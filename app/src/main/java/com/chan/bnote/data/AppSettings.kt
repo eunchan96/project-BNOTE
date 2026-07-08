@@ -7,6 +7,7 @@ object AppSettings {
 	private const val KEY_FONT_SIZE = "font_size_sp"
 	private const val KEY_DARK_MODE = "dark_mode"
 	private const val KEY_READING_PLAN_ENABLED = "reading_plan_enabled"
+	private const val KEY_AUTO_SCROLL_ENABLED = "auto_scroll_enabled"
 
 	private const val DEFAULT_FONT_SIZE = 16
 	const val MIN_FONT_SIZE = 12
@@ -41,5 +42,15 @@ object AppSettings {
 	fun setReadingPlanEnabled(context: Context, enabled: Boolean) {
 		context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
 			.edit().putBoolean(KEY_READING_PLAN_ENABLED, enabled).apply()
+	}
+
+	fun isAutoScrollEnabled(context: Context): Boolean {
+		return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.getBoolean(KEY_AUTO_SCROLL_ENABLED, false)
+	}
+
+	fun setAutoScrollEnabled(context: Context, enabled: Boolean) {
+		context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.edit().putBoolean(KEY_AUTO_SCROLL_ENABLED, enabled).apply()
 	}
 }

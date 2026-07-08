@@ -20,14 +20,13 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <TextView
+        <ImageView
             android:id="@+id/btn_translation"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
             android:padding="8dp"
-            android:text="개역한글"
-            android:textColor="@color/white"
-            android:textSize="14sp"
+            android:src="@drawable/ic_translate"
+            android:contentDescription="대역본 선택"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:clickable="true"
             android:focusable="true" />
@@ -36,7 +35,7 @@
             android:id="@+id/text_current_location"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="12dp"
+            android:layout_marginStart="8dp"
             android:padding="8dp"
             android:text="창세기 1장"
             android:textColor="@color/white"
@@ -53,12 +52,27 @@
             android:layout_marginStart="4dp"
             android:src="@drawable/ic_check"
             android:visibility="gone"
-            android:contentDescription="성경읽기표 완료" />
+            android:contentDescription="성경읽기표 완료 체크"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?attr/selectableItemBackgroundBorderless" />
 
         <View
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:layout_weight="1" />
+
+        <ImageView
+            android:id="@+id/btn_auto_scroll"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:padding="8dp"
+            android:src="@drawable/ic_play"
+            android:visibility="gone"
+            android:contentDescription="자동 스크롤"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:focusable="true" />
 
         <ImageView
             android:id="@+id/btn_search"

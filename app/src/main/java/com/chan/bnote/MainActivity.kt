@@ -19,7 +19,7 @@ import com.chan.bnote.ui.TopBarConfigListener
 class MainActivity : AppCompatActivity(), TopBarConfigListener {
 
 	private lateinit var textCurrentLocation: TextView
-	private lateinit var btnTranslation: TextView
+	private lateinit var btnTranslation: ImageView
 	private lateinit var btnSearch: ImageView
 	private lateinit var btnFavorites: TextView
 	private lateinit var btnMenu: TextView
@@ -30,6 +30,7 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener {
 	private lateinit var navSermon: ImageView
 	private lateinit var navMyPage: ImageView
 
+	private lateinit var btnAutoScroll: ImageView
 	private lateinit var iconReadingPlanCheck: ImageView
 
 	override fun onCreate(savedInstanceState: Bundle?) {
@@ -64,6 +65,7 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener {
 		btnSearch = findViewById(R.id.btn_search)
 		btnFavorites = findViewById(R.id.btn_favorites)
 		btnMenu = findViewById(R.id.btn_menu)
+		btnAutoScroll = findViewById(R.id.btn_auto_scroll)
 		iconReadingPlanCheck = findViewById(R.id.icon_reading_plan_check)
 	}
 
@@ -81,6 +83,8 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener {
 		btnSearch.setOnClickListener { currentHandler()?.onSearchClicked() }
 		btnFavorites.setOnClickListener { currentHandler()?.onFavoritesClicked() }
 		btnMenu.setOnClickListener { currentHandler()?.onMenuClicked() }
+		btnAutoScroll.setOnClickListener { currentHandler()?.onAutoScrollButtonClicked() }
+		iconReadingPlanCheck.setOnClickListener { currentHandler()?.onReadingPlanCheckClicked() }
 	}
 
 	private fun setupBottomNavActions() {
@@ -119,7 +123,12 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener {
 		btnMenu.visibility = visible(config.showMenu)
 		btnPrevChapter.visibility = visible(config.showChapterNav)
 		btnNextChapter.visibility = visible(config.showChapterNav)
+
 		iconReadingPlanCheck.visibility = visible(config.showReadingPlanCheck)
+		iconReadingPlanCheck.alpha = if (config.isChapterRead) 1f else 0.4f
+
+		btnAutoScroll.visibility = visible(config.showAutoScrollButton)
+		btnAutoScroll.setImageResource(if (config.isAutoScrolling) R.drawable.ic_pause else R.drawable.ic_play)
 	}
 
 	private fun visible(show: Boolean) =
