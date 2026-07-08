@@ -11,9 +11,8 @@ import com.chan.bnote.data.BibleVerse
 
 class VerseAdapter(
 	private val verses: List<BibleVerse>,
-	private var bookmarks: MutableMap<Int, BibleBookmark>, // key: verse number
-	private val onToggleHighlight: (verse: Int, current: BibleBookmark?) -> Unit,
-	private val onToggleFavorite: (verse: Int, current: BibleBookmark?) -> Unit
+	private var bookmarks: MutableMap<Int, BibleBookmark>,
+	private val onLongPress: (verse: Int, current: BibleBookmark?) -> Unit
 ) : RecyclerView.Adapter<VerseAdapter.ViewHolder>() {
 
 	class ViewHolder(view: android.view.View) : RecyclerView.ViewHolder(view) {
@@ -36,20 +35,15 @@ class VerseAdapter(
 		holder.number.text = verseItem.verse.toString()
 		holder.content.text = verseItem.text
 
-		// 하이라이트 배경
 		holder.root.setBackgroundColor(
 			if (bookmark?.isHighlighted == true) Color.parseColor("#FFF9C4") else Color.TRANSPARENT
 		)
-		// 즐겨찾기 별 색
-		holder.star.setTextColor(
-			if (bookmark?.isFavorite == true) Color.parseColor("#FFC107") else Color.parseColor("#CCCCCC")
-		)
+		holder.star.visibility =
+			if (bookmark?.isFavorite == true) android.view.View.VISIBLE else android.view.View.GONE
+		holder.star.setTextColor(Color.parseColor("#FFC107"))
 
-		holder.root.setOnClickListener {
-			onToggleHighlight(verseItem.verse, bookmarks[verseItem.verse])
-		}
 		holder.root.setOnLongClickListener {
-			onToggleFavorite(verseItem.verse, bookmarks[verseItem.verse])
+			onLongPress(verseItem.verse, bookmarks[verseItem.verse])
 			true
 		}
 	}

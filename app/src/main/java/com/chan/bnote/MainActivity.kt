@@ -68,9 +68,13 @@ class MainActivity : AppCompatActivity() {
 		findViewById<TextView>(R.id.btn_search).setOnClickListener {
 			Toast.makeText(this, "검색 (추후 구현)", Toast.LENGTH_SHORT).show()
 		}
-		// TODO 3단계: 즐겨찾기 목록 BottomSheet
+		// 즐겨찾기 목록 BottomSheet
 		findViewById<TextView>(R.id.btn_favorites).setOnClickListener {
-			Toast.makeText(this, "즐겨찾기 목록 (3단계에서 구현)", Toast.LENGTH_SHORT).show()
+			val sheet = com.chan.bnote.ui.FavoritesBottomSheet()
+			sheet.onVerseSelected = { bookId, chapter ->
+				loadChapter(bookId, chapter)
+			}
+			sheet.show(supportFragmentManager, "favorites_list")
 		}
 		// 햄버거 메뉴
 		findViewById<TextView>(R.id.btn_menu).setOnClickListener {
@@ -101,22 +105,24 @@ class MainActivity : AppCompatActivity() {
 
 			adapter = VerseAdapter(
 				verses = verses,
-				bookmarks = bookmarkMap,
-				onToggleHighlight = { verseNum, current ->
-					toggleField(
-						verseNum,
-						current,
-						isHighlightToggle = true
-					)
-				},
-				onToggleFavorite = { verseNum, current ->
-					toggleField(
-						verseNum,
-						current,
-						isHighlightToggle = false
-					)
-				}
-			)
+				bookmarks = bookmarkMap
+			) { verseNum, current ->
+				val verseText = verses.firstOrNull { it.verse == verseNum }?.text ?: ""
+				val sheet = com.chan.bnote.ui.VerseActionBottomSheet(
+					verseText = verseText,
+					isHighlighted = current?.isHighlighted ?: false,
+					isFavorite = current?.isFavorite ?: false,
+					onToggleHighlight = {
+						toggleField(
+							verseNum,
+							current,
+							isHighlightToggle = true
+						)
+					},
+					onToggleFavorite = { toggleField(verseNum, current, isHighlightToggle = false) }
+				)
+				sheet.show(supportFragmentManager, "verse_action")
+			}
 			findViewById<RecyclerView>(R.id.recycler_verses).adapter = adapter
 		}
 	}

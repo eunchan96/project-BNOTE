@@ -28,5 +28,5 @@
         android:layout_marginStart="8dp"
         android:text="★"
         android:textSize="18sp"
-        android:textColor="#CCCCCC" />
+        android:visibility="gone" />
 </LinearLayout>
