@@ -184,9 +184,9 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 			}
 			val bookmarkMap = db.bookmarkDao().getBookmarksForChapter(bookId, chapter)
 				.associateBy { it.verse }.toMutableMap()
-			isChapterRead = db.readingProgressDao().get(bookId, chapter) != null // 추가
+			isChapterRead = db.readingProgressDao().get(bookId, chapter) != null
 
-			notifyTopBarChanged() // 제목 + 체크 아이콘 상태 갱신
+			notifyTopBarChanged()
 
 			adapter = VerseAdapter(
 				verses = verses,
@@ -194,7 +194,21 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 				bookmarks = bookmarkMap,
 				fontSize = currentFontSize
 			) { verseNum, current ->
-				// 기존 롱프레스 로직 동일
+				val verseText = verses.firstOrNull { it.verse == verseNum }?.text ?: ""
+				val sheet = VerseActionBottomSheet(
+					verseText = verseText,
+					isHighlighted = current?.isHighlighted ?: false,
+					isFavorite = current?.isFavorite ?: false,
+					onToggleHighlight = {
+						toggleField(
+							verseNum,
+							current,
+							isHighlightToggle = true
+						)
+					},
+					onToggleFavorite = { toggleField(verseNum, current, isHighlightToggle = false) }
+				)
+				sheet.show(parentFragmentManager, "verse_action")
 			}
 			recyclerView.adapter = adapter
 

@@ -66,21 +66,25 @@ class BibleMenuDialogFragment(
 			appendixContainer.addView(itemView)
 		}
 
-		// 부록 탭은 아코디언처럼 펼침/접힘만 함 (패널 안 닫힘)
 		appendixToggle.setOnClickListener {
 			val expanding = appendixContainer.visibility != View.VISIBLE
 			appendixContainer.visibility = if (expanding) View.VISIBLE else View.GONE
 			appendixToggle.text = if (expanding) "부록  ▴" else "부록  ▾"
 		}
 
-		// 스위치는 토글해도 패널이 안 닫힘 (연속으로 설정 조정 가능하도록)
 		view.findViewById<Switch>(R.id.switch_reading_plan).apply {
 			isChecked = isReadingPlanEnabled
-			setOnCheckedChangeListener { _, checked -> onReadingPlanToggled?.invoke(checked) }
+			setOnCheckedChangeListener { _, checked ->
+				onReadingPlanToggled?.invoke(checked)
+				dismiss()
+			}
 		}
 		view.findViewById<Switch>(R.id.switch_auto_scroll).apply {
 			isChecked = isAutoScrollEnabled
-			setOnCheckedChangeListener { _, checked -> onAutoScrollToggled?.invoke(checked) }
+			setOnCheckedChangeListener { _, checked ->
+				onAutoScrollToggled?.invoke(checked)
+				dismiss()
+			}
 		}
 	}
 

@@ -25,7 +25,7 @@
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:padding="8dp"
-            android:src="@drawable/ic_translate"
+            android:src="@drawable/ic_book_open"
             android:contentDescription="대역본 선택"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:clickable="true"
@@ -176,19 +176,6 @@
             android:layout_weight="1" />
 
         <ImageView
-            android:id="@+id/nav_sermon"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:padding="8dp"
-            android:layout_marginEnd="12dp"
-            android:src="@drawable/ic_mic"
-            android:contentDescription="설교"
-            app:tint="@color/bottom_nav_unselected"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:clickable="true"
-            android:focusable="true" />
-
-        <ImageView
             android:id="@+id/nav_bible"
             android:layout_width="40dp"
             android:layout_height="40dp"
@@ -197,6 +184,19 @@
             android:src="@drawable/ic_book"
             android:contentDescription="성경"
             app:tint="@color/bottom_nav_selected"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:focusable="true" />
+
+        <ImageView
+            android:id="@+id/nav_sermon"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:padding="8dp"
+            android:layout_marginEnd="12dp"
+            android:src="@drawable/ic_mic"
+            android:contentDescription="설교"
+            app:tint="@color/bottom_nav_unselected"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:clickable="true"
             android:focusable="true" />
