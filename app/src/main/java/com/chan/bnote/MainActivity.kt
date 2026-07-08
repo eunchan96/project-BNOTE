@@ -45,6 +45,15 @@ class MainActivity : AppCompatActivity() {
 
 		val recyclerView = findViewById<RecyclerView>(R.id.recycler_verses)
 		recyclerView.layoutManager = LinearLayoutManager(this)
+		recyclerView.clipToPadding = false
+
+		val bottomSpace = (resources.displayMetrics.heightPixels * 0.3f).toInt()
+		recyclerView.setPadding(
+			recyclerView.paddingLeft,
+			recyclerView.paddingTop,
+			recyclerView.paddingRight,
+			bottomSpace
+		)
 
 		setupTopBarActions()
 		setupBottomNavActions()
@@ -76,8 +85,12 @@ class MainActivity : AppCompatActivity() {
 			sheet.show(supportFragmentManager, "translation_picker")
 		}
 
-		findViewById<TextView>(R.id.btn_search).setOnClickListener {
-			Toast.makeText(this, "검색 (추후 구현)", Toast.LENGTH_SHORT).show()
+		findViewById<android.widget.ImageView>(R.id.btn_search).setOnClickListener {
+			val sheet = com.chan.bnote.ui.SearchBottomSheet(primaryTranslation.code)
+			sheet.onResultSelected = { bookId, chapter, verse ->
+				loadChapter(bookId, chapter, scrollToVerse = verse)
+			}
+			sheet.show(supportFragmentManager, "search")
 		}
 		findViewById<TextView>(R.id.btn_favorites).setOnClickListener {
 			val sheet = com.chan.bnote.ui.FavoritesBottomSheet()

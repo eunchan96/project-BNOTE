@@ -24,4 +24,14 @@ interface BibleDao {
 
 	@Query("SELECT MAX(chapter) FROM bible_verses WHERE translation = :translation AND bookId = :bookId")
 	suspend fun getMaxChapter(translation: String, bookId: Int): Int
+
+	@Query(
+		"""
+    SELECT * FROM bible_verses 
+    WHERE translation = :translation AND text LIKE '%' || :keyword || '%' 
+    ORDER BY bookId, chapter, verse 
+    LIMIT 200
+    """
+	)
+	suspend fun searchVerses(translation: String, keyword: String): List<BibleVerse>
 }
