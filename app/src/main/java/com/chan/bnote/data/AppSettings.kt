@@ -6,6 +6,7 @@ object AppSettings {
 	private const val PREF_NAME = "bnote_settings"
 	private const val KEY_FONT_SIZE = "font_size_sp"
 	private const val KEY_DARK_MODE = "dark_mode"
+	private const val KEY_READING_PLAN_ENABLED = "reading_plan_enabled"
 
 	private const val DEFAULT_FONT_SIZE = 16
 	const val MIN_FONT_SIZE = 12
@@ -30,5 +31,15 @@ object AppSettings {
 	fun setDarkMode(context: Context, enabled: Boolean) {
 		context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
 			.edit().putBoolean(KEY_DARK_MODE, enabled).apply()
+	}
+
+	fun isReadingPlanEnabled(context: Context): Boolean {
+		val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+		return prefs.getBoolean(KEY_READING_PLAN_ENABLED, false)
+	}
+
+	fun setReadingPlanEnabled(context: Context, enabled: Boolean) {
+		context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.edit().putBoolean(KEY_READING_PLAN_ENABLED, enabled).apply()
 	}
 }

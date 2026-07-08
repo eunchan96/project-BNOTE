@@ -30,6 +30,8 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener {
 	private lateinit var navSermon: ImageView
 	private lateinit var navMyPage: ImageView
 
+	private lateinit var iconReadingPlanCheck: ImageView
+
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 
@@ -62,6 +64,7 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener {
 		btnSearch = findViewById(R.id.btn_search)
 		btnFavorites = findViewById(R.id.btn_favorites)
 		btnMenu = findViewById(R.id.btn_menu)
+		iconReadingPlanCheck = findViewById(R.id.icon_reading_plan_check)
 	}
 
 	private fun bindBottomNavViews() {
@@ -116,6 +119,7 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener {
 		btnMenu.visibility = visible(config.showMenu)
 		btnPrevChapter.visibility = visible(config.showChapterNav)
 		btnNextChapter.visibility = visible(config.showChapterNav)
+		iconReadingPlanCheck.visibility = visible(config.showReadingPlanCheck)
 	}
 
 	private fun visible(show: Boolean) =

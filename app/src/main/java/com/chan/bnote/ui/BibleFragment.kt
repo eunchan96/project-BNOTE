@@ -29,6 +29,16 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 	private var secondaryTranslation: Translation? = null
 	private var currentFontSize: Int = 16
 
+	private var isReadingPlanEnabled = false
+	private var isAutoScrolling = false
+	private val autoScrollHandler = android.os.Handler(android.os.Looper.getMainLooper())
+	private val autoScrollRunnable = object : Runnable {
+		override fun run() {
+			recyclerView.smoothScrollBy(0, 4) // 한 번에 4px씩, 부드럽게
+			autoScrollHandler.postDelayed(this, 50) // 50ms마다 반복
+		}
+	}
+
 	override fun onCreateView(
 		inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
 	): View {
@@ -39,6 +49,7 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		super.onViewCreated(view, savedInstanceState)
 
 		currentFontSize = AppSettings.getFontSize(requireContext())
+		isReadingPlanEnabled = AppSettings.isReadingPlanEnabled(requireContext())
 
 		recyclerView = view.findViewById(R.id.recycler_verses)
 		recyclerView.layoutManager = LinearLayoutManager(requireContext())
@@ -65,7 +76,8 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		showSearch = true,
 		showFavorites = true,
 		showMenu = true,
-		showChapterNav = true
+		showChapterNav = true,
+		showReadingPlanCheck = isReadingPlanEnabled
 	)
 
 	override fun onLocationClicked() {
@@ -101,14 +113,23 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 	}
 
 	override fun onMenuClicked() {
-		// TODO B단계: 찬송 / 부록 / 성경읽기표 활성화 / 자동스크롤
-		val sheet = MenuBottomSheet()
-		sheet.onFontSizeChanged = { newSize ->
-			currentFontSize = newSize
-			adapter.updateFontSize(newSize)
+		val sheet = BibleMenuBottomSheet(
+			isReadingPlanEnabled = isReadingPlanEnabled,
+			isAutoScrolling = isAutoScrolling
+		)
+		sheet.onAppendixClicked = {
+			AppendixListBottomSheet().show(parentFragmentManager, "appendix")
 		}
-		sheet.onDarkModeChanged = { requireActivity().recreate() }
-		sheet.show(parentFragmentManager, "menu")
+		sheet.onReadingPlanToggled = { enabled ->
+			isReadingPlanEnabled = enabled
+			AppSettings.setReadingPlanEnabled(requireContext(), enabled)
+			(activity as? TopBarConfigListener)?.onTopBarConfigChanged(getTopBarConfig())
+		}
+		sheet.onAutoScrollToggled = { enabled ->
+			isAutoScrolling = enabled
+			if (enabled) startAutoScroll() else stopAutoScroll()
+		}
+		sheet.show(parentFragmentManager, "bible_menu")
 	}
 
 	override fun onPrevChapterClicked() {
@@ -214,5 +235,19 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 				.associateBy { it.verse }.toMutableMap()
 			adapter.updateBookmarks(refreshed)
 		}
+	}
+
+	private fun startAutoScroll() {
+		autoScrollHandler.removeCallbacks(autoScrollRunnable)
+		autoScrollHandler.post(autoScrollRunnable)
+	}
+
+	private fun stopAutoScroll() {
+		autoScrollHandler.removeCallbacks(autoScrollRunnable)
+	}
+
+	override fun onDestroyView() {
+		super.onDestroyView()
+		stopAutoScroll() // 화면 벗어나면 반드시 정지 (메모리 누수 방지)
 	}
 }

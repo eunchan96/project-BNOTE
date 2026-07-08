@@ -6,7 +6,8 @@ data class TopBarConfig(
 	val showSearch: Boolean = false,
 	val showFavorites: Boolean = false,
 	val showMenu: Boolean = false,
-	val showChapterNav: Boolean = false // 하단바 좌측 이전/다음 장 버튼
+	val showChapterNav: Boolean = false, // 하단바 좌측 이전/다음 장 버튼
+	val showReadingPlanCheck: Boolean = false
 )
 
 interface TopBarActionHandler {

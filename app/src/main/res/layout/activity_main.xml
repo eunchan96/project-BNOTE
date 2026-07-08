@@ -46,6 +46,15 @@
             android:clickable="true"
             android:focusable="true" />
 
+        <ImageView
+            android:id="@+id/icon_reading_plan_check"
+            android:layout_width="18dp"
+            android:layout_height="18dp"
+            android:layout_marginStart="4dp"
+            android:src="@drawable/ic_check"
+            android:visibility="gone"
+            android:contentDescription="성경읽기표 완료" />
+
         <View
             android:layout_width="0dp"
             android:layout_height="0dp"
