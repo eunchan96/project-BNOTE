@@ -29,8 +29,17 @@ class MainActivity : AppCompatActivity() {
 	private var primaryTranslation: Translation = Translation.GAEYEOK
 	private var secondaryTranslation: Translation? = null
 
+	private var currentFontSize: Int = 16
+
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
+
+		val darkMode = com.chan.bnote.data.AppSettings.isDarkMode(this)
+		androidx.appcompat.app.AppCompatDelegate.setDefaultNightMode(
+			if (darkMode) androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES
+			else androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO
+		)
+
 		enableEdgeToEdge()
 		setContentView(R.layout.activity_main)
 		ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
@@ -57,6 +66,8 @@ class MainActivity : AppCompatActivity() {
 
 		setupTopBarActions()
 		setupBottomNavActions()
+
+		currentFontSize = com.chan.bnote.data.AppSettings.getFontSize(applicationContext)
 
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(applicationContext)
@@ -97,8 +108,16 @@ class MainActivity : AppCompatActivity() {
 			sheet.onVerseSelected = { bookId, chapter -> loadChapter(bookId, chapter) }
 			sheet.show(supportFragmentManager, "favorites_list")
 		}
-		findViewById<TextView>(R.id.btn_menu).setOnClickListener {
-			Toast.makeText(this, "메뉴 (추후 구현)", Toast.LENGTH_SHORT).show()
+		findViewById<android.widget.ImageView>(R.id.btn_menu).setOnClickListener {
+			val sheet = com.chan.bnote.ui.MenuBottomSheet()
+			sheet.onFontSizeChanged = { newSize ->
+				currentFontSize = newSize
+				adapter.updateFontSize(newSize)
+			}
+			sheet.onDarkModeChanged = {
+				recreate() // 다크모드는 테마 전체가 바뀌니 액티비티 재시작
+			}
+			sheet.show(supportFragmentManager, "menu")
 		}
 	}
 
@@ -158,7 +177,8 @@ class MainActivity : AppCompatActivity() {
 			adapter = VerseAdapter(
 				verses = verses,
 				secondaryTextByVerse = secondaryMap,
-				bookmarks = bookmarkMap
+				bookmarks = bookmarkMap,
+				fontSize = currentFontSize
 			) { verseNum, current ->
 				val verseText = verses.firstOrNull { it.verse == verseNum }?.text ?: ""
 				val sheet = com.chan.bnote.ui.VerseActionBottomSheet(

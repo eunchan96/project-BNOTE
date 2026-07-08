@@ -12,8 +12,9 @@ import com.chan.bnote.data.BibleVerse
 
 class VerseAdapter(
 	private val verses: List<BibleVerse>,
-	private val secondaryTextByVerse: Map<Int, String>?, // null이면 함께보기 없음
+	private val secondaryTextByVerse: Map<Int, String>?,
 	private var bookmarks: MutableMap<Int, BibleBookmark>,
+	private var fontSize: Int,
 	private val onLongPress: (verse: Int, current: BibleBookmark?) -> Unit
 ) : RecyclerView.Adapter<VerseAdapter.ViewHolder>() {
 
@@ -36,10 +37,12 @@ class VerseAdapter(
 
 		holder.number.text = verseItem.verse.toString()
 		holder.content.text = verseItem.text
+		holder.content.textSize = fontSize.toFloat()
 
 		val secondaryText = secondaryTextByVerse?.get(verseItem.verse)
 		if (secondaryText != null) {
 			holder.secondaryContent.text = secondaryText
+			holder.secondaryContent.textSize = (fontSize - 1).toFloat()
 			holder.secondaryContent.visibility = View.VISIBLE
 		} else {
 			holder.secondaryContent.visibility = View.GONE
@@ -59,6 +62,11 @@ class VerseAdapter(
 
 	fun updateBookmarks(newBookmarks: MutableMap<Int, BibleBookmark>) {
 		bookmarks = newBookmarks
+		notifyDataSetChanged()
+	}
+
+	fun updateFontSize(newSize: Int) {
+		fontSize = newSize
 		notifyDataSetChanged()
 	}
 }
