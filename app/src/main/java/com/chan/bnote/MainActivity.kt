@@ -1,6 +1,7 @@
 package com.chan.bnote
 
 import android.os.Bundle
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -9,7 +10,6 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import android.widget.TextView
 import com.chan.bnote.data.BibleBookmark
 import com.chan.bnote.data.BibleBooks
 import com.chan.bnote.data.BibleDatabase
@@ -52,15 +52,19 @@ class MainActivity : AppCompatActivity() {
 	}
 
 	private fun setupTopBarActions() {
-		// TODO 2단계: 책/장/절 선택 BottomSheet 연결
 		findViewById<TextView>(R.id.text_current_location).setOnClickListener {
-			Toast.makeText(this, "책/장 선택 (2단계에서 구현)", Toast.LENGTH_SHORT).show()
+			val sheet = com.chan.bnote.ui.BookChapterPickerBottomSheet()
+			sheet.onChapterSelected = { bookId, chapter ->
+				loadChapter(bookId, chapter)
+			}
+			sheet.show(supportFragmentManager, "book_chapter_picker")
 		}
-		// TODO: 대역본 선택 BottomSheet
+
+		// 대역본 선택 BottomSheet
 		findViewById<TextView>(R.id.btn_translation).setOnClickListener {
 			Toast.makeText(this, "대역본 선택 (추후 구현)", Toast.LENGTH_SHORT).show()
 		}
-		// TODO: 검색 화면/BottomSheet
+		// 검색 화면/BottomSheet
 		findViewById<TextView>(R.id.btn_search).setOnClickListener {
 			Toast.makeText(this, "검색 (추후 구현)", Toast.LENGTH_SHORT).show()
 		}
@@ -68,7 +72,7 @@ class MainActivity : AppCompatActivity() {
 		findViewById<TextView>(R.id.btn_favorites).setOnClickListener {
 			Toast.makeText(this, "즐겨찾기 목록 (3단계에서 구현)", Toast.LENGTH_SHORT).show()
 		}
-		// TODO: 햄버거 메뉴
+		// 햄버거 메뉴
 		findViewById<TextView>(R.id.btn_menu).setOnClickListener {
 			Toast.makeText(this, "메뉴 (추후 구현)", Toast.LENGTH_SHORT).show()
 		}
