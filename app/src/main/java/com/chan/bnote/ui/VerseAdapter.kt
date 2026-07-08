@@ -1,16 +1,22 @@
 package com.chan.bnote.ui
 
+import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.chan.bnote.R
+import com.chan.bnote.data.BibleBookmark
 import com.chan.bnote.data.BibleVerse
 
-class VerseAdapter(private val verses: List<BibleVerse>) :
-	RecyclerView.Adapter<VerseAdapter.ViewHolder>() {
+class VerseAdapter(
+	private val verses: List<BibleVerse>,
+	private var bookmarks: MutableMap<Int, BibleBookmark>,
+	private val onLongPress: (verse: Int, current: BibleBookmark?) -> Unit
+) : RecyclerView.Adapter<VerseAdapter.ViewHolder>() {
 
 	class ViewHolder(view: android.view.View) : RecyclerView.ViewHolder(view) {
+		val root: android.view.View = view.findViewById(R.id.item_root)
 		val number: TextView = view.findViewById(R.id.text_verse_number)
 		val content: TextView = view.findViewById(R.id.text_verse_content)
 	}
@@ -22,10 +28,26 @@ class VerseAdapter(private val verses: List<BibleVerse>) :
 	}
 
 	override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-		val verse = verses[position]
-		holder.number.text = verse.verse.toString()
-		holder.content.text = verse.text
+		val verseItem = verses[position]
+		val bookmark = bookmarks[verseItem.verse]
+
+		holder.number.text = verseItem.verse.toString()
+		holder.content.text = verseItem.text
+
+		holder.root.setBackgroundColor(
+			if (bookmark?.isHighlighted == true) Color.parseColor("#FFF9C4") else Color.TRANSPARENT
+		)
+
+		holder.root.setOnLongClickListener {
+			onLongPress(verseItem.verse, bookmarks[verseItem.verse])
+			true
+		}
 	}
 
 	override fun getItemCount(): Int = verses.size
+
+	fun updateBookmarks(newBookmarks: MutableMap<Int, BibleBookmark>) {
+		bookmarks = newBookmarks
+		notifyDataSetChanged()
+	}
 }
