@@ -54,8 +54,8 @@ class MainActivity : AppCompatActivity() {
 	private fun setupTopBarActions() {
 		findViewById<TextView>(R.id.text_current_location).setOnClickListener {
 			val sheet = com.chan.bnote.ui.BookChapterPickerBottomSheet()
-			sheet.onChapterSelected = { bookId, chapter ->
-				loadChapter(bookId, chapter)
+			sheet.onVerseSelected = { bookId, chapter, verse ->
+				loadChapter(bookId, chapter, scrollToVerse = verse)
 			}
 			sheet.show(supportFragmentManager, "book_chapter_picker")
 		}
@@ -127,7 +127,7 @@ class MainActivity : AppCompatActivity() {
 		}
 	}
 
-	private fun loadChapter(bookId: Int, chapter: Int) {
+	private fun loadChapter(bookId: Int, chapter: Int, scrollToVerse: Int? = null) {
 		currentBookId = bookId
 		currentChapter = chapter
 		textCurrentLocation.text = "${BibleBooks.nameOf(bookId)} ${chapter}장"
@@ -159,6 +159,13 @@ class MainActivity : AppCompatActivity() {
 				sheet.show(supportFragmentManager, "verse_action")
 			}
 			findViewById<RecyclerView>(R.id.recycler_verses).adapter = adapter
+
+			scrollToVerse?.let { verseNum ->
+				val index = verses.indexOfFirst { it.verse == verseNum }
+				if (index >= 0) {
+					findViewById<RecyclerView>(R.id.recycler_verses).scrollToPosition(index)
+				}
+			}
 		}
 	}
 

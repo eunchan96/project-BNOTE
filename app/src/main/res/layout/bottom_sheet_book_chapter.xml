@@ -39,9 +39,24 @@
         android:layout_height="1dp"
         android:background="@color/divider_light" />
 
+    <ScrollView
+        android:id="@+id/scroll_book_grid"
+        android:layout_width="match_parent"
+        android:layout_height="420dp">
+
+        <LinearLayout
+            android:id="@+id/container_book_grid"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="8dp" />
+    </ScrollView>
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler_picker"
         android:layout_width="match_parent"
-        android:layout_height="400dp" />
+        android:layout_height="420dp"
+        android:visibility="gone"
+        android:padding="4dp" />
 
 </LinearLayout>
