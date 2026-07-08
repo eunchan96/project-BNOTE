@@ -34,4 +34,4 @@ google-services.json
 *.hprof
 
 # Custom
-app/src/main/assets/bible.json
+app/src/main/assets/

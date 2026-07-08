@@ -2,6 +2,7 @@ package com.chan.bnote.ui
 
 import android.graphics.Color
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
@@ -11,14 +12,16 @@ import com.chan.bnote.data.BibleVerse
 
 class VerseAdapter(
 	private val verses: List<BibleVerse>,
+	private val secondaryTextByVerse: Map<Int, String>?, // null이면 함께보기 없음
 	private var bookmarks: MutableMap<Int, BibleBookmark>,
 	private val onLongPress: (verse: Int, current: BibleBookmark?) -> Unit
 ) : RecyclerView.Adapter<VerseAdapter.ViewHolder>() {
 
-	class ViewHolder(view: android.view.View) : RecyclerView.ViewHolder(view) {
-		val root: android.view.View = view.findViewById(R.id.item_root)
+	class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+		val root: View = view.findViewById(R.id.item_root)
 		val number: TextView = view.findViewById(R.id.text_verse_number)
 		val content: TextView = view.findViewById(R.id.text_verse_content)
+		val secondaryContent: TextView = view.findViewById(R.id.text_verse_content_secondary)
 	}
 
 	override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -33,6 +36,14 @@ class VerseAdapter(
 
 		holder.number.text = verseItem.verse.toString()
 		holder.content.text = verseItem.text
+
+		val secondaryText = secondaryTextByVerse?.get(verseItem.verse)
+		if (secondaryText != null) {
+			holder.secondaryContent.text = secondaryText
+			holder.secondaryContent.visibility = View.VISIBLE
+		} else {
+			holder.secondaryContent.visibility = View.GONE
+		}
 
 		holder.root.setBackgroundColor(
 			if (bookmark?.isHighlighted == true) Color.parseColor("#FFF9C4") else Color.TRANSPARENT
