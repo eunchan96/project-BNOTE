@@ -1,20 +1,31 @@
 package com.chan.bnote
 
-import android.content.Intent
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import android.widget.TextView
+import com.chan.bnote.data.BibleBookmark
 import com.chan.bnote.data.BibleBooks
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.BibleSeeder
-import com.chan.bnote.ui.SimpleListAdapter
+import com.chan.bnote.ui.VerseAdapter
 import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
+
+	private lateinit var adapter: VerseAdapter
+	private lateinit var textCurrentLocation: TextView
+
+	// 현재 보고 있는 위치 (기본값: 창세기 1장)
+	private var currentBookId = 1
+	private var currentChapter = 1
+
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 		enableEdgeToEdge()
@@ -25,38 +36,116 @@ class MainActivity : AppCompatActivity() {
 			insets
 		}
 
-		val recyclerView =
-			findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.recycler_books)
+		textCurrentLocation = findViewById(R.id.text_current_location)
+
+		val recyclerView = findViewById<RecyclerView>(R.id.recycler_verses)
 		recyclerView.layoutManager = LinearLayoutManager(this)
 
-		val db = BibleDatabase.getInstance(applicationContext)
+		setupTopBarActions()
+		setupBottomNavActions()
+
 		lifecycleScope.launch {
+			val db = BibleDatabase.getInstance(applicationContext)
 			BibleSeeder.seedIfEmpty(applicationContext, db)
+			loadChapter(currentBookId, currentChapter)
+		}
+	}
 
-			val bookIds = db.bibleDao().getBookIds()
-			val bookNames = bookIds.map { BibleBooks.nameOf(it) }
+	private fun setupTopBarActions() {
+		// TODO 2단계: 책/장/절 선택 BottomSheet 연결
+		findViewById<TextView>(R.id.text_current_location).setOnClickListener {
+			Toast.makeText(this, "책/장 선택 (2단계에서 구현)", Toast.LENGTH_SHORT).show()
+		}
+		// TODO: 대역본 선택 BottomSheet
+		findViewById<TextView>(R.id.btn_translation).setOnClickListener {
+			Toast.makeText(this, "대역본 선택 (추후 구현)", Toast.LENGTH_SHORT).show()
+		}
+		// TODO: 검색 화면/BottomSheet
+		findViewById<TextView>(R.id.btn_search).setOnClickListener {
+			Toast.makeText(this, "검색 (추후 구현)", Toast.LENGTH_SHORT).show()
+		}
+		// TODO 3단계: 즐겨찾기 목록 BottomSheet
+		findViewById<TextView>(R.id.btn_favorites).setOnClickListener {
+			Toast.makeText(this, "즐겨찾기 목록 (3단계에서 구현)", Toast.LENGTH_SHORT).show()
+		}
+		// TODO: 햄버거 메뉴
+		findViewById<TextView>(R.id.btn_menu).setOnClickListener {
+			Toast.makeText(this, "메뉴 (추후 구현)", Toast.LENGTH_SHORT).show()
+		}
+	}
 
-			recyclerView.adapter = SimpleListAdapter(bookNames) { position ->
-				val bookId = bookIds[position]
-				val bookName = bookNames[position]
-				val intent = Intent(this@MainActivity, ChapterListActivity::class.java)
-				intent.putExtra("bookId", bookId)
-				intent.putExtra("bookName", bookName)
-				startActivity(intent)
+	private fun setupBottomNavActions() {
+		// TODO: 설교/마이페이지 탭 (추후 구현). 지금은 "성경" 탭만 동작.
+		findViewById<TextView>(R.id.nav_sermon).setOnClickListener {
+			Toast.makeText(this, "설교 탭 (추후 구현)", Toast.LENGTH_SHORT).show()
+		}
+		findViewById<TextView>(R.id.nav_mypage).setOnClickListener {
+			Toast.makeText(this, "마이페이지 탭 (추후 구현)", Toast.LENGTH_SHORT).show()
+		}
+	}
+
+	private fun loadChapter(bookId: Int, chapter: Int) {
+		currentBookId = bookId
+		currentChapter = chapter
+		textCurrentLocation.text = "${BibleBooks.nameOf(bookId)} ${chapter}장"
+
+		lifecycleScope.launch {
+			val db = BibleDatabase.getInstance(applicationContext)
+			val verses = db.bibleDao().getVerses(bookId, chapter)
+			val bookmarkMap = db.bookmarkDao().getBookmarksForChapter(bookId, chapter)
+				.associateBy { it.verse }.toMutableMap()
+
+			adapter = VerseAdapter(
+				verses = verses,
+				bookmarks = bookmarkMap,
+				onToggleHighlight = { verseNum, current ->
+					toggleField(
+						verseNum,
+						current,
+						isHighlightToggle = true
+					)
+				},
+				onToggleFavorite = { verseNum, current ->
+					toggleField(
+						verseNum,
+						current,
+						isHighlightToggle = false
+					)
+				}
+			)
+			findViewById<RecyclerView>(R.id.recycler_verses).adapter = adapter
+		}
+	}
+
+	private fun toggleField(verseNum: Int, current: BibleBookmark?, isHighlightToggle: Boolean) {
+		lifecycleScope.launch {
+			val db = BibleDatabase.getInstance(applicationContext)
+			val updated = if (isHighlightToggle) {
+				(current ?: BibleBookmark(
+					bookId = currentBookId,
+					chapter = currentChapter,
+					verse = verseNum
+				))
+					.copy(
+						isHighlighted = !(current?.isHighlighted ?: false),
+						updatedAt = System.currentTimeMillis()
+					)
+			} else {
+				(current ?: BibleBookmark(
+					bookId = currentBookId,
+					chapter = currentChapter,
+					verse = verseNum
+				))
+					.copy(
+						isFavorite = !(current?.isFavorite ?: false),
+						updatedAt = System.currentTimeMillis()
+					)
 			}
-		}
-	}
+			db.bookmarkDao().upsert(updated)
 
-	override fun onCreateOptionsMenu(menu: android.view.Menu): Boolean {
-		menu.add(0, 1, 0, "즐겨찾기").setShowAsAction(android.view.MenuItem.SHOW_AS_ACTION_ALWAYS)
-		return true
-	}
-
-	override fun onOptionsItemSelected(item: android.view.MenuItem): Boolean {
-		if (item.itemId == 1) {
-			startActivity(Intent(this, FavoritesActivity::class.java))
-			return true
+			val refreshed = db.bookmarkDao().getBookmarksForChapter(currentBookId, currentChapter)
+				.associateBy { it.verse }.toMutableMap()
+			adapter.updateBookmarks(refreshed)
 		}
-		return super.onOptionsItemSelected(item)
 	}
 }
