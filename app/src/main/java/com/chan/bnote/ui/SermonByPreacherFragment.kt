@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.PopupMenu
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -18,6 +19,8 @@ import kotlinx.coroutines.launch
 
 class SermonByPreacherFragment : Fragment() {
 
+	private lateinit var preacherListContainer: View
+	private lateinit var sermonListContainer: View
 	private lateinit var preacherRecycler: RecyclerView
 	private lateinit var sermonRecycler: RecyclerView
 	private lateinit var btnPreacherSort: TextView
@@ -27,8 +30,8 @@ class SermonByPreacherFragment : Fragment() {
 	private var preachers: MutableList<String> = mutableListOf()
 	private var selectedPreacher: String? = null
 
-	private var preacherSortMode = "NAME" // NAME | CUSTOM
-	private var sermonSortMode = "DATE"   // DATE | BIBLE
+	private var preacherSortMode = "NAME"
+	private var sermonSortMode = "DATE"
 
 	override fun onCreateView(
 		inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -39,6 +42,8 @@ class SermonByPreacherFragment : Fragment() {
 	override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 		super.onViewCreated(view, savedInstanceState)
 
+		preacherListContainer = view.findViewById(R.id.container_preacher_list)
+		sermonListContainer = view.findViewById(R.id.container_preacher_sermons)
 		preacherRecycler = view.findViewById(R.id.recycler_preachers)
 		sermonRecycler = view.findViewById(R.id.recycler_preacher_sermons)
 		btnPreacherSort = view.findViewById(R.id.btn_preacher_sort)
@@ -52,26 +57,11 @@ class SermonByPreacherFragment : Fragment() {
 		sermonSortMode = AppSettings.getSermonSortMode(requireContext())
 		updateSortButtonLabels()
 
-		btnPreacherSort.setOnClickListener {
-			val sheet = SortOptionBottomSheet("설교자 정렬", listOf("이름순", "직접 설정"))
-			sheet.onSelected = { position ->
-				preacherSortMode = if (position == 0) "NAME" else "CUSTOM"
-				AppSettings.setPreacherSortMode(requireContext(), preacherSortMode)
-				updateSortButtonLabels()
-				loadPreachers()
-			}
-			sheet.show(parentFragmentManager, "preacher_sort")
-		}
+		btnPreacherSort.setOnClickListener { showPreacherSortMenu(it) }
+		btnSermonSort.setOnClickListener { showSermonSortMenu(it) }
 
-		btnSermonSort.setOnClickListener {
-			val sheet = SortOptionBottomSheet("설교 정렬", listOf("날짜순", "성경순"))
-			sheet.onSelected = { position ->
-				sermonSortMode = if (position == 0) "DATE" else "BIBLE"
-				AppSettings.setSermonSortMode(requireContext(), sermonSortMode)
-				updateSortButtonLabels()
-				selectedPreacher?.let { loadSermonsForPreacher(it) }
-			}
-			sheet.show(parentFragmentManager, "sermon_sort")
+		view.findViewById<TextView>(R.id.btn_back_to_preachers).setOnClickListener {
+			showPreacherListStep()
 		}
 
 		view.findViewById<TextView>(R.id.fab_add_sermon_by_preacher).setOnClickListener {
@@ -86,9 +76,51 @@ class SermonByPreacherFragment : Fragment() {
 		loadPreachers()
 	}
 
+	private fun showPreacherSortMenu(anchor: View) {
+		val popup = PopupMenu(requireContext(), anchor)
+		popup.menu.add(0, 0, 0, "이름순")
+		popup.menu.add(0, 1, 1, "직접 설정")
+		popup.setOnMenuItemClickListener { item ->
+			preacherSortMode = if (item.itemId == 0) "NAME" else "CUSTOM"
+			AppSettings.setPreacherSortMode(requireContext(), preacherSortMode)
+			updateSortButtonLabels()
+			loadPreachers()
+			true
+		}
+		popup.show()
+	}
+
+	private fun showSermonSortMenu(anchor: View) {
+		val popup = PopupMenu(requireContext(), anchor)
+		popup.menu.add(0, 0, 0, "날짜순")
+		popup.menu.add(0, 1, 1, "성경순")
+		popup.setOnMenuItemClickListener { item ->
+			sermonSortMode = if (item.itemId == 0) "DATE" else "BIBLE"
+			AppSettings.setSermonSortMode(requireContext(), sermonSortMode)
+			updateSortButtonLabels()
+			selectedPreacher?.let { loadSermonsForPreacher(it) }
+			true
+		}
+		popup.show()
+	}
+
 	private fun updateSortButtonLabels() {
 		btnPreacherSort.text = if (preacherSortMode == "NAME") "이름순 ▾" else "직접 설정 ▾"
 		btnSermonSort.text = if (sermonSortMode == "DATE") "날짜순 ▾" else "성경순 ▾"
+	}
+
+	private fun showPreacherListStep() {
+		preacherListContainer.visibility = View.VISIBLE
+		sermonListContainer.visibility = View.GONE
+		selectedPreacher = null
+	}
+
+	private fun showSermonListStep(preacher: String) {
+		preacherListContainer.visibility = View.GONE
+		sermonListContainer.visibility = View.VISIBLE
+		selectedPreacher = preacher
+		selectedPreacherText.text = preacher
+		loadSermonsForPreacher(preacher)
 	}
 
 	private fun loadPreachers() {
@@ -111,13 +143,10 @@ class SermonByPreacherFragment : Fragment() {
 
 	private fun renderPreacherList() {
 		val adapter = SimpleListAdapter(preachers) { position ->
-			selectedPreacher = preachers[position]
-			selectedPreacherText.text = selectedPreacher
-			loadSermonsForPreacher(preachers[position])
+			showSermonListStep(preachers[position])
 		}
 		preacherRecycler.adapter = adapter
 
-		// 기존 드래그 헬퍼가 붙어있으면 해제 후 다시 부착 (중복 방지)
 		if (preacherSortMode == "CUSTOM") {
 			val dragHelper = ItemTouchHelper(DragReorderHelper { from, to ->
 				if (from in preachers.indices && to in preachers.indices) {
@@ -136,9 +165,8 @@ class SermonByPreacherFragment : Fragment() {
 	private fun loadSermonsForPreacher(preacher: String) {
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(requireContext().applicationContext)
-			var sermons = db.sermonDao().getByPreacher(preacher)
+			val sermons = db.sermonDao().getByPreacher(preacher)
 
-			// 각 설교의 대표 구절(정렬/표시용) 미리 로드
 			val rows = sermons.map { sermon ->
 				val firstRef = db.sermonBibleRefDao().getFirstRef(sermon.id)
 				val category = sermon.categoryId?.let { db.sermonCategoryDao().getById(it) }

@@ -48,6 +48,21 @@ class SermonByBookFragment : Fragment() {
 			picker.show(parentFragmentManager, "book_only_picker")
 		}
 
+		view.findViewById<TextView>(R.id.btn_book_prev).setOnClickListener {
+			if (currentBookId > 1) {
+				currentBookId -= 1
+				selectedChapter = 1
+				loadChapterGrid()
+			}
+		}
+		view.findViewById<TextView>(R.id.btn_book_next).setOnClickListener {
+			if (currentBookId < 66) {
+				currentBookId += 1
+				selectedChapter = 1
+				loadChapterGrid()
+			}
+		}
+
 		view.findViewById<TextView>(R.id.fab_add_sermon_by_book).setOnClickListener {
 			val sheet = AddSermonBottomSheet()
 			sheet.onSaved = { loadChapterGrid(); loadSermonsForSelectedChapter() }
@@ -70,9 +85,9 @@ class SermonByBookFragment : Fragment() {
 			val cells = (1..maxChapter).map { chapter ->
 				ChapterCell(chapter, colorsByChapter[chapter].orEmpty())
 			}
-			chapterGridRecycler.adapter = ChapterGridAdapter(cells) { cell ->
+			chapterGridRecycler.adapter = ChapterGridAdapter(cells, selectedChapter) { cell ->
 				selectedChapter = cell.chapter
-				loadSermonsForSelectedChapter()
+				loadChapterGrid() // 선택 표시 갱신을 위해 그리드 다시 그림
 			}
 
 			loadSermonsForSelectedChapter()

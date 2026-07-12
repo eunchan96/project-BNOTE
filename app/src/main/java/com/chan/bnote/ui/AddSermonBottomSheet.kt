@@ -24,15 +24,15 @@ import kotlinx.coroutines.launch
 import java.util.Calendar
 
 class AddSermonBottomSheet(
-	private val existingSermon: Sermon? = null // null이면 추가, 값 있으면 수정
+	private val existingSermon: Sermon? = null,
+	private val initialDateMillis: Long = DateUtils.normalizeToDayStart(System.currentTimeMillis()) // 추가
 ) : DraggableBottomSheet() {
 
 	override val peekHeightRatio = 0.85f
 
 	var onSaved: (() -> Unit)? = null
 
-	private var selectedDateMillis: Long = existingSermon?.sermonDate
-		?: DateUtils.normalizeToDayStart(System.currentTimeMillis())
+	private var selectedDateMillis: Long = existingSermon?.sermonDate ?: initialDateMillis
 	private var selectedCategoryId: Long? = existingSermon?.categoryId
 	private val bibleRefs = mutableListOf<SermonBibleRef>()
 	private var categories: List<SermonCategory> = emptyList()

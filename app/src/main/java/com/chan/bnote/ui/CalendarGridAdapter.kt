@@ -19,6 +19,7 @@ data class CalendarDayCell(
 
 class CalendarGridAdapter(
 	private val days: List<CalendarDayCell>,
+	private val selectedDate: Long, // 추가
 	private val onDayClick: (CalendarDayCell) -> Unit
 ) : RecyclerView.Adapter<CalendarGridAdapter.ViewHolder>() {
 
@@ -37,20 +38,37 @@ class CalendarGridAdapter(
 		val cell = days[position]
 		holder.dayNumber.text = cell.dayOfMonth.toString()
 
+		val isSelected = cell.dateMillis == selectedDate
+
 		holder.dayNumber.setTextColor(
 			when {
+				isSelected -> Color.WHITE
 				!cell.isCurrentMonth -> Color.parseColor("#D0D0D0")
 				cell.isToday -> Color.parseColor("#795548")
 				else -> Color.parseColor("#333333")
 			}
 		)
-		if (cell.isToday) {
-			holder.dayNumber.setTypeface(null, android.graphics.Typeface.BOLD)
+		holder.dayNumber.setTypeface(
+			null,
+			if (cell.isToday || isSelected) android.graphics.Typeface.BOLD else android.graphics.Typeface.NORMAL
+		)
+
+		// 선택된 날짜는 동그란 갈색 배경으로 강조
+		if (isSelected) {
+			val drawable = android.graphics.drawable.GradientDrawable()
+			drawable.shape = android.graphics.drawable.GradientDrawable.OVAL
+			drawable.setColor(Color.parseColor("#795548"))
+			holder.dayNumber.background = drawable
+			val pad = (4 * holder.itemView.resources.displayMetrics.density).toInt()
+			holder.dayNumber.setPadding(pad, pad, pad, pad)
+		} else {
+			holder.dayNumber.background = null
+			holder.dayNumber.setPadding(0, 0, 0, 0)
 		}
 
 		holder.barsContainer.removeAllViews()
 		val density = holder.itemView.resources.displayMetrics.density
-		for (colorHex in cell.colors.take(3)) { // 한 칸에 최대 3개까지만 표시 (그 이상은 겹쳐서 안 보이니까)
+		for (colorHex in cell.colors.take(3)) {
 			val bar = View(holder.itemView.context)
 			bar.layoutParams = LinearLayout.LayoutParams(
 				LinearLayout.LayoutParams.MATCH_PARENT, (3 * density).toInt()

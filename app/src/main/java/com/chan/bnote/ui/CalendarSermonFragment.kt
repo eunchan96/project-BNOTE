@@ -56,8 +56,23 @@ class CalendarSermonFragment : Fragment() {
 			picker.show(parentFragmentManager, "month_year_picker")
 		}
 
+		view.findViewById<TextView>(R.id.btn_month_prev).setOnClickListener {
+			currentMonth0 -= 1
+			if (currentMonth0 < 0) {
+				currentMonth0 = 11; currentYear -= 1
+			}
+			loadCalendarGrid()
+		}
+		view.findViewById<TextView>(R.id.btn_month_next).setOnClickListener {
+			currentMonth0 += 1
+			if (currentMonth0 > 11) {
+				currentMonth0 = 0; currentYear += 1
+			}
+			loadCalendarGrid()
+		}
+
 		view.findViewById<TextView>(R.id.fab_add_sermon).setOnClickListener {
-			val sheet = AddSermonBottomSheet()
+			val sheet = AddSermonBottomSheet(initialDateMillis = selectedDate)
 			sheet.onSaved = { loadCalendarGrid(); loadSermonsForSelectedDate() }
 			sheet.show(parentFragmentManager, "add_sermon")
 		}
@@ -75,13 +90,13 @@ class CalendarSermonFragment : Fragment() {
 			val endMillis = DateUtils.getMonthEndMillisExclusive(currentYear, currentMonth0)
 			val markers = db.sermonDao().getSermonMarkersInRange(startMillis, endMillis)
 
-			// 날짜별 색상 리스트로 묶기
 			val colorsByDate = markers.groupBy { it.sermonDate }
 				.mapValues { entry -> entry.value.mapNotNull { it.colorHex } }
 
 			val cells = buildMonthCells(currentYear, currentMonth0, colorsByDate)
-			gridRecycler.adapter = CalendarGridAdapter(cells) { cell ->
+			gridRecycler.adapter = CalendarGridAdapter(cells, selectedDate) { cell ->
 				selectedDate = cell.dateMillis
+				loadCalendarGrid() // 선택 표시 갱신을 위해 그리드 다시 그림
 				loadSermonsForSelectedDate()
 			}
 		}
