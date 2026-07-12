@@ -52,6 +52,29 @@ interface SermonDao {
     """
 	)
 	suspend fun getSermonMarkersInRange(startMillis: Long, endMillis: Long): List<SermonMarker>
+
+	@Query(
+		"""
+    SELECT r.startChapter as startChapter, r.endChapter as endChapter, c.colorHex as colorHex
+    FROM sermon_bible_refs r
+    JOIN sermons s ON s.id = r.sermonId
+    LEFT JOIN sermon_categories c ON c.id = s.categoryId
+    WHERE r.startBookId = :bookId
+    """
+	)
+	suspend fun getChapterMarkersForBook(bookId: Int): List<ChapterMarker>
+
+	@Query(
+		"""
+    SELECT DISTINCT s.* FROM sermons s
+    INNER JOIN sermon_bible_refs r ON r.sermonId = s.id
+    WHERE r.startBookId = :bookId AND r.startChapter <= :chapter AND r.endChapter >= :chapter
+    ORDER BY s.sermonDate DESC
+    """
+	)
+	suspend fun getByBookChapter(bookId: Int, chapter: Int): List<Sermon>
 }
 
 data class SermonMarker(val sermonDate: Long, val colorHex: String?)
+
+data class ChapterMarker(val startChapter: Int, val endChapter: Int, val colorHex: String?)
