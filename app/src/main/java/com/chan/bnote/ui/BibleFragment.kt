@@ -18,6 +18,8 @@ import com.chan.bnote.data.BibleBookmark
 import com.chan.bnote.data.BibleBooks
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.BibleSeeder
+import com.chan.bnote.data.BibleVerse
+import com.chan.bnote.data.CopyFormatter
 import com.chan.bnote.data.Translation
 import kotlinx.coroutines.launch
 
@@ -55,6 +57,9 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 
 	private val selectedVerses = mutableSetOf<Int>()
 	private lateinit var selectionToolbar: View
+
+	private var currentVerses: List<BibleVerse> = emptyList()
+	private var currentSecondaryMap: Map<Int, String>? = null
 
 	private val autoScrollHandler = android.os.Handler(android.os.Looper.getMainLooper())
 	private val autoScrollRunnable = object : Runnable {
@@ -111,7 +116,7 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 			Toast.makeText(requireContext(), "스크랩 (E-3에서 구현)", Toast.LENGTH_SHORT).show()
 		}
 		view.findViewById<TextView>(R.id.btn_toolbar_copy).setOnClickListener {
-			Toast.makeText(requireContext(), "복사 (E-2에서 구현)", Toast.LENGTH_SHORT).show()
+			onCopyButtonClicked()
 		}
 	}
 
@@ -231,11 +236,14 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 			val secondaryMap = secondaryTranslation?.let { sec ->
 				db.bibleDao().getVerses(sec.code, bookId, chapter).associate { it.verse to it.text }
 			}
+			currentVerses = verses
+			currentSecondaryMap = secondaryMap
+
 			val bookmarkMap = db.bookmarkDao().getBookmarksForChapter(bookId, chapter)
 				.associateBy { it.verse }.toMutableMap()
 			isChapterRead = db.readingProgressDao().get(bookId, chapter) != null
 			hasSermonForChapter =
-				db.sermonDao().getByBookChapter(bookId, chapter).isNotEmpty() // 추가
+				db.sermonDao().getByBookChapter(bookId, chapter).isNotEmpty()
 
 			notifyTopBarChanged()
 
@@ -386,5 +394,29 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 			Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
 			clearSelection()
 		}
+	}
+
+	private fun onCopyButtonClicked() {
+		if (selectedVerses.isEmpty()) return
+
+		val includeSecondary = AppSettings.isCopyIncludeSecondary(requireContext())
+		val referenceStyle = AppSettings.getCopyReferenceStyle(requireContext())
+
+		val text = CopyFormatter.format(
+			bookId = currentBookId,
+			chapter = currentChapter,
+			verses = currentVerses,
+			selectedVerseNumbers = selectedVerses,
+			secondaryMap = if (includeSecondary) currentSecondaryMap else null,
+			includeSecondary = includeSecondary,
+			referenceStyle = referenceStyle
+		)
+
+		val clipboard = requireContext().getSystemService(android.content.Context.CLIPBOARD_SERVICE)
+				as android.content.ClipboardManager
+		clipboard.setPrimaryClip(android.content.ClipData.newPlainText("bible_verses", text))
+
+		Toast.makeText(requireContext(), "복사했어요", Toast.LENGTH_SHORT).show()
+		clearSelection()
 	}
 }

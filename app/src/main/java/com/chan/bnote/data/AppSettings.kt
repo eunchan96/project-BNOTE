@@ -19,6 +19,8 @@ object AppSettings {
 
 	private const val KEY_SCROLL_SPEED = "scroll_speed" // 1(느림)~5(빠름)
 	private const val KEY_KEEP_SCREEN_ON = "keep_screen_on"
+	private const val KEY_COPY_INCLUDE_SECONDARY = "copy_include_secondary"
+	private const val KEY_COPY_REFERENCE_STYLE = "copy_reference_style" // NONE | SHORT | LONG
 
 	fun getFontSize(context: Context): Int {
 		val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
@@ -110,5 +112,25 @@ object AppSettings {
 	fun setKeepScreenOn(context: Context, enabled: Boolean) {
 		context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
 			.edit().putBoolean(KEY_KEEP_SCREEN_ON, enabled).apply()
+	}
+
+	fun isCopyIncludeSecondary(context: Context): Boolean {
+		return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.getBoolean(KEY_COPY_INCLUDE_SECONDARY, false)
+	}
+
+	fun setCopyIncludeSecondary(context: Context, enabled: Boolean) {
+		context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.edit().putBoolean(KEY_COPY_INCLUDE_SECONDARY, enabled).apply()
+	}
+
+	fun getCopyReferenceStyle(context: Context): String {
+		return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.getString(KEY_COPY_REFERENCE_STYLE, "NONE") ?: "NONE"
+	}
+
+	fun setCopyReferenceStyle(context: Context, style: String) {
+		context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.edit().putString(KEY_COPY_REFERENCE_STYLE, style).apply()
 	}
 }

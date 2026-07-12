@@ -78,6 +78,33 @@ class SettingsBottomSheet : DraggableBottomSheet() {
 			}
 		}
 
+		view.findViewById<Switch>(R.id.switch_copy_secondary).apply {
+			isChecked = AppSettings.isCopyIncludeSecondary(requireContext())
+			setOnCheckedChangeListener { _, checked ->
+				AppSettings.setCopyIncludeSecondary(requireContext(), checked)
+			}
+		}
+
+		val btnReferenceStyle = view.findViewById<TextView>(R.id.btn_copy_reference_style)
+		updateReferenceStyleLabel(btnReferenceStyle)
+		btnReferenceStyle.setOnClickListener {
+			val popup = android.widget.PopupMenu(requireContext(), btnReferenceStyle)
+			popup.menu.add(0, 0, 0, "표기 안 함")
+			popup.menu.add(0, 1, 1, "짧게 (창 1:1)")
+			popup.menu.add(0, 2, 2, "길게 (창세기 1장 1절)")
+			popup.setOnMenuItemClickListener { item ->
+				val style = when (item.itemId) {
+					1 -> "SHORT"
+					2 -> "LONG"
+					else -> "NONE"
+				}
+				AppSettings.setCopyReferenceStyle(requireContext(), style)
+				updateReferenceStyleLabel(btnReferenceStyle)
+				true
+			}
+			popup.show()
+		}
+
 		view.findViewById<TextView>(R.id.menu_download_translation).setOnClickListener {
 			Toast.makeText(requireContext(), "대역본 다운로드 (추후 구현)", Toast.LENGTH_SHORT).show()
 		}
@@ -113,6 +140,14 @@ class SettingsBottomSheet : DraggableBottomSheet() {
 			requireActivity().window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 		} else {
 			requireActivity().window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+		}
+	}
+
+	private fun updateReferenceStyleLabel(button: TextView) {
+		button.text = when (AppSettings.getCopyReferenceStyle(requireContext())) {
+			"SHORT" -> "짧게 (창 1:1) ▾"
+			"LONG" -> "길게 (창세기 1장 1절) ▾"
+			else -> "표기 안 함 ▾"
 		}
 	}
 }
