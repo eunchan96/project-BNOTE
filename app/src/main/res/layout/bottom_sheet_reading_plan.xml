@@ -2,7 +2,8 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:background="@color/surface_elevated">
 
     <include layout="@layout/include_drag_handle" />
 
@@ -22,7 +23,7 @@
         android:paddingHorizontal="16dp"
         android:paddingBottom="12dp"
         android:textSize="14sp"
-        android:textColor="#757575" />
+        android:textColor="@color/text_secondary" />
 
     <ProgressBar
         android:id="@+id/progress_overall"

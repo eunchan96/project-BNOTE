@@ -2,7 +2,8 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:background="@color/surface_elevated">
 
     <include layout="@layout/include_drag_handle" />
 
@@ -40,6 +41,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:textSize="16sp"
+                    android:textColor="@color/text_primary"
                     android:text="아직 말씀이 등록되지 않았어요. 눌러서 선택해보세요." />
 
                 <TextView
@@ -99,7 +101,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="지난 기록이 없어요"
-                android:textColor="#9E9E9E"
+                android:textColor="@color/text_hint"
                 android:visibility="gone" />
 
         </LinearLayout>

@@ -38,7 +38,8 @@
                     android:textStyle="bold"
                     android:clickable="true"
                     android:focusable="true"
-                    android:background="?attr/selectableItemBackground" />
+                    android:background="?attr/selectableItemBackground"
+                    android:textColor="@color/text_primary" />
 
                 <TextView
                     android:id="@+id/btn_book_next"
@@ -69,7 +70,7 @@
                 android:layout_height="wrap_content"
                 android:padding="16dp"
                 android:textSize="14sp"
-                android:textColor="#757575" />
+                android:textColor="@color/text_primary" />
 
             <TextView
                 android:id="@+id/text_empty_by_chapter"
@@ -78,7 +79,7 @@
                 android:padding="24dp"
                 android:gravity="center"
                 android:text="등록된 설교가 없어요"
-                android:textColor="#9E9E9E" />
+                android:textColor="@color/text_hint" />
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recycler_sermons_by_chapter"

@@ -40,12 +40,21 @@ class CalendarGridAdapter(
 
 		val isSelected = cell.dateMillis == selectedDate
 
+		val context = holder.itemView.context
 		holder.dayNumber.setTextColor(
 			when {
-				!cell.isCurrentMonth -> Color.parseColor("#D0D0D0")
-				cell.isToday -> Color.parseColor("#1E88E5") // 오늘: 파란색으로 구분
-				isSelected -> Color.parseColor("#795548")   // 선택됨: 갈색
-				else -> Color.parseColor("#333333")
+				!cell.isCurrentMonth -> androidx.core.content.ContextCompat.getColor(
+					context,
+					R.color.text_hint
+				)
+
+				cell.isToday -> Color.parseColor("#1E88E5")
+				isSelected -> androidx.core.content.ContextCompat.getColor(
+					context,
+					R.color.brown_primary
+				)
+
+				else -> androidx.core.content.ContextCompat.getColor(context, R.color.text_primary)
 			}
 		)
 		holder.dayNumber.setTypeface(

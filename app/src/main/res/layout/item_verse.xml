@@ -25,7 +25,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textSize="16sp"
-            android:textColor="@color/black" />
+            android:textColor="@color/text_primary" />
 
         <TextView
             android:id="@+id/text_verse_content_secondary"

@@ -3,7 +3,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:background="@color/surface_elevated">
 
     <include layout="@layout/include_drag_handle" />
 
@@ -60,7 +61,7 @@
                 android:layout_height="wrap_content"
                 android:text="카테고리"
                 android:textSize="14sp"
-                android:textColor="#757575"
+                android:textColor="@color/text_secondary"
                 android:layout_marginBottom="8dp" />
 
             <androidx.recyclerview.widget.RecyclerView
@@ -75,7 +76,7 @@
                 android:layout_height="wrap_content"
                 android:text="관련 성경 구절"
                 android:textSize="14sp"
-                android:textColor="#757575"
+                android:textColor="@color/text_secondary"
                 android:layout_marginBottom="8dp" />
 
             <com.google.android.flexbox.FlexboxLayout

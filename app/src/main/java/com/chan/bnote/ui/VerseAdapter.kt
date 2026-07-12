@@ -1,6 +1,5 @@
 package com.chan.bnote.ui
 
-import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -49,7 +48,12 @@ class VerseAdapter(
 		}
 
 		holder.root.setBackgroundColor(
-			if (bookmark?.isHighlighted == true) Color.parseColor("#FFF9C4") else Color.TRANSPARENT
+			if (bookmark?.isHighlighted == true)
+				androidx.core.content.ContextCompat.getColor(
+					holder.itemView.context,
+					R.color.highlight_yellow
+				)
+			else android.graphics.Color.TRANSPARENT
 		)
 
 		holder.root.setOnLongClickListener {

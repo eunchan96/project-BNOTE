@@ -38,7 +38,14 @@ class ChapterGridAdapter(
 		val isSelected = cell.chapter == selectedChapter
 
 		holder.number.setTextColor(
-			if (isSelected) Color.parseColor("#795548") else Color.parseColor("#333333")
+			if (isSelected) androidx.core.content.ContextCompat.getColor(
+				holder.itemView.context,
+				R.color.brown_primary
+			)
+			else androidx.core.content.ContextCompat.getColor(
+				holder.itemView.context,
+				R.color.text_primary
+			)
 		)
 		holder.number.setTypeface(
 			null,

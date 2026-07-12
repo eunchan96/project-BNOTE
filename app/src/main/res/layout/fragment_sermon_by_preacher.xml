@@ -77,7 +77,8 @@
                 android:layout_weight="1"
                 android:layout_marginStart="8dp"
                 android:textSize="16sp"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                android:textColor="@color/text_primary" />
 
             <TextView
                 android:id="@+id/btn_sermon_sort"
@@ -103,7 +104,7 @@
             android:padding="24dp"
             android:gravity="center"
             android:text="등록된 설교가 없어요"
-            android:textColor="#9E9E9E" />
+            android:textColor="@color/text_hint" />
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recycler_preacher_sermons"
