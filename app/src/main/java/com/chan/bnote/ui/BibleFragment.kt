@@ -30,6 +30,7 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 	private var primaryTranslation: Translation = Translation.GAEYEOK
 	private var secondaryTranslation: Translation? = null
 	private var currentFontSize: Int = 16
+	private var scrollSpeed = 3
 
 	private var isReadingPlanEnabled = false
 	private var isChapterRead = false
@@ -40,8 +41,8 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 	private val autoScrollHandler = android.os.Handler(android.os.Looper.getMainLooper())
 	private val autoScrollRunnable = object : Runnable {
 		override fun run() {
-			recyclerView.smoothScrollBy(0, 4) // 한 번에 4px씩, 부드럽게
-			autoScrollHandler.postDelayed(this, 50) // 50ms마다 반복
+			recyclerView.smoothScrollBy(0, 2 + scrollSpeed) // 속도 1~5 -> 3~7px씩
+			autoScrollHandler.postDelayed(this, 60L - (scrollSpeed * 8)) // 속도 1~5 -> 52~20ms 간격
 		}
 	}
 
@@ -57,6 +58,7 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		currentFontSize = AppSettings.getFontSize(requireContext())
 		isReadingPlanEnabled = AppSettings.isReadingPlanEnabled(requireContext())
 		isAutoScrollEnabled = AppSettings.isAutoScrollEnabled(requireContext())
+		scrollSpeed = AppSettings.getScrollSpeed(requireContext())
 
 		recyclerView = view.findViewById(R.id.recycler_verses)
 		recyclerView.layoutManager = LinearLayoutManager(requireContext())

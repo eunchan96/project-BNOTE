@@ -17,6 +17,9 @@ object AppSettings {
 	const val MIN_FONT_SIZE = 12
 	const val MAX_FONT_SIZE = 28
 
+	private const val KEY_SCROLL_SPEED = "scroll_speed" // 1(느림)~5(빠름)
+	private const val KEY_KEEP_SCREEN_ON = "keep_screen_on"
+
 	fun getFontSize(context: Context): Int {
 		val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
 		return prefs.getInt(KEY_FONT_SIZE, DEFAULT_FONT_SIZE)
@@ -87,5 +90,25 @@ object AppSettings {
 	fun setSermonSortMode(context: Context, mode: String) {
 		context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
 			.edit().putString(KEY_SERMON_SORT_MODE, mode).apply()
+	}
+
+	fun getScrollSpeed(context: Context): Int {
+		return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.getInt(KEY_SCROLL_SPEED, 3)
+	}
+
+	fun setScrollSpeed(context: Context, speed: Int) {
+		context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.edit().putInt(KEY_SCROLL_SPEED, speed.coerceIn(1, 5)).apply()
+	}
+
+	fun isKeepScreenOn(context: Context): Boolean {
+		return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.getBoolean(KEY_KEEP_SCREEN_ON, false)
+	}
+
+	fun setKeepScreenOn(context: Context, enabled: Boolean) {
+		context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.edit().putBoolean(KEY_KEEP_SCREEN_ON, enabled).apply()
 	}
 }

@@ -41,6 +41,9 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener {
 		AppCompatDelegate.setDefaultNightMode(
 			if (darkMode) AppCompatDelegate.MODE_NIGHT_YES else AppCompatDelegate.MODE_NIGHT_NO
 		)
+		if (AppSettings.isKeepScreenOn(this)) {
+			window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+		}
 
 		enableEdgeToEdge()
 		setContentView(R.layout.activity_main)
