@@ -1,5 +1,7 @@
 package com.chan.bnote.ui
 
+import TopBarActionHandler
+import TopBarConfig
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -33,6 +35,8 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 	private var isChapterRead = false
 	private var isAutoScrollEnabled = false
 	private var isAutoScrolling = false
+	private var hasSermonForChapter = false
+
 	private val autoScrollHandler = android.os.Handler(android.os.Looper.getMainLooper())
 	private val autoScrollRunnable = object : Runnable {
 		override fun run() {
@@ -83,7 +87,8 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		showReadingPlanCheck = isReadingPlanEnabled,
 		isChapterRead = isChapterRead,
 		showAutoScrollButton = isAutoScrollEnabled,
-		isAutoScrolling = isAutoScrolling
+		isAutoScrolling = isAutoScrolling,
+		showSermonIcon = hasSermonForChapter
 	)
 
 	override fun onLocationClicked() {
@@ -172,6 +177,11 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		}
 	}
 
+	override fun onSermonIconClicked() {
+		ChapterSermonsBottomSheet(currentBookId, currentChapter)
+			.show(parentFragmentManager, "chapter_sermons")
+	}
+
 	private fun loadChapter(bookId: Int, chapter: Int, scrollToVerse: Int? = null) {
 		currentBookId = bookId
 		currentChapter = chapter
@@ -185,9 +195,12 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 			val bookmarkMap = db.bookmarkDao().getBookmarksForChapter(bookId, chapter)
 				.associateBy { it.verse }.toMutableMap()
 			isChapterRead = db.readingProgressDao().get(bookId, chapter) != null
+			hasSermonForChapter =
+				db.sermonDao().getByBookChapter(bookId, chapter).isNotEmpty() // 추가
 
 			notifyTopBarChanged()
 
+			// 이하 어댑터 생성 로직 기존과 동일
 			adapter = VerseAdapter(
 				verses = verses,
 				secondaryTextByVerse = secondaryMap,

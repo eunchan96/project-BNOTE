@@ -1,5 +1,7 @@
 package com.chan.bnote
 
+import TopBarActionHandler
+import TopBarConfig
 import android.os.Bundle
 import android.widget.ImageView
 import android.widget.TextView
@@ -12,8 +14,6 @@ import com.chan.bnote.data.AppSettings
 import com.chan.bnote.ui.BibleFragment
 import com.chan.bnote.ui.MyPageFragment
 import com.chan.bnote.ui.SermonFragment
-import com.chan.bnote.ui.TopBarActionHandler
-import com.chan.bnote.ui.TopBarConfig
 import com.chan.bnote.ui.TopBarConfigListener
 
 class MainActivity : AppCompatActivity(), TopBarConfigListener {
@@ -32,6 +32,7 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener {
 
 	private lateinit var btnAutoScroll: ImageView
 	private lateinit var iconReadingPlanCheck: ImageView
+	private lateinit var iconSermonIndicator: ImageView
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
@@ -67,6 +68,7 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener {
 		btnMenu = findViewById(R.id.btn_menu)
 		btnAutoScroll = findViewById(R.id.btn_auto_scroll)
 		iconReadingPlanCheck = findViewById(R.id.icon_reading_plan_check)
+		iconSermonIndicator = findViewById(R.id.icon_sermon_indicator)
 	}
 
 	private fun bindBottomNavViews() {
@@ -85,6 +87,7 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener {
 		btnMenu.setOnClickListener { currentHandler()?.onMenuClicked() }
 		btnAutoScroll.setOnClickListener { currentHandler()?.onAutoScrollButtonClicked() }
 		iconReadingPlanCheck.setOnClickListener { currentHandler()?.onReadingPlanCheckClicked() }
+		iconSermonIndicator.setOnClickListener { currentHandler()?.onSermonIconClicked() }
 	}
 
 	private fun setupBottomNavActions() {
@@ -129,6 +132,8 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener {
 
 		btnAutoScroll.visibility = visible(config.showAutoScrollButton)
 		btnAutoScroll.setImageResource(if (config.isAutoScrolling) R.drawable.ic_pause else R.drawable.ic_play)
+
+		iconSermonIndicator.visibility = visible(config.showSermonIcon)
 	}
 
 	private fun visible(show: Boolean) =

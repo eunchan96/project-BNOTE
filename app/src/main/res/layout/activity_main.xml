@@ -46,6 +46,18 @@
             android:focusable="true" />
 
         <ImageView
+            android:id="@+id/icon_sermon_indicator"
+            android:layout_width="18dp"
+            android:layout_height="18dp"
+            android:layout_marginStart="6dp"
+            android:src="@drawable/ic_sermon_note"
+            android:visibility="gone"
+            android:contentDescription="이 장의 설교 보기"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?attr/selectableItemBackgroundBorderless" />
+
+        <ImageView
             android:id="@+id/icon_reading_plan_check"
             android:layout_width="18dp"
             android:layout_height="18dp"

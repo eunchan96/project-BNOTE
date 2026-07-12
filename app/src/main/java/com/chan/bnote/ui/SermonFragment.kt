@@ -1,5 +1,7 @@
 package com.chan.bnote.ui
 
+import TopBarActionHandler
+import TopBarConfig
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -59,8 +61,8 @@ class SermonFragment : Fragment(), TopBarActionHandler {
 
 	override fun getTopBarConfig() = TopBarConfig(
 		title = "설교",
-		showSearch = true,
-		showMenu = true
+		showMenu = true,
+		showSearch = true
 	)
 
 	override fun onMenuClicked() {
