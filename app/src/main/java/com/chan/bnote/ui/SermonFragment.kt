@@ -57,6 +57,16 @@ class SermonFragment : Fragment(), TopBarActionHandler {
 		}
 	}
 
-	// 설교 탭은 상단바에 성경 탭 전용 버튼들이 필요 없음
-	override fun getTopBarConfig() = TopBarConfig(title = "설교")
+	override fun getTopBarConfig() = TopBarConfig(
+		title = "설교",
+		showMenu = true // 추가
+	)
+
+	override fun onMenuClicked() {
+		val dialog = SermonMenuDialogFragment()
+		dialog.onCategoryManageClicked = {
+			CategoryManageBottomSheet().show(parentFragmentManager, "category_manage")
+		}
+		dialog.show(parentFragmentManager, "sermon_menu")
+	}
 }
