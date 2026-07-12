@@ -98,6 +98,13 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 	override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 		super.onViewCreated(view, savedInstanceState)
 
+		val savedPrimaryCode = AppSettings.getPrimaryTranslation(requireContext())
+		primaryTranslation =
+			Translation.values().firstOrNull { it.code == savedPrimaryCode } ?: Translation.GAEYEOK
+
+		val savedSecondaryCode = AppSettings.getSecondaryTranslation(requireContext())
+		secondaryTranslation = Translation.values().firstOrNull { it.code == savedSecondaryCode }
+
 		currentFontSize = AppSettings.getFontSize(requireContext())
 		isReadingPlanEnabled = AppSettings.isReadingPlanEnabled(requireContext())
 		isAutoScrollEnabled = AppSettings.isAutoScrollEnabled(requireContext())
@@ -179,6 +186,8 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		sheet.onTranslationsSelected = { primary, secondary ->
 			primaryTranslation = primary
 			secondaryTranslation = secondary
+			AppSettings.setPrimaryTranslation(requireContext(), primary.code)
+			AppSettings.setSecondaryTranslation(requireContext(), secondary?.code)
 			loadChapter(currentBookId, currentChapter)
 		}
 		sheet.show(parentFragmentManager, "translation_picker")
