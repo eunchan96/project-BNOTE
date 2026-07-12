@@ -70,7 +70,9 @@ class CalendarSermonFragment : Fragment() {
 
 		val labels = sermons.map { "${it.title}  (${it.preacher})" }
 		recyclerView.adapter = SimpleListAdapter(labels) { position ->
-			SermonDetailBottomSheet(sermons[position]).show(parentFragmentManager, "sermon_detail")
+			val detail = SermonDetailBottomSheet(sermons[position])
+			detail.onChanged = { loadSermons() }
+			detail.show(parentFragmentManager, "sermon_detail")
 		}
 	}
 }

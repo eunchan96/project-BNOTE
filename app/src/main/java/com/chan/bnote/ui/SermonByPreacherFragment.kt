@@ -53,10 +53,9 @@ class SermonByPreacherFragment : Fragment() {
 			val recyclerView =
 				view?.findViewById<RecyclerView>(R.id.recycler_grouped) ?: return@launch
 			recyclerView.adapter = SimpleListAdapter(labels) { position ->
-				SermonDetailBottomSheet(sermons[position]).show(
-					parentFragmentManager,
-					"sermon_detail"
-				)
+				val detail = SermonDetailBottomSheet(sermons[position])
+				detail.onChanged = { showSermonsForPreacher(preacher) }
+				detail.show(parentFragmentManager, "sermon_detail")
 			}
 		}
 	}
