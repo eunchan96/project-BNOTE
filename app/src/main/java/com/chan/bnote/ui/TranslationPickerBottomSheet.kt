@@ -58,13 +58,14 @@ class TranslationPickerBottomSheet(
 
 		// 주성경으로 고른건 함께보기 목록에서 제외
 		val options = Translation.values().filter { it != selectedPrimary }
-		val labels = listOf("선택 안 함") + options.map { it.displayName }
+		val labels = options.map { it.displayName } + "선택 안 함" // "선택 안 함"을 맨 뒤로
 
 		recyclerView.adapter = SimpleListAdapter(labels) { position ->
-			if (position == 0) {
+			if (position == options.size) {
+				// 마지막 항목 = "선택 안 함"
 				onTranslationsSelected?.invoke(selectedPrimary, null)
 			} else {
-				onTranslationsSelected?.invoke(selectedPrimary, options[position - 1])
+				onTranslationsSelected?.invoke(selectedPrimary, options[position])
 			}
 			dismiss()
 		}

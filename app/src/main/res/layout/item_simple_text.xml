@@ -8,5 +8,6 @@
     android:maxLines="2"
     android:ellipsize="end"
     android:background="?attr/selectableItemBackground"
+    android:textColor="@color/text_primary"
     android:clickable="true"
     android:focusable="true" />

@@ -1,36 +1,51 @@
 package com.chan.bnote
 
+import TopBarActionHandler
+import TopBarConfig
 import android.os.Bundle
+import android.widget.ImageView
 import android.widget.TextView
-import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.lifecycle.lifecycleScope
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import com.chan.bnote.data.BibleBookmark
-import com.chan.bnote.data.BibleBooks
-import com.chan.bnote.data.BibleDatabase
-import com.chan.bnote.data.BibleSeeder
-import com.chan.bnote.data.Translation
-import com.chan.bnote.ui.VerseAdapter
-import kotlinx.coroutines.launch
+import com.chan.bnote.data.AppSettings
+import com.chan.bnote.ui.BibleFragment
+import com.chan.bnote.ui.BibleNavigationHost
+import com.chan.bnote.ui.MyPageFragment
+import com.chan.bnote.ui.SermonFragment
+import com.chan.bnote.ui.TopBarConfigListener
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationHost {
 
-	private lateinit var adapter: VerseAdapter
 	private lateinit var textCurrentLocation: TextView
-	private lateinit var btnTranslation: TextView
+	private lateinit var btnTranslation: ImageView
+	private lateinit var btnSearch: ImageView
+	private lateinit var btnFavorites: ImageView
+	private lateinit var btnMenu: ImageView
+	private lateinit var btnPrevChapter: ImageView
+	private lateinit var btnNextChapter: ImageView
 
-	private var currentBookId = 1
-	private var currentChapter = 1
-	private var primaryTranslation: Translation = Translation.GAEYEOK
-	private var secondaryTranslation: Translation? = null
+	private lateinit var navBible: ImageView
+	private lateinit var navSermon: ImageView
+	private lateinit var navMyPage: ImageView
+
+	private lateinit var btnAutoScroll: ImageView
+	private lateinit var iconReadingPlanCheck: ImageView
+	private lateinit var iconSermonIndicator: ImageView
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
+
+		val darkMode = AppSettings.isDarkMode(this)
+		AppCompatDelegate.setDefaultNightMode(
+			if (darkMode) AppCompatDelegate.MODE_NIGHT_YES else AppCompatDelegate.MODE_NIGHT_NO
+		)
+		if (AppSettings.isKeepScreenOn(this)) {
+			window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+		}
+
 		enableEdgeToEdge()
 		setContentView(R.layout.activity_main)
 		ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
@@ -39,183 +54,96 @@ class MainActivity : AppCompatActivity() {
 			insets
 		}
 
-		textCurrentLocation = findViewById(R.id.text_current_location)
-		btnTranslation = findViewById(R.id.btn_translation)
-		btnTranslation.text = primaryTranslation.displayName
-
-		val recyclerView = findViewById<RecyclerView>(R.id.recycler_verses)
-		recyclerView.layoutManager = LinearLayoutManager(this)
-		recyclerView.clipToPadding = false
-
-		val bottomSpace = (resources.displayMetrics.heightPixels * 0.3f).toInt()
-		recyclerView.setPadding(
-			recyclerView.paddingLeft,
-			recyclerView.paddingTop,
-			recyclerView.paddingRight,
-			bottomSpace
-		)
-
+		bindTopBarViews()
+		bindBottomNavViews()
 		setupTopBarActions()
 		setupBottomNavActions()
 
-		lifecycleScope.launch {
-			val db = BibleDatabase.getInstance(applicationContext)
-			BibleSeeder.seedIfEmpty(applicationContext, db)
-			loadChapter(currentBookId, currentChapter)
+		if (savedInstanceState == null) {
+			switchTab(BibleFragment(), navBible)
 		}
+	}
+
+	private fun bindTopBarViews() {
+		textCurrentLocation = findViewById(R.id.text_current_location)
+		btnTranslation = findViewById(R.id.btn_translation)
+		btnSearch = findViewById(R.id.btn_search)
+		btnFavorites = findViewById(R.id.btn_favorites)
+		btnMenu = findViewById(R.id.btn_menu)
+		btnAutoScroll = findViewById(R.id.btn_auto_scroll)
+		iconReadingPlanCheck = findViewById(R.id.icon_reading_plan_check)
+		iconSermonIndicator = findViewById(R.id.icon_sermon_indicator)
+	}
+
+	private fun bindBottomNavViews() {
+		btnPrevChapter = findViewById(R.id.btn_prev_chapter)
+		btnNextChapter = findViewById(R.id.btn_next_chapter)
+		navSermon = findViewById(R.id.nav_sermon)
+		navBible = findViewById(R.id.nav_bible)
+		navMyPage = findViewById(R.id.nav_mypage)
 	}
 
 	private fun setupTopBarActions() {
-		textCurrentLocation.setOnClickListener {
-			val sheet = com.chan.bnote.ui.BookChapterPickerBottomSheet(primaryTranslation.code)
-			sheet.onVerseSelected = { bookId, chapter, verse ->
-				loadChapter(bookId, chapter, scrollToVerse = verse)
-			}
-			sheet.show(supportFragmentManager, "book_chapter_picker")
-		}
-
-		btnTranslation.setOnClickListener {
-			val sheet = com.chan.bnote.ui.TranslationPickerBottomSheet(primaryTranslation)
-			sheet.onTranslationsSelected = { primary, secondary ->
-				primaryTranslation = primary
-				secondaryTranslation = secondary
-				btnTranslation.text = primary.displayName
-				loadChapter(currentBookId, currentChapter)
-			}
-			sheet.show(supportFragmentManager, "translation_picker")
-		}
-
-		findViewById<android.widget.ImageView>(R.id.btn_search).setOnClickListener {
-			val sheet = com.chan.bnote.ui.SearchBottomSheet(primaryTranslation.code)
-			sheet.onResultSelected = { bookId, chapter, verse ->
-				loadChapter(bookId, chapter, scrollToVerse = verse)
-			}
-			sheet.show(supportFragmentManager, "search")
-		}
-		findViewById<TextView>(R.id.btn_favorites).setOnClickListener {
-			val sheet = com.chan.bnote.ui.FavoritesBottomSheet()
-			sheet.onVerseSelected = { bookId, chapter -> loadChapter(bookId, chapter) }
-			sheet.show(supportFragmentManager, "favorites_list")
-		}
-		findViewById<TextView>(R.id.btn_menu).setOnClickListener {
-			Toast.makeText(this, "메뉴 (추후 구현)", Toast.LENGTH_SHORT).show()
-		}
+		textCurrentLocation.setOnClickListener { currentHandler()?.onLocationClicked() }
+		btnTranslation.setOnClickListener { currentHandler()?.onTranslationClicked() }
+		btnSearch.setOnClickListener { currentHandler()?.onSearchClicked() }
+		btnFavorites.setOnClickListener { currentHandler()?.onFavoritesClicked() }
+		btnMenu.setOnClickListener { currentHandler()?.onMenuClicked() }
+		btnAutoScroll.setOnClickListener { currentHandler()?.onAutoScrollButtonClicked() }
+		iconReadingPlanCheck.setOnClickListener { currentHandler()?.onReadingPlanCheckClicked() }
+		iconSermonIndicator.setOnClickListener { currentHandler()?.onSermonIconClicked() }
 	}
 
 	private fun setupBottomNavActions() {
-		findViewById<android.widget.ImageView>(R.id.btn_prev_chapter).setOnClickListener { goToPreviousChapter() }
-		findViewById<android.widget.ImageView>(R.id.btn_next_chapter).setOnClickListener { goToNextChapter() }
-		findViewById<android.widget.ImageView>(R.id.nav_sermon).setOnClickListener {
-			Toast.makeText(this, "설교 탭 (추후 구현)", Toast.LENGTH_SHORT).show()
-		}
-		findViewById<android.widget.ImageView>(R.id.nav_mypage).setOnClickListener {
-			Toast.makeText(this, "마이페이지 탭 (추후 구현)", Toast.LENGTH_SHORT).show()
-		}
+		btnPrevChapter.setOnClickListener { currentHandler()?.onPrevChapterClicked() }
+		btnNextChapter.setOnClickListener { currentHandler()?.onNextChapterClicked() }
+
+		navBible.setOnClickListener { switchTab(BibleFragment(), navBible) }
+		navSermon.setOnClickListener { switchTab(SermonFragment(), navSermon) }
+		navMyPage.setOnClickListener { switchTab(MyPageFragment(), navMyPage) }
 	}
 
-	private fun goToPreviousChapter() {
-		lifecycleScope.launch {
-			val db = BibleDatabase.getInstance(applicationContext)
-			when {
-				currentChapter > 1 -> loadChapter(currentBookId, currentChapter - 1)
-				currentBookId > 1 -> {
-					val prevBook = currentBookId - 1
-					val maxChapter = db.bibleDao().getMaxChapter(primaryTranslation.code, prevBook)
-					loadChapter(prevBook, maxChapter)
-				}
+	private fun switchTab(fragment: androidx.fragment.app.Fragment, selectedIcon: ImageView) {
+		supportFragmentManager.beginTransaction()
+			.replace(R.id.fragment_container, fragment)
+			.commitNow()
 
-				else -> Toast.makeText(this@MainActivity, "첫 장입니다", Toast.LENGTH_SHORT).show()
-			}
+		listOf(navBible, navSermon, navMyPage).forEach { icon ->
+			icon.setColorFilter(
+				if (icon == selectedIcon) getColor(R.color.bottom_nav_selected)
+				else getColor(R.color.bottom_nav_unselected)
+			)
 		}
+
+		(fragment as? TopBarActionHandler)?.let { onTopBarConfigChanged(it.getTopBarConfig()) }
 	}
 
-	private fun goToNextChapter() {
-		lifecycleScope.launch {
-			val db = BibleDatabase.getInstance(applicationContext)
-			val maxChapter = db.bibleDao().getMaxChapter(primaryTranslation.code, currentBookId)
-			when {
-				currentChapter < maxChapter -> loadChapter(currentBookId, currentChapter + 1)
-				currentBookId < 66 -> loadChapter(currentBookId + 1, 1)
-				else -> Toast.makeText(this@MainActivity, "마지막 장입니다", Toast.LENGTH_SHORT).show()
-			}
-		}
+	private fun currentHandler(): TopBarActionHandler? {
+		return supportFragmentManager.findFragmentById(R.id.fragment_container) as? TopBarActionHandler
 	}
 
-	private fun loadChapter(bookId: Int, chapter: Int, scrollToVerse: Int? = null) {
-		currentBookId = bookId
-		currentChapter = chapter
-		textCurrentLocation.text = "${BibleBooks.nameOf(bookId)} ${chapter}장"
+	override fun onTopBarConfigChanged(config: TopBarConfig) {
+		textCurrentLocation.text = config.title
+		btnTranslation.visibility = visible(config.showTranslationButton)
+		btnSearch.visibility = visible(config.showSearch)
+		btnFavorites.visibility = visible(config.showFavorites)
+		btnMenu.visibility = visible(config.showMenu)
+		btnPrevChapter.visibility = visible(config.showChapterNav)
+		btnNextChapter.visibility = visible(config.showChapterNav)
 
-		lifecycleScope.launch {
-			val db = BibleDatabase.getInstance(applicationContext)
-			val verses = db.bibleDao().getVerses(primaryTranslation.code, bookId, chapter)
-			val secondaryMap = secondaryTranslation?.let { sec ->
-				db.bibleDao().getVerses(sec.code, bookId, chapter).associate { it.verse to it.text }
-			}
-			val bookmarkMap = db.bookmarkDao().getBookmarksForChapter(bookId, chapter)
-				.associateBy { it.verse }.toMutableMap()
+		iconReadingPlanCheck.visibility = visible(config.showReadingPlanCheck)
+		iconReadingPlanCheck.alpha = if (config.isChapterRead) 1f else 0.4f
 
-			adapter = VerseAdapter(
-				verses = verses,
-				secondaryTextByVerse = secondaryMap,
-				bookmarks = bookmarkMap
-			) { verseNum, current ->
-				val verseText = verses.firstOrNull { it.verse == verseNum }?.text ?: ""
-				val sheet = com.chan.bnote.ui.VerseActionBottomSheet(
-					verseText = verseText,
-					isHighlighted = current?.isHighlighted ?: false,
-					isFavorite = current?.isFavorite ?: false,
-					onToggleHighlight = {
-						toggleField(
-							verseNum,
-							current,
-							isHighlightToggle = true
-						)
-					},
-					onToggleFavorite = { toggleField(verseNum, current, isHighlightToggle = false) }
-				)
-				sheet.show(supportFragmentManager, "verse_action")
-			}
-			findViewById<RecyclerView>(R.id.recycler_verses).adapter = adapter
+		btnAutoScroll.visibility = visible(config.showAutoScrollButton)
+		btnAutoScroll.setImageResource(if (config.isAutoScrolling) R.drawable.ic_pause else R.drawable.ic_play)
 
-			scrollToVerse?.let { verseNum ->
-				val index = verses.indexOfFirst { it.verse == verseNum }
-				if (index >= 0) findViewById<RecyclerView>(R.id.recycler_verses).scrollToPosition(
-					index
-				)
-			}
-		}
+		iconSermonIndicator.visibility = visible(config.showSermonIcon)
 	}
 
-	private fun toggleField(verseNum: Int, current: BibleBookmark?, isHighlightToggle: Boolean) {
-		lifecycleScope.launch {
-			val db = BibleDatabase.getInstance(applicationContext)
-			val updated = if (isHighlightToggle) {
-				(current ?: BibleBookmark(
-					bookId = currentBookId,
-					chapter = currentChapter,
-					verse = verseNum
-				))
-					.copy(
-						isHighlighted = !(current?.isHighlighted ?: false),
-						updatedAt = System.currentTimeMillis()
-					)
-			} else {
-				(current ?: BibleBookmark(
-					bookId = currentBookId,
-					chapter = currentChapter,
-					verse = verseNum
-				))
-					.copy(
-						isFavorite = !(current?.isFavorite ?: false),
-						updatedAt = System.currentTimeMillis()
-					)
-			}
-			db.bookmarkDao().upsert(updated)
+	private fun visible(show: Boolean) =
+		if (show) android.view.View.VISIBLE else android.view.View.GONE
 
-			val refreshed = db.bookmarkDao().getBookmarksForChapter(currentBookId, currentChapter)
-				.associateBy { it.verse }.toMutableMap()
-			adapter.updateBookmarks(refreshed)
-		}
+	override fun navigateToBibleChapter(bookId: Int, chapter: Int) {
+		switchTab(BibleFragment.newInstance(bookId, chapter), navBible)
 	}
 }

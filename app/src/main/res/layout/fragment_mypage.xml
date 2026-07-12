@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/menu_settings"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="18dp"
+        android:text="설정"
+        android:textSize="16sp"
+        android:background="?attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/divider_light" />
+
+    <TextView
+        android:id="@+id/menu_reading_plan"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="18dp"
+        android:text="성경읽기표"
+        android:textSize="16sp"
+        android:background="?attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/divider_light" />
+
+    <TextView
+        android:id="@+id/menu_verse_of_year"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="18dp"
+        android:text="올해 약속의 말씀"
+        android:textSize="16sp"
+        android:background="?attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/divider_light" />
+
+</LinearLayout>

@@ -4,7 +4,7 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/white">
+    android:background="@color/surface_background">
 
     <!-- 상단바 -->
     <LinearLayout
@@ -20,14 +20,13 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <TextView
+        <ImageView
             android:id="@+id/btn_translation"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
             android:padding="8dp"
-            android:text="개역한글"
-            android:textColor="@color/white"
-            android:textSize="14sp"
+            android:src="@drawable/ic_book"
+            android:contentDescription="대역본 선택"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:clickable="true"
             android:focusable="true" />
@@ -36,7 +35,7 @@
             android:id="@+id/text_current_location"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="12dp"
+            android:layout_marginStart="8dp"
             android:padding="8dp"
             android:text="창세기 1장"
             android:textColor="@color/white"
@@ -46,10 +45,46 @@
             android:clickable="true"
             android:focusable="true" />
 
+        <ImageView
+            android:id="@+id/icon_sermon_indicator"
+            android:layout_width="18dp"
+            android:layout_height="18dp"
+            android:layout_marginStart="6dp"
+            android:src="@drawable/ic_sermon_note"
+            android:visibility="gone"
+            android:contentDescription="이 장의 설교 보기"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?attr/selectableItemBackgroundBorderless" />
+
+        <ImageView
+            android:id="@+id/icon_reading_plan_check"
+            android:layout_width="18dp"
+            android:layout_height="18dp"
+            android:layout_marginStart="4dp"
+            android:src="@drawable/ic_check"
+            android:visibility="gone"
+            android:contentDescription="성경읽기표 완료 체크"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?attr/selectableItemBackgroundBorderless" />
+
         <View
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:layout_weight="1" />
+
+        <ImageView
+            android:id="@+id/btn_auto_scroll"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:padding="8dp"
+            android:src="@drawable/ic_play"
+            android:visibility="gone"
+            android:contentDescription="자동 스크롤"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:focusable="true" />
 
         <ImageView
             android:id="@+id/btn_search"
@@ -62,34 +97,31 @@
             android:clickable="true"
             android:focusable="true" />
 
-        <TextView
+        <ImageView
             android:id="@+id/btn_favorites"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
             android:padding="8dp"
-            android:text="★"
-            android:textColor="@color/white"
-            android:textSize="18sp"
+            android:src="@drawable/ic_bookmark"
+            android:contentDescription="북마크"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:clickable="true"
             android:focusable="true" />
 
-        <TextView
+        <ImageView
             android:id="@+id/btn_menu"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
             android:padding="8dp"
-            android:text="☰"
-            android:textColor="@color/white"
-            android:textSize="18sp"
+            android:src="@drawable/ic_menu"
+            android:contentDescription="메뉴"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:clickable="true"
             android:focusable="true" />
     </LinearLayout>
 
-    <!-- 절 목록 -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recycler_verses"
+    <FrameLayout
+        android:id="@+id/fragment_container"
         android:layout_width="0dp"
         android:layout_height="0dp"
         app:layout_constraintTop_toBottomOf="@id/top_bar"
@@ -103,7 +135,7 @@
         android:layout_width="0dp"
         android:layout_height="52dp"
         android:orientation="horizontal"
-        android:background="@color/white"
+        android:background="@color/surface_background"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
@@ -154,6 +186,19 @@
             android:layout_weight="1" />
 
         <ImageView
+            android:id="@+id/nav_bible"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:padding="8dp"
+            android:layout_marginEnd="12dp"
+            android:src="@drawable/ic_book_open"
+            android:contentDescription="성경"
+            app:tint="@color/bottom_nav_selected"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:focusable="true" />
+
+        <ImageView
             android:id="@+id/nav_sermon"
             android:layout_width="40dp"
             android:layout_height="40dp"
@@ -162,19 +207,6 @@
             android:src="@drawable/ic_mic"
             android:contentDescription="설교"
             app:tint="@color/bottom_nav_unselected"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:clickable="true"
-            android:focusable="true" />
-
-        <ImageView
-            android:id="@+id/nav_bible"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:padding="8dp"
-            android:layout_marginEnd="12dp"
-            android:src="@drawable/ic_book"
-            android:contentDescription="성경"
-            app:tint="@color/bottom_nav_selected"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:clickable="true"
             android:focusable="true" />

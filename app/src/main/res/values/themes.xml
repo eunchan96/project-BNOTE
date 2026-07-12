@@ -5,7 +5,21 @@
         <item name="colorPrimaryDark">@color/brown_primary_dark</item>
         <item name="android:statusBarColor">@color/brown_primary_dark</item>
         <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowBackground">@color/surface_background</item>
     </style>
 
     <style name="Theme.BNOTE" parent="Base.Theme.BNOTE" />
+
+    <style name="RightPanelDialog" parent="Theme.AppCompat.Dialog">
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowIsFloating">false</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:backgroundDimEnabled">true</item>
+        <item name="android:windowAnimationStyle">@style/RightPanelAnimation</item>
+    </style>
+
+    <style name="RightPanelAnimation" parent="android:Animation">
+        <item name="android:windowEnterAnimation">@anim/slide_in_right</item>
+        <item name="android:windowExitAnimation">@anim/slide_out_right</item>
+    </style>
 </resources>

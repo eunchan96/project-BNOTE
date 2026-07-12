@@ -10,4 +10,14 @@
     <color name="bottom_nav_selected">#795548</color>
     <color name="bottom_nav_unselected">#9E9E9E</color>
     <color name="divider_light">#E0E0E0</color>
+    <color name="verse_selected_bg">#E0E0E0</color>
+
+    <!-- 다크모드 대응 시맨틱 색상 (라이트 기본값) -->
+    <color name="surface_background">#FFFFFF</color>
+    <color name="surface_elevated">#FFFFFF</color>
+    <color name="text_primary">#212121</color>
+    <color name="text_secondary">#757575</color>
+    <color name="text_hint">#9E9E9E</color>
+    <color name="input_background">#F5F5F5</color>
+    <color name="highlight_yellow">#FFF9C4</color>
 </resources>

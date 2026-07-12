@@ -61,4 +61,5 @@ dependencies {
 
 	implementation(libs.androidx.recyclerview)
 	implementation(libs.androidx.lifecycle.runtime.ktx)
+	implementation(libs.flexbox)
 }

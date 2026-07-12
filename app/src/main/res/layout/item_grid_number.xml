@@ -8,4 +8,5 @@
     android:textSize="15sp"
     android:background="@drawable/bg_book_button"
     android:clickable="true"
-    android:focusable="true" />
+    android:focusable="true"
+    android:textColor="@color/text_primary" />
