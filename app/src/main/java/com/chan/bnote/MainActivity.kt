@@ -61,6 +61,8 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 
 		if (savedInstanceState == null) {
 			switchTab(BibleFragment(), navBible)
+		} else {
+			restoreCurrentTabUi() // 추가: recreate() 등으로 재생성됐을 때 현재 화면에 맞게 UI 동기화
 		}
 	}
 
@@ -145,5 +147,25 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 
 	override fun navigateToBibleChapter(bookId: Int, chapter: Int) {
 		switchTab(BibleFragment.newInstance(bookId, chapter), navBible)
+	}
+
+	private fun restoreCurrentTabUi() {
+		val current = supportFragmentManager.findFragmentById(R.id.fragment_container) ?: return
+
+		val selectedIcon = when (current) {
+			is BibleFragment -> navBible
+			is SermonFragment -> navSermon
+			is MyPageFragment -> navMyPage
+			else -> navBible
+		}
+
+		listOf(navBible, navSermon, navMyPage).forEach { icon ->
+			icon.setColorFilter(
+				if (icon == selectedIcon) getColor(R.color.bottom_nav_selected)
+				else getColor(R.color.bottom_nav_unselected)
+			)
+		}
+
+		(current as? TopBarActionHandler)?.let { onTopBarConfigChanged(it.getTopBarConfig()) }
 	}
 }

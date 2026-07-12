@@ -67,6 +67,9 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 	private var pendingHighlightRange: Triple<Int, Int, Int>? =
 		null // 부분 하이라이트용 (verse, start, end)
 
+	private var currentVerseMemos: Map<Int, com.chan.bnote.data.VerseMemo> = emptyMap()
+	private var currentWordMemos: Map<Int, List<com.chan.bnote.data.WordMemo>> = emptyMap()
+
 	private val autoScrollHandler = android.os.Handler(android.os.Looper.getMainLooper())
 	private val autoScrollRunnable = object : Runnable {
 		override fun run() {
@@ -156,6 +159,9 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		}
 		view.findViewById<TextView>(R.id.btn_remove_highlight).setOnClickListener {
 			removeHighlight()
+		}
+		view.findViewById<TextView>(R.id.btn_toolbar_memo).setOnClickListener {
+			onMemoButtonClicked()
 		}
 	}
 
@@ -299,6 +305,13 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 				.groupBy { it.verse }
 			currentHighlights = highlights
 
+			val verseMemos =
+				db.verseMemoDao().getForChapter(bookId, chapter).associateBy { it.verse }
+			val wordMemos = db.wordMemoDao().getForChapter(primaryTranslation.code, bookId, chapter)
+				.groupBy { it.verse }
+			currentVerseMemos = verseMemos
+			currentWordMemos = wordMemos
+
 			notifyTopBarChanged()
 
 			adapter = VerseAdapter(
@@ -308,12 +321,25 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 				fontSize = currentFontSize,
 				selectedVerses = selectedVerses,
 				highlightsByVerse = currentHighlights,
-				onVerseTap = { verseNum -> toggleVerseSelection(verseNum) }
-			) { verseNum, start, end ->
-				pendingHighlightRange = Triple(verseNum, start, end)
-				pendingHighlightVerses = null
-				showHighlightColorToolbar()
-			}
+				verseMemos = currentVerseMemos,
+				wordMemosByVerse = currentWordMemos,
+				onVerseTap = { verseNum -> toggleVerseSelection(verseNum) },
+				onVerseMemoView = { verseNum, memo -> showVerseMemoDialog(verseNum, memo) },
+				onHighlightRequested = { verseNum, start, end ->
+					pendingHighlightRange = Triple(verseNum, start, end)
+					pendingHighlightVerses = null
+					showHighlightColorToolbar()
+				},
+				onWordMemoCreate = { verseNum, start, end ->
+					showWordMemoEditDialog(
+						verseNum,
+						start,
+						end,
+						null
+					)
+				},
+				onWordMemoView = { verseNum, memo -> showWordMemoViewDialog(verseNum, memo) }
+			)
 			recyclerView.adapter = adapter
 
 			scrollToVerse?.let { verseNum ->
@@ -422,9 +448,11 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 			return
 		}
 		selectionToolbar.visibility = View.VISIBLE
-		// 선택 1개일 때만 북마크 버튼 노출
+		val singleSelected = selectedVerses.size == 1
 		view?.findViewById<TextView>(R.id.btn_toolbar_bookmark)?.visibility =
-			if (selectedVerses.size == 1) View.VISIBLE else View.GONE
+			if (singleSelected) View.VISIBLE else View.GONE
+		view?.findViewById<TextView>(R.id.btn_toolbar_memo)?.visibility =
+			if (singleSelected) View.VISIBLE else View.GONE
 	}
 
 	private fun onBookmarkButtonClicked() {
@@ -662,5 +690,112 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 			.groupBy { it.verse }
 		currentHighlights = refreshed
 		if (::adapter.isInitialized) adapter.updateHighlights(refreshed)
+	}
+
+	private fun onMemoButtonClicked() {
+		val verseNum = selectedVerses.firstOrNull() ?: return
+		showVerseMemoEditDialog(verseNum, currentVerseMemos[verseNum])
+		clearSelection()
+	}
+
+	private fun showVerseMemoEditDialog(verseNum: Int, existing: com.chan.bnote.data.VerseMemo?) {
+		val verseText = currentVerses.firstOrNull { it.verse == verseNum }?.text
+		val sheet = MemoEditorBottomSheet(
+			titleText = "${BibleBooks.nameOf(currentBookId)} ${currentChapter}:${verseNum} 메모",
+			previewText = verseText,
+			initialText = existing?.text ?: "",
+			isExisting = existing != null,
+			onSave = { text ->
+				lifecycleScope.launch {
+					val db = BibleDatabase.getInstance(requireContext().applicationContext)
+					db.verseMemoDao().upsert(
+						com.chan.bnote.data.VerseMemo(
+							bookId = currentBookId,
+							chapter = currentChapter,
+							verse = verseNum,
+							text = text
+						)
+					)
+					refreshMemos()
+				}
+			},
+			onDelete = {
+				lifecycleScope.launch {
+					val db = BibleDatabase.getInstance(requireContext().applicationContext)
+					db.verseMemoDao().delete(currentBookId, currentChapter, verseNum)
+					refreshMemos()
+				}
+			}
+		)
+		sheet.show(parentFragmentManager, "verse_memo_editor")
+	}
+
+	private fun showVerseMemoDialog(verseNum: Int, memo: com.chan.bnote.data.VerseMemo) {
+		showVerseMemoEditDialog(verseNum, memo)
+	}
+
+	private fun showWordMemoEditDialog(
+		verseNum: Int,
+		start: Int,
+		end: Int,
+		existing: com.chan.bnote.data.WordMemo?
+	) {
+		val verseText = currentVerses.firstOrNull { it.verse == verseNum }?.text ?: ""
+		val safeStart = start.coerceIn(0, verseText.length)
+		val safeEnd = end.coerceIn(safeStart, verseText.length)
+		val selectedFragment = verseText.substring(safeStart, safeEnd)
+
+		val sheet = MemoEditorBottomSheet(
+			titleText = "단어 메모",
+			previewText = "\"$selectedFragment\"",
+			initialText = existing?.text ?: "",
+			isExisting = existing != null,
+			onSave = { text ->
+				lifecycleScope.launch {
+					val db = BibleDatabase.getInstance(requireContext().applicationContext)
+					if (existing != null) {
+						db.wordMemoDao().update(
+							existing.copy(
+								text = text,
+								updatedAt = System.currentTimeMillis()
+							)
+						)
+					} else {
+						db.wordMemoDao().insert(
+							com.chan.bnote.data.WordMemo(
+								translation = primaryTranslation.code,
+								bookId = currentBookId, chapter = currentChapter, verse = verseNum,
+								startOffset = start, endOffset = end, text = text
+							)
+						)
+					}
+					refreshMemos()
+				}
+			},
+			onDelete = if (existing != null) {
+				{
+					lifecycleScope.launch {
+						val db = BibleDatabase.getInstance(requireContext().applicationContext)
+						db.wordMemoDao().delete(existing)
+						refreshMemos()
+					}
+				}
+			} else null
+		)
+		sheet.show(parentFragmentManager, "word_memo_editor")
+	}
+
+	private fun showWordMemoViewDialog(verseNum: Int, memo: com.chan.bnote.data.WordMemo) {
+		showWordMemoEditDialog(verseNum, memo.startOffset, memo.endOffset, memo)
+	}
+
+	private suspend fun refreshMemos() {
+		val db = BibleDatabase.getInstance(requireContext().applicationContext)
+		currentVerseMemos =
+			db.verseMemoDao().getForChapter(currentBookId, currentChapter).associateBy { it.verse }
+		currentWordMemos = db.wordMemoDao()
+			.getForChapter(primaryTranslation.code, currentBookId, currentChapter)
+			.groupBy { it.verse }
+		if (::adapter.isInitialized) adapter.updateMemos(currentVerseMemos, currentWordMemos)
 	}
 }
