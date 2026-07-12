@@ -59,7 +59,8 @@ class SermonFragment : Fragment(), TopBarActionHandler {
 
 	override fun getTopBarConfig() = TopBarConfig(
 		title = "설교",
-		showMenu = true // 추가
+		showSearch = true,
+		showMenu = true
 	)
 
 	override fun onMenuClicked() {
@@ -68,5 +69,9 @@ class SermonFragment : Fragment(), TopBarActionHandler {
 			CategoryManageBottomSheet().show(parentFragmentManager, "category_manage")
 		}
 		dialog.show(parentFragmentManager, "sermon_menu")
+	}
+
+	override fun onSearchClicked() {
+		SermonSearchBottomSheet().show(parentFragmentManager, "sermon_search")
 	}
 }
