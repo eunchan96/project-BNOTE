@@ -13,7 +13,6 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.chan.bnote.R
-import com.chan.bnote.data.BibleBooks
 import com.chan.bnote.data.BibleDatabase
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import kotlinx.coroutines.Job
@@ -72,6 +71,8 @@ class SearchBottomSheet(
 	private fun onQueryChanged(keyword: String) {
 		searchJob?.cancel()
 
+		val normalizedLength = keyword.replace(" ", "").length
+
 		if (keyword.isBlank()) {
 			emptyText.text = "검색어를 입력해주세요"
 			emptyText.visibility = View.VISIBLE
@@ -79,8 +80,15 @@ class SearchBottomSheet(
 			return
 		}
 
+		if (normalizedLength < 2) {
+			emptyText.text = "2글자 이상 입력해주세요"
+			emptyText.visibility = View.VISIBLE
+			recyclerView.visibility = View.GONE
+			return
+		}
+
 		searchJob = lifecycleScope.launch {
-			delay(300) // 디바운스: 타이핑 멈추고 300ms 후 검색
+			delay(300)
 			val db = BibleDatabase.getInstance(requireContext().applicationContext)
 			val results = db.bibleDao().searchVerses(translation, keyword.trim())
 
@@ -94,13 +102,9 @@ class SearchBottomSheet(
 			emptyText.visibility = View.GONE
 			recyclerView.visibility = View.VISIBLE
 
-			val labels = results.map { row ->
-				"${BibleBooks.nameOf(row.bookId)} ${row.chapter}:${row.verse}  ${row.text}"
-			}
-
-			recyclerView.adapter = SimpleListAdapter(labels) { position ->
-				val row = results[position]
-				onResultSelected?.invoke(row.bookId, row.chapter, row.verse)
+			val fontSize = com.chan.bnote.data.AppSettings.getFontSize(requireContext())
+			recyclerView.adapter = SearchResultAdapter(results, fontSize) { verse ->
+				onResultSelected?.invoke(verse.bookId, verse.chapter, verse.verse)
 				dismiss()
 			}
 		}

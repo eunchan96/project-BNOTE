@@ -28,7 +28,8 @@ interface BibleDao {
 	@Query(
 		"""
     SELECT * FROM bible_verses 
-    WHERE translation = :translation AND text LIKE '%' || :keyword || '%' 
+    WHERE translation = :translation 
+    AND REPLACE(text, ' ', '') LIKE '%' || REPLACE(:keyword, ' ', '') || '%' 
     ORDER BY bookId, chapter, verse 
     LIMIT 200
     """
