@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.TextView
+import androidx.lifecycle.lifecycleScope
 import com.chan.bnote.R
 
 class MemoEditorBottomSheet(
@@ -40,6 +41,23 @@ class MemoEditorBottomSheet(
 
 		val editText = view.findViewById<EditText>(R.id.edit_memo_text)
 		editText.setText(initialText)
+
+		var latestCitations: List<com.chan.bnote.data.CitationMatch> = emptyList()
+
+		fun refreshCitations() {
+			latestCitations = CitationBubbleHelper.applySpans(editText.text)
+		}
+
+		editText.addTextChangedListener(object : android.text.TextWatcher {
+			override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+			override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+			override fun afterTextChanged(s: android.text.Editable?) {
+				refreshCitations()
+			}
+		})
+
+		refreshCitations()
+		CitationBubbleHelper.attachTouchHandling(editText, { latestCitations }, lifecycleScope)
 
 		val deleteBtn = view.findViewById<TextView>(R.id.btn_delete_memo)
 		if (isExisting && onDelete != null) {

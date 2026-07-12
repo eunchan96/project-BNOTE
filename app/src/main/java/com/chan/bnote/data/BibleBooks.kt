@@ -39,4 +39,9 @@ object BibleBooks {
 	)
 
 	fun shortNameOf(bookId: Int): String = shortNames.getOrElse(bookId - 1) { "?" }
+
+	fun shortNameToId(abbr: String): Int? {
+		val index = shortNames.indexOf(abbr)
+		return if (index == -1) null else index + 1
+	}
 }

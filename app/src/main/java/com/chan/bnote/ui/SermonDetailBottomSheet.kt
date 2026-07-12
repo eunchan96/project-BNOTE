@@ -34,8 +34,16 @@ class SermonDetailBottomSheet(private val sermon: Sermon) : DraggableBottomSheet
 		view.findViewById<TextView>(R.id.text_sermon_title).text = sermon.title
 		view.findViewById<TextView>(R.id.text_sermon_meta).text =
 			"${sermon.preacher} · ${DateUtils.formatDate(sermon.sermonDate)}"
-		view.findViewById<TextView>(R.id.text_sermon_memo).text =
-			sermon.memo.ifBlank { "메모가 없어요" }
+		val memoText = sermon.memo.ifBlank { "메모가 없어요" }
+		val memoView = view.findViewById<TextView>(R.id.text_sermon_memo)
+
+		if (sermon.memo.isBlank()) {
+			memoView.text = memoText
+		} else {
+			val (spanned, citations) = CitationBubbleHelper.buildSpannedText(memoText)
+			memoView.text = spanned
+			CitationBubbleHelper.attachTouchHandling(memoView, { citations }, lifecycleScope)
+		}
 
 		val flexbox =
 			view.findViewById<com.google.android.flexbox.FlexboxLayout>(R.id.flexbox_detail_refs)
