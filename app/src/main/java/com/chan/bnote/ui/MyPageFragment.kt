@@ -26,8 +26,7 @@ class MyPageFragment : Fragment(), TopBarActionHandler {
 			SettingsBottomSheet().show(parentFragmentManager, "settings")
 		}
 		view.findViewById<TextView>(R.id.menu_reading_plan).setOnClickListener {
-			// TODO D-2
-			Toast.makeText(requireContext(), "성경읽기표 (D-2에서 구현)", Toast.LENGTH_SHORT).show()
+			ReadingPlanBottomSheet().show(parentFragmentManager, "reading_plan")
 		}
 		view.findViewById<TextView>(R.id.menu_verse_of_year).setOnClickListener {
 			// TODO D-3

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingBottom="16dp">
+
+    <include layout="@layout/include_drag_handle" />
+
+    <TextView
+        android:id="@+id/text_reading_plan_chapter_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="16dp"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/divider_light" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recycler_reading_plan_chapters"
+        android:layout_width="match_parent"
+        android:layout_height="420dp"
+        android:padding="4dp" />
+</LinearLayout>

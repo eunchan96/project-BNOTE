@@ -22,6 +22,20 @@ import kotlinx.coroutines.launch
 
 class BibleFragment : Fragment(), TopBarActionHandler {
 
+	companion object {
+		private const val ARG_BOOK_ID = "bookId"
+		private const val ARG_CHAPTER = "chapter"
+
+		fun newInstance(bookId: Int, chapter: Int): BibleFragment {
+			val fragment = BibleFragment()
+			fragment.arguments = android.os.Bundle().apply {
+				putInt(ARG_BOOK_ID, bookId)
+				putInt(ARG_CHAPTER, chapter)
+			}
+			return fragment
+		}
+	}
+
 	private lateinit var recyclerView: RecyclerView
 	private lateinit var adapter: VerseAdapter
 
@@ -75,7 +89,10 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(requireContext().applicationContext)
 			BibleSeeder.seedIfEmpty(requireContext().applicationContext, db)
-			loadChapter(currentBookId, currentChapter)
+
+			val startBookId = arguments?.getInt(ARG_BOOK_ID) ?: currentBookId
+			val startChapter = arguments?.getInt(ARG_CHAPTER) ?: currentChapter
+			loadChapter(startBookId, startChapter)
 		}
 	}
 

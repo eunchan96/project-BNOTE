@@ -12,11 +12,12 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.chan.bnote.data.AppSettings
 import com.chan.bnote.ui.BibleFragment
+import com.chan.bnote.ui.BibleNavigationHost
 import com.chan.bnote.ui.MyPageFragment
 import com.chan.bnote.ui.SermonFragment
 import com.chan.bnote.ui.TopBarConfigListener
 
-class MainActivity : AppCompatActivity(), TopBarConfigListener {
+class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationHost {
 
 	private lateinit var textCurrentLocation: TextView
 	private lateinit var btnTranslation: ImageView
@@ -141,4 +142,8 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener {
 
 	private fun visible(show: Boolean) =
 		if (show) android.view.View.VISIBLE else android.view.View.GONE
+
+	override fun navigateToBibleChapter(bookId: Int, chapter: Int) {
+		switchTab(BibleFragment.newInstance(bookId, chapter), navBible)
+	}
 }

@@ -20,4 +20,7 @@ interface ReadingProgressDao {
 	// 설정 화면(D단계)에서 "읽음 기록 초기화" 버튼에 연결할 함수
 	@Query("DELETE FROM reading_progress")
 	suspend fun resetAll()
+
+	@Query("SELECT * FROM reading_progress")
+	suspend fun getAll(): List<ReadingProgress>
 }
