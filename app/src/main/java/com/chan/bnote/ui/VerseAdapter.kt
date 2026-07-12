@@ -36,6 +36,7 @@ class VerseAdapter(
 
 	class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
 		val root: View = view.findViewById(R.id.item_root)
+		val title: TextView = view.findViewById(R.id.text_verse_title)
 		val number: TextView = view.findViewById(R.id.text_verse_number)
 		val content: TextView = view.findViewById(R.id.text_verse_content)
 		val secondaryContent: TextView = view.findViewById(R.id.text_verse_content_secondary)
@@ -50,6 +51,14 @@ class VerseAdapter(
 		val verseItem = verses[position]
 		val isSelected = selectedVerses.contains(verseItem.verse)
 		val context = holder.itemView.context
+
+		val titleText = verseItem.title
+		if (!titleText.isNullOrBlank()) {
+			holder.title.text = "<$titleText>"
+			holder.title.visibility = View.VISIBLE
+		} else {
+			holder.title.visibility = View.GONE
+		}
 
 		holder.number.text = verseItem.verse.toString()
 		holder.content.textSize = fontSize.toFloat()
