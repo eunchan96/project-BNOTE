@@ -1,9 +1,11 @@
 package com.chan.bnote.ui
 
+import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.chan.bnote.R
 import com.chan.bnote.data.BibleBookmark
@@ -14,7 +16,8 @@ class VerseAdapter(
 	private val secondaryTextByVerse: Map<Int, String>?,
 	private var bookmarks: MutableMap<Int, BibleBookmark>,
 	private var fontSize: Int,
-	private val onLongPress: (verse: Int, current: BibleBookmark?) -> Unit
+	private var selectedVerses: Set<Int>,
+	private val onVerseTap: (verse: Int) -> Unit
 ) : RecyclerView.Adapter<VerseAdapter.ViewHolder>() {
 
 	class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -33,6 +36,7 @@ class VerseAdapter(
 	override fun onBindViewHolder(holder: ViewHolder, position: Int) {
 		val verseItem = verses[position]
 		val bookmark = bookmarks[verseItem.verse]
+		val isSelected = selectedVerses.contains(verseItem.verse)
 
 		holder.number.text = verseItem.verse.toString()
 		holder.content.text = verseItem.text
@@ -47,22 +51,23 @@ class VerseAdapter(
 			holder.secondaryContent.visibility = View.GONE
 		}
 
+		val context = holder.itemView.context
 		holder.root.setBackgroundColor(
-			if (bookmark?.isHighlighted == true)
-				androidx.core.content.ContextCompat.getColor(
-					holder.itemView.context,
+			when {
+				isSelected -> ContextCompat.getColor(context, R.color.verse_selected_bg)
+				bookmark?.isHighlighted == true -> ContextCompat.getColor(
+					context,
 					R.color.highlight_yellow
 				)
-			else android.graphics.Color.TRANSPARENT
+
+				else -> Color.TRANSPARENT
+			}
 		)
 
-		holder.root.setOnLongClickListener {
-			onLongPress(verseItem.verse, bookmarks[verseItem.verse])
-			true
-		}
+		holder.root.setOnClickListener { onVerseTap(verseItem.verse) }
 	}
 
-	override fun getItemCount(): Int = verses.size
+	override fun getItemCount() = verses.size
 
 	fun updateBookmarks(newBookmarks: MutableMap<Int, BibleBookmark>) {
 		bookmarks = newBookmarks
@@ -71,6 +76,11 @@ class VerseAdapter(
 
 	fun updateFontSize(newSize: Int) {
 		fontSize = newSize
+		notifyDataSetChanged()
+	}
+
+	fun updateSelection(newSelection: Set<Int>) {
+		selectedVerses = newSelection
 		notifyDataSetChanged()
 	}
 }

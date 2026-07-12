@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -52,6 +53,9 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 	private var isAutoScrolling = false
 	private var hasSermonForChapter = false
 
+	private val selectedVerses = mutableSetOf<Int>()
+	private lateinit var selectionToolbar: View
+
 	private val autoScrollHandler = android.os.Handler(android.os.Looper.getMainLooper())
 	private val autoScrollRunnable = object : Runnable {
 		override fun run() {
@@ -78,6 +82,8 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		recyclerView.layoutManager = LinearLayoutManager(requireContext())
 		recyclerView.clipToPadding = false
 
+		selectionToolbar = view.findViewById(R.id.container_selection_toolbar)
+
 		val bottomSpace = (resources.displayMetrics.heightPixels * 0.3f).toInt()
 		recyclerView.setPadding(
 			recyclerView.paddingLeft,
@@ -93,6 +99,19 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 			val startBookId = arguments?.getInt(ARG_BOOK_ID) ?: currentBookId
 			val startChapter = arguments?.getInt(ARG_CHAPTER) ?: currentChapter
 			loadChapter(startBookId, startChapter)
+		}
+
+		view.findViewById<TextView>(R.id.btn_cancel_selection).setOnClickListener {
+			clearSelection()
+		}
+		view.findViewById<TextView>(R.id.btn_toolbar_bookmark).setOnClickListener {
+			onBookmarkButtonClicked()
+		}
+		view.findViewById<TextView>(R.id.btn_toolbar_scrap).setOnClickListener {
+			Toast.makeText(requireContext(), "스크랩 (E-3에서 구현)", Toast.LENGTH_SHORT).show()
+		}
+		view.findViewById<TextView>(R.id.btn_toolbar_copy).setOnClickListener {
+			Toast.makeText(requireContext(), "복사 (E-2에서 구현)", Toast.LENGTH_SHORT).show()
 		}
 	}
 
@@ -204,6 +223,7 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 	private fun loadChapter(bookId: Int, chapter: Int, scrollToVerse: Int? = null) {
 		currentBookId = bookId
 		currentChapter = chapter
+		clearSelection()
 
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(requireContext().applicationContext)
@@ -224,23 +244,10 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 				verses = verses,
 				secondaryTextByVerse = secondaryMap,
 				bookmarks = bookmarkMap,
-				fontSize = currentFontSize
-			) { verseNum, current ->
-				val verseText = verses.firstOrNull { it.verse == verseNum }?.text ?: ""
-				val sheet = VerseActionBottomSheet(
-					verseText = verseText,
-					isHighlighted = current?.isHighlighted ?: false,
-					isFavorite = current?.isFavorite ?: false,
-					onToggleHighlight = {
-						toggleField(
-							verseNum,
-							current,
-							isHighlightToggle = true
-						)
-					},
-					onToggleFavorite = { toggleField(verseNum, current, isHighlightToggle = false) }
-				)
-				sheet.show(parentFragmentManager, "verse_action")
+				fontSize = currentFontSize,
+				selectedVerses = selectedVerses
+			) { verseNum ->
+				toggleVerseSelection(verseNum)
 			}
 			recyclerView.adapter = adapter
 
@@ -322,6 +329,62 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 			}
 			isChapterRead = !isChapterRead
 			notifyTopBarChanged()
+		}
+	}
+
+	private fun toggleVerseSelection(verseNum: Int) {
+		if (selectedVerses.contains(verseNum)) {
+			selectedVerses.remove(verseNum)
+		} else {
+			selectedVerses.add(verseNum)
+		}
+		adapter.updateSelection(selectedVerses.toSet())
+		updateToolbarVisibility()
+	}
+
+	private fun clearSelection() {
+		if (selectedVerses.isEmpty()) return
+		selectedVerses.clear()
+		if (::adapter.isInitialized) adapter.updateSelection(emptySet())
+		updateToolbarVisibility()
+	}
+
+	private fun updateToolbarVisibility() {
+		if (selectedVerses.isEmpty()) {
+			selectionToolbar.visibility = View.GONE
+			return
+		}
+		selectionToolbar.visibility = View.VISIBLE
+		// 선택 1개일 때만 북마크 버튼 노출
+		view?.findViewById<TextView>(R.id.btn_toolbar_bookmark)?.visibility =
+			if (selectedVerses.size == 1) View.VISIBLE else View.GONE
+	}
+
+	private fun onBookmarkButtonClicked() {
+		val verseNum = selectedVerses.firstOrNull() ?: return
+		lifecycleScope.launch {
+			val db = BibleDatabase.getInstance(requireContext().applicationContext)
+			val current = db.bookmarkDao().getBookmarksForChapter(currentBookId, currentChapter)
+				.firstOrNull { it.verse == verseNum }
+
+			val updated = (current ?: BibleBookmark(
+				bookId = currentBookId,
+				chapter = currentChapter,
+				verse = verseNum
+			))
+				.copy(
+					isFavorite = !(current?.isFavorite ?: false),
+					updatedAt = System.currentTimeMillis()
+				)
+			db.bookmarkDao().upsert(updated)
+
+			val refreshed = db.bookmarkDao().getBookmarksForChapter(currentBookId, currentChapter)
+				.associateBy { it.verse }.toMutableMap()
+			adapter.updateBookmarks(refreshed)
+
+			val message = if (updated.isFavorite) "북마크에 추가했어요" else "북마크를 해제했어요"
+			Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
+			clearSelection()
 		}
 	}
 }
