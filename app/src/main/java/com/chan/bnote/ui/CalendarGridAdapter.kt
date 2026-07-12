@@ -19,7 +19,7 @@ data class CalendarDayCell(
 
 class CalendarGridAdapter(
 	private val days: List<CalendarDayCell>,
-	private val selectedDate: Long, // 추가
+	private val selectedDate: Long,
 	private val onDayClick: (CalendarDayCell) -> Unit
 ) : RecyclerView.Adapter<CalendarGridAdapter.ViewHolder>() {
 
@@ -42,29 +42,18 @@ class CalendarGridAdapter(
 
 		holder.dayNumber.setTextColor(
 			when {
-				isSelected -> Color.WHITE
 				!cell.isCurrentMonth -> Color.parseColor("#D0D0D0")
-				cell.isToday -> Color.parseColor("#795548")
+				cell.isToday -> Color.parseColor("#1E88E5") // 오늘: 파란색으로 구분
+				isSelected -> Color.parseColor("#795548")   // 선택됨: 갈색
 				else -> Color.parseColor("#333333")
 			}
 		)
 		holder.dayNumber.setTypeface(
 			null,
-			if (cell.isToday || isSelected) android.graphics.Typeface.BOLD else android.graphics.Typeface.NORMAL
+			if (isSelected) android.graphics.Typeface.BOLD else android.graphics.Typeface.NORMAL
 		)
-
-		// 선택된 날짜는 동그란 갈색 배경으로 강조
-		if (isSelected) {
-			val drawable = android.graphics.drawable.GradientDrawable()
-			drawable.shape = android.graphics.drawable.GradientDrawable.OVAL
-			drawable.setColor(Color.parseColor("#795548"))
-			holder.dayNumber.background = drawable
-			val pad = (4 * holder.itemView.resources.displayMetrics.density).toInt()
-			holder.dayNumber.setPadding(pad, pad, pad, pad)
-		} else {
-			holder.dayNumber.background = null
-			holder.dayNumber.setPadding(0, 0, 0, 0)
-		}
+		holder.dayNumber.background = null
+		holder.dayNumber.setPadding(0, 0, 0, 0)
 
 		holder.barsContainer.removeAllViews()
 		val density = holder.itemView.resources.displayMetrics.density

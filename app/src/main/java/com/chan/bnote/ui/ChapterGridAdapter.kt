@@ -16,7 +16,7 @@ data class ChapterCell(
 
 class ChapterGridAdapter(
 	private val chapters: List<ChapterCell>,
-	private val selectedChapter: Int, // 추가
+	private val selectedChapter: Int,
 	private val onChapterClick: (ChapterCell) -> Unit
 ) : RecyclerView.Adapter<ChapterGridAdapter.ViewHolder>() {
 
@@ -37,21 +37,15 @@ class ChapterGridAdapter(
 
 		val isSelected = cell.chapter == selectedChapter
 
-		if (isSelected) {
-			val drawable = android.graphics.drawable.GradientDrawable()
-			drawable.shape = android.graphics.drawable.GradientDrawable.OVAL
-			drawable.setColor(Color.parseColor("#795548"))
-			holder.number.background = drawable
-			val pad = (4 * holder.itemView.resources.displayMetrics.density).toInt()
-			holder.number.setPadding(pad, pad, pad, pad)
-			holder.number.setTextColor(Color.WHITE)
-			holder.number.setTypeface(null, android.graphics.Typeface.BOLD)
-		} else {
-			holder.number.background = null
-			holder.number.setPadding(0, 0, 0, 0)
-			holder.number.setTextColor(Color.parseColor("#333333"))
-			holder.number.setTypeface(null, android.graphics.Typeface.NORMAL)
-		}
+		holder.number.setTextColor(
+			if (isSelected) Color.parseColor("#795548") else Color.parseColor("#333333")
+		)
+		holder.number.setTypeface(
+			null,
+			if (isSelected) android.graphics.Typeface.BOLD else android.graphics.Typeface.NORMAL
+		)
+		holder.number.background = null
+		holder.number.setPadding(0, 0, 0, 0)
 
 		holder.barsContainer.removeAllViews()
 		val density = holder.itemView.resources.displayMetrics.density
