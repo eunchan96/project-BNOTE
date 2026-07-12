@@ -4,6 +4,7 @@ import android.graphics.Color
 import android.text.Spannable
 import android.text.SpannableString
 import android.text.style.BackgroundColorSpan
+import android.text.style.ForegroundColorSpan
 import android.view.ActionMode
 import android.view.LayoutInflater
 import android.view.Menu
@@ -26,13 +27,11 @@ class VerseAdapter(
 	private var selectedVerses: Set<Int>,
 	private var highlightsByVerse: Map<Int, List<PartialHighlight>>,
 	private val onVerseTap: (verse: Int) -> Unit,
-	private val onHighlightDefault: (verse: Int, start: Int, end: Int) -> Unit,
-	private val onHighlightColorPick: (verse: Int, start: Int, end: Int) -> Unit
+	private val onHighlightRequested: (verse: Int, start: Int, end: Int) -> Unit
 ) : RecyclerView.Adapter<VerseAdapter.ViewHolder>() {
 
 	companion object {
 		private const val ID_HIGHLIGHT = 9001
-		private const val ID_HIGHLIGHT_COLOR = 9002
 	}
 
 	class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -55,19 +54,25 @@ class VerseAdapter(
 		holder.number.text = verseItem.verse.toString()
 		holder.content.textSize = fontSize.toFloat()
 
-		// 부분 하이라이트 적용 (주성경 텍스트에만)
 		val spannable = SpannableString(verseItem.text)
 		for (h in highlightsByVerse[verseItem.verse].orEmpty()) {
 			val start = h.startOffset.coerceIn(0, spannable.length)
 			val end = h.endOffset.coerceIn(start, spannable.length)
 			if (start < end) {
-				val color = try {
+				val bgColor = try {
 					Color.parseColor(h.colorHex)
 				} catch (e: Exception) {
 					Color.YELLOW
 				}
+				val fgColor = HighlightColors.contrastTextColor(h.colorHex)
 				spannable.setSpan(
-					BackgroundColorSpan(color),
+					BackgroundColorSpan(bgColor),
+					start,
+					end,
+					Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+				)
+				spannable.setSpan(
+					ForegroundColorSpan(fgColor),
 					start,
 					end,
 					Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
@@ -92,37 +97,26 @@ class VerseAdapter(
 			) else Color.TRANSPARENT
 		)
 
-		// 탭 = 절 선택 모드 (번호/본문 어디를 눌러도 동작)
 		val tapListener = View.OnClickListener { onVerseTap(verseItem.verse) }
 		holder.root.setOnClickListener(tapListener)
 		holder.number.setOnClickListener(tapListener)
 		holder.content.setOnClickListener(tapListener)
 
-		// 롱프레스 + 드래그 = 부분 텍스트 선택 (시스템 기본 복사 + 커스텀 하이라이트)
 		holder.content.setTextIsSelectable(true)
 		holder.content.customSelectionActionModeCallback = object : ActionMode.Callback {
 			override fun onCreateActionMode(mode: ActionMode?, menu: Menu?): Boolean {
 				menu?.add(0, ID_HIGHLIGHT, 0, "하이라이트")
-				menu?.add(0, ID_HIGHLIGHT_COLOR, 1, "하이라이트 색상")
 				return true
 			}
 
 			override fun onPrepareActionMode(mode: ActionMode?, menu: Menu?): Boolean = false
 
 			override fun onActionItemClicked(mode: ActionMode?, item: MenuItem?): Boolean {
-				val start = holder.content.selectionStart
-				val end = holder.content.selectionEnd
-				if (start !in 0 until end) return false
-
-				when (item?.itemId) {
-					ID_HIGHLIGHT -> {
-						onHighlightDefault(verseItem.verse, start, end)
-						mode?.finish()
-						return true
-					}
-
-					ID_HIGHLIGHT_COLOR -> {
-						onHighlightColorPick(verseItem.verse, start, end)
+				if (item?.itemId == ID_HIGHLIGHT) {
+					val start = holder.content.selectionStart
+					val end = holder.content.selectionEnd
+					if (start in 0 until end) {
+						onHighlightRequested(verseItem.verse, start, end)
 						mode?.finish()
 						return true
 					}

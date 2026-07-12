@@ -62,6 +62,11 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 	private var currentSecondaryMap: Map<Int, String>? = null
 	private var currentHighlights: Map<Int, List<com.chan.bnote.data.PartialHighlight>> = emptyMap()
 
+	private lateinit var highlightColorToolbar: View
+	private var pendingHighlightVerses: List<Int>? = null   // 절 탭 선택 → 전체 하이라이트용
+	private var pendingHighlightRange: Triple<Int, Int, Int>? =
+		null // 부분 하이라이트용 (verse, start, end)
+
 	private val autoScrollHandler = android.os.Handler(android.os.Looper.getMainLooper())
 	private val autoScrollRunnable = object : Runnable {
 		override fun run() {
@@ -103,6 +108,7 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		recyclerView.clipToPadding = false
 
 		selectionToolbar = view.findViewById(R.id.container_selection_toolbar)
+		highlightColorToolbar = view.findViewById(R.id.scroll_highlight_toolbar)
 
 		val bottomSpace = (resources.displayMetrics.heightPixels * 0.3f).toInt()
 		recyclerView.setPadding(
@@ -131,10 +137,18 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 			onScrapButtonClicked()
 		}
 		view.findViewById<TextView>(R.id.btn_toolbar_highlight).setOnClickListener {
-			onHighlightButtonClicked()
+			pendingHighlightVerses = selectedVerses.toList()
+			pendingHighlightRange = null
+			showHighlightColorToolbar()
 		}
 		view.findViewById<TextView>(R.id.btn_toolbar_copy).setOnClickListener {
 			onCopyButtonClicked()
+		}
+		view.findViewById<TextView>(R.id.btn_cancel_highlight_toolbar).setOnClickListener {
+			hideHighlightColorToolbar()
+		}
+		view.findViewById<TextView>(R.id.btn_remove_highlight).setOnClickListener {
+			removeHighlight()
 		}
 	}
 
@@ -285,23 +299,12 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 				fontSize = currentFontSize,
 				selectedVerses = selectedVerses,
 				highlightsByVerse = currentHighlights,
-				onVerseTap = { verseNum -> toggleVerseSelection(verseNum) },
-				onHighlightDefault = { verseNum, start, end ->
-					saveHighlight(
-						verseNum,
-						start,
-						end,
-						"#FFF9C4"
-					)
-				},
-				onHighlightColorPick = { verseNum, start, end ->
-					openHighlightColorPicker(
-						verseNum,
-						start,
-						end
-					)
-				}
-			)
+				onVerseTap = { verseNum -> toggleVerseSelection(verseNum) }
+			) { verseNum, start, end ->
+				pendingHighlightRange = Triple(verseNum, start, end)
+				pendingHighlightVerses = null
+				showHighlightColorToolbar()
+			}
 			recyclerView.adapter = adapter
 
 			scrollToVerse?.let { verseNum ->
@@ -396,10 +399,12 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 	}
 
 	private fun clearSelection() {
-		if (selectedVerses.isEmpty()) return
 		selectedVerses.clear()
 		if (::adapter.isInitialized) adapter.updateSelection(emptySet())
-		updateToolbarVisibility()
+		selectionToolbar.visibility = View.GONE
+		highlightColorToolbar.visibility = View.GONE
+		pendingHighlightVerses = null
+		pendingHighlightRange = null
 	}
 
 	private fun updateToolbarVisibility() {
@@ -437,52 +442,6 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 
 			val message = if (updated.isFavorite) "북마크에 추가했어요" else "북마크를 해제했어요"
 			Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
-			clearSelection()
-		}
-	}
-
-	private fun onHighlightButtonClicked() {
-		if (selectedVerses.isEmpty()) return
-
-		lifecycleScope.launch {
-			val db = BibleDatabase.getInstance(requireContext().applicationContext)
-
-			// 선택된 절이 전부 이미 "전체 하이라이트"된 상태면 해제, 아니면 전부 적용
-			val allAlreadyHighlighted = selectedVerses.all { verseNum ->
-				val verseData = currentVerses.firstOrNull { it.verse == verseNum }
-				val existing = currentHighlights[verseNum].orEmpty()
-				verseData != null && existing.any { it.startOffset == 0 && it.endOffset >= verseData.text.length }
-			}
-
-			for (verseNum in selectedVerses) {
-				db.partialHighlightDao().deleteAllForVerse(
-					primaryTranslation.code,
-					currentBookId,
-					currentChapter,
-					verseNum
-				)
-
-				if (!allAlreadyHighlighted) {
-					val verseData = currentVerses.firstOrNull { it.verse == verseNum } ?: continue
-					db.partialHighlightDao().insert(
-						com.chan.bnote.data.PartialHighlight(
-							translation = primaryTranslation.code,
-							bookId = currentBookId,
-							chapter = currentChapter,
-							verse = verseNum,
-							startOffset = 0,
-							endOffset = verseData.text.length,
-							colorHex = "#FFF9C4"
-						)
-					)
-				}
-			}
-
-			val refreshed = db.partialHighlightDao()
-				.getForChapter(primaryTranslation.code, currentBookId, currentChapter)
-				.groupBy { it.verse }
-			currentHighlights = refreshed
-			adapter.updateHighlights(refreshed)
 			clearSelection()
 		}
 	}
@@ -571,5 +530,128 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 			currentHighlights = refreshed
 			adapter.updateHighlights(refreshed)
 		}
+	}
+
+	private fun showHighlightColorToolbar() {
+		selectionToolbar.visibility = View.GONE
+		populateHighlightSwatches()
+		highlightColorToolbar.visibility = View.VISIBLE
+	}
+
+	private fun hideHighlightColorToolbar() {
+		highlightColorToolbar.visibility = View.GONE
+		pendingHighlightVerses = null
+		pendingHighlightRange = null
+		updateToolbarVisibility() // 선택 중이던 절이 남아있으면 선택 툴바 복귀
+	}
+
+	private fun populateHighlightSwatches() {
+		val container =
+			view?.findViewById<android.widget.LinearLayout>(R.id.container_highlight_swatches)
+				?: return
+		container.removeAllViews()
+		val size = (28 * resources.displayMetrics.density).toInt()
+		val margin = (4 * resources.displayMetrics.density).toInt()
+
+		for (colorHex in HighlightColors.palette) {
+			val swatch = View(requireContext())
+			val params = android.widget.LinearLayout.LayoutParams(size, size)
+			params.setMargins(margin, margin, margin, margin)
+			swatch.layoutParams = params
+
+			val drawable = android.graphics.drawable.GradientDrawable()
+			drawable.shape = android.graphics.drawable.GradientDrawable.OVAL
+			drawable.setColor(android.graphics.Color.parseColor(colorHex))
+			drawable.setStroke(1, android.graphics.Color.parseColor("#55FFFFFF"))
+			swatch.background = drawable
+
+			swatch.setOnClickListener { applyHighlightColor(colorHex) }
+			container.addView(swatch)
+		}
+	}
+
+	private fun applyHighlightColor(colorHex: String) {
+		lifecycleScope.launch {
+			val db = BibleDatabase.getInstance(requireContext().applicationContext)
+
+			pendingHighlightRange?.let { (verseNum, start, end) ->
+				db.partialHighlightDao().insert(
+					com.chan.bnote.data.PartialHighlight(
+						translation = primaryTranslation.code,
+						bookId = currentBookId,
+						chapter = currentChapter,
+						verse = verseNum,
+						startOffset = start,
+						endOffset = end,
+						colorHex = colorHex
+					)
+				)
+			}
+
+			pendingHighlightVerses?.let { verseNums ->
+				for (verseNum in verseNums) {
+					db.partialHighlightDao().deleteAllForVerse(
+						primaryTranslation.code,
+						currentBookId,
+						currentChapter,
+						verseNum
+					)
+					val verseData = currentVerses.firstOrNull { it.verse == verseNum } ?: continue
+					db.partialHighlightDao().insert(
+						com.chan.bnote.data.PartialHighlight(
+							translation = primaryTranslation.code,
+							bookId = currentBookId,
+							chapter = currentChapter,
+							verse = verseNum,
+							startOffset = 0,
+							endOffset = verseData.text.length,
+							colorHex = colorHex
+						)
+					)
+				}
+			}
+
+			refreshHighlights()
+			hideHighlightColorToolbar()
+			clearSelection()
+		}
+	}
+
+	private fun removeHighlight() {
+		lifecycleScope.launch {
+			val db = BibleDatabase.getInstance(requireContext().applicationContext)
+
+			pendingHighlightRange?.let { (verseNum, _, _) ->
+				db.partialHighlightDao().deleteAllForVerse(
+					primaryTranslation.code,
+					currentBookId,
+					currentChapter,
+					verseNum
+				)
+			}
+			pendingHighlightVerses?.let { verseNums ->
+				for (verseNum in verseNums) {
+					db.partialHighlightDao().deleteAllForVerse(
+						primaryTranslation.code,
+						currentBookId,
+						currentChapter,
+						verseNum
+					)
+				}
+			}
+
+			refreshHighlights()
+			hideHighlightColorToolbar()
+			clearSelection()
+		}
+	}
+
+	private suspend fun refreshHighlights() {
+		val db = BibleDatabase.getInstance(requireContext().applicationContext)
+		val refreshed = db.partialHighlightDao()
+			.getForChapter(primaryTranslation.code, currentBookId, currentChapter)
+			.groupBy { it.verse }
+		currentHighlights = refreshed
+		if (::adapter.isInitialized) adapter.updateHighlights(refreshed)
 	}
 }
