@@ -22,8 +22,8 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 	private lateinit var textCurrentLocation: TextView
 	private lateinit var btnTranslation: ImageView
 	private lateinit var btnSearch: ImageView
-	private lateinit var btnFavorites: TextView
-	private lateinit var btnMenu: TextView
+	private lateinit var btnFavorites: ImageView
+	private lateinit var btnMenu: ImageView
 	private lateinit var btnPrevChapter: ImageView
 	private lateinit var btnNextChapter: ImageView
 
