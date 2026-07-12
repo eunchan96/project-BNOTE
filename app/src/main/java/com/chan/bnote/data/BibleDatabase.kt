@@ -11,9 +11,10 @@ import kotlinx.coroutines.launch
 @Database(
 	entities = [
 		BibleVerse::class, BibleBookmark::class, ReadingProgress::class,
-		Sermon::class, SermonCategory::class, SermonBibleRef::class
+		Sermon::class, SermonCategory::class, SermonBibleRef::class,
+		VerseOfYear::class // 추가
 	],
-	version = 6, // 5 -> 6
+	version = 7, // 6 -> 7
 	exportSchema = false
 )
 abstract class BibleDatabase : RoomDatabase() {
@@ -21,8 +22,9 @@ abstract class BibleDatabase : RoomDatabase() {
 	abstract fun bookmarkDao(): BookmarkDao
 	abstract fun readingProgressDao(): ReadingProgressDao
 	abstract fun sermonDao(): SermonDao
-	abstract fun sermonCategoryDao(): SermonCategoryDao   // 추가
-	abstract fun sermonBibleRefDao(): SermonBibleRefDao   // 추가
+	abstract fun sermonCategoryDao(): SermonCategoryDao
+	abstract fun sermonBibleRefDao(): SermonBibleRefDao
+	abstract fun verseOfYearDao(): VerseOfYearDao
 
 	companion object {
 		@Volatile

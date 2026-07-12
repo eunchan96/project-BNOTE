@@ -7,7 +7,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
-import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.chan.bnote.R
 
@@ -29,8 +28,7 @@ class MyPageFragment : Fragment(), TopBarActionHandler {
 			ReadingPlanBottomSheet().show(parentFragmentManager, "reading_plan")
 		}
 		view.findViewById<TextView>(R.id.menu_verse_of_year).setOnClickListener {
-			// TODO D-3
-			Toast.makeText(requireContext(), "올해 약속의 말씀 (D-3에서 구현)", Toast.LENGTH_SHORT).show()
+			VerseOfYearBottomSheet().show(parentFragmentManager, "verse_of_year")
 		}
 	}
 
