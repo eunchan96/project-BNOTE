@@ -41,4 +41,17 @@ interface SermonDao {
         """
 	)
 	suspend fun search(keyword: String): List<Sermon>
+
+	@Query(
+		"""
+    SELECT s.sermonDate as sermonDate, c.colorHex as colorHex
+    FROM sermons s
+    LEFT JOIN sermon_categories c ON s.categoryId = c.id
+    WHERE s.sermonDate >= :startMillis AND s.sermonDate < :endMillis
+    ORDER BY s.sermonDate, s.createdAt
+    """
+	)
+	suspend fun getSermonMarkersInRange(startMillis: Long, endMillis: Long): List<SermonMarker>
 }
+
+data class SermonMarker(val sermonDate: Long, val colorHex: String?)
