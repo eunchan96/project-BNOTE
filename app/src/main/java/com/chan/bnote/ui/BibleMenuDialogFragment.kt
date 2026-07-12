@@ -22,6 +22,7 @@ class BibleMenuDialogFragment(
 	var onAppendixItemSelected: ((String) -> Unit)? = null
 	var onReadingPlanToggled: ((Boolean) -> Unit)? = null
 	var onAutoScrollToggled: ((Boolean) -> Unit)? = null
+	var onScrapClicked: (() -> Unit)? = null
 
 	override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
 		val dialog = Dialog(requireContext(), R.style.RightPanelDialog)
@@ -39,6 +40,11 @@ class BibleMenuDialogFragment(
 	}
 
 	private fun setupViews(view: View) {
+		view.findViewById<TextView>(R.id.menu_scrap).setOnClickListener {
+			onScrapClicked?.invoke()
+			dismiss()
+		}
+		
 		view.findViewById<TextView>(R.id.menu_hymn).setOnClickListener {
 			Toast.makeText(requireContext(), "찬송 (추후 구현)", Toast.LENGTH_SHORT).show()
 			dismiss()

@@ -69,6 +69,20 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		}
 	}
 
+	private val scrapLauncher = registerForActivityResult(
+		androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()
+	) { result ->
+		if (result.resultCode == android.app.Activity.RESULT_OK) {
+			val bookId = result.data?.getIntExtra("bookId", -1) ?: return@registerForActivityResult
+			val chapter =
+				result.data?.getIntExtra("chapter", -1) ?: return@registerForActivityResult
+			val verse = result.data?.getIntExtra("verse", -1) ?: return@registerForActivityResult
+			if (bookId > 0 && chapter > 0) {
+				loadChapter(bookId, chapter, scrollToVerse = if (verse > 0) verse else null)
+			}
+		}
+	}
+
 	override fun onCreateView(
 		inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
 	): View {
@@ -113,7 +127,7 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 			onBookmarkButtonClicked()
 		}
 		view.findViewById<TextView>(R.id.btn_toolbar_scrap).setOnClickListener {
-			Toast.makeText(requireContext(), "스크랩 (E-3에서 구현)", Toast.LENGTH_SHORT).show()
+			onScrapButtonClicked()
 		}
 		view.findViewById<TextView>(R.id.btn_toolbar_copy).setOnClickListener {
 			onCopyButtonClicked()
@@ -171,6 +185,14 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 			isReadingPlanEnabled = isReadingPlanEnabled,
 			isAutoScrollEnabled = isAutoScrollEnabled
 		)
+		dialog.onScrapClicked = {
+			scrapLauncher.launch(
+				android.content.Intent(
+					requireContext(),
+					com.chan.bnote.ScrapActivity::class.java
+				)
+			)
+		}
 		dialog.onAppendixItemSelected = { itemName ->
 			// TODO: 번역본/버전 정해지면 실제 본문 화면 연결
 			Toast.makeText(requireContext(), "$itemName (본문 준비 중)", Toast.LENGTH_SHORT).show()
@@ -418,5 +440,37 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 
 		Toast.makeText(requireContext(), "복사했어요", Toast.LENGTH_SHORT).show()
 		clearSelection()
+	}
+
+	private fun onScrapButtonClicked() {
+		if (selectedVerses.isEmpty()) return
+		val sortedSelected = selectedVerses.sorted()
+		val startVerse = sortedSelected.first()
+		val endVerse = sortedSelected.last()
+		val combinedText = currentVerses
+			.filter { it.verse in selectedVerses }
+			.sortedBy { it.verse }
+			.joinToString("\n") { it.text }
+
+		val picker = ScrapGroupPickerBottomSheet()
+		picker.onGroupSelected = { group ->
+			lifecycleScope.launch {
+				val db = BibleDatabase.getInstance(requireContext().applicationContext)
+				db.scrapDao().insertScrap(
+					com.chan.bnote.data.Scrap(
+						groupId = group.id,
+						bookId = currentBookId,
+						chapter = currentChapter,
+						startVerse = startVerse,
+						endVerse = endVerse,
+						verseText = combinedText
+					)
+				)
+				Toast.makeText(requireContext(), "'${group.name}'에 스크랩했어요", Toast.LENGTH_SHORT)
+					.show()
+				clearSelection()
+			}
+		}
+		picker.show(parentFragmentManager, "scrap_group_picker")
 	}
 }

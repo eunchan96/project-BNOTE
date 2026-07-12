@@ -20,6 +20,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".ScrapActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ScrapGroupManageActivity"
+            android:exported="false" />
     </application>
 
 </manifest>

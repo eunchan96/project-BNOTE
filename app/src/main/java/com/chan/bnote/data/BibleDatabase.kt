@@ -12,9 +12,9 @@ import kotlinx.coroutines.launch
 	entities = [
 		BibleVerse::class, BibleBookmark::class, ReadingProgress::class,
 		Sermon::class, SermonCategory::class, SermonBibleRef::class,
-		VerseOfYear::class // 추가
+		VerseOfYear::class, ScrapGroup::class, Scrap::class // 추가
 	],
-	version = 7, // 6 -> 7
+	version = 8, // 7 -> 8
 	exportSchema = false
 )
 abstract class BibleDatabase : RoomDatabase() {
@@ -25,6 +25,7 @@ abstract class BibleDatabase : RoomDatabase() {
 	abstract fun sermonCategoryDao(): SermonCategoryDao
 	abstract fun sermonBibleRefDao(): SermonBibleRefDao
 	abstract fun verseOfYearDao(): VerseOfYearDao
+	abstract fun scrapDao(): ScrapDao
 
 	companion object {
 		@Volatile
@@ -41,10 +42,12 @@ abstract class BibleDatabase : RoomDatabase() {
 					.build()
 				INSTANCE = instance
 
-				// 최초 생성 시 기본 카테고리 자동 시딩
 				CoroutineScope(Dispatchers.IO).launch {
 					if (instance.sermonCategoryDao().count() == 0) {
 						instance.sermonCategoryDao().insertAll(DefaultSermonCategories.list)
+					}
+					if (instance.scrapDao().countGroups() == 0) {
+						instance.scrapDao().insertGroup(ScrapGroup(name = "기본", sortOrder = 0))
 					}
 				}
 				instance
