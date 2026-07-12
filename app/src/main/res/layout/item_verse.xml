@@ -26,7 +26,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textSize="16sp"
-            android:textColor="@color/text_primary" />
+            android:textColor="@color/text_primary"
+            android:textIsSelectable="true" />
 
         <TextView
             android:id="@+id/text_verse_content_secondary"

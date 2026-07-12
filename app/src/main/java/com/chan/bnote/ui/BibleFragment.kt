@@ -60,6 +60,7 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 
 	private var currentVerses: List<BibleVerse> = emptyList()
 	private var currentSecondaryMap: Map<Int, String>? = null
+	private var currentHighlights: Map<Int, List<com.chan.bnote.data.PartialHighlight>> = emptyMap()
 
 	private val autoScrollHandler = android.os.Handler(android.os.Looper.getMainLooper())
 	private val autoScrollRunnable = object : Runnable {
@@ -128,6 +129,9 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		}
 		view.findViewById<TextView>(R.id.btn_toolbar_scrap).setOnClickListener {
 			onScrapButtonClicked()
+		}
+		view.findViewById<TextView>(R.id.btn_toolbar_highlight).setOnClickListener {
+			onHighlightButtonClicked()
 		}
 		view.findViewById<TextView>(R.id.btn_toolbar_copy).setOnClickListener {
 			onCopyButtonClicked()
@@ -267,18 +271,37 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 			hasSermonForChapter =
 				db.sermonDao().getByBookChapter(bookId, chapter).isNotEmpty()
 
+			val highlights = db.partialHighlightDao()
+				.getForChapter(primaryTranslation.code, bookId, chapter)
+				.groupBy { it.verse }
+			currentHighlights = highlights
+
 			notifyTopBarChanged()
 
-			// 이하 어댑터 생성 로직 기존과 동일
 			adapter = VerseAdapter(
 				verses = verses,
 				secondaryTextByVerse = secondaryMap,
 				bookmarks = bookmarkMap,
 				fontSize = currentFontSize,
-				selectedVerses = selectedVerses
-			) { verseNum ->
-				toggleVerseSelection(verseNum)
-			}
+				selectedVerses = selectedVerses,
+				highlightsByVerse = currentHighlights,
+				onVerseTap = { verseNum -> toggleVerseSelection(verseNum) },
+				onHighlightDefault = { verseNum, start, end ->
+					saveHighlight(
+						verseNum,
+						start,
+						end,
+						"#FFF9C4"
+					)
+				},
+				onHighlightColorPick = { verseNum, start, end ->
+					openHighlightColorPicker(
+						verseNum,
+						start,
+						end
+					)
+				}
+			)
 			recyclerView.adapter = adapter
 
 			scrollToVerse?.let { verseNum ->
@@ -418,6 +441,52 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		}
 	}
 
+	private fun onHighlightButtonClicked() {
+		if (selectedVerses.isEmpty()) return
+
+		lifecycleScope.launch {
+			val db = BibleDatabase.getInstance(requireContext().applicationContext)
+
+			// 선택된 절이 전부 이미 "전체 하이라이트"된 상태면 해제, 아니면 전부 적용
+			val allAlreadyHighlighted = selectedVerses.all { verseNum ->
+				val verseData = currentVerses.firstOrNull { it.verse == verseNum }
+				val existing = currentHighlights[verseNum].orEmpty()
+				verseData != null && existing.any { it.startOffset == 0 && it.endOffset >= verseData.text.length }
+			}
+
+			for (verseNum in selectedVerses) {
+				db.partialHighlightDao().deleteAllForVerse(
+					primaryTranslation.code,
+					currentBookId,
+					currentChapter,
+					verseNum
+				)
+
+				if (!allAlreadyHighlighted) {
+					val verseData = currentVerses.firstOrNull { it.verse == verseNum } ?: continue
+					db.partialHighlightDao().insert(
+						com.chan.bnote.data.PartialHighlight(
+							translation = primaryTranslation.code,
+							bookId = currentBookId,
+							chapter = currentChapter,
+							verse = verseNum,
+							startOffset = 0,
+							endOffset = verseData.text.length,
+							colorHex = "#FFF9C4"
+						)
+					)
+				}
+			}
+
+			val refreshed = db.partialHighlightDao()
+				.getForChapter(primaryTranslation.code, currentBookId, currentChapter)
+				.groupBy { it.verse }
+			currentHighlights = refreshed
+			adapter.updateHighlights(refreshed)
+			clearSelection()
+		}
+	}
+
 	private fun onCopyButtonClicked() {
 		if (selectedVerses.isEmpty()) return
 
@@ -472,5 +541,35 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 			}
 		}
 		picker.show(parentFragmentManager, "scrap_group_picker")
+	}
+
+	private fun openHighlightColorPicker(verseNum: Int, start: Int, end: Int) {
+		val picker = ColorPickerBottomSheet()
+		picker.onColorSelected = { colorHex ->
+			saveHighlight(verseNum, start, end, colorHex)
+		}
+		picker.show(parentFragmentManager, "highlight_color_picker")
+	}
+
+	private fun saveHighlight(verseNum: Int, start: Int, end: Int, colorHex: String) {
+		lifecycleScope.launch {
+			val db = BibleDatabase.getInstance(requireContext().applicationContext)
+			db.partialHighlightDao().insert(
+				com.chan.bnote.data.PartialHighlight(
+					translation = primaryTranslation.code,
+					bookId = currentBookId,
+					chapter = currentChapter,
+					verse = verseNum,
+					startOffset = start,
+					endOffset = end,
+					colorHex = colorHex
+				)
+			)
+			val refreshed = db.partialHighlightDao()
+				.getForChapter(primaryTranslation.code, currentBookId, currentChapter)
+				.groupBy { it.verse }
+			currentHighlights = refreshed
+			adapter.updateHighlights(refreshed)
+		}
 	}
 }

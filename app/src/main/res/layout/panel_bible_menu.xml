@@ -40,7 +40,7 @@
                 android:background="?attr/selectableItemBackground"
                 android:clickable="true"
                 android:focusable="true" />
-            
+
             <TextView
                 android:id="@+id/menu_hymn"
                 android:layout_width="match_parent"
@@ -68,7 +68,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:background="#F5F5F5"
+                android:background="@color/input_background"
                 android:visibility="gone" />
 
             <View
