@@ -25,4 +25,9 @@ interface SermonBibleRefDao {
         """
 	)
 	suspend fun getRefsCoveringChapter(bookId: Int, chapter: Int): List<SermonBibleRef>
+
+	@Query(
+		"SELECT * FROM sermon_bible_refs WHERE sermonId = :sermonId ORDER BY startBookId, startChapter, startVerse LIMIT 1"
+	)
+	suspend fun getFirstRef(sermonId: Long): SermonBibleRef?
 }

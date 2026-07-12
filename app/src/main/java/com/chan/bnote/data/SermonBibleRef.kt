@@ -17,7 +17,7 @@ data class SermonBibleRef(
 ) {
 	// 화면 표시용 짧은 텍스트, ex) "창 1:1~10" 또는 "창 1:1~2:1"
 	fun toShortLabel(): String {
-		val bookAbbr = BibleBooks.nameOf(startBookId).take(1) // 임시 축약, 필요시 별도 약칭 테이블로 교체 가능
+		val bookAbbr = BibleBooks.shortNameOf(startBookId) // "창", "고전" 등 정확한 약칭
 		return if (startBookId == endBookId && startChapter == endChapter) {
 			"$bookAbbr$startChapter:$startVerse~$endVerse"
 		} else {
