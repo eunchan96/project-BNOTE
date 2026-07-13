@@ -1,3 +1,5 @@
+package com.chan.bnote.ui
+
 data class TopBarConfig(
 	val title: String,
 	val showTranslationButton: Boolean = false,

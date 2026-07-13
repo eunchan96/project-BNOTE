@@ -1,7 +1,5 @@
 package com.chan.bnote.ui.bible
 
-import TopBarActionHandler
-import TopBarConfig
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -26,6 +24,8 @@ import com.chan.bnote.data.mypage.CopyFormatter
 import com.chan.bnote.data.mypage.ReadingProgress
 import com.chan.bnote.data.partialhighlight.PartialHighlight
 import com.chan.bnote.data.scrap.Scrap
+import com.chan.bnote.ui.TopBarActionHandler
+import com.chan.bnote.ui.TopBarConfig
 import com.chan.bnote.ui.TopBarConfigListener
 import com.chan.bnote.ui.common.ColorPickerBottomSheet
 import com.chan.bnote.ui.common.HighlightColors
