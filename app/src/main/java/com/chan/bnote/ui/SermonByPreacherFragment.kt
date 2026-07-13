@@ -1,9 +1,12 @@
 package com.chan.bnote.ui
 
+import android.app.AlertDialog
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
+import android.widget.ImageView
 import android.widget.PopupMenu
 import android.widget.TextView
 import androidx.fragment.app.Fragment
@@ -14,7 +17,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.chan.bnote.R
 import com.chan.bnote.data.AppSettings
 import com.chan.bnote.data.BibleDatabase
-import com.chan.bnote.data.DateUtils
+import com.chan.bnote.data.Preacher
 import kotlinx.coroutines.launch
 
 class SermonByPreacherFragment : Fragment() {
@@ -27,11 +30,12 @@ class SermonByPreacherFragment : Fragment() {
 	private lateinit var btnSermonSort: TextView
 	private lateinit var selectedPreacherText: TextView
 
-	private var preachers: MutableList<String> = mutableListOf()
-	private var selectedPreacher: String? = null
+	private var preachers: MutableList<Preacher> = mutableListOf()
+	private var selectedPreacher: Preacher? = null
 
 	private var preacherSortMode = "NAME"
 	private var sermonSortMode = "DATE"
+	private var isPreacherManageMode = false
 
 	override fun onCreateView(
 		inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -60,7 +64,15 @@ class SermonByPreacherFragment : Fragment() {
 		btnPreacherSort.setOnClickListener { showPreacherSortMenu(it) }
 		btnSermonSort.setOnClickListener { showSermonSortMenu(it) }
 
-		view.findViewById<TextView>(R.id.btn_back_to_preachers).setOnClickListener {
+		view.findViewById<TextView>(R.id.btn_preacher_manage_toggle).setOnClickListener {
+			togglePreacherManageMode(it as TextView)
+		}
+
+		view.findViewById<TextView>(R.id.btn_add_preacher_in_manage).setOnClickListener {
+			showAddPreacherDialog()
+		}
+
+		view.findViewById<ImageView>(R.id.btn_back_from_detail).setOnClickListener {
 			showPreacherListStep()
 		}
 
@@ -74,6 +86,74 @@ class SermonByPreacherFragment : Fragment() {
 		}
 
 		loadPreachers()
+	}
+
+	private fun togglePreacherManageMode(button: TextView) {
+		isPreacherManageMode = !isPreacherManageMode
+		button.text = if (isPreacherManageMode) "완료" else "관리"
+		(preacherRecycler.adapter as? PreacherManageAdapter)?.setEditMode(isPreacherManageMode)
+		view?.findViewById<TextView>(R.id.btn_add_preacher_in_manage)?.visibility =
+			if (isPreacherManageMode) View.VISIBLE else View.GONE
+	}
+
+	private fun showAddPreacherDialog() {
+		val editText = EditText(requireContext()).apply {
+			hint = "설교자 이름"
+			setPadding(48, 32, 48, 32)
+		}
+		AlertDialog.Builder(requireContext())
+			.setTitle("설교자 추가")
+			.setView(editText)
+			.setPositiveButton("추가") { _, _ ->
+				val name = editText.text.toString().trim()
+				if (name.isNotEmpty()) {
+					lifecycleScope.launch {
+						val db = BibleDatabase.getInstance(requireContext().applicationContext)
+						db.preacherDao().insert(Preacher(name = name, sortOrder = preachers.size))
+						loadPreachers()
+					}
+				}
+			}
+			.setNegativeButton("취소", null)
+			.show()
+	}
+
+	private fun showEditPreacherDialog(preacher: Preacher) {
+		val editText = EditText(requireContext()).apply {
+			setText(preacher.name)
+			setPadding(48, 32, 48, 32)
+		}
+		AlertDialog.Builder(requireContext())
+			.setTitle("설교자 이름 수정")
+			.setView(editText)
+			.setPositiveButton("저장") { _, _ ->
+				val newName = editText.text.toString().trim()
+				if (newName.isNotEmpty()) {
+					lifecycleScope.launch {
+						val db = BibleDatabase.getInstance(requireContext().applicationContext)
+						db.preacherDao().update(preacher.copy(name = newName))
+						loadPreachers()
+					}
+				}
+			}
+			.setNegativeButton("취소", null)
+			.show()
+	}
+
+	private fun confirmDeletePreacher(preacher: Preacher) {
+		AlertDialog.Builder(requireContext())
+			.setTitle("설교자 삭제")
+			.setMessage("'${preacher.name}'을(를) 삭제할까요? 이 설교자로 등록된 설교는 '미지정' 상태가 돼요.")
+			.setPositiveButton("삭제") { _, _ ->
+				lifecycleScope.launch {
+					val db = BibleDatabase.getInstance(requireContext().applicationContext)
+					db.preacherDao().clearPreacherFromSermons(preacher.id)
+					db.preacherDao().delete(preacher)
+					loadPreachers()
+				}
+			}
+			.setNegativeButton("취소", null)
+			.show()
 	}
 
 	private fun showPreacherSortMenu(anchor: View) {
@@ -115,36 +195,44 @@ class SermonByPreacherFragment : Fragment() {
 		selectedPreacher = null
 	}
 
-	private fun showSermonListStep(preacher: String) {
+	private fun showSermonListStep(preacher: Preacher) {
 		preacherListContainer.visibility = View.GONE
 		sermonListContainer.visibility = View.VISIBLE
 		selectedPreacher = preacher
-		selectedPreacherText.text = preacher
+		selectedPreacherText.text = preacher.name
 		loadSermonsForPreacher(preacher)
 	}
 
 	private fun loadPreachers() {
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(requireContext().applicationContext)
-			val allPreachers = db.sermonDao().getAllPreachers()
+			val allPreachers = db.preacherDao().getAll()
 
 			preachers = if (preacherSortMode == "NAME") {
-				allPreachers.sorted().toMutableList()
+				allPreachers.sortedBy { it.name }.toMutableList()
 			} else {
-				val customOrder = AppSettings.getPreacherCustomOrder(requireContext())
-				val ordered = customOrder.filter { it in allPreachers }.toMutableList()
-				val rest = allPreachers.filter { it !in ordered }
+				val customOrderIds = AppSettings.getPreacherCustomOrderIds(requireContext())
+				val byId = allPreachers.associateBy { it.id }
+				val ordered = customOrderIds.mapNotNull { byId[it] }.toMutableList()
+				val rest = allPreachers.filter { it.id !in customOrderIds }
 				(ordered + rest).toMutableList()
 			}
 
-			renderPreacherList()
+			val rows = preachers.map { preacher ->
+				PreacherRow(preacher, db.sermonDao().getByPreacherId(preacher.id).size)
+			}
+			renderPreacherList(rows)
 		}
 	}
 
-	private fun renderPreacherList() {
-		val adapter = SimpleListAdapter(preachers) { position ->
-			showSermonListStep(preachers[position])
-		}
+	private fun renderPreacherList(rows: List<PreacherRow>) {
+		val adapter = PreacherManageAdapter(
+			rows = rows,
+			isEditMode = isPreacherManageMode,
+			onClick = { preacher -> showSermonListStep(preacher) },
+			onEdit = { preacher -> showEditPreacherDialog(preacher) },
+			onDelete = { preacher -> confirmDeletePreacher(preacher) }
+		)
 		preacherRecycler.adapter = adapter
 
 		if (preacherSortMode == "CUSTOM") {
@@ -152,8 +240,8 @@ class SermonByPreacherFragment : Fragment() {
 				if (from in preachers.indices && to in preachers.indices) {
 					val item = preachers.removeAt(from)
 					preachers.add(to, item)
-					adapter.notifyItemMoved(from, to)
-					AppSettings.setPreacherCustomOrder(requireContext(), preachers)
+					AppSettings.setPreacherCustomOrderIds(requireContext(), preachers.map { it.id })
+					loadPreachers()
 				}
 			})
 			dragHelper.attachToRecyclerView(preacherRecycler)
@@ -162,21 +250,20 @@ class SermonByPreacherFragment : Fragment() {
 		}
 	}
 
-	private fun loadSermonsForPreacher(preacher: String) {
+	private fun loadSermonsForPreacher(preacher: Preacher) {
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(requireContext().applicationContext)
-			val sermons = db.sermonDao().getByPreacher(preacher)
+			val sermons = db.sermonDao().getByPreacherId(preacher.id)
 
-			val rows = sermons.map { sermon ->
+			val rowsWithRef = sermons.map { sermon ->
 				val firstRef = db.sermonBibleRefDao().getFirstRef(sermon.id)
-				val category = sermon.categoryId?.let { db.sermonCategoryDao().getById(it) }
-				Triple(sermon, firstRef, category?.colorHex)
+				sermon to firstRef
 			}
 
-			val sortedRows = if (sermonSortMode == "DATE") {
-				rows.sortedByDescending { it.first.sermonDate }
+			val sortedPairs = if (sermonSortMode == "DATE") {
+				rowsWithRef.sortedByDescending { it.first.sermonDate }
 			} else {
-				rows.sortedWith(
+				rowsWithRef.sortedWith(
 					compareBy(
 					{ it.second?.startBookId ?: Int.MAX_VALUE },
 					{ it.second?.startChapter ?: Int.MAX_VALUE },
@@ -184,14 +271,8 @@ class SermonByPreacherFragment : Fragment() {
 				))
 			}
 
-			val rowData = sortedRows.map { (sermon, ref, colorHex) ->
-				SermonRowData(
-					sermon = sermon,
-					colorHex = colorHex,
-					dateLabel = DateUtils.formatDateShort(sermon.sermonDate),
-					bibleRefLabel = ref?.toShortLabel() ?: ""
-				)
-			}
+			val rowData = SermonRowBuilder.build(db, sortedPairs.map { it.first })
+				.sortedBy { row -> sortedPairs.indexOfFirst { it.first.id == row.sermon.id } }
 
 			val emptyText = view?.findViewById<TextView>(R.id.text_empty_preacher_sermons)
 			if (rowData.isEmpty()) {

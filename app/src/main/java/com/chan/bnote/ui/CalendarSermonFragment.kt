@@ -199,11 +199,14 @@ class CalendarSermonFragment : Fragment() {
 		recyclerView.visibility = View.VISIBLE
 		recyclerView.layoutManager = LinearLayoutManager(requireContext())
 
-		val labels = sermons.map { "${it.title}  (${it.preacher})" }
-		recyclerView.adapter = SimpleListAdapter(labels) { position ->
-			val detail = SermonDetailBottomSheet(sermons[position])
-			detail.onChanged = { loadCalendarGrid(); loadSermonsForSelectedDate() }
-			detail.show(parentFragmentManager, "sermon_detail")
+		lifecycleScope.launch {
+			val db = BibleDatabase.getInstance(requireContext().applicationContext)
+			val rows = SermonRowBuilder.build(db, sermons, useDateLabel = false)
+			recyclerView.adapter = SermonRowAdapter(rows) { sermon ->
+				val detail = SermonDetailBottomSheet(sermon)
+				detail.onChanged = { loadCalendarGrid(); loadSermonsForSelectedDate() }
+				detail.show(parentFragmentManager, "sermon_detail")
+			}
 		}
 	}
 }

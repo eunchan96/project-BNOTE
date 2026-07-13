@@ -15,7 +15,7 @@ data class SermonCategory(
 
 object DefaultSermonCategories {
 	val list = listOf(
-		SermonCategory(name = "주일 오전 예배", colorHex = "#FB8C00", isDefault = true, sortOrder = 0),
+		SermonCategory(name = "주일 낮예배", colorHex = "#FB8C00", isDefault = true, sortOrder = 0),
 		SermonCategory(name = "주일 오후 예배", colorHex = "#FDD835", isDefault = true, sortOrder = 1),
 		SermonCategory(name = "금요예배", colorHex = "#8E24AA", isDefault = true, sortOrder = 2),
 		SermonCategory(name = "새벽예배", colorHex = "#795548", isDefault = true, sortOrder = 3),

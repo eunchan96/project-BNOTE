@@ -36,7 +36,7 @@ class SermonByBookFragment : Fragment() {
 
 		bookTitleText = view.findViewById(R.id.text_current_book)
 		chapterGridRecycler = view.findViewById(R.id.recycler_chapter_grid)
-		chapterGridRecycler.layoutManager = GridLayoutManager(requireContext(), 5)
+		chapterGridRecycler.layoutManager = GridLayoutManager(requireContext(), 7)
 
 		bookTitleText.setOnClickListener {
 			val picker = BookOnlyPickerBottomSheet()
@@ -132,11 +132,14 @@ class SermonByBookFragment : Fragment() {
 		recyclerView.visibility = View.VISIBLE
 		recyclerView.layoutManager = LinearLayoutManager(requireContext())
 
-		val labels = sermons.map { "${it.title}  (${it.preacher})" }
-		recyclerView.adapter = SimpleListAdapter(labels) { position ->
-			val detail = SermonDetailBottomSheet(sermons[position])
-			detail.onChanged = { loadChapterGrid() }
-			detail.show(parentFragmentManager, "sermon_detail")
+		lifecycleScope.launch {
+			val db = BibleDatabase.getInstance(requireContext().applicationContext)
+			val rows = SermonRowBuilder.build(db, sermons)
+			recyclerView.adapter = SermonRowAdapter(rows) { sermon ->
+				val detail = SermonDetailBottomSheet(sermon)
+				detail.onChanged = { loadChapterGrid() }
+				detail.show(parentFragmentManager, "sermon_detail")
+			}
 		}
 	}
 }

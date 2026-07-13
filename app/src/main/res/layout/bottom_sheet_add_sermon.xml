@@ -18,14 +18,36 @@
             android:orientation="vertical"
             android:padding="16dp">
 
-            <TextView
-                android:id="@+id/text_sheet_header"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="설교 기록 추가"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:paddingBottom="16dp" />
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingBottom="16dp">
+
+                <TextView
+                    android:id="@+id/text_sheet_header"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="설교 기록 추가"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_primary" />
+
+                <TextView
+                    android:id="@+id/btn_pick_date"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="날짜 선택"
+                    android:textSize="14sp"
+                    android:textColor="@color/brown_primary"
+                    android:paddingStart="4dp"
+                    android:paddingTop="8dp"
+                    android:paddingBottom="8dp"
+                    android:clickable="true"
+                    android:focusable="true" />
+            </LinearLayout>
 
             <EditText
                 android:id="@+id/edit_title"
@@ -36,65 +58,54 @@
                 android:layout_marginBottom="8dp"
                 android:background="@drawable/bg_book_button" />
 
-            <EditText
-                android:id="@+id/edit_preacher"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="설교자"
-                android:padding="12dp"
-                android:layout_marginBottom="8dp"
-                android:background="@drawable/bg_book_button" />
-
             <TextView
-                android:id="@+id/btn_pick_date"
+                android:id="@+id/btn_add_bible_ref"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:padding="12dp"
-                android:text="날짜 선택"
+                android:text="+ 성경 구절 추가"
                 android:background="@drawable/bg_book_button"
-                android:layout_marginBottom="12dp"
+                android:layout_marginBottom="8dp"
                 android:clickable="true"
                 android:focusable="true" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="카테고리"
-                android:textSize="14sp"
-                android:textColor="@color/text_secondary"
-                android:layout_marginBottom="8dp" />
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/recycler_categories"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginBottom="16dp" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="관련 성경 구절"
-                android:textSize="14sp"
-                android:textColor="@color/text_secondary"
-                android:layout_marginBottom="8dp" />
 
             <com.google.android.flexbox.FlexboxLayout
                 android:id="@+id/flexbox_bible_refs"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
                 app:flexWrap="wrap" />
 
-            <TextView
-                android:id="@+id/btn_add_bible_ref"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="+ 구절 추가"
-                android:textColor="@color/brown_primary"
-                android:padding="8dp"
-                android:layout_marginBottom="16dp"
-                android:clickable="true"
-                android:focusable="true" />
+                android:orientation="horizontal"
+                android:layout_marginBottom="12dp">
+
+                <TextView
+                    android:id="@+id/btn_pick_preacher"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="4dp"
+                    android:padding="12dp"
+                    android:text="설교자 선택"
+                    android:background="@drawable/bg_book_button"
+                    android:clickable="true"
+                    android:focusable="true" />
+
+                <TextView
+                    android:id="@+id/btn_pick_category"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="4dp"
+                    android:padding="12dp"
+                    android:text="카테고리 선택"
+                    android:background="@drawable/bg_book_button"
+                    android:clickable="true"
+                    android:focusable="true" />
+            </LinearLayout>
 
             <EditText
                 android:id="@+id/edit_memo"

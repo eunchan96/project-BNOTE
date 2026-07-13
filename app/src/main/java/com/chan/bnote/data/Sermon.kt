@@ -8,9 +8,9 @@ data class Sermon(
 	@PrimaryKey(autoGenerate = true)
 	val id: Long = 0,
 	val title: String,
-	val preacher: String,
+	val preacherId: Long?,
 	val sermonDate: Long,
-	val categoryId: Long?,   // SermonCategory 참조 (nullable: 카테고리 미지정 허용)
+	val categoryId: Long?,
 	val memo: String = "",
 	val createdAt: Long = System.currentTimeMillis()
 )

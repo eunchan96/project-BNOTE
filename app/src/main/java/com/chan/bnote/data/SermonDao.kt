@@ -27,11 +27,8 @@ interface SermonDao {
 	@Query("SELECT DISTINCT sermonDate FROM sermons")
 	suspend fun getAllSermonDates(): List<Long>
 
-	@Query("SELECT * FROM sermons WHERE preacher = :preacher")
-	suspend fun getByPreacher(preacher: String): List<Sermon>
-
-	@Query("SELECT DISTINCT preacher FROM sermons ORDER BY preacher")
-	suspend fun getAllPreachers(): List<String>
+	@Query("SELECT * FROM sermons WHERE preacherId = :preacherId ORDER BY sermonDate DESC")
+	suspend fun getByPreacherId(preacherId: Long): List<Sermon>
 
 	@Query(
 		"""
@@ -44,37 +41,38 @@ interface SermonDao {
 
 	@Query(
 		"""
-    SELECT s.sermonDate as sermonDate, c.colorHex as colorHex
-    FROM sermons s
-    LEFT JOIN sermon_categories c ON s.categoryId = c.id
-    WHERE s.sermonDate >= :startMillis AND s.sermonDate < :endMillis
-    ORDER BY s.sermonDate, s.createdAt
-    """
+        SELECT * FROM sermons 
+        WHERE id IN (
+            SELECT sermonId FROM sermon_bible_refs 
+            WHERE startBookId = :bookId AND startChapter <= :chapter AND endChapter >= :chapter
+        )
+        ORDER BY sermonDate DESC
+        """
 	)
-	suspend fun getSermonMarkersInRange(startMillis: Long, endMillis: Long): List<SermonMarker>
+	suspend fun getByBookChapter(bookId: Int, chapter: Int): List<Sermon>
 
 	@Query(
 		"""
-    SELECT r.startChapter as startChapter, r.endChapter as endChapter, c.colorHex as colorHex
-    FROM sermon_bible_refs r
-    JOIN sermons s ON s.id = r.sermonId
-    LEFT JOIN sermon_categories c ON c.id = s.categoryId
-    WHERE r.startBookId = :bookId
-    """
+        SELECT r.startChapter as startChapter, r.endChapter as endChapter, c.colorHex as colorHex
+        FROM sermon_bible_refs r
+        JOIN sermons s ON s.id = r.sermonId
+        LEFT JOIN sermon_categories c ON c.id = s.categoryId
+        WHERE r.startBookId = :bookId
+        """
 	)
 	suspend fun getChapterMarkersForBook(bookId: Int): List<ChapterMarker>
 
 	@Query(
 		"""
-    SELECT DISTINCT s.* FROM sermons s
-    INNER JOIN sermon_bible_refs r ON r.sermonId = s.id
-    WHERE r.startBookId = :bookId AND r.startChapter <= :chapter AND r.endChapter >= :chapter
-    ORDER BY s.sermonDate DESC
-    """
+        SELECT s.sermonDate as sermonDate, c.colorHex as colorHex
+        FROM sermons s
+        LEFT JOIN sermon_categories c ON s.categoryId = c.id
+        WHERE s.sermonDate >= :startMillis AND s.sermonDate < :endMillis
+        ORDER BY s.sermonDate, s.createdAt
+        """
 	)
-	suspend fun getByBookChapter(bookId: Int, chapter: Int): List<Sermon>
+	suspend fun getSermonMarkersInRange(startMillis: Long, endMillis: Long): List<SermonMarker>
 }
 
 data class SermonMarker(val sermonDate: Long, val colorHex: String?)
-
 data class ChapterMarker(val startChapter: Int, val endChapter: Int, val colorHex: String?)

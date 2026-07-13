@@ -13,9 +13,10 @@ import kotlinx.coroutines.launch
 		BibleVerse::class, BibleBookmark::class, ReadingProgress::class,
 		Sermon::class, SermonCategory::class, SermonBibleRef::class,
 		VerseOfYear::class, ScrapGroup::class, Scrap::class,
-		PartialHighlight::class, VerseMemo::class, WordMemo::class // 추가
+		PartialHighlight::class, VerseMemo::class, WordMemo::class,
+		Preacher::class // 추가
 	],
-	version = 10, // 9 -> 10
+	version = 11, // 10 -> 11
 	exportSchema = false
 )
 abstract class BibleDatabase : RoomDatabase() {
@@ -30,6 +31,7 @@ abstract class BibleDatabase : RoomDatabase() {
 	abstract fun partialHighlightDao(): PartialHighlightDao
 	abstract fun verseMemoDao(): VerseMemoDao
 	abstract fun wordMemoDao(): WordMemoDao
+	abstract fun preacherDao(): PreacherDao
 
 	companion object {
 		@Volatile

@@ -3,92 +3,99 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <ScrollView
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:orientation="vertical">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center">
-
-                <TextView
-                    android:id="@+id/btn_book_prev"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="◀"
-                    android:padding="16dp"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:background="?attr/selectableItemBackgroundBorderless" />
-
-                <TextView
-                    android:id="@+id/text_current_book"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:padding="16dp"
-                    android:text="창세기"
-                    android:textSize="17sp"
-                    android:textStyle="bold"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:background="?attr/selectableItemBackground"
-                    android:textColor="@color/text_primary" />
-
-                <TextView
-                    android:id="@+id/btn_book_next"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="▶"
-                    android:padding="16dp"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:background="?attr/selectableItemBackgroundBorderless" />
-            </LinearLayout>
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/recycler_chapter_grid"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:nestedScrollingEnabled="false" />
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:layout_marginTop="8dp"
-                android:background="@color/divider_light" />
+            android:orientation="horizontal"
+            android:gravity="center">
 
             <TextView
-                android:id="@+id/text_selected_chapter_label"
-                android:layout_width="match_parent"
+                android:id="@+id/btn_book_prev"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="◀"
+                android:padding="16dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackgroundBorderless" />
+
+            <TextView
+                android:id="@+id/text_current_book"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:padding="16dp"
-                android:textSize="14sp"
-                android:textColor="@color/text_primary" />
+                android:text="창세기"
+                android:textSize="17sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackground" />
+
+            <TextView
+                android:id="@+id/btn_book_next"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="▶"
+                android:padding="16dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackgroundBorderless" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/divider_light" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recycler_chapter_grid"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:padding="4dp" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/divider_light" />
+
+        <TextView
+            android:id="@+id/text_selected_chapter_label"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="12dp"
+            android:textSize="14sp"
+            android:textColor="@color/text_secondary" />
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="180dp">
 
             <TextView
                 android:id="@+id/text_empty_by_chapter"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_gravity="center"
                 android:padding="24dp"
                 android:gravity="center"
                 android:text="등록된 설교가 없어요"
-                android:textColor="@color/text_hint" />
+                android:textColor="@color/text_hint"
+                android:visibility="gone" />
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recycler_sermons_by_chapter"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:nestedScrollingEnabled="false"
+                android:layout_height="match_parent"
                 android:visibility="gone" />
-        </LinearLayout>
-    </ScrollView>
+        </FrameLayout>
+
+    </LinearLayout>
 
     <TextView
         android:id="@+id/fab_add_sermon_by_book"

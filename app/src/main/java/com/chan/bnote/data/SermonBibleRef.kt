@@ -24,4 +24,17 @@ data class SermonBibleRef(
 			"$bookAbbr$startChapter:$startVerse~${endChapter}:$endVerse"
 		}
 	}
+
+	fun toDisplayLabel(): String {
+		val bookName = BibleBooks.nameOf(startBookId)
+		return if (startChapter == endChapter) {
+			if (startVerse == endVerse) {
+				"$bookName ${startChapter}장 ${startVerse}절"
+			} else {
+				"$bookName ${startChapter}장 ${startVerse}~${endVerse}절"
+			}
+		} else {
+			"$bookName ${startChapter}장 ${startVerse}절~${endChapter}장 ${endVerse}절"
+		}
+	}
 }

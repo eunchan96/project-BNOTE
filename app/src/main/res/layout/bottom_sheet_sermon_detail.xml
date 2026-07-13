@@ -80,31 +80,28 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
+                android:gravity="end"
                 android:layout_marginTop="24dp">
 
-                <TextView
+                <ImageView
                     android:id="@+id/btn_edit_sermon"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginEnd="8dp"
-                    android:padding="12dp"
-                    android:gravity="center"
-                    android:text="수정"
-                    android:background="@drawable/bg_book_button"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:padding="10dp"
+                    android:src="@drawable/ic_edit"
+                    android:contentDescription="수정"
+                    android:background="?attr/selectableItemBackgroundBorderless"
                     android:clickable="true"
                     android:focusable="true" />
 
-                <TextView
+                <ImageView
                     android:id="@+id/btn_delete_sermon"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:padding="12dp"
-                    android:gravity="center"
-                    android:text="삭제"
-                    android:textColor="#E53935"
-                    android:background="@drawable/bg_book_button"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:padding="10dp"
+                    android:src="@drawable/ic_delete"
+                    android:contentDescription="삭제"
+                    android:background="?attr/selectableItemBackgroundBorderless"
                     android:clickable="true"
                     android:focusable="true" />
             </LinearLayout>

@@ -97,15 +97,15 @@ object AppSettings {
 			.edit().putString(KEY_PREACHER_SORT_MODE, mode).apply()
 	}
 
-	fun getPreacherCustomOrder(context: Context): List<String> {
+	fun getPreacherCustomOrderIds(context: Context): List<Long> {
 		val raw = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
 			.getString(KEY_PREACHER_CUSTOM_ORDER, "") ?: ""
-		return if (raw.isBlank()) emptyList() else raw.split(",")
+		return if (raw.isBlank()) emptyList() else raw.split(",").mapNotNull { it.toLongOrNull() }
 	}
 
-	fun setPreacherCustomOrder(context: Context, order: List<String>) {
+	fun setPreacherCustomOrderIds(context: Context, ids: List<Long>) {
 		context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
-			.edit().putString(KEY_PREACHER_CUSTOM_ORDER, order.joinToString(",")).apply()
+			.edit().putString(KEY_PREACHER_CUSTOM_ORDER, ids.joinToString(",")).apply()
 	}
 
 	fun getSermonSortMode(context: Context): String {
