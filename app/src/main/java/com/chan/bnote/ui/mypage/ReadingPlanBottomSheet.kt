@@ -78,8 +78,9 @@ class ReadingPlanBottomSheet : DraggableBottomSheet() {
 					readCount >= maxChapter -> R.drawable.bg_book_progress_done
 					else -> R.drawable.bg_book_progress_partial
 				}
-				val textColor =
-					if (readCount >= maxChapter && readCount > 0) "#FFFFFF" else "#333333"
+				val textColorRes =
+					if (readCount >= maxChapter && readCount > 0) R.color.white else R.color.book_progress_none_text
+				val textColor = ContextCompat.getColor(requireContext(), textColorRes)
 
 				val container = LinearLayout(requireContext()).apply {
 					orientation = LinearLayout.VERTICAL
@@ -102,13 +103,13 @@ class ReadingPlanBottomSheet : DraggableBottomSheet() {
 					textSize = 13f
 					maxLines = 2
 					gravity = Gravity.CENTER
-					setTextColor(android.graphics.Color.parseColor(textColor))
+					setTextColor(textColor)
 				}
 				val countView = TextView(requireContext()).apply {
 					text = "$readCount/$maxChapter"
 					textSize = 10f
 					gravity = Gravity.CENTER
-					setTextColor(android.graphics.Color.parseColor(textColor))
+					setTextColor(textColor)
 					alpha = 0.8f
 				}
 
