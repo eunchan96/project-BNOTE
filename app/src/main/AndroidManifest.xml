@@ -21,10 +21,10 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".ScrapActivity"
+            android:name=".ui.scrap.ScrapActivity"
             android:exported="false" />
         <activity
-            android:name=".ScrapGroupManageActivity"
+            android:name=".ui.scrap.ScrapGroupManageActivity"
             android:exported="false" />
     </application>
 

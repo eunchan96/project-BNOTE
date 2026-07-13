@@ -3,6 +3,9 @@ package com.chan.bnote.data
 import android.content.Context
 
 object AppSettings {
+	private const val KEY_PRIMARY_TRANSLATION = "primary_translation"
+	private const val KEY_SECONDARY_TRANSLATION = "secondary_translation" // 없으면 빈 문자열
+
 	private const val PREF_NAME = "bnote_settings"
 	private const val KEY_FONT_SIZE = "font_size_sp"
 	private const val KEY_DARK_MODE = "dark_mode"
@@ -21,6 +24,27 @@ object AppSettings {
 	private const val KEY_KEEP_SCREEN_ON = "keep_screen_on"
 	private const val KEY_COPY_INCLUDE_SECONDARY = "copy_include_secondary"
 	private const val KEY_COPY_REFERENCE_STYLE = "copy_reference_style" // NONE | SHORT | LONG
+
+	fun getPrimaryTranslation(context: Context): String {
+		return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.getString(KEY_PRIMARY_TRANSLATION, "GAEYEOK") ?: "GAEYEOK"
+	}
+
+	fun setPrimaryTranslation(context: Context, code: String) {
+		context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.edit().putString(KEY_PRIMARY_TRANSLATION, code).apply()
+	}
+
+	fun getSecondaryTranslation(context: Context): String? {
+		val value = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.getString(KEY_SECONDARY_TRANSLATION, "") ?: ""
+		return value.ifBlank { null }
+	}
+
+	fun setSecondaryTranslation(context: Context, code: String?) {
+		context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.edit().putString(KEY_SECONDARY_TRANSLATION, code ?: "").apply()
+	}
 
 	fun getFontSize(context: Context): Int {
 		val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
@@ -73,15 +97,15 @@ object AppSettings {
 			.edit().putString(KEY_PREACHER_SORT_MODE, mode).apply()
 	}
 
-	fun getPreacherCustomOrder(context: Context): List<String> {
+	fun getPreacherCustomOrderIds(context: Context): List<Long> {
 		val raw = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
 			.getString(KEY_PREACHER_CUSTOM_ORDER, "") ?: ""
-		return if (raw.isBlank()) emptyList() else raw.split(",")
+		return if (raw.isBlank()) emptyList() else raw.split(",").mapNotNull { it.toLongOrNull() }
 	}
 
-	fun setPreacherCustomOrder(context: Context, order: List<String>) {
+	fun setPreacherCustomOrderIds(context: Context, ids: List<Long>) {
 		context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
-			.edit().putString(KEY_PREACHER_CUSTOM_ORDER, order.joinToString(",")).apply()
+			.edit().putString(KEY_PREACHER_CUSTOM_ORDER, ids.joinToString(",")).apply()
 	}
 
 	fun getSermonSortMode(context: Context): String {
