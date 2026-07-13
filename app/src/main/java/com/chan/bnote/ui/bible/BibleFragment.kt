@@ -27,6 +27,10 @@ import com.chan.bnote.data.scrap.Scrap
 import com.chan.bnote.ui.TopBarActionHandler
 import com.chan.bnote.ui.TopBarConfig
 import com.chan.bnote.ui.TopBarConfigListener
+import com.chan.bnote.ui.appendix.AppendixTextBottomSheet
+import com.chan.bnote.ui.appendix.AppendixTextType
+import com.chan.bnote.ui.appendix.ResponsiveReadingListBottomSheet
+import com.chan.bnote.ui.appendix.TenCommandmentsBottomSheet
 import com.chan.bnote.ui.common.ColorPickerBottomSheet
 import com.chan.bnote.ui.common.HighlightColors
 import com.chan.bnote.ui.scrap.ScrapActivity
@@ -237,8 +241,19 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 			)
 		}
 		dialog.onAppendixItemSelected = { itemName ->
-			// TODO: 번역본/버전 정해지면 실제 본문 화면 연결
-			Toast.makeText(requireContext(), "$itemName (본문 준비 중)", Toast.LENGTH_SHORT).show()
+			when (itemName) {
+				"주기도문" -> AppendixTextBottomSheet(AppendixTextType.LORDS_PRAYER)
+					.show(parentFragmentManager, "appendix_lords_prayer")
+
+				"사도신경" -> AppendixTextBottomSheet(AppendixTextType.APOSTLES_CREED)
+					.show(parentFragmentManager, "appendix_apostles_creed")
+
+				"십계명" -> TenCommandmentsBottomSheet()
+					.show(parentFragmentManager, "appendix_ten_commandments")
+
+				"교독문" -> ResponsiveReadingListBottomSheet()
+					.show(parentFragmentManager, "appendix_responsive_readings")
+			}
 		}
 		dialog.onReadingPlanToggled = { enabled ->
 			isReadingPlanEnabled = enabled
