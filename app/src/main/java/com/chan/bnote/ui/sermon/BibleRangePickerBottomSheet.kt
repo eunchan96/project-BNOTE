@@ -108,7 +108,7 @@ class BibleRangePickerBottomSheet : DraggableBottomSheet() {
 
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(requireContext().applicationContext)
-			var chapters = db.bibleDao().getChapters("GAEYEOK", bookId)
+			var chapters = db.bibleDao().getChapters("NKRV", bookId)
 			if (!isStart) chapters = chapters.filter { it >= startChapter } // 끝 장은 시작 장 이상만
 
 			recyclerView.adapter = GridNumberAdapter(chapters) { position ->
@@ -135,7 +135,7 @@ class BibleRangePickerBottomSheet : DraggableBottomSheet() {
 
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(requireContext().applicationContext)
-			var verses = db.bibleDao().getVerses("GAEYEOK", bookId, chapter).map { it.verse }
+			var verses = db.bibleDao().getVerses("NKRV", bookId, chapter).map { it.verse }
 			if (!isStart && endChapter == startChapter) {
 				verses = verses.filter { it >= startVerse } // 같은 장이면 끝 절은 시작 절 이상만
 			}

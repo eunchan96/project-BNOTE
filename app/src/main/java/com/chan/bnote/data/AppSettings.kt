@@ -27,7 +27,7 @@ object AppSettings {
 
 	fun getPrimaryTranslation(context: Context): String {
 		return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
-			.getString(KEY_PRIMARY_TRANSLATION, "GAEYEOK") ?: "GAEYEOK"
+			.getString(KEY_PRIMARY_TRANSLATION, "NKRV") ?: "NKRV"
 	}
 
 	fun setPrimaryTranslation(context: Context, code: String) {

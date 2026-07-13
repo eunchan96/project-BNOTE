@@ -54,7 +54,7 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 
 	private var currentBookId = 1
 	private var currentChapter = 1
-	private var primaryTranslation: Translation = Translation.GAEYEOK
+	private var primaryTranslation: Translation = Translation.NKRV
 	private var secondaryTranslation: Translation? = null
 	private var currentFontSize: Int = 16
 	private var scrollSpeed = 3
@@ -113,7 +113,7 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 
 		val savedPrimaryCode = AppSettings.getPrimaryTranslation(requireContext())
 		primaryTranslation =
-			Translation.values().firstOrNull { it.code == savedPrimaryCode } ?: Translation.GAEYEOK
+			Translation.values().firstOrNull { it.code == savedPrimaryCode } ?: Translation.NKRV
 
 		val savedSecondaryCode = AppSettings.getSecondaryTranslation(requireContext())
 		secondaryTranslation = Translation.values().firstOrNull { it.code == savedSecondaryCode }

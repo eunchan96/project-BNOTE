@@ -40,7 +40,7 @@ class ReadingPlanChapterBottomSheet(
 
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(requireContext().applicationContext)
-			val maxChapter = db.bibleDao().getMaxChapter("GAEYEOK", bookId)
+			val maxChapter = db.bibleDao().getMaxChapter("NKRV", bookId)
 			val readChapters = db.readingProgressDao().getAll()
 				.filter { it.bookId == bookId }
 				.map { it.chapter }

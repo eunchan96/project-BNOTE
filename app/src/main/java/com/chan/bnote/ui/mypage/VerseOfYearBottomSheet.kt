@@ -47,14 +47,14 @@ class VerseOfYearBottomSheet : DraggableBottomSheet() {
 		noteEdit = view.findViewById(R.id.edit_verse_note)
 
 		view.findViewById<LinearLayout>(R.id.container_current_verse).setOnClickListener {
-			val picker = BookChapterPickerBottomSheet("GAEYEOK")
+			val picker = BookChapterPickerBottomSheet("NKRV")
 			picker.onVerseSelected = { bookId, chapter, verse ->
 				selectedBookId = bookId
 				selectedChapter = chapter
 				selectedVerse = verse
 				lifecycleScope.launch {
 					val db = BibleDatabase.getInstance(requireContext().applicationContext)
-					val verseData = db.bibleDao().getVerses("GAEYEOK", bookId, chapter)
+					val verseData = db.bibleDao().getVerses("NKRV", bookId, chapter)
 						.firstOrNull { it.verse == verse }
 					selectedVerseText = verseData?.text ?: ""
 					verseContentText.text = selectedVerseText
