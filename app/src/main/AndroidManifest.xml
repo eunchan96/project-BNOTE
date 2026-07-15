@@ -26,6 +26,18 @@
         <activity
             android:name=".ui.scrap.ScrapGroupManageActivity"
             android:exported="false" />
+        <activity
+            android:name=".ui.appendix.AppendixTextActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.appendix.TenCommandmentsActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.appendix.ResponsiveReadingListActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.appendix.ResponsiveReadingDetailActivity"
+            android:exported="false" />
     </application>
 
 </manifest>

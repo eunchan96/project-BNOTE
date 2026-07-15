@@ -1,5 +1,6 @@
 package com.chan.bnote.ui.bible
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -27,10 +28,10 @@ import com.chan.bnote.data.scrap.Scrap
 import com.chan.bnote.ui.TopBarActionHandler
 import com.chan.bnote.ui.TopBarConfig
 import com.chan.bnote.ui.TopBarConfigListener
-import com.chan.bnote.ui.appendix.AppendixTextBottomSheet
+import com.chan.bnote.ui.appendix.AppendixTextActivity
 import com.chan.bnote.ui.appendix.AppendixTextType
-import com.chan.bnote.ui.appendix.ResponsiveReadingListBottomSheet
-import com.chan.bnote.ui.appendix.TenCommandmentsBottomSheet
+import com.chan.bnote.ui.appendix.ResponsiveReadingListActivity
+import com.chan.bnote.ui.appendix.TenCommandmentsActivity
 import com.chan.bnote.ui.common.ColorPickerBottomSheet
 import com.chan.bnote.ui.common.HighlightColors
 import com.chan.bnote.ui.scrap.ScrapActivity
@@ -242,17 +243,29 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		}
 		dialog.onAppendixItemSelected = { itemName ->
 			when (itemName) {
-				"주기도문" -> AppendixTextBottomSheet(AppendixTextType.LORDS_PRAYER)
-					.show(parentFragmentManager, "appendix_lords_prayer")
+				"주기도문" -> AppendixTextActivity.start(
+					requireContext(),
+					AppendixTextType.LORDS_PRAYER
+				)
 
-				"사도신경" -> AppendixTextBottomSheet(AppendixTextType.APOSTLES_CREED)
-					.show(parentFragmentManager, "appendix_apostles_creed")
+				"사도신경" -> AppendixTextActivity.start(
+					requireContext(),
+					AppendixTextType.APOSTLES_CREED
+				)
 
-				"십계명" -> TenCommandmentsBottomSheet()
-					.show(parentFragmentManager, "appendix_ten_commandments")
+				"십계명" -> startActivity(
+					Intent(
+						requireContext(),
+						TenCommandmentsActivity::class.java
+					)
+				)
 
-				"교독문" -> ResponsiveReadingListBottomSheet()
-					.show(parentFragmentManager, "appendix_responsive_readings")
+				"교독문" -> startActivity(
+					Intent(
+						requireContext(),
+						ResponsiveReadingListActivity::class.java
+					)
+				)
 			}
 		}
 		dialog.onReadingPlanToggled = { enabled ->
