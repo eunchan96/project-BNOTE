@@ -17,6 +17,11 @@ import com.chan.bnote.data.appendix.AppendixLoader
 import com.chan.bnote.data.appendix.TextVersion
 import com.chan.bnote.data.appendix.VersionedTextContent
 
+enum class AppendixTextType {
+	LORDS_PRAYER,
+	APOSTLES_CREED
+}
+
 class AppendixTextActivity : AppCompatActivity() {
 
 	companion object {
