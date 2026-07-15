@@ -1,5 +1,6 @@
 package com.chan.bnote.ui.sermon
 
+import android.app.Activity
 import android.app.AlertDialog
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -9,6 +10,7 @@ import android.widget.EditText
 import android.widget.ImageView
 import android.widget.PopupMenu
 import android.widget.TextView
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.ItemTouchHelper
@@ -28,6 +30,15 @@ class SermonByPreacherFragment : Fragment() {
 	private lateinit var preacherRecycler: RecyclerView
 	private lateinit var sermonRecycler: RecyclerView
 	private lateinit var btnPreacherSort: TextView
+
+	private val addSermonLauncher = registerForActivityResult(
+		ActivityResultContracts.StartActivityForResult()
+	) { result ->
+		if (result.resultCode == Activity.RESULT_OK) {
+			loadPreachers()
+			selectedPreacher?.let { loadSermonsForPreacher(it) }
+		}
+	}
 	private lateinit var btnSermonSort: TextView
 	private lateinit var selectedPreacherText: TextView
 
@@ -78,12 +89,7 @@ class SermonByPreacherFragment : Fragment() {
 		}
 
 		view.findViewById<TextView>(R.id.fab_add_sermon_by_preacher).setOnClickListener {
-			val sheet = AddSermonBottomSheet()
-			sheet.onSaved = {
-				loadPreachers()
-				selectedPreacher?.let { loadSermonsForPreacher(it) }
-			}
-			sheet.show(parentFragmentManager, "add_sermon")
+			addSermonLauncher.launch(AddSermonActivity.createIntent(requireContext()))
 		}
 
 		loadPreachers()

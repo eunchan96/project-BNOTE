@@ -1,10 +1,12 @@
 package com.chan.bnote.ui.sermon.bybook
 
+import android.app.Activity
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
@@ -16,7 +18,7 @@ import com.chan.bnote.data.bible.BibleBooks
 import com.chan.bnote.data.sermon.ChapterMarker
 import com.chan.bnote.data.sermon.Sermon
 import com.chan.bnote.ui.bible.BookOnlyPickerBottomSheet
-import com.chan.bnote.ui.sermon.AddSermonBottomSheet
+import com.chan.bnote.ui.sermon.AddSermonActivity
 import com.chan.bnote.ui.sermon.SermonDetailBottomSheet
 import com.chan.bnote.ui.sermon.SermonRowAdapter
 import com.chan.bnote.ui.sermon.SermonRowBuilder
@@ -26,6 +28,15 @@ class SermonByBookFragment : Fragment() {
 
 	private lateinit var bookTitleText: TextView
 	private lateinit var chapterGridRecycler: RecyclerView
+
+	private val addSermonLauncher = registerForActivityResult(
+		ActivityResultContracts.StartActivityForResult()
+	) { result ->
+		if (result.resultCode == Activity.RESULT_OK) {
+			loadChapterGrid()
+			loadSermonsForSelectedChapter()
+		}
+	}
 
 	private var currentBookId = 1
 	private var selectedChapter = 1
@@ -69,9 +80,7 @@ class SermonByBookFragment : Fragment() {
 		}
 
 		view.findViewById<TextView>(R.id.fab_add_sermon_by_book).setOnClickListener {
-			val sheet = AddSermonBottomSheet()
-			sheet.onSaved = { loadChapterGrid(); loadSermonsForSelectedChapter() }
-			sheet.show(parentFragmentManager, "add_sermon")
+			addSermonLauncher.launch(AddSermonActivity.createIntent(requireContext()))
 		}
 
 		loadChapterGrid()
@@ -82,7 +91,7 @@ class SermonByBookFragment : Fragment() {
 
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(requireContext().applicationContext)
-			val maxChapter = db.bibleDao().getMaxChapter("NKRV", currentBookId)
+			val maxChapter = db.bibleDao().getMaxChapter("GAEYEOK", currentBookId)
 			val markers = db.sermonDao().getChapterMarkersForBook(currentBookId)
 
 			val colorsByChapter = buildColorsByChapter(markers)

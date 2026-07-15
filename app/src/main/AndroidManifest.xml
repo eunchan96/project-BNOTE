@@ -38,6 +38,13 @@
         <activity
             android:name=".ui.appendix.ResponsiveReadingDetailActivity"
             android:exported="false" />
+        <activity
+            android:name=".ui.sermon.AddSermonActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.bible.MemoEditorActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
     </application>
 
 </manifest>

@@ -1,5 +1,6 @@
 package com.chan.bnote.ui.bible
 
+import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -7,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -72,6 +74,101 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 
 	private val selectedVerses = mutableSetOf<Int>()
 	private lateinit var selectionToolbar: View
+
+	// 절 메모 편집 결과를 받기 위한 대기 상태
+	private var pendingVerseMemoVerseNum: Int = 0
+
+	private val verseMemoEditorLauncher = registerForActivityResult(
+		ActivityResultContracts.StartActivityForResult()
+	) { result ->
+		if (result.resultCode == Activity.RESULT_OK) {
+			val data = result.data
+			val verseNum = pendingVerseMemoVerseNum
+			when (data?.getStringExtra(MemoEditorActivity.EXTRA_RESULT_ACTION)) {
+				MemoEditorActivity.ACTION_SAVE -> {
+					val text = data.getStringExtra(MemoEditorActivity.EXTRA_RESULT_TEXT)
+					if (text != null) {
+						lifecycleScope.launch {
+							val db = BibleDatabase.getInstance(requireContext().applicationContext)
+							db.verseMemoDao().upsert(
+								VerseMemo(
+									bookId = currentBookId,
+									chapter = currentChapter,
+									verse = verseNum,
+									text = text
+								)
+							)
+							refreshMemos()
+						}
+					}
+				}
+
+				MemoEditorActivity.ACTION_DELETE -> {
+					lifecycleScope.launch {
+						val db = BibleDatabase.getInstance(requireContext().applicationContext)
+						db.verseMemoDao().delete(currentBookId, currentChapter, verseNum)
+						refreshMemos()
+					}
+				}
+			}
+		}
+	}
+
+	// 단어 메모 편집 결과를 받기 위한 대기 상태
+	private var pendingWordMemoVerseNum: Int = 0
+	private var pendingWordMemoStart: Int = 0
+	private var pendingWordMemoEnd: Int = 0
+	private var pendingWordMemoExisting: WordMemo? = null
+
+	private val wordMemoEditorLauncher = registerForActivityResult(
+		ActivityResultContracts.StartActivityForResult()
+	) { result ->
+		if (result.resultCode == Activity.RESULT_OK) {
+			val data = result.data
+			val existing = pendingWordMemoExisting
+			when (data?.getStringExtra(MemoEditorActivity.EXTRA_RESULT_ACTION)) {
+				MemoEditorActivity.ACTION_SAVE -> {
+					val text = data.getStringExtra(MemoEditorActivity.EXTRA_RESULT_TEXT)
+					if (text != null) {
+						lifecycleScope.launch {
+							val db = BibleDatabase.getInstance(requireContext().applicationContext)
+							if (existing != null) {
+								db.wordMemoDao().update(
+									existing.copy(
+										text = text,
+										updatedAt = System.currentTimeMillis()
+									)
+								)
+							} else {
+								db.wordMemoDao().insert(
+									WordMemo(
+										translation = primaryTranslation.code,
+										bookId = currentBookId,
+										chapter = currentChapter,
+										verse = pendingWordMemoVerseNum,
+										startOffset = pendingWordMemoStart,
+										endOffset = pendingWordMemoEnd,
+										text = text
+									)
+								)
+							}
+							refreshMemos()
+						}
+					}
+				}
+
+				MemoEditorActivity.ACTION_DELETE -> {
+					if (existing != null) {
+						lifecycleScope.launch {
+							val db = BibleDatabase.getInstance(requireContext().applicationContext)
+							db.wordMemoDao().delete(existing)
+							refreshMemos()
+						}
+					}
+				}
+			}
+		}
+	}
 
 	private var currentVerses: List<BibleVerse> = emptyList()
 	private var currentSecondaryMap: Map<Int, String>? = null
@@ -738,34 +835,16 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 
 	private fun showVerseMemoEditDialog(verseNum: Int, existing: VerseMemo?) {
 		val verseText = currentVerses.firstOrNull { it.verse == verseNum }?.text
-		val sheet = MemoEditorBottomSheet(
-			titleText = "${BibleBooks.nameOf(currentBookId)} ${currentChapter}:${verseNum} 메모",
-			previewText = verseText,
-			initialText = existing?.text ?: "",
-			isExisting = existing != null,
-			onSave = { text ->
-				lifecycleScope.launch {
-					val db = BibleDatabase.getInstance(requireContext().applicationContext)
-					db.verseMemoDao().upsert(
-						VerseMemo(
-							bookId = currentBookId,
-							chapter = currentChapter,
-							verse = verseNum,
-							text = text
-						)
-					)
-					refreshMemos()
-				}
-			},
-			onDelete = {
-				lifecycleScope.launch {
-					val db = BibleDatabase.getInstance(requireContext().applicationContext)
-					db.verseMemoDao().delete(currentBookId, currentChapter, verseNum)
-					refreshMemos()
-				}
-			}
+		pendingVerseMemoVerseNum = verseNum
+		verseMemoEditorLauncher.launch(
+			MemoEditorActivity.createIntent(
+				context = requireContext(),
+				titleText = "${BibleBooks.nameOf(currentBookId)} ${currentChapter}:${verseNum} 메모",
+				previewText = verseText,
+				initialText = existing?.text ?: "",
+				isExisting = existing != null
+			)
 		)
-		sheet.show(parentFragmentManager, "verse_memo_editor")
 	}
 
 	private fun showVerseMemoDialog(verseNum: Int, memo: VerseMemo) {
@@ -783,44 +862,20 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		val safeEnd = end.coerceIn(safeStart, verseText.length)
 		val selectedFragment = verseText.substring(safeStart, safeEnd)
 
-		val sheet = MemoEditorBottomSheet(
-			titleText = "단어 메모",
-			previewText = "\"$selectedFragment\"",
-			initialText = existing?.text ?: "",
-			isExisting = existing != null,
-			onSave = { text ->
-				lifecycleScope.launch {
-					val db = BibleDatabase.getInstance(requireContext().applicationContext)
-					if (existing != null) {
-						db.wordMemoDao().update(
-							existing.copy(
-								text = text,
-								updatedAt = System.currentTimeMillis()
-							)
-						)
-					} else {
-						db.wordMemoDao().insert(
-							WordMemo(
-								translation = primaryTranslation.code,
-								bookId = currentBookId, chapter = currentChapter, verse = verseNum,
-								startOffset = start, endOffset = end, text = text
-							)
-						)
-					}
-					refreshMemos()
-				}
-			},
-			onDelete = if (existing != null) {
-				{
-					lifecycleScope.launch {
-						val db = BibleDatabase.getInstance(requireContext().applicationContext)
-						db.wordMemoDao().delete(existing)
-						refreshMemos()
-					}
-				}
-			} else null
+		pendingWordMemoVerseNum = verseNum
+		pendingWordMemoStart = start
+		pendingWordMemoEnd = end
+		pendingWordMemoExisting = existing
+
+		wordMemoEditorLauncher.launch(
+			MemoEditorActivity.createIntent(
+				context = requireContext(),
+				titleText = "단어 메모",
+				previewText = "\"$selectedFragment\"",
+				initialText = existing?.text ?: "",
+				isExisting = existing != null
+			)
 		)
-		sheet.show(parentFragmentManager, "word_memo_editor")
 	}
 
 	private fun showWordMemoViewDialog(verseNum: Int, memo: WordMemo) {

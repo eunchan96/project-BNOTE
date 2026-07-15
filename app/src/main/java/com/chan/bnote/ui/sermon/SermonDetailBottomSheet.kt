@@ -1,5 +1,6 @@
 package com.chan.bnote.ui.sermon
 
+import android.app.Activity
 import android.app.AlertDialog
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
@@ -9,13 +10,14 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.lifecycleScope
 import com.chan.bnote.R
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.DateUtils
 import com.chan.bnote.data.sermon.Sermon
-import com.chan.bnote.ui.bible.CitationBubbleHelper
 import com.chan.bnote.ui.DraggableBottomSheet
+import com.chan.bnote.ui.bible.CitationBubbleHelper
 import kotlinx.coroutines.launch
 
 class SermonDetailBottomSheet(private val sermon: Sermon) : DraggableBottomSheet() {
@@ -23,6 +25,14 @@ class SermonDetailBottomSheet(private val sermon: Sermon) : DraggableBottomSheet
 	override val peekHeightRatio = 0.6f
 
 	var onChanged: (() -> Unit)? = null // 수정/삭제 후 목록 갱신용
+
+	private val editSermonLauncher = registerForActivityResult(
+		ActivityResultContracts.StartActivityForResult()
+	) { result ->
+		if (result.resultCode == Activity.RESULT_OK) {
+			onChanged?.invoke()
+		}
+	}
 
 	override fun onCreateView(
 		inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -85,9 +95,7 @@ class SermonDetailBottomSheet(private val sermon: Sermon) : DraggableBottomSheet
 
 		// 수정/삭제 아이콘 버튼
 		view.findViewById<ImageView>(R.id.btn_edit_sermon).setOnClickListener {
-			val editSheet = AddSermonBottomSheet(existingSermon = sermon)
-			editSheet.onSaved = { onChanged?.invoke() }
-			editSheet.show(parentFragmentManager, "edit_sermon")
+			editSermonLauncher.launch(AddSermonActivity.editIntent(requireContext(), sermon.id))
 			dismiss()
 		}
 
