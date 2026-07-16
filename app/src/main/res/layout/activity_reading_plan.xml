@@ -1,26 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/reading_plan_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@color/surface_elevated">
+    android:background="@color/surface_background">
 
-    <include layout="@layout/include_drag_handle" />
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="16dp"
-        android:paddingBottom="4dp"
-        android:text="성경읽기표"
-        android:textSize="18sp"
-        android:textStyle="bold" />
+    <include layout="@layout/include_activity_top_bar" />
 
     <TextView
         android:id="@+id/text_overall_progress"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingHorizontal="16dp"
+        android:paddingTop="12dp"
         android:paddingBottom="12dp"
         android:textSize="14sp"
         android:textColor="@color/text_secondary" />

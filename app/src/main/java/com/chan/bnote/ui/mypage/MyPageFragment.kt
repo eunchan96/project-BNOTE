@@ -1,5 +1,6 @@
 package com.chan.bnote.ui.mypage
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -22,13 +23,13 @@ class MyPageFragment : Fragment(), TopBarActionHandler {
 		super.onViewCreated(view, savedInstanceState)
 
 		view.findViewById<TextView>(R.id.menu_settings).setOnClickListener {
-			SettingsBottomSheet().show(parentFragmentManager, "settings")
+			startActivity(Intent(requireContext(), SettingsActivity::class.java))
 		}
 		view.findViewById<TextView>(R.id.menu_reading_plan).setOnClickListener {
-			ReadingPlanBottomSheet().show(parentFragmentManager, "reading_plan")
+			startActivity(Intent(requireContext(), ReadingPlanActivity::class.java))
 		}
 		view.findViewById<TextView>(R.id.menu_verse_of_year).setOnClickListener {
-			VerseOfYearBottomSheet().show(parentFragmentManager, "verse_of_year")
+			startActivity(Intent(requireContext(), VerseOfYearActivity::class.java))
 		}
 	}
 

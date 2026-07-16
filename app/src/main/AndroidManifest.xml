@@ -45,6 +45,18 @@
             android:name=".ui.bible.MemoEditorActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name=".ui.mypage.SettingsActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.mypage.ReadingPlanActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.mypage.VerseOfYearActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.mypage.VerseOfYearEditActivity"
+            android:exported="false" />
     </application>
 
 </manifest>
