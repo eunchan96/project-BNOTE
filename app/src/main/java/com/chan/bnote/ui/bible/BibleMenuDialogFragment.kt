@@ -9,7 +9,6 @@ import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.Switch
 import android.widget.TextView
-import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.DialogFragment
 import com.chan.bnote.R
@@ -23,6 +22,7 @@ class BibleMenuDialogFragment(
 	var onReadingPlanToggled: ((Boolean) -> Unit)? = null
 	var onAutoScrollToggled: ((Boolean) -> Unit)? = null
 	var onScrapClicked: (() -> Unit)? = null
+	var onHymnClicked: (() -> Unit)? = null
 
 	override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
 		val dialog = Dialog(requireContext(), R.style.RightPanelDialog)
@@ -46,7 +46,7 @@ class BibleMenuDialogFragment(
 		}
 
 		view.findViewById<TextView>(R.id.menu_hymn).setOnClickListener {
-			Toast.makeText(requireContext(), "찬송 (추후 구현)", Toast.LENGTH_SHORT).show()
+			onHymnClicked?.invoke()
 			dismiss()
 		}
 
