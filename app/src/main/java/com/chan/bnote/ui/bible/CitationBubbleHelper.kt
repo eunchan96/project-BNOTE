@@ -121,7 +121,7 @@ object CitationBubbleHelper {
 				if (seg.start == seg.end) "${seg.start}" else "${seg.start}~${seg.end}"
 			}
 			val matchedVerses = group.segments.flatMap { it.start..it.end }.toSet()
-			val allVerses = db.bibleDao().getVerses("GAEYEOK", citation.bookId, group.chapter)
+			val allVerses = db.bibleDao().getVerses("NKRV", citation.bookId, group.chapter)
 			val bodyText = allVerses.filter { it.verse in matchedVerses }
 				.sortedBy { it.verse }
 				.joinToString("\n") { it.text }

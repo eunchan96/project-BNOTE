@@ -1,7 +1,6 @@
 package com.chan.bnote.ui.sermon
 
-import TopBarActionHandler
-import TopBarConfig
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -9,6 +8,8 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import com.chan.bnote.R
+import com.chan.bnote.ui.TopBarActionHandler
+import com.chan.bnote.ui.TopBarConfig
 import com.chan.bnote.ui.sermon.bybook.SermonByBookFragment
 import com.chan.bnote.ui.sermon.calendar.CalendarSermonFragment
 
@@ -70,12 +71,12 @@ class SermonFragment : Fragment(), TopBarActionHandler {
 	override fun onMenuClicked() {
 		val dialog = SermonMenuDialogFragment()
 		dialog.onCategoryManageClicked = {
-			CategoryManageBottomSheet().show(parentFragmentManager, "category_manage")
+			startActivity(Intent(requireContext(), CategoryManageActivity::class.java))
 		}
 		dialog.show(parentFragmentManager, "sermon_menu")
 	}
 
 	override fun onSearchClicked() {
-		SermonSearchBottomSheet().show(parentFragmentManager, "sermon_search")
+		startActivity(Intent(requireContext(), SermonSearchActivity::class.java))
 	}
 }

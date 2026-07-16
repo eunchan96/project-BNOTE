@@ -1,6 +1,6 @@
 package com.chan.bnote.ui.sermon
 
-import android.app.AlertDialog
+import android.app.Activity
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -9,6 +9,7 @@ import android.widget.EditText
 import android.widget.ImageView
 import android.widget.PopupMenu
 import android.widget.TextView
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.ItemTouchHelper
@@ -19,6 +20,7 @@ import com.chan.bnote.data.AppSettings
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.sermon.Preacher
 import com.chan.bnote.ui.common.DragReorderHelper
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 
 class SermonByPreacherFragment : Fragment() {
@@ -28,6 +30,23 @@ class SermonByPreacherFragment : Fragment() {
 	private lateinit var preacherRecycler: RecyclerView
 	private lateinit var sermonRecycler: RecyclerView
 	private lateinit var btnPreacherSort: TextView
+
+	private val addSermonLauncher = registerForActivityResult(
+		ActivityResultContracts.StartActivityForResult()
+	) { result ->
+		if (result.resultCode == Activity.RESULT_OK) {
+			loadPreachers()
+			selectedPreacher?.let { loadSermonsForPreacher(it) }
+		}
+	}
+	private val sermonDetailLauncher = registerForActivityResult(
+		ActivityResultContracts.StartActivityForResult()
+	) { result ->
+		if (result.resultCode == Activity.RESULT_OK) {
+			loadPreachers()
+			selectedPreacher?.let { loadSermonsForPreacher(it) }
+		}
+	}
 	private lateinit var btnSermonSort: TextView
 	private lateinit var selectedPreacherText: TextView
 
@@ -78,12 +97,7 @@ class SermonByPreacherFragment : Fragment() {
 		}
 
 		view.findViewById<TextView>(R.id.fab_add_sermon_by_preacher).setOnClickListener {
-			val sheet = AddSermonBottomSheet()
-			sheet.onSaved = {
-				loadPreachers()
-				selectedPreacher?.let { loadSermonsForPreacher(it) }
-			}
-			sheet.show(parentFragmentManager, "add_sermon")
+			addSermonLauncher.launch(AddSermonActivity.createIntent(requireContext()))
 		}
 
 		loadPreachers()
@@ -101,10 +115,19 @@ class SermonByPreacherFragment : Fragment() {
 		val editText = EditText(requireContext()).apply {
 			hint = "설교자 이름"
 			setPadding(48, 32, 48, 32)
+			textSize = 15f
+			background = androidx.core.content.ContextCompat.getDrawable(
+				requireContext(),
+				R.drawable.bg_book_button
+			)
 		}
-		AlertDialog.Builder(requireContext())
+		val container = android.widget.FrameLayout(requireContext()).apply {
+			setPadding(dp(24), dp(16), dp(24), dp(0))
+			addView(editText)
+		}
+		MaterialAlertDialogBuilder(requireContext(), R.style.ThemeOverlay_BNOTE_Dialog)
 			.setTitle("설교자 추가")
-			.setView(editText)
+			.setView(container)
 			.setPositiveButton("추가") { _, _ ->
 				val name = editText.text.toString().trim()
 				if (name.isNotEmpty()) {
@@ -123,10 +146,19 @@ class SermonByPreacherFragment : Fragment() {
 		val editText = EditText(requireContext()).apply {
 			setText(preacher.name)
 			setPadding(48, 32, 48, 32)
+			textSize = 15f
+			background = androidx.core.content.ContextCompat.getDrawable(
+				requireContext(),
+				R.drawable.bg_book_button
+			)
 		}
-		AlertDialog.Builder(requireContext())
+		val container = android.widget.FrameLayout(requireContext()).apply {
+			setPadding(dp(24), dp(16), dp(24), dp(0))
+			addView(editText)
+		}
+		MaterialAlertDialogBuilder(requireContext(), R.style.ThemeOverlay_BNOTE_Dialog)
 			.setTitle("설교자 이름 수정")
-			.setView(editText)
+			.setView(container)
 			.setPositiveButton("저장") { _, _ ->
 				val newName = editText.text.toString().trim()
 				if (newName.isNotEmpty()) {
@@ -142,7 +174,7 @@ class SermonByPreacherFragment : Fragment() {
 	}
 
 	private fun confirmDeletePreacher(preacher: Preacher) {
-		AlertDialog.Builder(requireContext())
+		MaterialAlertDialogBuilder(requireContext(), R.style.ThemeOverlay_BNOTE_Dialog)
 			.setTitle("설교자 삭제")
 			.setMessage("'${preacher.name}'을(를) 삭제할까요? 이 설교자로 등록된 설교는 '미지정' 상태가 돼요.")
 			.setPositiveButton("삭제") { _, _ ->
@@ -283,11 +315,13 @@ class SermonByPreacherFragment : Fragment() {
 				emptyText?.visibility = View.GONE
 				sermonRecycler.visibility = View.VISIBLE
 				sermonRecycler.adapter = SermonRowAdapter(rowData) { sermon ->
-					val detail = SermonDetailBottomSheet(sermon)
-					detail.onChanged = { loadSermonsForPreacher(preacher) }
-					detail.show(parentFragmentManager, "sermon_detail")
+					sermonDetailLauncher.launch(
+						SermonDetailActivity.createIntent(requireContext(), sermon.id)
+					)
 				}
 			}
 		}
 	}
+
+	private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
 }

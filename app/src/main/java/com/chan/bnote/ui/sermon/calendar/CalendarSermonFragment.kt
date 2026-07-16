@@ -1,10 +1,12 @@
 package com.chan.bnote.ui.sermon.calendar
 
+import android.app.Activity
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
@@ -14,8 +16,8 @@ import com.chan.bnote.R
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.DateUtils
 import com.chan.bnote.data.sermon.Sermon
-import com.chan.bnote.ui.sermon.AddSermonBottomSheet
-import com.chan.bnote.ui.sermon.SermonDetailBottomSheet
+import com.chan.bnote.ui.sermon.AddSermonActivity
+import com.chan.bnote.ui.sermon.SermonDetailActivity
 import com.chan.bnote.ui.sermon.SermonRowAdapter
 import com.chan.bnote.ui.sermon.SermonRowBuilder
 import kotlinx.coroutines.launch
@@ -25,6 +27,24 @@ class CalendarSermonFragment : Fragment() {
 
 	private lateinit var monthYearText: TextView
 	private lateinit var gridRecycler: RecyclerView
+
+	private val addSermonLauncher = registerForActivityResult(
+		ActivityResultContracts.StartActivityForResult()
+	) { result ->
+		if (result.resultCode == Activity.RESULT_OK) {
+			loadCalendarGrid()
+			loadSermonsForSelectedDate()
+		}
+	}
+
+	private val sermonDetailLauncher = registerForActivityResult(
+		ActivityResultContracts.StartActivityForResult()
+	) { result ->
+		if (result.resultCode == Activity.RESULT_OK) {
+			loadCalendarGrid()
+			loadSermonsForSelectedDate()
+		}
+	}
 
 	private var currentYear: Int
 	private var currentMonth0: Int // 0-indexed
@@ -76,9 +96,12 @@ class CalendarSermonFragment : Fragment() {
 		}
 
 		view.findViewById<TextView>(R.id.fab_add_sermon).setOnClickListener {
-			val sheet = AddSermonBottomSheet(initialDateMillis = selectedDate)
-			sheet.onSaved = { loadCalendarGrid(); loadSermonsForSelectedDate() }
-			sheet.show(parentFragmentManager, "add_sermon")
+			addSermonLauncher.launch(
+				AddSermonActivity.createIntent(
+					requireContext(),
+					initialDateMillis = selectedDate
+				)
+			)
 		}
 
 		loadCalendarGrid()
@@ -207,9 +230,9 @@ class CalendarSermonFragment : Fragment() {
 			val db = BibleDatabase.getInstance(requireContext().applicationContext)
 			val rows = SermonRowBuilder.build(db, sermons, useDateLabel = false)
 			recyclerView.adapter = SermonRowAdapter(rows) { sermon ->
-				val detail = SermonDetailBottomSheet(sermon)
-				detail.onChanged = { loadCalendarGrid(); loadSermonsForSelectedDate() }
-				detail.show(parentFragmentManager, "sermon_detail")
+				sermonDetailLauncher.launch(
+					SermonDetailActivity.createIntent(requireContext(), sermon.id)
+				)
 			}
 		}
 	}

@@ -14,7 +14,8 @@
         tools:targetApi="31">
         <activity
             android:name=".MainActivity"
-            android:exported="true">
+            android:exported="true"
+            android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -25,6 +26,57 @@
             android:exported="false" />
         <activity
             android:name=".ui.scrap.ScrapGroupManageActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.appendix.AppendixTextActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.appendix.TenCommandmentsActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.appendix.ResponsiveReadingListActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.appendix.ResponsiveReadingDetailActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.sermon.AddSermonActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.bible.MemoEditorActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name=".ui.mypage.SettingsActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.mypage.ReadingPlanActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.mypage.VerseOfYearActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.mypage.VerseOfYearEditActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.sermon.CategoryManageActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.sermon.SermonDetailActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.bible.ChapterSermonsActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.sermon.SermonSearchActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name=".ui.bible.BibleSearchActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name=".ui.bible.BookmarkListActivity"
             android:exported="false" />
     </application>
 

@@ -48,11 +48,6 @@
                 android:background="?attr/selectableItemBackgroundBorderless" />
         </LinearLayout>
 
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="@color/divider_light" />
-
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recycler_chapter_grid"
             android:layout_width="match_parent"

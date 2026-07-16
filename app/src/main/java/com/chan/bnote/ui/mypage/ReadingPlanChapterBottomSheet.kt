@@ -23,6 +23,14 @@ class ReadingPlanChapterBottomSheet(
 
 	override val peekHeightRatio = 0.7f
 
+	/** 장 읽음 상태를 바꾸고 이 바텀시트가 닫힐 때 호출된다 (전체 진행률 갱신용). */
+	var onDismissed: (() -> Unit)? = null
+
+	override fun onDismiss(dialog: android.content.DialogInterface) {
+		super.onDismiss(dialog)
+		onDismissed?.invoke()
+	}
+
 	override fun onCreateView(
 		inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
 	): View {
@@ -40,7 +48,7 @@ class ReadingPlanChapterBottomSheet(
 
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(requireContext().applicationContext)
-			val maxChapter = db.bibleDao().getMaxChapter("GAEYEOK", bookId)
+			val maxChapter = db.bibleDao().getMaxChapter("NKRV", bookId)
 			val readChapters = db.readingProgressDao().getAll()
 				.filter { it.bookId == bookId }
 				.map { it.chapter }

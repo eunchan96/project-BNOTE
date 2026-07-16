@@ -29,4 +29,15 @@
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:backgroundDimEnabled">true</item>
     </style>
+
+    <!-- 카테고리/설교자/그룹 추가·수정 등에 쓰는 입력 다이얼로그 공용 스타일 -->
+    <style name="ThemeOverlay.BNOTE.Dialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+        <item name="colorSurface">@color/dialog_background</item>
+        <item name="materialAlertDialogTitleTextStyle">@style/BNOTE.Dialog.TitleText</item>
+    </style>
+
+    <style name="BNOTE.Dialog.TitleText" parent="MaterialAlertDialog.Material3.Title.Text">
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">@color/dialog_title_text</item>
+    </style>
 </resources>

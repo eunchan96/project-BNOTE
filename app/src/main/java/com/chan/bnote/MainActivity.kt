@@ -1,7 +1,5 @@
 package com.chan.bnote
 
-import TopBarActionHandler
-import TopBarConfig
 import android.os.Bundle
 import android.widget.ImageView
 import android.widget.TextView
@@ -11,18 +9,25 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.chan.bnote.data.AppSettings
-import com.chan.bnote.ui.bible.BibleFragment
 import com.chan.bnote.ui.BibleNavigationHost
+import com.chan.bnote.ui.TopBarActionHandler
+import com.chan.bnote.ui.TopBarConfig
+import com.chan.bnote.ui.TopBarConfigListener
+import com.chan.bnote.ui.bible.BibleFragment
 import com.chan.bnote.ui.mypage.MyPageFragment
 import com.chan.bnote.ui.sermon.SermonFragment
-import com.chan.bnote.ui.TopBarConfigListener
 
 class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationHost {
+
+	companion object {
+		const val EXTRA_NAVIGATE_BOOK_ID = "extra_navigate_book_id"
+		const val EXTRA_NAVIGATE_CHAPTER = "extra_navigate_chapter"
+	}
 
 	private lateinit var textCurrentLocation: TextView
 	private lateinit var btnTranslation: ImageView
 	private lateinit var btnSearch: ImageView
-	private lateinit var btnFavorites: ImageView
+	private lateinit var btnBookmarks: ImageView
 	private lateinit var btnMenu: ImageView
 	private lateinit var btnPrevChapter: ImageView
 	private lateinit var btnNextChapter: ImageView
@@ -61,8 +66,24 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 
 		if (savedInstanceState == null) {
 			switchTab(BibleFragment(), navBible)
+			handleNavigationIntent(intent)
 		} else {
 			restoreCurrentTabUi() // 추가: recreate() 등으로 재생성됐을 때 현재 화면에 맞게 UI 동기화
+		}
+	}
+
+	override fun onNewIntent(intent: android.content.Intent) {
+		super.onNewIntent(intent)
+		setIntent(intent)
+		handleNavigationIntent(intent)
+	}
+
+	private fun handleNavigationIntent(intent: android.content.Intent) {
+		if (!intent.hasExtra(EXTRA_NAVIGATE_BOOK_ID)) return
+		val bookId = intent.getIntExtra(EXTRA_NAVIGATE_BOOK_ID, -1)
+		val chapter = intent.getIntExtra(EXTRA_NAVIGATE_CHAPTER, -1)
+		if (bookId != -1 && chapter != -1) {
+			navigateToBibleChapter(bookId, chapter)
 		}
 	}
 
@@ -70,7 +91,7 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 		textCurrentLocation = findViewById(R.id.text_current_location)
 		btnTranslation = findViewById(R.id.btn_translation)
 		btnSearch = findViewById(R.id.btn_search)
-		btnFavorites = findViewById(R.id.btn_favorites)
+		btnBookmarks = findViewById(R.id.btn_bookmarks)
 		btnMenu = findViewById(R.id.btn_menu)
 		btnAutoScroll = findViewById(R.id.btn_auto_scroll)
 		iconReadingPlanCheck = findViewById(R.id.icon_reading_plan_check)
@@ -89,7 +110,7 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 		textCurrentLocation.setOnClickListener { currentHandler()?.onLocationClicked() }
 		btnTranslation.setOnClickListener { currentHandler()?.onTranslationClicked() }
 		btnSearch.setOnClickListener { currentHandler()?.onSearchClicked() }
-		btnFavorites.setOnClickListener { currentHandler()?.onFavoritesClicked() }
+		btnBookmarks.setOnClickListener { currentHandler()?.onBookmarksClicked() }
 		btnMenu.setOnClickListener { currentHandler()?.onMenuClicked() }
 		btnAutoScroll.setOnClickListener { currentHandler()?.onAutoScrollButtonClicked() }
 		iconReadingPlanCheck.setOnClickListener { currentHandler()?.onReadingPlanCheckClicked() }
@@ -128,7 +149,7 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 		textCurrentLocation.text = config.title
 		btnTranslation.visibility = visible(config.showTranslationButton)
 		btnSearch.visibility = visible(config.showSearch)
-		btnFavorites.visibility = visible(config.showFavorites)
+		btnBookmarks.visibility = visible(config.showBookmarks)
 		btnMenu.visibility = visible(config.showMenu)
 		btnPrevChapter.visibility = visible(config.showChapterNav)
 		btnNextChapter.visibility = visible(config.showChapterNav)

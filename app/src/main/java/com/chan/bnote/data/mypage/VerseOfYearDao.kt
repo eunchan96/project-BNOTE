@@ -16,4 +16,7 @@ interface VerseOfYearDao {
 
 	@Query("SELECT * FROM verse_of_year ORDER BY year DESC")
 	suspend fun getAll(): List<VerseOfYear>
+
+	@Query("DELETE FROM verse_of_year WHERE year = :year")
+	suspend fun delete(year: Int)
 }

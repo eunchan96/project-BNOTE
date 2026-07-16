@@ -14,7 +14,7 @@ data class BibleBookmark(
 	val bookId: Int,
 	val chapter: Int,
 	val verse: Int,
-	val isFavorite: Boolean = false,
+	val isBookmarked: Boolean = false,
 	val isHighlighted: Boolean = false,
 	val updatedAt: Long = System.currentTimeMillis()
 )

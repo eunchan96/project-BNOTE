@@ -1,6 +1,5 @@
 package com.chan.bnote.ui.sermon
 
-import android.app.AlertDialog
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -15,6 +14,7 @@ import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.sermon.Preacher
 import com.chan.bnote.ui.common.SimpleListAdapter
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 
 class PreacherPickerBottomSheet : BottomSheetDialogFragment() {
@@ -59,7 +59,7 @@ class PreacherPickerBottomSheet : BottomSheetDialogFragment() {
 			hint = "설교자 이름"
 			setPadding(48, 32, 48, 32)
 		}
-		AlertDialog.Builder(requireContext())
+		MaterialAlertDialogBuilder(requireContext(), R.style.ThemeOverlay_BNOTE_Dialog)
 			.setTitle("새 설교자 추가")
 			.setView(editText)
 			.setPositiveButton("추가") { _, _ ->

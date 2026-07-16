@@ -16,6 +16,7 @@ import com.chan.bnote.data.scrap.Scrap
 class ScrapVerseAdapter(
 	private val scraps: List<Scrap>,
 	private var isEditMode: Boolean,
+	private val fontSize: Int,
 	private val onClick: (Scrap) -> Unit,
 	private val onDelete: (Scrap) -> Unit
 ) : RecyclerView.Adapter<ScrapVerseAdapter.ViewHolder>() {
@@ -41,6 +42,7 @@ class ScrapVerseAdapter(
 			"$bookName ${scrap.chapter}:${scrap.startVerse}~${scrap.endVerse}"
 		}
 		holder.text.text = scrap.verseText
+		holder.text.textSize = fontSize.toFloat()
 
 		holder.deleteBtn.visibility = if (isEditMode) View.VISIBLE else View.GONE
 		holder.deleteBtn.setOnClickListener { onDelete(scrap) }

@@ -46,6 +46,7 @@ class VerseAdapter(
 
 	class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
 		val root: View = view.findViewById(R.id.item_root)
+		val contentRow: View = view.findViewById(R.id.content_row)
 		val title: TextView = view.findViewById(R.id.text_verse_title)
 		val number: TextView = view.findViewById(R.id.text_verse_number)
 		val content: TextView = view.findViewById(R.id.text_verse_content)
@@ -69,6 +70,14 @@ class VerseAdapter(
 		} else {
 			holder.title.visibility = View.GONE
 		}
+
+		val extraTopSpacing = position == 0 && titleText.isNullOrBlank()
+		val topPaddingDp = if (extraTopSpacing) 16 else 4
+		val topPaddingPx = (topPaddingDp * context.resources.displayMetrics.density).toInt()
+		holder.contentRow.setPadding(
+			holder.contentRow.paddingLeft, topPaddingPx,
+			holder.contentRow.paddingRight, holder.contentRow.paddingBottom
+		)
 
 		// 절 번호: 구절 메모 있으면 밑줄
 		val verseMemo = verseMemos[verseItem.verse]
