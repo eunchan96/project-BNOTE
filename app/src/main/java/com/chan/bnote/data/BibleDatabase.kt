@@ -42,9 +42,9 @@ import kotlinx.coroutines.launch
 		Sermon::class, SermonCategory::class, SermonBibleRef::class,
 		VerseOfYear::class, VerseOfYearRef::class, ScrapGroup::class, Scrap::class,
 		PartialHighlight::class, VerseMemo::class, WordMemo::class,
-		Preacher::class // 추가
+		Preacher::class
 	],
-	version = 12, // 11 -> 12
+	version = 13, // 12 -> 13
 	exportSchema = false
 )
 abstract class BibleDatabase : RoomDatabase() {

@@ -20,6 +20,7 @@
     <color name="text_hint">#9E9E9E</color>
     <color name="input_background">#F5F5F5</color>
     <color name="highlight_yellow">#FFF9C4</color>
+    <color name="icon_action_tint">#795548</color>
 
     <!-- 마이페이지 성경 읽기 진행률 그리드 -->
     <color name="book_progress_none_bg">#F5F5F5</color>

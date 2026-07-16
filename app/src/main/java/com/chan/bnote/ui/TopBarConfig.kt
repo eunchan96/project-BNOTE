@@ -4,7 +4,7 @@ data class TopBarConfig(
 	val title: String,
 	val showTranslationButton: Boolean = false,
 	val showSearch: Boolean = false,
-	val showFavorites: Boolean = false,
+	val showBookmarks: Boolean = false,
 	val showMenu: Boolean = false,
 	val showChapterNav: Boolean = false,
 	val showReadingPlanCheck: Boolean = false,
@@ -19,7 +19,7 @@ interface TopBarActionHandler {
 	fun onLocationClicked() {}
 	fun onTranslationClicked() {}
 	fun onSearchClicked() {}
-	fun onFavoritesClicked() {}
+	fun onBookmarksClicked() {}
 	fun onMenuClicked() {}
 	fun onPrevChapterClicked() {}
 	fun onNextChapterClicked() {}

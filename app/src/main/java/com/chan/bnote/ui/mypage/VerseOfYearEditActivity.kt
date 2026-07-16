@@ -16,6 +16,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import com.chan.bnote.R
+import com.chan.bnote.data.AppSettings
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.mypage.VerseOfYear
 import com.chan.bnote.data.mypage.VerseOfYearRef
@@ -145,7 +146,10 @@ class VerseOfYearEditActivity : AppCompatActivity() {
 			val card = LayoutInflater.from(this)
 				.inflate(R.layout.item_verse_of_year_ref_card, refsContainer, false)
 			card.findViewById<TextView>(R.id.text_ref_label).text = ref.toDisplayLabel()
-			card.findViewById<TextView>(R.id.text_ref_verse_text).text = verseText
+			card.findViewById<TextView>(R.id.text_ref_verse_text).apply {
+				text = verseText
+				textSize = AppSettings.getFontSize(this@VerseOfYearEditActivity).toFloat()
+			}
 			card.findViewById<TextView>(R.id.btn_remove_ref).setOnClickListener {
 				bibleRefs.removeAll { it.first === ref }
 				renderBibleRefChips()

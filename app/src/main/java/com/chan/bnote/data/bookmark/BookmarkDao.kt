@@ -15,19 +15,24 @@ interface BookmarkDao {
 	suspend fun upsert(bookmark: BibleBookmark)
 
 	@Query(
+		"UPDATE bible_bookmarks SET isBookmarked = 0 WHERE bookId = :bookId AND chapter = :chapter AND verse = :verse"
+	)
+	suspend fun removeBookmark(bookId: Int, chapter: Int, verse: Int)
+
+	@Query(
 		"""
         SELECT bv.bookId as bookId, bv.chapter as chapter, bv.verse as verse, bv.text as text
         FROM bible_bookmarks bb
         JOIN bible_verses bv 
             ON bv.bookId = bb.bookId AND bv.chapter = bb.chapter AND bv.verse = bb.verse
-        WHERE bb.isFavorite = 1
+        WHERE bb.isBookmarked = 1 AND bv.translation = :translation
         ORDER BY bb.updatedAt DESC
         """
 	)
-	suspend fun getFavoriteVerses(): List<FavoriteVerseRow>
+	suspend fun getBookmarkedVerses(translation: String): List<BookmarkedVerseRow>
 }
 
-data class FavoriteVerseRow(
+data class BookmarkedVerseRow(
 	val bookId: Int,
 	val chapter: Int,
 	val verse: Int,

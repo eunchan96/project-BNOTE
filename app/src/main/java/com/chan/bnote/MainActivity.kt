@@ -27,7 +27,7 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 	private lateinit var textCurrentLocation: TextView
 	private lateinit var btnTranslation: ImageView
 	private lateinit var btnSearch: ImageView
-	private lateinit var btnFavorites: ImageView
+	private lateinit var btnBookmarks: ImageView
 	private lateinit var btnMenu: ImageView
 	private lateinit var btnPrevChapter: ImageView
 	private lateinit var btnNextChapter: ImageView
@@ -91,7 +91,7 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 		textCurrentLocation = findViewById(R.id.text_current_location)
 		btnTranslation = findViewById(R.id.btn_translation)
 		btnSearch = findViewById(R.id.btn_search)
-		btnFavorites = findViewById(R.id.btn_favorites)
+		btnBookmarks = findViewById(R.id.btn_bookmarks)
 		btnMenu = findViewById(R.id.btn_menu)
 		btnAutoScroll = findViewById(R.id.btn_auto_scroll)
 		iconReadingPlanCheck = findViewById(R.id.icon_reading_plan_check)
@@ -110,7 +110,7 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 		textCurrentLocation.setOnClickListener { currentHandler()?.onLocationClicked() }
 		btnTranslation.setOnClickListener { currentHandler()?.onTranslationClicked() }
 		btnSearch.setOnClickListener { currentHandler()?.onSearchClicked() }
-		btnFavorites.setOnClickListener { currentHandler()?.onFavoritesClicked() }
+		btnBookmarks.setOnClickListener { currentHandler()?.onBookmarksClicked() }
 		btnMenu.setOnClickListener { currentHandler()?.onMenuClicked() }
 		btnAutoScroll.setOnClickListener { currentHandler()?.onAutoScrollButtonClicked() }
 		iconReadingPlanCheck.setOnClickListener { currentHandler()?.onReadingPlanCheckClicked() }
@@ -149,7 +149,7 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 		textCurrentLocation.text = config.title
 		btnTranslation.visibility = visible(config.showTranslationButton)
 		btnSearch.visibility = visible(config.showSearch)
-		btnFavorites.visibility = visible(config.showFavorites)
+		btnBookmarks.visibility = visible(config.showBookmarks)
 		btnMenu.visibility = visible(config.showMenu)
 		btnPrevChapter.visibility = visible(config.showChapterNav)
 		btnNextChapter.visibility = visible(config.showChapterNav)

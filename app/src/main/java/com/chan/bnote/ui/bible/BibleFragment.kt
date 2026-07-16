@@ -204,6 +204,33 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		}
 	}
 
+	private val bibleSearchLauncher = registerForActivityResult(
+		ActivityResultContracts.StartActivityForResult()
+	) { result ->
+		if (result.resultCode == Activity.RESULT_OK) {
+			val data = result.data ?: return@registerForActivityResult
+			val bookId = data.getIntExtra(BibleSearchActivity.EXTRA_RESULT_BOOK_ID, -1)
+			val chapter = data.getIntExtra(BibleSearchActivity.EXTRA_RESULT_CHAPTER, -1)
+			val verse = data.getIntExtra(BibleSearchActivity.EXTRA_RESULT_VERSE, -1)
+			if (bookId > 0 && chapter > 0) {
+				loadChapter(bookId, chapter, scrollToVerse = if (verse > 0) verse else null)
+			}
+		}
+	}
+
+	private val bookmarkLauncher = registerForActivityResult(
+		ActivityResultContracts.StartActivityForResult()
+	) { result ->
+		if (result.resultCode == Activity.RESULT_OK) {
+			val data = result.data ?: return@registerForActivityResult
+			val bookId = data.getIntExtra(BookmarkListActivity.EXTRA_RESULT_BOOK_ID, -1)
+			val chapter = data.getIntExtra(BookmarkListActivity.EXTRA_RESULT_CHAPTER, -1)
+			if (bookId > 0 && chapter > 0) {
+				loadChapter(bookId, chapter)
+			}
+		}
+	}
+
 	override fun onCreateView(
 		inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
 	): View {
@@ -281,7 +308,7 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		title = "${BibleBooks.nameOf(currentBookId)} ${currentChapter}장",
 		showTranslationButton = true,
 		showSearch = true,
-		showFavorites = true,
+		showBookmarks = true,
 		showMenu = true,
 		showChapterNav = true,
 		showReadingPlanCheck = isReadingPlanEnabled,
@@ -312,17 +339,16 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 	}
 
 	override fun onSearchClicked() {
-		val sheet = SearchBottomSheet(primaryTranslation.code)
-		sheet.onResultSelected = { bookId, chapter, verse ->
-			loadChapter(bookId, chapter, scrollToVerse = verse)
-		}
-		sheet.show(parentFragmentManager, "search")
+		bibleSearchLauncher.launch(
+			BibleSearchActivity.createIntent(
+				requireContext(),
+				primaryTranslation.code
+			)
+		)
 	}
 
-	override fun onFavoritesClicked() {
-		val sheet = FavoritesBottomSheet()
-		sheet.onVerseSelected = { bookId, chapter -> loadChapter(bookId, chapter) }
-		sheet.show(parentFragmentManager, "favorites_list")
+	override fun onBookmarksClicked() {
+		bookmarkLauncher.launch(BookmarkListActivity.createIntent(requireContext()))
 	}
 
 	override fun onMenuClicked() {
@@ -503,7 +529,7 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 					verse = verseNum
 				))
 					.copy(
-						isFavorite = !(current?.isFavorite ?: false),
+						isBookmarked = !(current?.isBookmarked ?: false),
 						updatedAt = System.currentTimeMillis()
 					)
 			}
@@ -602,7 +628,7 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 				verse = verseNum
 			))
 				.copy(
-					isFavorite = !(current?.isFavorite ?: false),
+					isBookmarked = !(current?.isBookmarked ?: false),
 					updatedAt = System.currentTimeMillis()
 				)
 			db.bookmarkDao().upsert(updated)
@@ -611,7 +637,7 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 				.associateBy { it.verse }.toMutableMap()
 			adapter.updateBookmarks(refreshed)
 
-			val message = if (updated.isFavorite) "북마크에 추가했어요" else "북마크를 해제했어요"
+			val message = if (updated.isBookmarked) "북마크에 추가했어요" else "북마크를 해제했어요"
 			Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
 			clearSelection()
 		}

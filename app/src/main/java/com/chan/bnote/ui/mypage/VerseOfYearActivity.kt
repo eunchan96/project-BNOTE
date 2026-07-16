@@ -14,6 +14,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.chan.bnote.R
+import com.chan.bnote.data.AppSettings
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.mypage.VerseOfYear
 import com.chan.bnote.data.mypage.VerseOfYearRef
@@ -65,6 +66,7 @@ class VerseOfYearActivity : AppCompatActivity() {
 			recyclerView.adapter = VerseOfYearAdapter(
 				rows = rows,
 				currentYear = currentYear,
+				fontSize = AppSettings.getFontSize(this@VerseOfYearActivity),
 				onEdit = { row ->
 					startActivity(
 						VerseOfYearEditActivity.editIntent(this@VerseOfYearActivity, row.entry.year)
@@ -83,6 +85,7 @@ private data class VerseOfYearRow(
 private class VerseOfYearAdapter(
 	private val rows: List<VerseOfYearRow>,
 	private val currentYear: Int,
+	private val fontSize: Int,
 	private val onEdit: (VerseOfYearRow) -> Unit
 ) : RecyclerView.Adapter<VerseOfYearAdapter.ViewHolder>() {
 
@@ -108,6 +111,7 @@ private class VerseOfYearAdapter(
 			if (entry.year == currentYear) "${entry.year}년 (올해)" else "${entry.year}년"
 		holder.ref.text = row.refs.joinToString(", ") { it.toDisplayLabel() }
 		holder.verse.text = row.refs.joinToString("\n") { it.verseText }
+		holder.verse.textSize = fontSize.toFloat()
 		if (entry.note.isNotBlank()) {
 			holder.note.text = entry.note
 			holder.note.visibility = View.VISIBLE

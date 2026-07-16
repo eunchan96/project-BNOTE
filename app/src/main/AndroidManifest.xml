@@ -71,6 +71,13 @@
             android:name=".ui.sermon.SermonSearchActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name=".ui.bible.BibleSearchActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name=".ui.bible.BookmarkListActivity"
+            android:exported="false" />
     </application>
 
 </manifest>
