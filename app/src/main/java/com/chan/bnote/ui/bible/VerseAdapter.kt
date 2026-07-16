@@ -71,12 +71,15 @@ class VerseAdapter(
 			holder.title.visibility = View.GONE
 		}
 
+		// 장이 소제목 없이 1절부터 바로 시작하면 맨 위가 너무 붙어 보여서 여백을 더 준다.
 		val extraTopSpacing = position == 0 && titleText.isNullOrBlank()
 		val topPaddingDp = if (extraTopSpacing) 16 else 4
 		val topPaddingPx = (topPaddingDp * context.resources.displayMetrics.density).toInt()
 		holder.contentRow.setPadding(
-			holder.contentRow.paddingLeft, topPaddingPx,
-			holder.contentRow.paddingRight, holder.contentRow.paddingBottom
+			holder.contentRow.paddingLeft,
+			topPaddingPx,
+			holder.contentRow.paddingRight,
+			holder.contentRow.paddingBottom
 		)
 
 		// 절 번호: 구절 메모 있으면 밑줄
@@ -148,7 +151,20 @@ class VerseAdapter(
 
 		val tapListener = View.OnClickListener { onVerseTap(verseItem.verse) }
 		holder.root.setOnClickListener(tapListener)
-		holder.content.setOnClickListener(tapListener)
+
+		val gestureDetector = android.view.GestureDetector(
+			context,
+			object : android.view.GestureDetector.SimpleOnGestureListener() {
+				override fun onSingleTapUp(e: android.view.MotionEvent): Boolean {
+					onVerseTap(verseItem.verse)
+					return true
+				}
+			}
+		)
+		holder.content.setOnTouchListener { _, event ->
+			gestureDetector.onTouchEvent(event)
+			false // 롱프레스로 텍스트 선택하는 기존 동작은 그대로 유지
+		}
 
 		// 절 번호: 메모 있으면 메모 보기, 없으면 기존처럼 선택 토글
 		holder.number.setOnClickListener {
