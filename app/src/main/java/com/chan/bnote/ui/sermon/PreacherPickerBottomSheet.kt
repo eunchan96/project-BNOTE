@@ -58,10 +58,19 @@ class PreacherPickerBottomSheet : BottomSheetDialogFragment() {
 		val editText = EditText(requireContext()).apply {
 			hint = "설교자 이름"
 			setPadding(48, 32, 48, 32)
+			textSize = 15f
+			background = androidx.core.content.ContextCompat.getDrawable(
+				requireContext(),
+				R.drawable.bg_book_button
+			)
+		}
+		val container = android.widget.FrameLayout(requireContext()).apply {
+			setPadding(dp(24), dp(16), dp(24), dp(4))
+			addView(editText)
 		}
 		MaterialAlertDialogBuilder(requireContext(), R.style.ThemeOverlay_BNOTE_Dialog)
 			.setTitle("새 설교자 추가")
-			.setView(editText)
+			.setView(container)
 			.setPositiveButton("추가") { _, _ ->
 				val name = editText.text.toString().trim()
 				if (name.isNotEmpty()) {
@@ -77,4 +86,6 @@ class PreacherPickerBottomSheet : BottomSheetDialogFragment() {
 			.setNegativeButton("취소", null)
 			.show()
 	}
+
+	private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
 }
