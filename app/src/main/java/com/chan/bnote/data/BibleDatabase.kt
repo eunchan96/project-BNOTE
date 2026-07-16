@@ -36,6 +36,8 @@ import com.chan.bnote.data.sermon.SermonBibleRefDao
 import com.chan.bnote.data.sermon.SermonCategory
 import com.chan.bnote.data.sermon.SermonCategoryDao
 import com.chan.bnote.data.sermon.SermonDao
+import com.chan.bnote.data.sermon.SermonPhoto
+import com.chan.bnote.data.sermon.SermonPhotoDao
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -43,12 +45,12 @@ import kotlinx.coroutines.launch
 @Database(
 	entities = [
 		BibleVerse::class, BibleBookmark::class, ReadingProgress::class,
-		Sermon::class, SermonCategory::class, SermonBibleRef::class,
+		Sermon::class, SermonCategory::class, SermonBibleRef::class, SermonPhoto::class,
 		VerseOfYear::class, VerseOfYearRef::class, ScrapGroup::class, Scrap::class,
 		PartialHighlight::class, VerseMemo::class, WordMemo::class,
 		Preacher::class, HymnCategory::class, Hymn::class
 	],
-	version = 14, // 13 -> 14 (찬송 기능 추가: HymnCategory, Hymn)
+	version = 15, // 14 -> 15 (설교 사진 첨부 기능 추가: SermonPhoto)
 	exportSchema = false
 )
 abstract class BibleDatabase : RoomDatabase() {
@@ -58,6 +60,7 @@ abstract class BibleDatabase : RoomDatabase() {
 	abstract fun sermonDao(): SermonDao
 	abstract fun sermonCategoryDao(): SermonCategoryDao
 	abstract fun sermonBibleRefDao(): SermonBibleRefDao
+	abstract fun sermonPhotoDao(): SermonPhotoDao
 	abstract fun verseOfYearDao(): VerseOfYearDao
 	abstract fun verseOfYearRefDao(): VerseOfYearRefDao
 	abstract fun hymnDao(): HymnDao

@@ -129,6 +129,37 @@
         android:background="@drawable/bg_book_button" />
 
     <TextView
+        android:id="@+id/btn_add_photo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="8dp"
+        android:padding="12dp"
+        android:text="+ 사진 추가 (0/5)"
+        android:background="@drawable/bg_book_button"
+        android:clickable="true"
+        android:focusable="true" />
+
+    <HorizontalScrollView
+        android:id="@+id/scroll_photo_thumbnails"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="12dp"
+        android:scrollbars="none"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:id="@+id/container_photo_thumbnails"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal" />
+
+    </HorizontalScrollView>
+
+    <TextView
         android:id="@+id/btn_save_sermon"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

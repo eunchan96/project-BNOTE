@@ -4,6 +4,11 @@
 
     <!-- 찬송 화면의 유튜브 재생/썸네일 로딩에 필요 -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- 설교 사진 첨부(카메라 촬영)에 필요 -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
 
     <application
         android:allowBackup="true"
@@ -90,6 +95,19 @@
         <activity
             android:name=".ui.hymn.HymnDetailActivity"
             android:exported="false" />
+        <activity
+            android:name=".ui.sermon.PhotoViewerActivity"
+            android:exported="false" />
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
     </application>
 
 </manifest>

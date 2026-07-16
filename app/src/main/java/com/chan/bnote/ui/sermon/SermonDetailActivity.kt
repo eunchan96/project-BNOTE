@@ -3,9 +3,15 @@ package com.chan.bnote.ui.sermon
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
+import android.text.Spannable
+import android.text.SpannableStringBuilder
+import android.text.style.ForegroundColorSpan
 import android.view.LayoutInflater
+import android.view.View
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.activity.addCallback
 import androidx.activity.enableEdgeToEdge
@@ -14,6 +20,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
+import coil.load
 import com.chan.bnote.MainActivity
 import com.chan.bnote.R
 import com.chan.bnote.data.BibleDatabase
@@ -76,6 +83,10 @@ class SermonDetailActivity : AppCompatActivity() {
 					lifecycleScope.launch {
 						val db = BibleDatabase.getInstance(applicationContext)
 						db.sermonBibleRefDao().deleteBySermon(sermon.id)
+						db.sermonPhotoDao().getBySermon(sermon.id).forEach { photo ->
+							com.chan.bnote.data.sermon.SermonPhotoStorage.deleteFile(photo.filePath)
+						}
+						db.sermonPhotoDao().deleteBySermon(sermon.id)
 						db.sermonDao().delete(sermon)
 						changed = true
 						finishWithResult()
@@ -118,7 +129,7 @@ class SermonDetailActivity : AppCompatActivity() {
 			findViewById<com.google.android.flexbox.FlexboxLayout>(R.id.flexbox_detail_refs)
 		val memoView = findViewById<TextView>(R.id.text_sermon_memo)
 
-		// 날짜 · 카테고리 · 설교자
+		// 날짜 · 카테고리(색상 텍스트) · 설교자
 		val preacherName =
 			sermon.preacherId?.let { db.preacherDao().getById(it)?.name } ?: "설교자 미지정"
 		val category = sermon.categoryId?.let { db.sermonCategoryDao().getById(it) }
@@ -126,7 +137,7 @@ class SermonDetailActivity : AppCompatActivity() {
 
 		val metaView = findViewById<TextView>(R.id.text_sermon_meta)
 		if (category != null) {
-			/* val prefix = "$dateLabel · "
+			val prefix = "$dateLabel · "
 			val categoryPart = category.name
 			val suffix = " · $preacherName"
 			val builder = SpannableStringBuilder()
@@ -138,8 +149,8 @@ class SermonDetailActivity : AppCompatActivity() {
 				categoryStart, builder.length,
 				Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
 			)
-			builder.append(suffix)*/
-			metaView.text = "$dateLabel· ${category.name} · $preacherName"
+			builder.append(suffix)
+			metaView.text = builder
 		} else {
 			metaView.text = "$dateLabel · $preacherName"
 		}
@@ -170,6 +181,20 @@ class SermonDetailActivity : AppCompatActivity() {
 			val (spanned, citations) = CitationBubbleHelper.buildSpannedText(memoText)
 			memoView.text = spanned
 			CitationBubbleHelper.attachTouchHandling(memoView, { citations }, lifecycleScope)
+		}
+
+		// 첨부 사진
+		val photoScroll = findViewById<View>(R.id.scroll_detail_photos)
+		val photoContainer = findViewById<LinearLayout>(R.id.container_detail_photos)
+		photoContainer.removeAllViews()
+		val photos = db.sermonPhotoDao().getBySermon(sermon.id)
+		photoScroll.visibility = if (photos.isEmpty()) View.GONE else View.VISIBLE
+		for (photo in photos) {
+			val thumb = LayoutInflater.from(this)
+				.inflate(R.layout.item_sermon_detail_photo, photoContainer, false) as ImageView
+			thumb.load(photo.filePath)
+			thumb.setOnClickListener { PhotoViewerActivity.start(this, photo.filePath) }
+			photoContainer.addView(thumb)
 		}
 	}
 }
