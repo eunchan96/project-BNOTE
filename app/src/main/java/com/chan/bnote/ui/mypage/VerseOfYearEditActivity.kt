@@ -4,9 +4,10 @@ import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.view.LayoutInflater
 import android.widget.EditText
 import android.widget.ImageView
-import android.widget.LinearLayout
+import android.widget.NumberPicker
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
@@ -16,9 +17,10 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import com.chan.bnote.R
 import com.chan.bnote.data.BibleDatabase
-import com.chan.bnote.data.bible.BibleBooks
 import com.chan.bnote.data.mypage.VerseOfYear
-import com.chan.bnote.ui.bible.BookChapterPickerBottomSheet
+import com.chan.bnote.data.mypage.VerseOfYearRef
+import com.chan.bnote.data.sermon.SermonBibleRef
+import com.chan.bnote.ui.sermon.BibleRangePickerBottomSheet
 import kotlinx.coroutines.launch
 import java.util.Calendar
 
@@ -40,17 +42,15 @@ class VerseOfYearEditActivity : AppCompatActivity() {
 	}
 
 	private var isEditMode = false
-	private var editingYear: Int = 0
+	private var editingYear = 0
+	private var selectedYear = Calendar.getInstance().get(Calendar.YEAR)
 
-	private var selectedBookId: Int? = null
-	private var selectedChapter: Int? = null
-	private var selectedVerse: Int? = null
-	private var selectedVerseText: String = ""
+	// 이번 화면에서 추가한 성경 범위들 (bookId/chapter/verse ~ end, verseText 포함해서 함께 들고 있음)
+	private val bibleRefs = mutableListOf<Pair<SermonBibleRef, String>>()
 
-	private lateinit var yearEdit: EditText
+	private lateinit var btnPickYear: TextView
 	private lateinit var yearFixedText: TextView
-	private lateinit var verseContentText: TextView
-	private lateinit var verseRefText: TextView
+	private lateinit var refsContainer: android.widget.LinearLayout
 	private lateinit var noteEdit: EditText
 
 	override fun onCreate(savedInstanceState: Bundle?) {
@@ -65,42 +65,37 @@ class VerseOfYearEditActivity : AppCompatActivity() {
 		}
 
 		isEditMode = intent.hasExtra(EXTRA_YEAR)
-		editingYear = intent.getIntExtra(EXTRA_YEAR, Calendar.getInstance().get(Calendar.YEAR))
+		editingYear = intent.getIntExtra(EXTRA_YEAR, selectedYear)
 
 		findViewById<ImageView>(R.id.btn_top_bar_back).setOnClickListener { finish() }
 		findViewById<TextView>(R.id.text_top_bar_title).text =
-			if (isEditMode) "${editingYear}년 말씀 수정" else "말씀 추가"
+			if (isEditMode) "${editingYear}년 말씀 수정" else "약속의 말씀 추가"
 
-		yearEdit = findViewById(R.id.edit_year)
+		btnPickYear = findViewById(R.id.btn_pick_year)
 		yearFixedText = findViewById(R.id.text_year_fixed)
-		verseContentText = findViewById(R.id.text_verse_content)
-		verseRefText = findViewById(R.id.text_verse_ref)
+		refsContainer = findViewById(R.id.container_bible_refs)
 		noteEdit = findViewById(R.id.edit_verse_note)
 
 		if (isEditMode) {
-			yearEdit.visibility = android.view.View.GONE
+			btnPickYear.visibility = android.view.View.GONE
 			yearFixedText.visibility = android.view.View.VISIBLE
 			yearFixedText.text = "${editingYear}년"
 		} else {
-			yearEdit.setText(Calendar.getInstance().get(Calendar.YEAR).toString())
+			selectedYear = Calendar.getInstance().get(Calendar.YEAR)
+			btnPickYear.text = "${selectedYear}년"
+			btnPickYear.setOnClickListener { showYearPicker() }
 		}
 
-		findViewById<LinearLayout>(R.id.container_verse_picker).setOnClickListener {
-			val picker = BookChapterPickerBottomSheet("GAEYEOK")
-			picker.onVerseSelected = { bookId, chapter, verse ->
-				selectedBookId = bookId
-				selectedChapter = chapter
-				selectedVerse = verse
+		findViewById<TextView>(R.id.btn_add_bible_ref).setOnClickListener {
+			val rangePicker = BibleRangePickerBottomSheet()
+			rangePicker.onRangeSelected = { ref ->
 				lifecycleScope.launch {
-					val db = BibleDatabase.getInstance(applicationContext)
-					val verseData = db.bibleDao().getVerses("GAEYEOK", bookId, chapter)
-						.firstOrNull { it.verse == verse }
-					selectedVerseText = verseData?.text ?: ""
-					verseContentText.text = selectedVerseText
-					verseRefText.text = "${BibleBooks.nameOf(bookId)} $chapter:$verse"
+					val verseText = buildVerseText(ref)
+					bibleRefs.add(ref to verseText)
+					renderBibleRefChips()
 				}
 			}
-			picker.show(supportFragmentManager, "verse_of_year_picker")
+			rangePicker.show(supportFragmentManager, "verse_of_year_range_picker")
 		}
 
 		val deleteBtn = findViewById<ImageView>(R.id.btn_delete_entry)
@@ -116,44 +111,98 @@ class VerseOfYearEditActivity : AppCompatActivity() {
 		}
 	}
 
+	private fun showYearPicker() {
+		val picker = NumberPicker(this).apply {
+			minValue = selectedYear - 100
+			maxValue = selectedYear + 20
+			value = selectedYear
+		}
+		val container = android.widget.FrameLayout(this).apply {
+			setPadding(dp(24), dp(8), dp(24), dp(8))
+			addView(
+				picker,
+				android.widget.FrameLayout.LayoutParams(
+					android.widget.FrameLayout.LayoutParams.WRAP_CONTENT,
+					android.widget.FrameLayout.LayoutParams.WRAP_CONTENT,
+					android.view.Gravity.CENTER
+				)
+			)
+		}
+		AlertDialog.Builder(this)
+			.setTitle("연도 선택")
+			.setView(container)
+			.setPositiveButton("확인") { _, _ ->
+				selectedYear = picker.value
+				btnPickYear.text = "${selectedYear}년"
+			}
+			.setNegativeButton("취소", null)
+			.show()
+	}
+
+	private fun renderBibleRefChips() {
+		refsContainer.removeAllViews()
+		for ((ref, verseText) in bibleRefs) {
+			val card = LayoutInflater.from(this)
+				.inflate(R.layout.item_verse_of_year_ref_card, refsContainer, false)
+			card.findViewById<TextView>(R.id.text_ref_label).text = ref.toDisplayLabel()
+			card.findViewById<TextView>(R.id.text_ref_verse_text).text = verseText
+			card.findViewById<TextView>(R.id.btn_remove_ref).setOnClickListener {
+				bibleRefs.removeAll { it.first === ref }
+				renderBibleRefChips()
+			}
+			refsContainer.addView(card)
+		}
+	}
+
+	private suspend fun buildVerseText(ref: SermonBibleRef): String {
+		val db = BibleDatabase.getInstance(applicationContext)
+		val parts = mutableListOf<String>()
+		for (chapter in ref.startChapter..ref.endChapter) {
+			val verses = db.bibleDao().getVerses("NKRV", ref.startBookId, chapter)
+			val filtered = verses.filter { v ->
+				when {
+					ref.startChapter == ref.endChapter -> v.verse in ref.startVerse..ref.endVerse
+					chapter == ref.startChapter -> v.verse >= ref.startVerse
+					chapter == ref.endChapter -> v.verse <= ref.endVerse
+					else -> true
+				}
+			}
+			parts.addAll(filtered.map { it.text })
+		}
+		return parts.joinToString(" ")
+	}
+
 	private fun loadExisting() {
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(applicationContext)
 			val existing = db.verseOfYearDao().getByYear(editingYear) ?: return@launch
-
-			selectedBookId = existing.bookId
-			selectedChapter = existing.chapter
-			selectedVerse = existing.verse
-			selectedVerseText = existing.verseText
-
-			verseContentText.text = existing.verseText
-			verseRefText.text =
-				"${BibleBooks.nameOf(existing.bookId)} ${existing.chapter}:${existing.verse}"
 			noteEdit.setText(existing.note)
+
+			val refs = db.verseOfYearRefDao().getByYear(editingYear)
+			bibleRefs.clear()
+			for (r in refs) {
+				val sermonRef = SermonBibleRef(
+					sermonId = 0,
+					startBookId = r.startBookId,
+					startChapter = r.startChapter,
+					startVerse = r.startVerse,
+					endBookId = r.endBookId,
+					endChapter = r.endChapter,
+					endVerse = r.endVerse
+				)
+				bibleRefs.add(sermonRef to r.verseText)
+			}
+			renderBibleRefChips()
 		}
 	}
 
 	private fun save() {
-		val bookId = selectedBookId
-		val chapter = selectedChapter
-		val verse = selectedVerse
-
-		if (bookId == null || chapter == null || verse == null) {
-			Toast.makeText(this, "말씀을 먼저 선택해주세요", Toast.LENGTH_SHORT).show()
+		if (bibleRefs.isEmpty()) {
+			Toast.makeText(this, "말씀을 하나 이상 추가해주세요", Toast.LENGTH_SHORT).show()
 			return
 		}
 
-		val year: Int
-		if (isEditMode) {
-			year = editingYear
-		} else {
-			val yearInput = yearEdit.text.toString().trim().toIntOrNull()
-			if (yearInput == null || yearInput < 1900 || yearInput > 2200) {
-				Toast.makeText(this, "연도를 올바르게 입력해주세요", Toast.LENGTH_SHORT).show()
-				return
-			}
-			year = yearInput
-		}
+		val year = if (isEditMode) editingYear else selectedYear
 
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(applicationContext)
@@ -170,15 +219,21 @@ class VerseOfYearEditActivity : AppCompatActivity() {
 				}
 			}
 
-			db.verseOfYearDao().upsert(
-				VerseOfYear(
-					year = year,
-					bookId = bookId,
-					chapter = chapter,
-					verse = verse,
-					verseText = selectedVerseText,
-					note = noteEdit.text.toString()
-				)
+			db.verseOfYearDao().upsert(VerseOfYear(year = year, note = noteEdit.text.toString()))
+			db.verseOfYearRefDao().deleteByYear(year)
+			db.verseOfYearRefDao().insertAll(
+				bibleRefs.map { (ref, text) ->
+					VerseOfYearRef(
+						year = year,
+						startBookId = ref.startBookId,
+						startChapter = ref.startChapter,
+						startVerse = ref.startVerse,
+						endBookId = ref.endBookId,
+						endChapter = ref.endChapter,
+						endVerse = ref.endVerse,
+						verseText = text
+					)
+				}
 			)
 			Toast.makeText(this@VerseOfYearEditActivity, "저장됐어요", Toast.LENGTH_SHORT).show()
 			finish()
@@ -192,6 +247,7 @@ class VerseOfYearEditActivity : AppCompatActivity() {
 			.setPositiveButton("삭제") { _, _ ->
 				lifecycleScope.launch {
 					val db = BibleDatabase.getInstance(applicationContext)
+					db.verseOfYearRefDao().deleteByYear(editingYear)
 					db.verseOfYearDao().delete(editingYear)
 					Toast.makeText(this@VerseOfYearEditActivity, "삭제됐어요", Toast.LENGTH_SHORT).show()
 					finish()
@@ -200,4 +256,6 @@ class VerseOfYearEditActivity : AppCompatActivity() {
 			.setNegativeButton("취소", null)
 			.show()
 	}
+
+	private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
 }

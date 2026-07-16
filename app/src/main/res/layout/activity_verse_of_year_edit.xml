@@ -43,6 +43,7 @@
             android:layout_height="40dp"
             android:padding="8dp"
             android:src="@drawable/ic_delete"
+            app:tint="@color/white"
             android:contentDescription="삭제"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:visibility="gone"
@@ -69,21 +70,16 @@
                 android:layout_marginBottom="12dp">
 
                 <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="연도"
-                    android:textSize="15sp"
-                    android:textColor="@color/text_primary"
-                    android:layout_marginEnd="12dp" />
-
-                <EditText
-                    android:id="@+id/edit_year"
+                    android:id="@+id/btn_pick_year"
                     android:layout_width="120dp"
                     android:layout_height="wrap_content"
-                    android:inputType="number"
-                    android:maxLength="4"
                     android:padding="10dp"
-                    android:background="@drawable/bg_book_button" />
+                    android:gravity="center"
+                    android:textSize="15sp"
+                    android:textColor="@color/text_primary"
+                    android:background="@drawable/bg_book_button"
+                    android:clickable="true"
+                    android:focusable="true" />
 
                 <TextView
                     android:id="@+id/text_year_fixed"
@@ -95,32 +91,22 @@
                     android:visibility="gone" />
             </LinearLayout>
 
+            <TextView
+                android:id="@+id/btn_add_bible_ref"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="12dp"
+                android:text="+ 성경 구절 추가"
+                android:background="@drawable/bg_book_button"
+                android:clickable="true"
+                android:focusable="true" />
+
             <LinearLayout
-                android:id="@+id/container_verse_picker"
+                android:id="@+id/container_bible_refs"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:background="@drawable/bg_book_button"
-                android:padding="16dp"
-                android:clickable="true"
-                android:focusable="true">
-
-                <TextView
-                    android:id="@+id/text_verse_content"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:textSize="16sp"
-                    android:textColor="@color/text_primary"
-                    android:text="눌러서 말씀을 선택해보세요" />
-
-                <TextView
-                    android:id="@+id/text_verse_ref"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:textSize="13sp"
-                    android:textColor="@color/brown_primary" />
-            </LinearLayout>
+                android:layout_marginTop="8dp" />
 
             <EditText
                 android:id="@+id/edit_verse_note"

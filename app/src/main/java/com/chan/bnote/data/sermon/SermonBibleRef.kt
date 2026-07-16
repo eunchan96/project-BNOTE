@@ -20,7 +20,11 @@ data class SermonBibleRef(
 	fun toShortLabel(): String {
 		val bookAbbr = BibleBooks.shortNameOf(startBookId) // "창", "고전" 등 정확한 약칭
 		return if (startBookId == endBookId && startChapter == endChapter) {
-			"$bookAbbr $startChapter:$startVerse~$endVerse"
+			if (startVerse == endVerse) {
+				"$bookAbbr $startChapter:$startVerse"
+			} else {
+				"$bookAbbr $startChapter:$startVerse~$endVerse"
+			}
 		} else {
 			"$bookAbbr $startChapter:$startVerse~${endChapter}:$endVerse"
 		}

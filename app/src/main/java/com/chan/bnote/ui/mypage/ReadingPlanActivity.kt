@@ -44,7 +44,7 @@ class ReadingPlanActivity : AppCompatActivity() {
 
 			// 책별 총 장수 계산
 			val maxChapterByBook = (1..66).associateWith { bookId ->
-				db.bibleDao().getMaxChapter("GAEYEOK", bookId)
+				db.bibleDao().getMaxChapter("NKRV", bookId)
 			}
 			val totalChapters = maxChapterByBook.values.sum()
 

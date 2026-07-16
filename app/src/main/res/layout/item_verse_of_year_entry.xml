@@ -30,9 +30,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="2dp"
         android:textSize="15sp"
-        android:textColor="@color/text_primary"
-        android:maxLines="2"
-        android:ellipsize="end" />
+        android:textColor="@color/text_primary" />
 
     <TextView
         android:id="@+id/text_row_note"

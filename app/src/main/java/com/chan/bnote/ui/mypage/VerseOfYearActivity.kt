@@ -15,8 +15,8 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.chan.bnote.R
 import com.chan.bnote.data.BibleDatabase
-import com.chan.bnote.data.bible.BibleBooks
 import com.chan.bnote.data.mypage.VerseOfYear
+import com.chan.bnote.data.mypage.VerseOfYearRef
 import kotlinx.coroutines.launch
 import java.util.Calendar
 
@@ -55,15 +55,19 @@ class VerseOfYearActivity : AppCompatActivity() {
 	private fun loadEntries() {
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(applicationContext)
+			// DAO가 이미 연도 내림차순(최신 연도 우선)으로 반환한다.
 			val entries = db.verseOfYearDao().getAll()
+			val rows = entries.map { entry ->
+				VerseOfYearRow(entry, db.verseOfYearRefDao().getByYear(entry.year))
+			}
 
-			emptyText.visibility = if (entries.isEmpty()) View.VISIBLE else View.GONE
+			emptyText.visibility = if (rows.isEmpty()) View.VISIBLE else View.GONE
 			recyclerView.adapter = VerseOfYearAdapter(
-				entries = entries,
+				rows = rows,
 				currentYear = currentYear,
-				onEdit = { entry ->
+				onEdit = { row ->
 					startActivity(
-						VerseOfYearEditActivity.editIntent(this@VerseOfYearActivity, entry.year)
+						VerseOfYearEditActivity.editIntent(this@VerseOfYearActivity, row.entry.year)
 					)
 				}
 			)
@@ -71,10 +75,15 @@ class VerseOfYearActivity : AppCompatActivity() {
 	}
 }
 
+private data class VerseOfYearRow(
+	val entry: VerseOfYear,
+	val refs: List<VerseOfYearRef>
+)
+
 private class VerseOfYearAdapter(
-	private val entries: List<VerseOfYear>,
+	private val rows: List<VerseOfYearRow>,
 	private val currentYear: Int,
-	private val onEdit: (VerseOfYear) -> Unit
+	private val onEdit: (VerseOfYearRow) -> Unit
 ) : RecyclerView.Adapter<VerseOfYearAdapter.ViewHolder>() {
 
 	class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -90,20 +99,21 @@ private class VerseOfYearAdapter(
 		return ViewHolder(view)
 	}
 
-	override fun getItemCount(): Int = entries.size
+	override fun getItemCount(): Int = rows.size
 
 	override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-		val entry = entries[position]
+		val row = rows[position]
+		val entry = row.entry
 		holder.year.text =
 			if (entry.year == currentYear) "${entry.year}년 (올해)" else "${entry.year}년"
-		holder.ref.text = "${BibleBooks.nameOf(entry.bookId)} ${entry.chapter}:${entry.verse}"
-		holder.verse.text = entry.verseText
+		holder.ref.text = row.refs.joinToString(", ") { it.toDisplayLabel() }
+		holder.verse.text = row.refs.joinToString("\n") { it.verseText }
 		if (entry.note.isNotBlank()) {
 			holder.note.text = entry.note
 			holder.note.visibility = View.VISIBLE
 		} else {
 			holder.note.visibility = View.GONE
 		}
-		holder.itemView.setOnClickListener { onEdit(entry) }
+		holder.itemView.setOnClickListener { onEdit(row) }
 	}
 }

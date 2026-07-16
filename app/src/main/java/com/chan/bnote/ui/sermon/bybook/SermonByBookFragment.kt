@@ -100,7 +100,7 @@ class SermonByBookFragment : Fragment() {
 
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(requireContext().applicationContext)
-			val maxChapter = db.bibleDao().getMaxChapter("GAEYEOK", currentBookId)
+			val maxChapter = db.bibleDao().getMaxChapter("NKRV", currentBookId)
 			val markers = db.sermonDao().getChapterMarkersForBook(currentBookId)
 
 			val colorsByChapter = buildColorsByChapter(markers)
