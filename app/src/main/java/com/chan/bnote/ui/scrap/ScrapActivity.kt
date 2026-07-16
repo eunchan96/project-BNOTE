@@ -1,6 +1,5 @@
 package com.chan.bnote.ui.scrap
 
-import android.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
@@ -13,9 +12,11 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.chan.bnote.R
+import com.chan.bnote.data.AppSettings
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.scrap.Scrap
 import com.chan.bnote.data.scrap.ScrapGroup
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 
 class ScrapActivity : AppCompatActivity() {
@@ -130,6 +131,7 @@ class ScrapActivity : AppCompatActivity() {
 			verseRecycler.adapter = ScrapVerseAdapter(
 				scraps = scraps,
 				isEditMode = isEditMode,
+				fontSize = AppSettings.getFontSize(this@ScrapActivity),
 				onClick = { scrap -> navigateToScrap(scrap) },
 				onDelete = { scrap -> confirmDeleteScrap(scrap) }
 			)
@@ -146,7 +148,7 @@ class ScrapActivity : AppCompatActivity() {
 	}
 
 	private fun confirmDeleteScrap(scrap: Scrap) {
-		AlertDialog.Builder(this)
+		MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_BNOTE_Dialog)
 			.setTitle("스크랩 삭제")
 			.setMessage("이 스크랩을 삭제할까요?")
 			.setPositiveButton("삭제") { _, _ ->

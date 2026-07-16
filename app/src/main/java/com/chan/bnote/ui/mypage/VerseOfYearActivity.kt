@@ -62,7 +62,9 @@ class VerseOfYearActivity : AppCompatActivity() {
 				VerseOfYearRow(entry, db.verseOfYearRefDao().getByYear(entry.year))
 			}
 
-			emptyText.visibility = if (rows.isEmpty()) View.VISIBLE else View.GONE
+			val isEmpty = rows.isEmpty()
+			emptyText.visibility = if (isEmpty) View.VISIBLE else View.GONE
+			recyclerView.visibility = if (isEmpty) View.GONE else View.VISIBLE
 			recyclerView.adapter = VerseOfYearAdapter(
 				rows = rows,
 				currentYear = currentYear,

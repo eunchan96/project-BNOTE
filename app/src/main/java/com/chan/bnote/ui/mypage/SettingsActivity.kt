@@ -1,6 +1,5 @@
 package com.chan.bnote.ui.mypage
 
-import android.app.AlertDialog
 import android.os.Bundle
 import android.view.WindowManager
 import android.widget.ImageView
@@ -17,6 +16,7 @@ import androidx.lifecycle.lifecycleScope
 import com.chan.bnote.R
 import com.chan.bnote.data.AppSettings
 import com.chan.bnote.data.BibleDatabase
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 
 class SettingsActivity : AppCompatActivity() {
@@ -131,7 +131,7 @@ class SettingsActivity : AppCompatActivity() {
 		}
 
 		findViewById<TextView>(R.id.btn_reset_reading_progress).setOnClickListener {
-			AlertDialog.Builder(this)
+			MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_BNOTE_Dialog)
 				.setTitle("성경읽기표 기록 초기화")
 				.setMessage("지금까지 읽음 표시한 모든 기록이 사라져요. 계속할까요?")
 				.setPositiveButton("초기화") { _, _ ->

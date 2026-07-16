@@ -1,7 +1,6 @@
 package com.chan.bnote.ui.sermon
 
 import android.app.Activity
-import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
@@ -21,6 +20,7 @@ import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.DateUtils
 import com.chan.bnote.data.sermon.Sermon
 import com.chan.bnote.ui.bible.CitationBubbleHelper
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 
 class SermonDetailActivity : AppCompatActivity() {
@@ -69,7 +69,7 @@ class SermonDetailActivity : AppCompatActivity() {
 		}
 
 		findViewById<ImageView>(R.id.btn_delete_sermon).setOnClickListener {
-			AlertDialog.Builder(this)
+			MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_BNOTE_Dialog)
 				.setTitle("설교 삭제")
 				.setMessage("'${sermon.title}'을(를) 삭제할까요?")
 				.setPositiveButton("삭제") { _, _ ->

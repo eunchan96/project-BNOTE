@@ -20,10 +20,16 @@
     <color name="text_hint">#9E9E9E</color>
     <color name="input_background">#F5F5F5</color>
     <color name="highlight_yellow">#FFF9C4</color>
-    <color name="icon_action_tint">#795548</color>
 
     <!-- 마이페이지 성경 읽기 진행률 그리드 -->
     <color name="book_progress_none_bg">#F5F5F5</color>
     <color name="book_progress_partial_bg">#D7CCC8</color>
     <color name="book_progress_none_text">#333333</color>
+
+    <!-- 리스트 액션 아이콘(삭제 등) 톤 - 다크모드에서 흰색으로 전환 -->
+    <color name="icon_action_tint">#795548</color>
+
+    <!-- 다이얼로그(카테고리/설교자 추가 등) 배경 - 갈색 베이스 -->
+    <color name="dialog_background">#F7EFEA</color>
+    <color name="dialog_title_text">#5D4037</color>
 </resources>

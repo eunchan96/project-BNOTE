@@ -2,6 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="horizontal"
     android:gravity="center_vertical"
     android:padding="16dp"
@@ -32,6 +33,7 @@
         android:padding="8dp"
         android:src="@drawable/ic_edit"
         android:contentDescription="수정"
+        app:tint="@color/icon_action_tint"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:clickable="true"
         android:focusable="true" />
@@ -43,6 +45,7 @@
         android:padding="8dp"
         android:src="@drawable/ic_delete"
         android:contentDescription="삭제"
+        app:tint="@color/icon_action_tint"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:clickable="true"
         android:focusable="true" />

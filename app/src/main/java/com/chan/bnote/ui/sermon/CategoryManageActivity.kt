@@ -1,6 +1,5 @@
 package com.chan.bnote.ui.sermon
 
-import android.app.AlertDialog
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
@@ -21,6 +20,7 @@ import com.chan.bnote.R
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.sermon.SermonCategory
 import com.chan.bnote.ui.common.ColorPickerBottomSheet
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 
 class CategoryManageActivity : AppCompatActivity() {
@@ -68,12 +68,21 @@ class CategoryManageActivity : AppCompatActivity() {
 			hint = "카테고리 이름"
 			setText(existing?.name ?: "")
 			setPadding(48, 32, 48, 32)
+			textSize = 15f
+			background = androidx.core.content.ContextCompat.getDrawable(
+				this@CategoryManageActivity,
+				R.drawable.bg_book_button
+			)
+		}
+		val container = android.widget.FrameLayout(this).apply {
+			setPadding(dp(24), dp(16), dp(24), dp(0))
+			addView(editText)
 		}
 		var selectedColor = existing?.colorHex ?: ColorPickerBottomSheet.palette.first()
 
-		AlertDialog.Builder(this)
+		MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_BNOTE_Dialog)
 			.setTitle(if (existing == null) "카테고리 추가" else "카테고리 수정")
-			.setView(editText)
+			.setView(container)
 			.setPositiveButton("색상 선택 및 저장") { _, _ ->
 				val colorPicker = ColorPickerBottomSheet()
 				colorPicker.onColorSelected = { color ->
@@ -102,7 +111,7 @@ class CategoryManageActivity : AppCompatActivity() {
 	}
 
 	private fun confirmDelete(category: SermonCategory) {
-		AlertDialog.Builder(this)
+		MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_BNOTE_Dialog)
 			.setTitle("카테고리 삭제")
 			.setMessage("'${category.name}'을(를) 삭제할까요? 이 카테고리를 쓰던 설교는 카테고리 미지정 상태가 돼요.")
 			.setPositiveButton("삭제") { _, _ ->
@@ -115,6 +124,8 @@ class CategoryManageActivity : AppCompatActivity() {
 			.setNegativeButton("취소", null)
 			.show()
 	}
+
+	private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
 
 	private class CategoryAdapter(
 		private val items: List<SermonCategory>,

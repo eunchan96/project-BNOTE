@@ -51,19 +51,26 @@
 
     </LinearLayout>
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recycler_verse_of_year"
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="0dp"
+        android:layout_weight="1">
 
-    <TextView
-        android:id="@+id/text_empty"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="32dp"
-        android:gravity="center"
-        android:text="아직 등록된 말씀이 없어요.\n오른쪽 위 '+ 연도 추가'로 시작해보세요."
-        android:textColor="@color/text_hint"
-        android:visibility="gone" />
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recycler_verse_of_year"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <TextView
+            android:id="@+id/text_empty"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="32dp"
+            android:gravity="center"
+            android:text="아직 등록된 말씀이 없어요.\n오른쪽 위 '+ 연도 추가'로 시작해보세요."
+            android:textColor="@color/text_hint"
+            android:visibility="gone" />
+
+    </FrameLayout>
 
 </LinearLayout>

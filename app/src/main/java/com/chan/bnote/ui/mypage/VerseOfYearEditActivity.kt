@@ -1,6 +1,5 @@
 package com.chan.bnote.ui.mypage
 
-import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
@@ -22,6 +21,7 @@ import com.chan.bnote.data.mypage.VerseOfYear
 import com.chan.bnote.data.mypage.VerseOfYearRef
 import com.chan.bnote.data.sermon.SermonBibleRef
 import com.chan.bnote.ui.sermon.BibleRangePickerBottomSheet
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 import java.util.Calendar
 
@@ -129,7 +129,7 @@ class VerseOfYearEditActivity : AppCompatActivity() {
 				)
 			)
 		}
-		AlertDialog.Builder(this)
+		MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_BNOTE_Dialog)
 			.setTitle("연도 선택")
 			.setView(container)
 			.setPositiveButton("확인") { _, _ ->
@@ -245,7 +245,7 @@ class VerseOfYearEditActivity : AppCompatActivity() {
 	}
 
 	private fun confirmDelete() {
-		AlertDialog.Builder(this)
+		MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_BNOTE_Dialog)
 			.setTitle("${editingYear}년 말씀 삭제")
 			.setMessage("삭제하면 되돌릴 수 없어요. 계속할까요?")
 			.setPositiveButton("삭제") { _, _ ->
