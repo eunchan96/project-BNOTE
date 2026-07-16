@@ -8,6 +8,10 @@ import com.chan.bnote.data.bible.BibleDao
 import com.chan.bnote.data.bible.BibleVerse
 import com.chan.bnote.data.bookmark.BibleBookmark
 import com.chan.bnote.data.bookmark.BookmarkDao
+import com.chan.bnote.data.hymn.Hymn
+import com.chan.bnote.data.hymn.HymnCategory
+import com.chan.bnote.data.hymn.HymnDao
+import com.chan.bnote.data.hymn.HymnSeeder
 import com.chan.bnote.data.memo.VerseMemo
 import com.chan.bnote.data.memo.VerseMemoDao
 import com.chan.bnote.data.memo.WordMemo
@@ -42,9 +46,9 @@ import kotlinx.coroutines.launch
 		Sermon::class, SermonCategory::class, SermonBibleRef::class,
 		VerseOfYear::class, VerseOfYearRef::class, ScrapGroup::class, Scrap::class,
 		PartialHighlight::class, VerseMemo::class, WordMemo::class,
-		Preacher::class
+		Preacher::class, HymnCategory::class, Hymn::class
 	],
-	version = 13, // 12 -> 13
+	version = 14, // 13 -> 14 (찬송 기능 추가: HymnCategory, Hymn)
 	exportSchema = false
 )
 abstract class BibleDatabase : RoomDatabase() {
@@ -56,6 +60,7 @@ abstract class BibleDatabase : RoomDatabase() {
 	abstract fun sermonBibleRefDao(): SermonBibleRefDao
 	abstract fun verseOfYearDao(): VerseOfYearDao
 	abstract fun verseOfYearRefDao(): VerseOfYearRefDao
+	abstract fun hymnDao(): HymnDao
 	abstract fun scrapDao(): ScrapDao
 	abstract fun partialHighlightDao(): PartialHighlightDao
 	abstract fun verseMemoDao(): VerseMemoDao
@@ -84,6 +89,7 @@ abstract class BibleDatabase : RoomDatabase() {
 					if (instance.scrapDao().countGroups() == 0) {
 						instance.scrapDao().insertGroup(ScrapGroup(name = "기본", sortOrder = 0))
 					}
+					HymnSeeder.seedIfNeeded(context.applicationContext, instance.hymnDao())
 				}
 				instance
 			}

@@ -35,20 +35,6 @@
             android:layout_height="24dp"
             android:background="#555555" />
 
-        <LinearLayout
-            android:id="@+id/container_highlight_swatches"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:paddingStart="6dp"
-            android:paddingEnd="6dp" />
-
-        <View
-            android:layout_width="1dp"
-            android:layout_height="24dp"
-            android:background="#555555" />
-
         <TextView
             android:id="@+id/btn_remove_highlight"
             android:layout_width="wrap_content"
@@ -60,5 +46,20 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:clickable="true"
             android:focusable="true" />
+
+        <View
+            android:layout_width="1dp"
+            android:layout_height="24dp"
+            android:background="#555555" />
+
+        <LinearLayout
+            android:id="@+id/container_highlight_swatches"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="6dp"
+            android:paddingEnd="6dp" />
+
     </LinearLayout>
 </HorizontalScrollView>

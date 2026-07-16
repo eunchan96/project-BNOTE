@@ -2,6 +2,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- 찬송 화면의 유튜브 재생/썸네일 로딩에 필요 -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -77,6 +80,15 @@
             android:windowSoftInputMode="adjustResize" />
         <activity
             android:name=".ui.bible.BookmarkListActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.hymn.HymnListActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.hymn.HymnCategoryGridActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.hymn.HymnDetailActivity"
             android:exported="false" />
     </application>
 

@@ -25,4 +25,20 @@ interface PartialHighlightDao {
 		"DELETE FROM partial_highlights WHERE translation = :translation AND bookId = :bookId AND chapter = :chapter AND verse = :verse"
 	)
 	suspend fun deleteAllForVerse(translation: String, bookId: Int, chapter: Int, verse: Int)
+
+	@Query(
+		"""
+        DELETE FROM partial_highlights
+        WHERE translation = :translation AND bookId = :bookId AND chapter = :chapter AND verse = :verse
+          AND NOT (endOffset <= :start OR startOffset >= :end)
+        """
+	)
+	suspend fun deleteOverlapping(
+		translation: String,
+		bookId: Int,
+		chapter: Int,
+		verse: Int,
+		start: Int,
+		end: Int
+	)
 }
