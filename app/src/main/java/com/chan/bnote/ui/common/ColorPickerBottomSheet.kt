@@ -10,8 +10,11 @@ import androidx.recyclerview.widget.RecyclerView
 import com.chan.bnote.R
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 
-class ColorPickerBottomSheet : BottomSheetDialogFragment() {
+class ColorPickerBottomSheet(
+	private val includeNoneOption: Boolean = false
+) : BottomSheetDialogFragment() {
 
+	/** "없음" 선택 시 빈 문자열("")이 전달된다. */
 	var onColorSelected: ((String) -> Unit)? = null
 
 	companion object {
@@ -43,7 +46,24 @@ class ColorPickerBottomSheet : BottomSheetDialogFragment() {
 			}
 
 			override fun onBindViewHolder(holder: ColorViewHolder, position: Int) {
-				val colorHex = palette[position]
+				if (includeNoneOption && position == 0) {
+					val drawable = android.graphics.drawable.GradientDrawable()
+					drawable.shape = android.graphics.drawable.GradientDrawable.OVAL
+					drawable.setColor(Color.parseColor("#E0E0E0"))
+					drawable.setStroke(
+						(1 * resources.displayMetrics.density).toInt(),
+						Color.parseColor("#9E9E9E")
+					)
+					holder.itemView.background = drawable
+					holder.itemView.contentDescription = "없음"
+					holder.itemView.setOnClickListener {
+						onColorSelected?.invoke("")
+						dismiss()
+					}
+					return
+				}
+
+				val colorHex = palette[position - if (includeNoneOption) 1 else 0]
 				val drawable = android.graphics.drawable.GradientDrawable()
 				drawable.shape = android.graphics.drawable.GradientDrawable.OVAL
 				drawable.setColor(Color.parseColor(colorHex))
@@ -54,7 +74,7 @@ class ColorPickerBottomSheet : BottomSheetDialogFragment() {
 				}
 			}
 
-			override fun getItemCount() = palette.size
+			override fun getItemCount() = palette.size + if (includeNoneOption) 1 else 0
 		}
 	}
 

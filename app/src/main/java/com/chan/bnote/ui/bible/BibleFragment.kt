@@ -608,6 +608,8 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 	private fun updateToolbarVisibility() {
 		if (selectedVerses.isEmpty()) {
 			selectionToolbar.visibility = View.GONE
+			highlightColorToolbar.visibility = View.GONE
+			pendingHighlightVerses = null
 			return
 		}
 		selectionToolbar.visibility = View.VISIBLE
@@ -703,11 +705,34 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 	}
 
 	private fun openHighlightColorPicker(verseNum: Int, start: Int, end: Int) {
-		val picker = ColorPickerBottomSheet()
+		val picker = ColorPickerBottomSheet(includeNoneOption = true)
 		picker.onColorSelected = { colorHex ->
-			saveHighlight(verseNum, start, end, colorHex)
+			if (colorHex.isEmpty()) {
+				clearHighlight(verseNum, start, end)
+			} else {
+				saveHighlight(verseNum, start, end, colorHex)
+			}
 		}
 		picker.show(parentFragmentManager, "highlight_color_picker")
+	}
+
+	private fun clearHighlight(verseNum: Int, start: Int, end: Int) {
+		lifecycleScope.launch {
+			val db = BibleDatabase.getInstance(requireContext().applicationContext)
+			db.partialHighlightDao().deleteOverlapping(
+				translation = primaryTranslation.code,
+				bookId = currentBookId,
+				chapter = currentChapter,
+				verse = verseNum,
+				start = start,
+				end = end
+			)
+			val refreshed = db.partialHighlightDao()
+				.getForChapter(primaryTranslation.code, currentBookId, currentChapter)
+				.groupBy { it.verse }
+			currentHighlights = refreshed
+			adapter.updateHighlights(refreshed)
+		}
 	}
 
 	private fun saveHighlight(verseNum: Int, start: Int, end: Int, colorHex: String) {
@@ -735,7 +760,22 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 	private fun showHighlightColorToolbar() {
 		selectionToolbar.visibility = View.GONE
 		populateHighlightSwatches()
+		view?.findViewById<TextView>(R.id.btn_remove_highlight)?.visibility =
+			if (hasExistingHighlightForPending()) View.VISIBLE else View.GONE
 		highlightColorToolbar.visibility = View.VISIBLE
+	}
+
+	private fun hasExistingHighlightForPending(): Boolean {
+		pendingHighlightRange?.let { (verseNum, start, end) ->
+			val overlaps = currentHighlights[verseNum]?.any { h ->
+				!(end <= h.startOffset || start >= h.endOffset)
+			} ?: false
+			return overlaps
+		}
+		pendingHighlightVerses?.let { verseNums ->
+			return verseNums.any { verseNum -> !currentHighlights[verseNum].isNullOrEmpty() }
+		}
+		return false
 	}
 
 	private fun hideHighlightColorToolbar() {

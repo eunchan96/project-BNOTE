@@ -152,17 +152,27 @@ class VerseAdapter(
 		val tapListener = View.OnClickListener { onVerseTap(verseItem.verse) }
 		holder.root.setOnClickListener(tapListener)
 
-		val gestureDetector = android.view.GestureDetector(
-			context,
-			object : android.view.GestureDetector.SimpleOnGestureListener() {
-				override fun onSingleTapUp(e: android.view.MotionEvent): Boolean {
-					onVerseTap(verseItem.verse)
-					return true
+		var downTime = 0L
+		var downX = 0f
+		var downY = 0f
+		holder.content.setOnTouchListener { _, event ->
+			when (event.actionMasked) {
+				android.view.MotionEvent.ACTION_DOWN -> {
+					downTime = System.currentTimeMillis()
+					downX = event.x
+					downY = event.y
+				}
+
+				android.view.MotionEvent.ACTION_UP -> {
+					val elapsed = System.currentTimeMillis() - downTime
+					val dx = kotlin.math.abs(event.x - downX)
+					val dy = kotlin.math.abs(event.y - downY)
+					val touchSlop = android.view.ViewConfiguration.get(context).scaledTouchSlop
+					if (elapsed < 200 && dx < touchSlop && dy < touchSlop) {
+						onVerseTap(verseItem.verse)
+					}
 				}
 			}
-		)
-		holder.content.setOnTouchListener { _, event ->
-			gestureDetector.onTouchEvent(event)
 			false // 롱프레스로 텍스트 선택하는 기존 동작은 그대로 유지
 		}
 
