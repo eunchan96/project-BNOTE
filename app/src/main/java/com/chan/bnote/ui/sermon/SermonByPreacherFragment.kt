@@ -39,6 +39,14 @@ class SermonByPreacherFragment : Fragment() {
 			selectedPreacher?.let { loadSermonsForPreacher(it) }
 		}
 	}
+	private val sermonDetailLauncher = registerForActivityResult(
+		ActivityResultContracts.StartActivityForResult()
+	) { result ->
+		if (result.resultCode == Activity.RESULT_OK) {
+			loadPreachers()
+			selectedPreacher?.let { loadSermonsForPreacher(it) }
+		}
+	}
 	private lateinit var btnSermonSort: TextView
 	private lateinit var selectedPreacherText: TextView
 
@@ -289,9 +297,9 @@ class SermonByPreacherFragment : Fragment() {
 				emptyText?.visibility = View.GONE
 				sermonRecycler.visibility = View.VISIBLE
 				sermonRecycler.adapter = SermonRowAdapter(rowData) { sermon ->
-					val detail = SermonDetailBottomSheet(sermon)
-					detail.onChanged = { loadSermonsForPreacher(preacher) }
-					detail.show(parentFragmentManager, "sermon_detail")
+					sermonDetailLauncher.launch(
+						SermonDetailActivity.createIntent(requireContext(), sermon.id)
+					)
 				}
 			}
 		}

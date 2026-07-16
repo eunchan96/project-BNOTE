@@ -19,7 +19,7 @@ import com.chan.bnote.data.sermon.ChapterMarker
 import com.chan.bnote.data.sermon.Sermon
 import com.chan.bnote.ui.bible.BookOnlyPickerBottomSheet
 import com.chan.bnote.ui.sermon.AddSermonActivity
-import com.chan.bnote.ui.sermon.SermonDetailBottomSheet
+import com.chan.bnote.ui.sermon.SermonDetailActivity
 import com.chan.bnote.ui.sermon.SermonRowAdapter
 import com.chan.bnote.ui.sermon.SermonRowBuilder
 import kotlinx.coroutines.launch
@@ -30,6 +30,15 @@ class SermonByBookFragment : Fragment() {
 	private lateinit var chapterGridRecycler: RecyclerView
 
 	private val addSermonLauncher = registerForActivityResult(
+		ActivityResultContracts.StartActivityForResult()
+	) { result ->
+		if (result.resultCode == Activity.RESULT_OK) {
+			loadChapterGrid()
+			loadSermonsForSelectedChapter()
+		}
+	}
+
+	private val sermonDetailLauncher = registerForActivityResult(
 		ActivityResultContracts.StartActivityForResult()
 	) { result ->
 		if (result.resultCode == Activity.RESULT_OK) {
@@ -150,9 +159,9 @@ class SermonByBookFragment : Fragment() {
 			val db = BibleDatabase.getInstance(requireContext().applicationContext)
 			val rows = SermonRowBuilder.build(db, sermons)
 			recyclerView.adapter = SermonRowAdapter(rows) { sermon ->
-				val detail = SermonDetailBottomSheet(sermon)
-				detail.onChanged = { loadChapterGrid() }
-				detail.show(parentFragmentManager, "sermon_detail")
+				sermonDetailLauncher.launch(
+					SermonDetailActivity.createIntent(requireContext(), sermon.id)
+				)
 			}
 		}
 	}

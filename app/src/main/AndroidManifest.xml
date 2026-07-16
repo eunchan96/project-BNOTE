@@ -14,7 +14,8 @@
         tools:targetApi="31">
         <activity
             android:name=".MainActivity"
-            android:exported="true">
+            android:exported="true"
+            android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -57,6 +58,19 @@
         <activity
             android:name=".ui.mypage.VerseOfYearEditActivity"
             android:exported="false" />
+        <activity
+            android:name=".ui.sermon.CategoryManageActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.sermon.SermonDetailActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.bible.ChapterSermonsActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.sermon.SermonSearchActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
     </application>
 
 </manifest>

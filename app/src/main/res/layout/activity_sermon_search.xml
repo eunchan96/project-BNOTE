@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/sermon_search_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@color/surface_elevated">
+    android:background="@color/surface_background">
 
-    <include layout="@layout/include_drag_handle" />
+    <include layout="@layout/include_activity_top_bar" />
 
     <EditText
         android:id="@+id/edit_sermon_search"
@@ -31,7 +32,7 @@
         android:padding="24dp"
         android:gravity="center"
         android:text="검색어를 입력해주세요"
-        android:textColor="#9E9E9E" />
+        android:textColor="@color/text_hint" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler_sermon_search_results"

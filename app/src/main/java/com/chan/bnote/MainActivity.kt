@@ -19,6 +19,11 @@ import com.chan.bnote.ui.sermon.SermonFragment
 
 class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationHost {
 
+	companion object {
+		const val EXTRA_NAVIGATE_BOOK_ID = "extra_navigate_book_id"
+		const val EXTRA_NAVIGATE_CHAPTER = "extra_navigate_chapter"
+	}
+
 	private lateinit var textCurrentLocation: TextView
 	private lateinit var btnTranslation: ImageView
 	private lateinit var btnSearch: ImageView
@@ -61,8 +66,24 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 
 		if (savedInstanceState == null) {
 			switchTab(BibleFragment(), navBible)
+			handleNavigationIntent(intent)
 		} else {
 			restoreCurrentTabUi() // 추가: recreate() 등으로 재생성됐을 때 현재 화면에 맞게 UI 동기화
+		}
+	}
+
+	override fun onNewIntent(intent: android.content.Intent) {
+		super.onNewIntent(intent)
+		setIntent(intent)
+		handleNavigationIntent(intent)
+	}
+
+	private fun handleNavigationIntent(intent: android.content.Intent) {
+		if (!intent.hasExtra(EXTRA_NAVIGATE_BOOK_ID)) return
+		val bookId = intent.getIntExtra(EXTRA_NAVIGATE_BOOK_ID, -1)
+		val chapter = intent.getIntExtra(EXTRA_NAVIGATE_CHAPTER, -1)
+		if (bookId != -1 && chapter != -1) {
+			navigateToBibleChapter(bookId, chapter)
 		}
 	}
 

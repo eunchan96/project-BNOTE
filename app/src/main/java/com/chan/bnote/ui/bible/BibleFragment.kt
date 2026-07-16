@@ -411,8 +411,7 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 	}
 
 	override fun onSermonIconClicked() {
-		ChapterSermonsBottomSheet(currentBookId, currentChapter)
-			.show(parentFragmentManager, "chapter_sermons")
+		ChapterSermonsActivity.start(requireContext(), currentBookId, currentChapter)
 	}
 
 	private fun loadChapter(bookId: Int, chapter: Int, scrollToVerse: Int? = null) {

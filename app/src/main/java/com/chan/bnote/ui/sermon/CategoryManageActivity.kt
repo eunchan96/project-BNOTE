@@ -8,7 +8,12 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
+import android.widget.ImageView
 import android.widget.TextView
+import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -16,29 +21,30 @@ import com.chan.bnote.R
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.sermon.SermonCategory
 import com.chan.bnote.ui.common.ColorPickerBottomSheet
-import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import kotlinx.coroutines.launch
 
-class CategoryManageBottomSheet : BottomSheetDialogFragment() {
-
-	var onCategoriesChanged: (() -> Unit)? = null
+class CategoryManageActivity : AppCompatActivity() {
 
 	private lateinit var recyclerView: RecyclerView
 	private var categories: List<SermonCategory> = emptyList()
 
-	override fun onCreateView(
-		inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
-	): View {
-		return inflater.inflate(R.layout.bottom_sheet_category_manage, container, false)
-	}
+	override fun onCreate(savedInstanceState: Bundle?) {
+		super.onCreate(savedInstanceState)
+		enableEdgeToEdge()
+		setContentView(R.layout.activity_category_manage)
 
-	override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-		super.onViewCreated(view, savedInstanceState)
+		ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.category_manage_root)) { v, insets ->
+			val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+			v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+			insets
+		}
 
-		recyclerView = view.findViewById(R.id.recycler_categories)
-		recyclerView.layoutManager = LinearLayoutManager(requireContext())
+		findViewById<ImageView>(R.id.btn_top_bar_back).setOnClickListener { finish() }
 
-		view.findViewById<TextView>(R.id.btn_add_category).setOnClickListener {
+		recyclerView = findViewById(R.id.recycler_categories)
+		recyclerView.layoutManager = LinearLayoutManager(this)
+
+		findViewById<TextView>(R.id.btn_add_category).setOnClickListener {
 			showEditDialog(null)
 		}
 
@@ -47,7 +53,7 @@ class CategoryManageBottomSheet : BottomSheetDialogFragment() {
 
 	private fun loadCategories() {
 		lifecycleScope.launch {
-			val db = BibleDatabase.getInstance(requireContext().applicationContext)
+			val db = BibleDatabase.getInstance(applicationContext)
 			categories = db.sermonCategoryDao().getAll()
 			recyclerView.adapter = CategoryAdapter(
 				categories,
@@ -58,14 +64,14 @@ class CategoryManageBottomSheet : BottomSheetDialogFragment() {
 	}
 
 	private fun showEditDialog(existing: SermonCategory?) {
-		val editText = EditText(requireContext()).apply {
+		val editText = EditText(this).apply {
 			hint = "카테고리 이름"
 			setText(existing?.name ?: "")
 			setPadding(48, 32, 48, 32)
 		}
 		var selectedColor = existing?.colorHex ?: ColorPickerBottomSheet.palette.first()
 
-		AlertDialog.Builder(requireContext())
+		AlertDialog.Builder(this)
 			.setTitle(if (existing == null) "카테고리 추가" else "카테고리 수정")
 			.setView(editText)
 			.setPositiveButton("색상 선택 및 저장") { _, _ ->
@@ -74,7 +80,7 @@ class CategoryManageBottomSheet : BottomSheetDialogFragment() {
 					selectedColor = color
 					saveCategory(existing, editText.text.toString().trim(), selectedColor)
 				}
-				colorPicker.show(parentFragmentManager, "color_picker")
+				colorPicker.show(supportFragmentManager, "color_picker")
 			}
 			.setNegativeButton("취소", null)
 			.show()
@@ -83,7 +89,7 @@ class CategoryManageBottomSheet : BottomSheetDialogFragment() {
 	private fun saveCategory(existing: SermonCategory?, name: String, colorHex: String) {
 		if (name.isBlank()) return
 		lifecycleScope.launch {
-			val db = BibleDatabase.getInstance(requireContext().applicationContext)
+			val db = BibleDatabase.getInstance(applicationContext)
 			if (existing == null) {
 				db.sermonCategoryDao().insert(
 					SermonCategory(name = name, colorHex = colorHex, sortOrder = categories.size)
@@ -91,20 +97,18 @@ class CategoryManageBottomSheet : BottomSheetDialogFragment() {
 			} else {
 				db.sermonCategoryDao().update(existing.copy(name = name, colorHex = colorHex))
 			}
-			onCategoriesChanged?.invoke()
 			loadCategories()
 		}
 	}
 
 	private fun confirmDelete(category: SermonCategory) {
-		AlertDialog.Builder(requireContext())
+		AlertDialog.Builder(this)
 			.setTitle("카테고리 삭제")
 			.setMessage("'${category.name}'을(를) 삭제할까요? 이 카테고리를 쓰던 설교는 카테고리 미지정 상태가 돼요.")
 			.setPositiveButton("삭제") { _, _ ->
 				lifecycleScope.launch {
-					val db = BibleDatabase.getInstance(requireContext().applicationContext)
+					val db = BibleDatabase.getInstance(applicationContext)
 					db.sermonCategoryDao().delete(category)
-					onCategoriesChanged?.invoke()
 					loadCategories()
 				}
 			}
