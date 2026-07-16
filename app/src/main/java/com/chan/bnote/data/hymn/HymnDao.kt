@@ -34,6 +34,19 @@ interface HymnDao {
 	@Query("SELECT * FROM hymns WHERE number = :number LIMIT 1")
 	suspend fun getByNumber(number: Int): Hymn?
 
+	/** 소분류 하나에 속한 찬송들의 최소~최대 장번호. */
+	@Query("SELECT MIN(number) as minNumber, MAX(number) as maxNumber FROM hymns WHERE categoryId = :minorCategoryId")
+	suspend fun getRangeForMinorCategory(minorCategoryId: Long): HymnNumberRange?
+
+	/** 대분류 하나에 속한 모든 소분류의 찬송을 합친 최소~최대 장번호. */
+	@Query(
+		"""
+        SELECT MIN(number) as minNumber, MAX(number) as maxNumber FROM hymns
+        WHERE categoryId IN (SELECT id FROM hymn_categories WHERE parentId = :majorId)
+        """
+	)
+	suspend fun getRangeForMajorCategory(majorId: Long): HymnNumberRange?
+
 	@Query(
 		"""
         SELECT * FROM hymns
@@ -44,3 +57,8 @@ interface HymnDao {
 	)
 	suspend fun search(keyword: String): List<Hymn>
 }
+
+data class HymnNumberRange(
+	val minNumber: Int,
+	val maxNumber: Int
+)

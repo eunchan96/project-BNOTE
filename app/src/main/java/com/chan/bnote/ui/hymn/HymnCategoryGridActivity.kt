@@ -66,7 +66,11 @@ class HymnCategoryGridActivity : AppCompatActivity() {
 
 			if (isMinorLevel) {
 				val minors = db.hymnDao().getMinorCategories(parentId)
-				recyclerView.adapter = HymnCategoryAdapter(minors) { minor ->
+				val cells = minors.map { minor ->
+					val range = db.hymnDao().getRangeForMinorCategory(minor.id)
+					CategoryCell(minor, formatRangeLabel(range))
+				}
+				recyclerView.adapter = HymnCategoryAdapter(cells) { minor ->
 					HymnListActivity.startForCategory(
 						this@HymnCategoryGridActivity,
 						minor.id,
@@ -75,7 +79,11 @@ class HymnCategoryGridActivity : AppCompatActivity() {
 				}
 			} else {
 				val majors = db.hymnDao().getMajorCategories()
-				recyclerView.adapter = HymnCategoryAdapter(majors) { major ->
+				val cells = majors.map { major ->
+					val range = db.hymnDao().getRangeForMajorCategory(major.id)
+					CategoryCell(major, formatRangeLabel(range))
+				}
+				recyclerView.adapter = HymnCategoryAdapter(cells) { major ->
 					lifecycleScope.launch {
 						val minors = db.hymnDao().getMinorCategories(major.id)
 						if (minors.size == 1) {
@@ -91,10 +99,24 @@ class HymnCategoryGridActivity : AppCompatActivity() {
 			}
 		}
 	}
+
+	private fun formatRangeLabel(range: com.chan.bnote.data.hymn.HymnNumberRange?): String {
+		if (range == null) return ""
+		return if (range.minNumber == range.maxNumber) {
+			"(${range.minNumber})"
+		} else {
+			"(${range.minNumber}~${range.maxNumber})"
+		}
+	}
 }
 
+private data class CategoryCell(
+	val category: HymnCategory,
+	val rangeLabel: String
+)
+
 private class HymnCategoryAdapter(
-	private val categories: List<HymnCategory>,
+	private val cells: List<CategoryCell>,
 	private val onClick: (HymnCategory) -> Unit
 ) : RecyclerView.Adapter<HymnCategoryAdapter.ViewHolder>() {
 
@@ -108,11 +130,15 @@ private class HymnCategoryAdapter(
 		return ViewHolder(view)
 	}
 
-	override fun getItemCount(): Int = categories.size
+	override fun getItemCount(): Int = cells.size
 
 	override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-		val category = categories[position]
-		holder.name.text = category.name
-		holder.itemView.setOnClickListener { onClick(category) }
+		val cell = cells[position]
+		holder.name.text = if (cell.rangeLabel.isNotEmpty()) {
+			"${cell.category.name}\n${cell.rangeLabel}"
+		} else {
+			cell.category.name
+		}
+		holder.itemView.setOnClickListener { onClick(cell.category) }
 	}
 }
