@@ -8,7 +8,7 @@ import androidx.room.Query
 interface HymnDao {
 
 	@Insert
-	suspend fun insertCategories(categories: List<HymnCategory>)
+	suspend fun insertCategory(category: HymnCategory): Long
 
 	@Insert
 	suspend fun insertHymns(hymns: List<Hymn>)

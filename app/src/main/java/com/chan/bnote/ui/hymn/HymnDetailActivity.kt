@@ -11,6 +11,7 @@ import android.view.View
 import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.PopupMenu
 import android.widget.TextView
 import android.widget.Toast
@@ -61,11 +62,31 @@ class HymnDetailActivity : AppCompatActivity() {
 
 			findViewById<TextView>(R.id.text_top_bar_title).text = "${hymn.number}장 ${hymn.title}"
 
-			findViewById<ImageView>(R.id.image_hymn_sheet)
-				.load("file:///android_asset/hymns/images/${hymn.imageFileName}")
+			renderSheetImages(hymn.imageFileName)
 
 			setupVideoCard(findViewById(R.id.card_song), hymn.youtubeSongUrl)
 			setupVideoCard(findViewById(R.id.card_mr), hymn.youtubeMrUrl)
+		}
+	}
+
+	private fun renderSheetImages(imageFileNames: String) {
+		val container = findViewById<LinearLayout>(R.id.container_hymn_sheets)
+		container.removeAllViews()
+
+		val files = imageFileNames.split("|").filter { it.isNotBlank() }
+		files.forEachIndexed { index, fileName ->
+			val imageView = ImageView(this).apply {
+				layoutParams = LinearLayout.LayoutParams(
+					LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
+				).apply {
+					if (index > 0) topMargin = (8 * resources.displayMetrics.density).toInt()
+				}
+				adjustViewBounds = true
+				scaleType = ImageView.ScaleType.FIT_CENTER
+				contentDescription = "악보 ${index + 1}페이지"
+			}
+			imageView.load("file:///android_asset/hymns/images/$fileName")
+			container.addView(imageView)
 		}
 	}
 
@@ -75,10 +96,35 @@ class HymnDetailActivity : AppCompatActivity() {
 		val webView = cardRoot.findViewById<WebView>(R.id.webview_player)
 		val overflowBtn = cardRoot.findViewById<ImageView>(R.id.btn_video_overflow)
 
+		// 화면 실제 폭에 맞춰 16:9 비율로 카드 높이를 다시 계산한다 (고정 200dp라 좌우가 비어 보이던 문제 수정).
+		cardRoot.post {
+			val width = cardRoot.width
+			if (width > 0) {
+				val height = width * 9 / 16
+				cardRoot.layoutParams = cardRoot.layoutParams.apply { this.height = height }
+				thumbnail.layoutParams = thumbnail.layoutParams.apply { this.height = height }
+				webView.layoutParams = webView.layoutParams.apply { this.height = height }
+				cardRoot.requestLayout()
+			}
+		}
+
 		val videoId = extractYoutubeId(youtubeUrl)
+		android.util.Log.d("HymnDetail", "youtubeUrl=$youtubeUrl -> videoId=$videoId")
 
 		if (videoId != null) {
-			thumbnail.load("https://img.youtube.com/vi/$videoId/hqdefault.jpg")
+			thumbnail.load("https://img.youtube.com/vi/$videoId/hqdefault.jpg") {
+				listener(
+					onError = { _, result ->
+						android.util.Log.e(
+							"HymnDetail",
+							"썸네일 로드 실패: videoId=$videoId", result.throwable
+						)
+					},
+					onSuccess = { _, _ ->
+						android.util.Log.d("HymnDetail", "썸네일 로드 성공: videoId=$videoId")
+					}
+				)
+			}
 		}
 
 		val playClickListener = View.OnClickListener {
@@ -89,8 +135,48 @@ class HymnDetailActivity : AppCompatActivity() {
 
 			webView.settings.javaScriptEnabled = true
 			webView.settings.mediaPlaybackRequiresUserGesture = false
+			webView.settings.domStorageEnabled = true
+			webView.settings.loadWithOverviewMode = true
+			webView.settings.useWideViewPort = true
+			webView.webViewClient = object : android.webkit.WebViewClient() {
+				override fun onPageStarted(
+					view: WebView?, url: String?, favicon: android.graphics.Bitmap?
+				) {
+					android.util.Log.d("HymnDetail", "WebView onPageStarted url=$url")
+				}
+
+				override fun onPageFinished(view: WebView?, url: String?) {
+					android.util.Log.d("HymnDetail", "WebView onPageFinished url=$url")
+				}
+
+				override fun onReceivedError(
+					view: WebView?,
+					request: android.webkit.WebResourceRequest?,
+					error: android.webkit.WebResourceError?
+				) {
+					android.util.Log.e(
+						"HymnDetail",
+						"WebView onReceivedError url=${request?.url} " +
+								"errorCode=${error?.errorCode} description=${error?.description}"
+					)
+				}
+			}
 			webView.webChromeClient = WebChromeClient()
-			webView.loadUrl("https://www.youtube.com/embed/$videoId?autoplay=1&playsinline=1")
+
+			val embedOrigin = "https://bnote.app"
+			val html = """
+				<html>
+				<body style="margin:0;padding:0;background:#000;">
+				<iframe width="100%" height="100%"
+					src="https://www.youtube.com/embed/$videoId?autoplay=1&playsinline=1&origin=$embedOrigin&enablejsapi=1"
+					frameborder="0"
+					allow="autoplay; encrypted-media"
+					allowfullscreen></iframe>
+				</body>
+				</html>
+			""".trimIndent()
+			android.util.Log.d("HymnDetail", "재생 버튼 눌림, iframe 로드 시작 videoId=$videoId")
+			webView.loadDataWithBaseURL(embedOrigin, html, "text/html", "utf-8", null)
 		}
 		thumbnail.setOnClickListener(playClickListener)
 		playOverlay.setOnClickListener(playClickListener)
