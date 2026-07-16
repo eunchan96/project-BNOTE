@@ -1,29 +1,40 @@
 package com.chan.bnote.ui.sermon
 
+import android.Manifest
 import android.app.Activity
 import android.app.DatePickerDialog
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.text.Spannable
 import android.text.SpannableString
 import android.text.style.UnderlineSpan
 import android.view.LayoutInflater
+import android.view.View
 import android.widget.EditText
 import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.PopupMenu
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
+import coil.load
 import com.chan.bnote.R
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.DateUtils
 import com.chan.bnote.data.sermon.Sermon
 import com.chan.bnote.data.sermon.SermonBibleRef
+import com.chan.bnote.data.sermon.SermonPhoto
+import com.chan.bnote.data.sermon.SermonPhotoStorage
 import kotlinx.coroutines.launch
+import java.io.File
 import java.util.Calendar
 
 class AddSermonActivity : AppCompatActivity() {
@@ -31,6 +42,7 @@ class AddSermonActivity : AppCompatActivity() {
 	companion object {
 		private const val EXTRA_SERMON_ID = "extra_sermon_id"
 		private const val EXTRA_INITIAL_DATE_MILLIS = "extra_initial_date_millis"
+		private const val MAX_PHOTOS = 5
 
 		/** 신규 등록용 Intent. */
 		fun createIntent(
@@ -55,11 +67,48 @@ class AddSermonActivity : AppCompatActivity() {
 	private var selectedCategoryId: Long? = null
 	private var selectedPreacherId: Long? = null
 	private val bibleRefs = mutableListOf<SermonBibleRef>()
+	private val photoPaths = mutableListOf<String>()
+	private var pendingCaptureFile: File? = null
 
 	private lateinit var flexboxRefs: com.google.android.flexbox.FlexboxLayout
 	private lateinit var btnPickPreacher: TextView
 	private lateinit var btnPickCategory: TextView
 	private lateinit var btnDate: TextView
+	private lateinit var btnAddPhoto: TextView
+	private lateinit var scrollPhotos: View
+	private lateinit var photoContainer: LinearLayout
+
+	private val pickPhotosLauncher = registerForActivityResult(
+		ActivityResultContracts.PickMultipleVisualMedia(MAX_PHOTOS)
+	) { uris ->
+		if (uris.isEmpty()) return@registerForActivityResult
+		val remaining = MAX_PHOTOS - photoPaths.size
+		for (uri in uris.take(remaining)) {
+			SermonPhotoStorage.copyToInternalStorage(this, uri)?.let { path ->
+				photoPaths.add(path)
+			}
+		}
+		renderPhotoThumbnails()
+	}
+
+	private val takePictureLauncher = registerForActivityResult(
+		ActivityResultContracts.TakePicture()
+	) { success ->
+		val file = pendingCaptureFile
+		pendingCaptureFile = null
+		if (success && file != null) {
+			photoPaths.add(file.absolutePath)
+			renderPhotoThumbnails()
+		}
+	}
+
+	private val cameraPermissionLauncher = registerForActivityResult(
+		ActivityResultContracts.RequestPermission()
+	) { granted ->
+		if (granted) launchCamera() else {
+			Toast.makeText(this, "카메라 권한이 필요해요", Toast.LENGTH_SHORT).show()
+		}
+	}
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
@@ -89,8 +138,12 @@ class AddSermonActivity : AppCompatActivity() {
 		btnPickPreacher = findViewById(R.id.btn_pick_preacher)
 		btnPickCategory = findViewById(R.id.btn_pick_category)
 		flexboxRefs = findViewById(R.id.flexbox_bible_refs)
+		btnAddPhoto = findViewById(R.id.btn_add_photo)
+		scrollPhotos = findViewById(R.id.scroll_photo_thumbnails)
+		photoContainer = findViewById(R.id.container_photo_thumbnails)
 
 		updateDateText()
+		renderPhotoThumbnails()
 
 		btnDate.setOnClickListener {
 			val cal = Calendar.getInstance().apply { timeInMillis = selectedDateMillis }
@@ -133,6 +186,8 @@ class AddSermonActivity : AppCompatActivity() {
 			rangePicker.show(supportFragmentManager, "bible_range_picker")
 		}
 
+		btnAddPhoto.setOnClickListener { showPhotoSourceMenu(it) }
+
 		findViewById<TextView>(R.id.btn_save_sermon).setOnClickListener {
 			save(editTitle.text.toString().trim(), editMemo.text.toString())
 		}
@@ -153,6 +208,10 @@ class AddSermonActivity : AppCompatActivity() {
 
 					bibleRefs.addAll(db.sermonBibleRefDao().getBySermon(sermon.id))
 					renderBibleRefChips()
+
+					photoPaths.addAll(
+						db.sermonPhotoDao().getBySermon(sermon.id).map { it.filePath })
+					renderPhotoThumbnails()
 				}
 			}
 
@@ -162,6 +221,63 @@ class AddSermonActivity : AppCompatActivity() {
 			selectedCategoryId?.let { id ->
 				db.sermonCategoryDao().getById(id)?.let { btnPickCategory.text = it.name }
 			}
+		}
+	}
+
+	private fun showPhotoSourceMenu(anchor: View) {
+		if (photoPaths.size >= MAX_PHOTOS) {
+			Toast.makeText(this, "사진은 최대 ${MAX_PHOTOS}장까지 추가할 수 있어요", Toast.LENGTH_SHORT).show()
+			return
+		}
+		val popup = PopupMenu(this, anchor)
+		popup.menu.add(0, 0, 0, "갤러리에서 선택")
+		popup.menu.add(0, 1, 1, "카메라로 촬영")
+		popup.setOnMenuItemClickListener { item ->
+			when (item.itemId) {
+				0 -> pickPhotosLauncher.launch(
+					androidx.activity.result.PickVisualMediaRequest(
+						ActivityResultContracts.PickVisualMedia.ImageOnly
+					)
+				)
+
+				1 -> requestCameraAndLaunch()
+			}
+			true
+		}
+		popup.show()
+	}
+
+	private fun requestCameraAndLaunch() {
+		val granted = ContextCompat.checkSelfPermission(
+			this, Manifest.permission.CAMERA
+		) == PackageManager.PERMISSION_GRANTED
+		if (granted) {
+			launchCamera()
+		} else {
+			cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+		}
+	}
+
+	private fun launchCamera() {
+		val (file, uri) = SermonPhotoStorage.createCaptureTarget(this)
+		pendingCaptureFile = file
+		takePictureLauncher.launch(uri)
+	}
+
+	private fun renderPhotoThumbnails() {
+		btnAddPhoto.text = "+ 사진 추가 (${photoPaths.size}/$MAX_PHOTOS)"
+		photoContainer.removeAllViews()
+		scrollPhotos.visibility = if (photoPaths.isEmpty()) View.GONE else View.VISIBLE
+
+		for (path in photoPaths) {
+			val thumb = LayoutInflater.from(this)
+				.inflate(R.layout.item_sermon_photo_thumbnail, photoContainer, false)
+			thumb.findViewById<ImageView>(R.id.image_photo_thumbnail).load(File(path))
+			thumb.findViewById<ImageView>(R.id.btn_remove_photo).setOnClickListener {
+				photoPaths.remove(path)
+				renderPhotoThumbnails()
+			}
+			photoContainer.addView(thumb)
 		}
 	}
 
@@ -215,6 +331,15 @@ class AddSermonActivity : AppCompatActivity() {
 
 			if (bibleRefs.isNotEmpty()) {
 				db.sermonBibleRefDao().insertAll(bibleRefs.map { it.copy(sermonId = sermonId) })
+			}
+
+			db.sermonPhotoDao().deleteBySermon(sermonId)
+			if (photoPaths.isNotEmpty()) {
+				db.sermonPhotoDao().insertAll(
+					photoPaths.mapIndexed { index, path ->
+						SermonPhoto(sermonId = sermonId, filePath = path, sortOrder = index)
+					}
+				)
 			}
 
 			setResult(Activity.RESULT_OK)
