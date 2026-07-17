@@ -126,7 +126,7 @@ class BibleRangePickerBottomSheet : DraggableBottomSheet() {
 	private fun showVerseStep(isStart: Boolean) {
 		val chapter = if (isStart) startChapter else endChapter
 		titleView.text =
-			"${BibleBooks.nameOf(bookId)} ${chapter}장 - ${if (isStart) "시작" else "끝"} 절 선택"
+			"${BibleBooks.nameOf(bookId)} ${chapter}${BibleBooks.chapterUnit(bookId)} - ${if (isStart) "시작" else "끝"} 절 선택"
 		backButton.visibility = View.VISIBLE
 		backButton.setOnClickListener {
 			if (isStart) showChapterStep(isStart = true) else showChapterStep(isStart = false)

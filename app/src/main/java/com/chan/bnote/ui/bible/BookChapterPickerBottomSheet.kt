@@ -114,7 +114,7 @@ class BookChapterPickerBottomSheet(
 	}
 
 	private fun showVerseList(bookName: String, chapter: Int) {
-		titleView.text = "$bookName ${chapter}장 - 절 선택"
+		titleView.text = "$bookName ${chapter}${BibleBooks.chapterUnit(selectedBookId)} - 절 선택"
 		backButton.visibility = View.VISIBLE
 		backButton.setOnClickListener { showChapterList(bookName) }
 		scrollBookGrid.visibility = View.GONE

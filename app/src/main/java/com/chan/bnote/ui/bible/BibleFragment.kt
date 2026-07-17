@@ -305,7 +305,11 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 	}
 
 	override fun getTopBarConfig() = TopBarConfig(
-		title = "${BibleBooks.nameOf(currentBookId)} ${currentChapter}장",
+		title = "${BibleBooks.nameOf(currentBookId)} ${currentChapter}${
+			BibleBooks.chapterUnit(
+				currentBookId
+			)
+		}",
 		showTranslationButton = true,
 		showSearch = true,
 		showBookmarks = true,
