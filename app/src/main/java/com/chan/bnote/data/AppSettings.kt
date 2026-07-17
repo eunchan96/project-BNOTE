@@ -24,6 +24,9 @@ object AppSettings {
 	private const val KEY_KEEP_SCREEN_ON = "keep_screen_on"
 	private const val KEY_COPY_INCLUDE_SECONDARY = "copy_include_secondary"
 	private const val KEY_COPY_REFERENCE_STYLE = "copy_reference_style" // NONE | SHORT | LONG
+	private const val KEY_LAST_READ_BOOK_ID = "last_read_book_id"
+	private const val KEY_LAST_READ_CHAPTER = "last_read_chapter"
+	private const val KEY_LAST_TAB = "last_tab"
 
 	fun getPrimaryTranslation(context: Context): String {
 		return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
@@ -156,5 +159,35 @@ object AppSettings {
 	fun setCopyReferenceStyle(context: Context, style: String) {
 		context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
 			.edit().putString(KEY_COPY_REFERENCE_STYLE, style).apply()
+	}
+
+	/** 마지막으로 읽던 위치 - 앱을 완전히 껐다 켜도 이 위치로 열리게 하기 위함. */
+	fun getLastReadBookId(context: Context): Int {
+		return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.getInt(KEY_LAST_READ_BOOK_ID, 1)
+	}
+
+	fun getLastReadChapter(context: Context): Int {
+		return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.getInt(KEY_LAST_READ_CHAPTER, 1)
+	}
+
+	fun setLastRead(context: Context, bookId: Int, chapter: Int) {
+		context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.edit()
+			.putInt(KEY_LAST_READ_BOOK_ID, bookId)
+			.putInt(KEY_LAST_READ_CHAPTER, chapter)
+			.apply()
+	}
+
+	/** 마지막으로 보던 하단 탭 - MainActivity가 다크모드 전환 등으로 재생성돼도 이 탭으로 열리게 하기 위함. */
+	fun getLastTab(context: Context): String {
+		return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.getString(KEY_LAST_TAB, "tab_bible") ?: "tab_bible"
+	}
+
+	fun setLastTab(context: Context, tab: String) {
+		context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.edit().putString(KEY_LAST_TAB, tab).apply()
 	}
 }

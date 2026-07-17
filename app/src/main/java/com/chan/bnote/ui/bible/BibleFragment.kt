@@ -271,8 +271,10 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 			val db = BibleDatabase.getInstance(requireContext().applicationContext)
 			BibleSeeder.seedIfEmpty(requireContext().applicationContext, db)
 
-			val startBookId = arguments?.getInt(ARG_BOOK_ID) ?: currentBookId
-			val startChapter = arguments?.getInt(ARG_CHAPTER) ?: currentChapter
+			val startBookId = arguments?.getInt(ARG_BOOK_ID)
+				?: AppSettings.getLastReadBookId(requireContext())
+			val startChapter = arguments?.getInt(ARG_CHAPTER)
+				?: AppSettings.getLastReadChapter(requireContext())
 			loadChapter(startBookId, startChapter)
 		}
 
@@ -443,14 +445,41 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		}
 	}
 
+	/** 탭이 유지되는 프래그먼트라 onViewCreated는 다시 안 불리므로, 설정 화면에서 바뀐 값(글자 크기 등)을
+	 * 여기서 다시 확인해서 반영한다. hide()/show() 방식의 탭 전환은 onResume이 아니라 이 콜백을 탄다. */
+	override fun onHiddenChanged(hidden: Boolean) {
+		super.onHiddenChanged(hidden)
+		if (!hidden) refreshFontSizeIfChanged()
+	}
+
+	override fun onResume() {
+		super.onResume()
+		refreshFontSizeIfChanged()
+	}
+
+	private fun refreshFontSizeIfChanged() {
+		if (!::adapter.isInitialized) return
+		val newFontSize = AppSettings.getFontSize(requireContext())
+		if (newFontSize != currentFontSize) {
+			currentFontSize = newFontSize
+			adapter.updateFontSize(currentFontSize)
+		}
+	}
+
 	override fun onSermonIconClicked() {
 		ChapterSermonsActivity.start(requireContext(), currentBookId, currentChapter)
+	}
+
+	/** 탭을 새로 만들지 않고 기존 인스턴스에서 특정 장으로 이동할 때 (MainActivity에서 호출). */
+	fun navigateTo(bookId: Int, chapter: Int, scrollToVerse: Int? = null) {
+		loadChapter(bookId, chapter, scrollToVerse)
 	}
 
 	private fun loadChapter(bookId: Int, chapter: Int, scrollToVerse: Int? = null) {
 		currentBookId = bookId
 		currentChapter = chapter
 		clearSelection()
+		AppSettings.setLastRead(requireContext(), bookId, chapter)
 
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(requireContext().applicationContext)
