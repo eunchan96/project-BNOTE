@@ -592,6 +592,7 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 	}
 
 	private fun notifyTopBarChanged() {
+		if (isHidden) return // 숨겨진(다른 탭이 보이는) 상태에서는 상단바를 건드리면 안 된다
 		(activity as? TopBarConfigListener)?.onTopBarConfigChanged(getTopBarConfig())
 	}
 

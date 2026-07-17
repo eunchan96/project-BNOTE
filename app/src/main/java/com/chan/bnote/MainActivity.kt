@@ -82,9 +82,11 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 			myPageFragment = supportFragmentManager.findFragmentByTag(TAG_MYPAGE) as? MyPageFragment
 		}
 
+		val savedTab = AppSettings.getLastTab(this)
+
 		// Bundle 복원 타이밍에 기대지 않고, SharedPreferences에 직접 저장해둔 마지막 탭으로 확실하게 되돌린다
 		// (다크모드 전환처럼 배경에 있던 액티비티가 재생성될 때도 안정적으로 동작).
-		when (AppSettings.getLastTab(this)) {
+		when (savedTab) {
 			TAG_SERMON -> switchToSermon()
 			TAG_MYPAGE -> switchToMyPage()
 			else -> switchToBible()
