@@ -12,9 +12,21 @@
         android:id="@+id/text_reading_plan_chapter_title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="16dp"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="16dp"
         android:textSize="18sp"
         android:textStyle="bold" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="12dp"
+        android:text="탭하면 읽음 체크, 길게 누르면 그 장으로 이동해요"
+        android:textSize="12sp"
+        android:textColor="@color/text_hint" />
 
     <View
         android:layout_width="match_parent"
