@@ -30,9 +30,6 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".ui.scrap.ScrapActivity"
-            android:exported="false" />
-        <activity
             android:name=".ui.scrap.ScrapGroupManageActivity"
             android:exported="false" />
         <activity
@@ -46,6 +43,15 @@
             android:exported="false" />
         <activity
             android:name=".ui.appendix.ResponsiveReadingDetailActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.scrap.ScrapActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.bible.HighlightListActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.bible.MemoListActivity"
             android:exported="false" />
         <activity
             android:name=".ui.sermon.AddSermonActivity"
