@@ -23,7 +23,10 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:padding="16dp">
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:paddingTop="16dp"
+                android:paddingBottom="14dp">
 
                 <TextView
                     android:layout_width="0dp"
@@ -35,11 +38,11 @@
 
                 <TextView
                     android:id="@+id/btn_font_minus"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
                     android:gravity="center"
                     android:text="-"
-                    android:textSize="20sp"
+                    android:textSize="16sp"
                     android:textColor="@color/text_primary"
                     android:background="@drawable/bg_book_button"
                     android:clickable="true"
@@ -55,11 +58,11 @@
 
                 <TextView
                     android:id="@+id/btn_font_plus"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
                     android:gravity="center"
                     android:text="+"
-                    android:textSize="20sp"
+                    android:textSize="16sp"
                     android:textColor="@color/text_primary"
                     android:background="@drawable/bg_book_button"
                     android:clickable="true"
@@ -72,7 +75,10 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:padding="16dp">
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:paddingTop="6dp"
+                android:paddingBottom="16dp">
 
                 <TextView
                     android:layout_width="0dp"
@@ -84,11 +90,11 @@
 
                 <TextView
                     android:id="@+id/btn_speed_minus"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
                     android:gravity="center"
                     android:text="-"
-                    android:textSize="20sp"
+                    android:textSize="16sp"
                     android:textColor="@color/text_primary"
                     android:background="@drawable/bg_book_button"
                     android:clickable="true"
@@ -104,11 +110,11 @@
 
                 <TextView
                     android:id="@+id/btn_speed_plus"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
                     android:gravity="center"
                     android:text="+"
-                    android:textSize="20sp"
+                    android:textSize="16sp"
                     android:textColor="@color/text_primary"
                     android:background="@drawable/bg_book_button"
                     android:clickable="true"
