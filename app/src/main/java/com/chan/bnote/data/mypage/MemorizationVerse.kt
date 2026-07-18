@@ -9,6 +9,7 @@ import com.chan.bnote.data.bible.BibleBooks
 data class MemorizationVerse(
 	@PrimaryKey(autoGenerate = true)
 	val id: Long = 0,
+	val groupId: Long,
 	val startBookId: Int,
 	val startChapter: Int,
 	val startVerse: Int,

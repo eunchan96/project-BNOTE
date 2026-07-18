@@ -226,6 +226,7 @@ class VerseOfYearEditActivity : AppCompatActivity() {
 		lifecycleScope.launch {
 			persistEntry() ?: return@launch
 			val db = BibleDatabase.getInstance(applicationContext)
+			val defaultGroupId = db.memorizationVerseDao().getAllGroups().first().id
 			for ((ref, text) in bibleRefs) {
 				val alreadyExists = db.memorizationVerseDao().existsCount(
 					ref.startBookId, ref.startChapter, ref.startVerse,
@@ -234,6 +235,7 @@ class VerseOfYearEditActivity : AppCompatActivity() {
 				if (!alreadyExists) {
 					db.memorizationVerseDao().insert(
 						MemorizationVerse(
+							groupId = defaultGroupId,
 							startBookId = ref.startBookId,
 							startChapter = ref.startChapter,
 							startVerse = ref.startVerse,

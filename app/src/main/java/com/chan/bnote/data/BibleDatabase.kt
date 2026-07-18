@@ -16,6 +16,7 @@ import com.chan.bnote.data.memo.VerseMemo
 import com.chan.bnote.data.memo.VerseMemoDao
 import com.chan.bnote.data.memo.WordMemo
 import com.chan.bnote.data.memo.WordMemoDao
+import com.chan.bnote.data.mypage.MemorizationGroup
 import com.chan.bnote.data.mypage.MemorizationVerse
 import com.chan.bnote.data.mypage.MemorizationVerseDao
 import com.chan.bnote.data.mypage.ReadingProgress
@@ -57,9 +58,10 @@ import kotlinx.coroutines.launch
 		VerseOfYear::class, VerseOfYearRef::class, ScrapGroup::class, Scrap::class,
 		PartialHighlight::class, VerseMemo::class, WordMemo::class,
 		Preacher::class, HymnCategory::class, Hymn::class, UserProfile::class,
-		PrayerRequest::class, VerseMemorizationProgress::class, MemorizationVerse::class
+		PrayerRequest::class, VerseMemorizationProgress::class, MemorizationVerse::class,
+		MemorizationGroup::class
 	],
-	version = 20, // 19 -> 20 (암송 구절에 메모(note) 필드 추가)
+	version = 21, // 20 -> 21 (암송 구절 그룹(MemorizationGroup) 추가)
 	exportSchema = false
 )
 abstract class BibleDatabase : RoomDatabase() {
@@ -104,6 +106,10 @@ abstract class BibleDatabase : RoomDatabase() {
 					}
 					if (instance.scrapDao().countGroups() == 0) {
 						instance.scrapDao().insertGroup(ScrapGroup(name = "기본", sortOrder = 0))
+					}
+					if (instance.memorizationVerseDao().countGroups() == 0) {
+						instance.memorizationVerseDao()
+							.insertGroup(MemorizationGroup(name = "기본", sortOrder = 0))
 					}
 					HymnSeeder.seedIfNeeded(context.applicationContext, instance.hymnDao())
 				}

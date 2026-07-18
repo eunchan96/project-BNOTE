@@ -39,4 +39,28 @@ interface MemorizationVerseDao {
 		startBookId: Int, startChapter: Int, startVerse: Int,
 		endBookId: Int, endChapter: Int, endVerse: Int
 	): Int
+
+	// --- 그룹 ---
+
+	@Query("SELECT COUNT(*) FROM memorization_groups")
+	suspend fun countGroups(): Int
+
+	@Insert
+	suspend fun insertGroup(group: MemorizationGroup): Long
+
+	@Update
+	suspend fun updateGroup(group: MemorizationGroup)
+
+	@Delete
+	suspend fun deleteGroup(group: MemorizationGroup)
+
+	@Query("SELECT * FROM memorization_groups ORDER BY sortOrder")
+	suspend fun getAllGroups(): List<MemorizationGroup>
+
+	@Query("SELECT * FROM memorization_verses WHERE groupId = :groupId ORDER BY createdAt DESC")
+	suspend fun getByGroup(groupId: Long): List<MemorizationVerse>
+
+	// 그룹 삭제 시 그 그룹의 암송 구절도 같이 정리
+	@Query("DELETE FROM memorization_verses WHERE groupId = :groupId")
+	suspend fun deleteByGroup(groupId: Long)
 }

@@ -78,6 +78,9 @@
             android:name=".ui.mypage.MemorizationVerseListActivity"
             android:exported="false" />
         <activity
+            android:name=".ui.mypage.MemorizationGroupManageActivity"
+            android:exported="false" />
+        <activity
             android:name=".ui.mypage.MemorizationVerseDetailActivity"
             android:exported="false" />
         <activity
