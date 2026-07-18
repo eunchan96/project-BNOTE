@@ -30,10 +30,14 @@ class BookChapterPickerBottomSheet(
 	private lateinit var scrollBookGrid: ScrollView
 	private lateinit var bookGridContainer: LinearLayout
 	private lateinit var titleView: TextView
-	private lateinit var backButton: TextView
+	private lateinit var tabBarContainer: LinearLayout
 
 	private var selectedBookId: Int = -1
 	private var selectedChapter: Int = -1
+
+	private enum class Step { BOOK, CHAPTER, VERSE }
+
+	private var currentStep = Step.BOOK
 
 	override fun onCreateView(
 		inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -48,14 +52,60 @@ class BookChapterPickerBottomSheet(
 		scrollBookGrid = view.findViewById(R.id.scroll_book_grid)
 		bookGridContainer = view.findViewById(R.id.container_book_grid)
 		titleView = view.findViewById(R.id.text_sheet_title)
-		backButton = view.findViewById(R.id.btn_back)
+		tabBarContainer = view.findViewById(R.id.container_tab_bar)
 
-		showBookList()
+		goToStep(Step.BOOK)
 	}
 
-	private fun showBookList() {
-		titleView.text = "책 선택"
-		backButton.visibility = View.GONE
+	/** 탭 이동(성경 → 장 → 절)과 화면 갱신을 함께 처리하는 진입점. */
+	private fun goToStep(step: Step) {
+		currentStep = step
+		updateHeader()
+		renderTabs()
+		when (step) {
+			Step.BOOK -> showBookGrid()
+			Step.CHAPTER -> showChapterGrid()
+			Step.VERSE -> showVerseGrid()
+		}
+	}
+
+	private fun updateHeader() {
+		titleView.text = when (currentStep) {
+			Step.BOOK -> "책 선택"
+			Step.CHAPTER -> "${BibleBooks.nameOf(selectedBookId)} - 장 선택"
+			Step.VERSE ->
+				"${BibleBooks.nameOf(selectedBookId)} ${selectedChapter}${
+					BibleBooks.chapterUnit(
+						selectedBookId
+					)
+				} - 절 선택"
+		}
+	}
+
+	private fun renderTabs() {
+		val tabs = listOf(
+			PickerTab(label = "성경", enabled = true, selected = currentStep == Step.BOOK) {
+				goToStep(Step.BOOK)
+			},
+			PickerTab(
+				label = "장",
+				enabled = selectedBookId != -1,
+				selected = currentStep == Step.CHAPTER
+			) {
+				if (selectedBookId != -1) goToStep(Step.CHAPTER)
+			},
+			PickerTab(
+				label = "절",
+				enabled = selectedChapter != -1,
+				selected = currentStep == Step.VERSE
+			) {
+				if (selectedChapter != -1) goToStep(Step.VERSE)
+			}
+		)
+		renderPickerTabs(requireContext(), tabBarContainer, tabs)
+	}
+
+	private fun showBookGrid() {
 		scrollBookGrid.visibility = View.VISIBLE
 		recyclerView.visibility = View.GONE
 
@@ -85,7 +135,8 @@ class BookChapterPickerBottomSheet(
 					).apply { marginStart = dp(4); marginEnd = dp(4) }
 					setOnClickListener {
 						selectedBookId = bookId
-						showChapterList(BibleBooks.nameOf(bookId))
+						selectedChapter = -1
+						goToStep(Step.CHAPTER)
 					}
 				}
 				row.addView(button)
@@ -104,10 +155,7 @@ class BookChapterPickerBottomSheet(
 		}
 	}
 
-	private fun showChapterList(bookName: String) {
-		titleView.text = "$bookName - 장 선택"
-		backButton.visibility = View.VISIBLE
-		backButton.setOnClickListener { showBookList() }
+	private fun showChapterGrid() {
 		scrollBookGrid.visibility = View.GONE
 		recyclerView.visibility = View.VISIBLE
 		recyclerView.layoutManager = GridLayoutManager(requireContext(), 5)
@@ -118,15 +166,12 @@ class BookChapterPickerBottomSheet(
 
 			recyclerView.adapter = GridNumberAdapter(chapters) { position ->
 				selectedChapter = chapters[position]
-				showVerseList(bookName, selectedChapter)
+				goToStep(Step.VERSE)
 			}
 		}
 	}
 
-	private fun showVerseList(bookName: String, chapter: Int) {
-		titleView.text = "$bookName ${chapter}${BibleBooks.chapterUnit(selectedBookId)} - 절 선택"
-		backButton.visibility = View.VISIBLE
-		backButton.setOnClickListener { showChapterList(bookName) }
+	private fun showVerseGrid() {
 		scrollBookGrid.visibility = View.GONE
 		recyclerView.visibility = View.VISIBLE
 		recyclerView.layoutManager = GridLayoutManager(requireContext(), 5)
@@ -134,10 +179,11 @@ class BookChapterPickerBottomSheet(
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(requireContext().applicationContext)
 			val verseNumbers =
-				db.bibleDao().getVerses(translation, selectedBookId, chapter).map { it.verse }
+				db.bibleDao().getVerses(translation, selectedBookId, selectedChapter)
+					.map { it.verse }
 
 			recyclerView.adapter = GridNumberAdapter(verseNumbers) { position ->
-				onVerseSelected?.invoke(selectedBookId, chapter, verseNumbers[position])
+				onVerseSelected?.invoke(selectedBookId, selectedChapter, verseNumbers[position])
 				dismiss()
 			}
 		}
