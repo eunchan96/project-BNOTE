@@ -116,6 +116,12 @@
             android:name=".ui.knowledge.CultureDetailActivity"
             android:exported="false" />
         <activity
+            android:name=".ui.knowledge.ParableListActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.knowledge.ParableDetailActivity"
+            android:exported="false" />
+        <activity
             android:name=".ui.mypage.PrayerRequestActivity"
             android:exported="false" />
         <activity

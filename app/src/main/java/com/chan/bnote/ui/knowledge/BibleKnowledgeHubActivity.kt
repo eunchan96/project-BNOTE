@@ -46,5 +46,8 @@ class BibleKnowledgeHubActivity : AppCompatActivity() {
 		findViewById<LinearLayout>(R.id.menu_culture).setOnClickListener {
 			startActivity(Intent(this, CultureListActivity::class.java))
 		}
+		findViewById<LinearLayout>(R.id.menu_parables).setOnClickListener {
+			startActivity(Intent(this, ParableListActivity::class.java))
+		}
 	}
 }
