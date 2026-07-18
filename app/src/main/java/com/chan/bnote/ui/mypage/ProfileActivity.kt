@@ -17,7 +17,6 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
-import coil.load
 import com.chan.bnote.R
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.profile.ProfileDisplay
@@ -46,6 +45,7 @@ class ProfileActivity : AppCompatActivity() {
 		findViewById<TextView>(R.id.btn_edit_profile).setOnClickListener {
 			startActivity(Intent(this, ProfileEditActivity::class.java))
 		}
+		findViewById<ImageView>(R.id.img_profile_photo).loadProfilePhoto(null)
 	}
 
 	override fun onResume() {
@@ -60,15 +60,12 @@ class ProfileActivity : AppCompatActivity() {
 			val db = BibleDatabase.getInstance(applicationContext)
 			val profile = db.userProfileDao().get()
 
-			findViewById<TextView>(R.id.text_profile_name).text = ProfileDisplay.nameText(profile)
-			findViewById<TextView>(R.id.text_profile_meta).text = ProfileDisplay.metaText(profile)
-
-			val photoView = findViewById<ImageView>(R.id.img_profile_photo)
-			if (!profile?.photoPath.isNullOrBlank()) {
-				photoView.load(profile?.photoPath) { placeholder(R.drawable.ic_person) }
-			} else {
-				photoView.setImageResource(R.drawable.ic_person)
-			}
+			findViewById<TextView>(R.id.text_profile_name).setNameWithPosition(
+				ProfileDisplay.nameText(profile), ProfileDisplay.positionText(profile)
+			)
+			findViewById<TextView>(R.id.text_profile_meta).text =
+				ProfileDisplay.profilePageMetaText(profile)
+			findViewById<ImageView>(R.id.img_profile_photo).loadProfilePhoto(profile?.photoPath)
 		}
 	}
 

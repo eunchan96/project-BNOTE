@@ -11,7 +11,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
-import coil.load
 import com.chan.bnote.R
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.profile.ProfilePhotoStorage
@@ -36,7 +35,7 @@ class ProfileEditActivity : AppCompatActivity() {
 		if (uri == null) return@registerForActivityResult
 		ProfilePhotoStorage.copyToInternalStorage(this, uri)?.let { path ->
 			pendingPhotoPath = path
-			imgPhoto.load(path) { placeholder(R.drawable.ic_person) }
+			imgPhoto.loadProfilePhoto(path)
 		}
 	}
 
@@ -55,6 +54,7 @@ class ProfileEditActivity : AppCompatActivity() {
 		findViewById<ImageView>(R.id.btn_top_bar_back).setOnClickListener { finish() }
 
 		imgPhoto = findViewById(R.id.img_edit_photo)
+		imgPhoto.loadProfilePhoto(null) // 데이터 로드 전까지는 연한 회색 기본 아이콘을 보여준다
 		inputName = findViewById(R.id.input_name)
 		inputChurch = findViewById(R.id.input_church)
 		inputDepartment = findViewById(R.id.input_department)
@@ -84,9 +84,7 @@ class ProfileEditActivity : AppCompatActivity() {
 			inputPosition.setText(profile.position)
 
 			existingPhotoPath = profile.photoPath
-			if (!profile.photoPath.isNullOrBlank()) {
-				imgPhoto.load(profile.photoPath) { placeholder(R.drawable.ic_person) }
-			}
+			imgPhoto.loadProfilePhoto(profile.photoPath)
 		}
 	}
 

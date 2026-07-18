@@ -9,7 +9,6 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
-import coil.load
 import com.chan.bnote.R
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.profile.ProfileDisplay
@@ -31,6 +30,7 @@ class MyPageFragment : Fragment(), TopBarActionHandler {
 		view.findViewById<View>(R.id.container_profile_thumbnail).setOnClickListener {
 			startActivity(Intent(requireContext(), ProfileActivity::class.java))
 		}
+		view.findViewById<ImageView>(R.id.img_profile_photo).loadProfilePhoto(null)
 		view.findViewById<TextView>(R.id.menu_settings).setOnClickListener {
 			startActivity(Intent(requireContext(), SettingsActivity::class.java))
 		}
@@ -54,17 +54,13 @@ class MyPageFragment : Fragment(), TopBarActionHandler {
 			val db = BibleDatabase.getInstance(requireContext().applicationContext)
 			val profile = db.userProfileDao().get()
 
-			view.findViewById<TextView>(R.id.text_profile_name).text =
-				ProfileDisplay.nameText(profile)
+			view.findViewById<TextView>(R.id.text_profile_name).setNameWithPosition(
+				ProfileDisplay.nameText(profile), ProfileDisplay.positionText(profile)
+			)
 			view.findViewById<TextView>(R.id.text_profile_meta).text =
-				ProfileDisplay.metaText(profile)
-
-			val photoView = view.findViewById<ImageView>(R.id.img_profile_photo)
-			if (!profile?.photoPath.isNullOrBlank()) {
-				photoView.load(profile?.photoPath) { placeholder(R.drawable.ic_person) }
-			} else {
-				photoView.setImageResource(R.drawable.ic_person)
-			}
+				ProfileDisplay.thumbnailMetaText(profile)
+			view.findViewById<ImageView>(R.id.img_profile_photo)
+				.loadProfilePhoto(profile?.photoPath)
 		}
 	}
 
