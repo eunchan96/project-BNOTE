@@ -54,6 +54,9 @@ class MyPageFragment : Fragment(), TopBarActionHandler {
 				)
 			)
 		}
+		view.findViewById<TextView>(R.id.menu_app_info).setOnClickListener {
+			startActivity(Intent(requireContext(), AppInfoActivity::class.java))
+		}
 	}
 
 	override fun onResume() {
