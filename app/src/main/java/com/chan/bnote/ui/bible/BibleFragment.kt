@@ -489,6 +489,9 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(requireContext().applicationContext)
+			db.recentChapterViewDao().upsert(
+				com.chan.bnote.data.mypage.RecentChapterView(bookId = bookId, chapter = chapter)
+			)
 			val verses = db.bibleDao().getVerses(primaryTranslation.code, bookId, chapter)
 			val secondaryMap = secondaryTranslation?.let { sec ->
 				db.bibleDao().getVerses(sec.code, bookId, chapter).associate { it.verse to it.text }

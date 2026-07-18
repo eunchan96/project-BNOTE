@@ -24,6 +24,9 @@ interface SermonDao {
 	@Query("SELECT * FROM sermons WHERE id = :id LIMIT 1")
 	suspend fun getById(id: Long): Sermon?
 
+	@Query("SELECT * FROM sermons ORDER BY createdAt DESC LIMIT :limit")
+	suspend fun getRecent(limit: Int): List<Sermon>
+
 	@Query("SELECT * FROM sermons WHERE sermonDate = :dateMillis ORDER BY createdAt DESC")
 	suspend fun getByDate(dateMillis: Long): List<Sermon>
 

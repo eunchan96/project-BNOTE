@@ -21,6 +21,8 @@ import com.chan.bnote.data.mypage.MemorizationVerse
 import com.chan.bnote.data.mypage.MemorizationVerseDao
 import com.chan.bnote.data.mypage.ReadingProgress
 import com.chan.bnote.data.mypage.ReadingProgressDao
+import com.chan.bnote.data.mypage.RecentChapterView
+import com.chan.bnote.data.mypage.RecentChapterViewDao
 import com.chan.bnote.data.mypage.VerseMemorizationProgress
 import com.chan.bnote.data.mypage.VerseMemorizationProgressDao
 import com.chan.bnote.data.mypage.VerseOfYear
@@ -59,9 +61,9 @@ import kotlinx.coroutines.launch
 		PartialHighlight::class, VerseMemo::class, WordMemo::class,
 		Preacher::class, HymnCategory::class, Hymn::class, UserProfile::class,
 		PrayerRequest::class, VerseMemorizationProgress::class, MemorizationVerse::class,
-		MemorizationGroup::class
+		MemorizationGroup::class, RecentChapterView::class
 	],
-	version = 21, // 20 -> 21 (암송 구절 그룹(MemorizationGroup) 추가)
+	version = 22, // 21 -> 22 (최근 본 장(RecentChapterView) 추가)
 	exportSchema = false
 )
 abstract class BibleDatabase : RoomDatabase() {
@@ -84,6 +86,7 @@ abstract class BibleDatabase : RoomDatabase() {
 	abstract fun prayerRequestDao(): PrayerRequestDao
 	abstract fun verseMemorizationProgressDao(): VerseMemorizationProgressDao
 	abstract fun memorizationVerseDao(): MemorizationVerseDao
+	abstract fun recentChapterViewDao(): RecentChapterViewDao
 
 	companion object {
 		@Volatile
