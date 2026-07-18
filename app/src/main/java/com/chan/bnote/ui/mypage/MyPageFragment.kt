@@ -25,6 +25,9 @@ class MyPageFragment : Fragment(), TopBarActionHandler {
 		view.findViewById<TextView>(R.id.menu_settings).setOnClickListener {
 			startActivity(Intent(requireContext(), SettingsActivity::class.java))
 		}
+		view.findViewById<TextView>(R.id.menu_faith_stats).setOnClickListener {
+			startActivity(Intent(requireContext(), FaithStatsActivity::class.java))
+		}
 		view.findViewById<TextView>(R.id.menu_reading_plan).setOnClickListener {
 			startActivity(Intent(requireContext(), ReadingPlanActivity::class.java))
 		}

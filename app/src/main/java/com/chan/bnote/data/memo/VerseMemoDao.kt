@@ -11,6 +11,9 @@ interface VerseMemoDao {
 	@Insert(onConflict = OnConflictStrategy.REPLACE)
 	suspend fun upsert(memo: VerseMemo)
 
+	@Query("SELECT COUNT(*) FROM verse_memos")
+	suspend fun count(): Int
+
 	@Query("SELECT * FROM verse_memos WHERE bookId = :bookId AND chapter = :chapter")
 	suspend fun getForChapter(bookId: Int, chapter: Int): List<VerseMemo>
 

@@ -14,6 +14,9 @@ interface BookmarkDao {
 	@Insert(onConflict = OnConflictStrategy.REPLACE)
 	suspend fun upsert(bookmark: BibleBookmark)
 
+	@Query("SELECT COUNT(*) FROM bible_bookmarks WHERE isBookmarked = 1")
+	suspend fun countBookmarks(): Int
+
 	@Query(
 		"UPDATE bible_bookmarks SET isBookmarked = 0 WHERE bookId = :bookId AND chapter = :chapter AND verse = :verse"
 	)

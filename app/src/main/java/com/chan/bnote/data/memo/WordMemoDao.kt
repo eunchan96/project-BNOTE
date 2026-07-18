@@ -12,6 +12,9 @@ interface WordMemoDao {
 	@Insert
 	suspend fun insert(memo: WordMemo): Long
 
+	@Query("SELECT COUNT(*) FROM word_memos")
+	suspend fun count(): Int
+
 	@Update
 	suspend fun update(memo: WordMemo)
 

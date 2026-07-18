@@ -12,6 +12,9 @@ interface ScrapDao {
 	@Query("SELECT COUNT(*) FROM scrap_groups")
 	suspend fun countGroups(): Int
 
+	@Query("SELECT COUNT(*) FROM scraps")
+	suspend fun countAllScraps(): Int
+
 	@Insert
 	suspend fun insertGroup(group: ScrapGroup): Long
 

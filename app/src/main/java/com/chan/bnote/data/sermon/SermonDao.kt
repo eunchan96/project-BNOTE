@@ -12,6 +12,9 @@ interface SermonDao {
 	@Insert
 	suspend fun insert(sermon: Sermon): Long
 
+	@Query("SELECT COUNT(*) FROM sermons")
+	suspend fun count(): Int
+
 	@Update
 	suspend fun update(sermon: Sermon)
 
