@@ -40,6 +40,9 @@ class MyPageFragment : Fragment(), TopBarActionHandler {
 		view.findViewById<TextView>(R.id.menu_verse_of_year).setOnClickListener {
 			startActivity(Intent(requireContext(), VerseOfYearActivity::class.java))
 		}
+		view.findViewById<TextView>(R.id.menu_prayer_request).setOnClickListener {
+			startActivity(Intent(requireContext(), PrayerRequestActivity::class.java))
+		}
 	}
 
 	override fun onResume() {

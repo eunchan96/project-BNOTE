@@ -71,6 +71,9 @@
             android:name=".ui.mypage.VerseOfYearActivity"
             android:exported="false" />
         <activity
+            android:name=".ui.mypage.PrayerRequestActivity"
+            android:exported="false" />
+        <activity
             android:name=".ui.mypage.VerseOfYearEditActivity"
             android:exported="false" />
         <activity

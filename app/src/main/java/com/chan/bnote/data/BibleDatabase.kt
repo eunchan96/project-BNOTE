@@ -24,6 +24,8 @@ import com.chan.bnote.data.mypage.VerseOfYearRef
 import com.chan.bnote.data.mypage.VerseOfYearRefDao
 import com.chan.bnote.data.partialhighlight.PartialHighlight
 import com.chan.bnote.data.partialhighlight.PartialHighlightDao
+import com.chan.bnote.data.prayer.PrayerRequest
+import com.chan.bnote.data.prayer.PrayerRequestDao
 import com.chan.bnote.data.profile.UserProfile
 import com.chan.bnote.data.profile.UserProfileDao
 import com.chan.bnote.data.scrap.Scrap
@@ -50,9 +52,10 @@ import kotlinx.coroutines.launch
 		Sermon::class, SermonCategory::class, SermonBibleRef::class, SermonPhoto::class,
 		VerseOfYear::class, VerseOfYearRef::class, ScrapGroup::class, Scrap::class,
 		PartialHighlight::class, VerseMemo::class, WordMemo::class,
-		Preacher::class, HymnCategory::class, Hymn::class, UserProfile::class
+		Preacher::class, HymnCategory::class, Hymn::class, UserProfile::class,
+		PrayerRequest::class
 	],
-	version = 16, // 15 -> 16 (내 정보(UserProfile) 추가)
+	version = 17, // 16 -> 17 (기도제목 노트(PrayerRequest) 추가)
 	exportSchema = false
 )
 abstract class BibleDatabase : RoomDatabase() {
@@ -72,6 +75,7 @@ abstract class BibleDatabase : RoomDatabase() {
 	abstract fun wordMemoDao(): WordMemoDao
 	abstract fun preacherDao(): PreacherDao
 	abstract fun userProfileDao(): UserProfileDao
+	abstract fun prayerRequestDao(): PrayerRequestDao
 
 	companion object {
 		@Volatile
