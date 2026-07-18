@@ -20,7 +20,9 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import kotlinx.coroutines.launch
 
 class BookChapterPickerBottomSheet(
-	private val translation: String
+	private val translation: String,
+	// 현재 읽고 있던 책이 있으면 미리 선택된 상태로 열어준다 (없으면 -1)
+	private val initialBookId: Int = -1
 ) : BottomSheetDialogFragment() {
 
 	// bookId, chapter, verse 순서로 전달
@@ -54,6 +56,9 @@ class BookChapterPickerBottomSheet(
 		titleView = view.findViewById(R.id.text_sheet_title)
 		tabBarContainer = view.findViewById(R.id.container_tab_bar)
 
+		// 현재 보고 있던 책이 있으면 미리 선택된 상태로 시작한다 (장 탭 바로 이동 가능)
+		selectedBookId = initialBookId
+
 		goToStep(Step.BOOK)
 	}
 
@@ -70,15 +75,13 @@ class BookChapterPickerBottomSheet(
 	}
 
 	private fun updateHeader() {
-		titleView.text = when (currentStep) {
-			Step.BOOK -> "책 선택"
-			Step.CHAPTER -> "${BibleBooks.nameOf(selectedBookId)} - 장 선택"
-			Step.VERSE ->
-				"${BibleBooks.nameOf(selectedBookId)} ${selectedChapter}${
-					BibleBooks.chapterUnit(
-						selectedBookId
-					)
-				} - 절 선택"
+		titleView.text = if (selectedBookId == -1) {
+			"책 선택"
+		} else {
+			val unit = BibleBooks.chapterUnit(selectedBookId)
+			val chapterLabel =
+				if (selectedChapter != -1) "${selectedChapter}${unit}" else "_${unit}"
+			"${BibleBooks.nameOf(selectedBookId)} ${chapterLabel} _절"
 		}
 	}
 
@@ -119,6 +122,7 @@ class BookChapterPickerBottomSheet(
 				).apply { bottomMargin = dp(4) }
 			}
 			for (bookId in group) {
+				val isSelected = bookId == selectedBookId
 				val button = TextView(requireContext()).apply {
 					text = BibleBooks.nameOf(bookId)
 					gravity = Gravity.CENTER
@@ -126,7 +130,14 @@ class BookChapterPickerBottomSheet(
 					maxLines = 2
 					setPadding(dp(4), dp(14), dp(4), dp(14))
 					background = androidx.core.content.ContextCompat.getDrawable(
-						requireContext(), R.drawable.bg_book_button
+						requireContext(),
+						if (isSelected) R.drawable.bg_book_button_selected else R.drawable.bg_book_button
+					)
+					setTextColor(
+						androidx.core.content.ContextCompat.getColor(
+							requireContext(),
+							if (isSelected) R.color.white else R.color.text_primary
+						)
 					)
 					isClickable = true
 					isFocusable = true

@@ -73,9 +73,9 @@ class BibleRangePickerBottomSheet : DraggableBottomSheet() {
 
 		checkboxMulti.setOnCheckedChangeListener { _, checked ->
 			isMultiMode = checked
-			// 모드가 바뀌면 처음부터 다시 선택하도록 초기화한다.
-			resetSelection()
-			goToStep(Step.BOOK)
+			// 체크박스는 첫 번째(시작) 선택 단계에서만 보이므로, 이미 고른 책/장/절은
+			// 초기화하지 않고 그대로 유지한 채 현재 단계만 다시 그린다.
+			goToStep(currentStep)
 		}
 
 		// 상단에 표시된 "OO 1장 1절~" 라벨을 누르면 첫 번째(시작) 선택을 다시 할 수 있다.
@@ -86,14 +86,6 @@ class BibleRangePickerBottomSheet : DraggableBottomSheet() {
 		}
 
 		goToStep(Step.BOOK)
-	}
-
-	private fun resetSelection() {
-		bookId = -1
-		startChapter = -1
-		startVerse = -1
-		endChapter = -1
-		isSelectingEnd = false
 	}
 
 	/** 탭 이동(성경 → 장 → 절)과 화면 갱신을 함께 처리하는 진입점. */
@@ -118,13 +110,13 @@ class BibleRangePickerBottomSheet : DraggableBottomSheet() {
 				"${BibleBooks.nameOf(bookId)} ${startChapter}${unit} ${startVerse}절~"
 		}
 
-		titleView.text = when (currentStep) {
-			Step.BOOK -> "책 선택"
-			Step.CHAPTER -> "${BibleBooks.nameOf(bookId)} - 장 선택"
-			Step.VERSE -> {
-				val chapter = if (showStartLabel) endChapter else startChapter
-				"${BibleBooks.nameOf(bookId)} ${chapter}${BibleBooks.chapterUnit(bookId)} - 절 선택"
-			}
+		titleView.text = if (bookId == -1) {
+			"책 선택"
+		} else {
+			val unit = BibleBooks.chapterUnit(bookId)
+			val chapter = if (showStartLabel) endChapter else startChapter
+			val chapterLabel = if (chapter != -1) "${chapter}${unit}" else "_${unit}"
+			"${BibleBooks.nameOf(bookId)} ${chapterLabel} _절"
 		}
 	}
 
@@ -180,14 +172,23 @@ class BibleRangePickerBottomSheet : DraggableBottomSheet() {
 				).apply { bottomMargin = dp(4) }
 			}
 			for (id in group) {
+				val isSelected = id == bookId
 				val button = TextView(requireContext()).apply {
 					text = BibleBooks.nameOf(id)
 					gravity = Gravity.CENTER
 					textSize = 13f
 					maxLines = 2
 					setPadding(dp(4), dp(14), dp(4), dp(14))
-					background =
-						ContextCompat.getDrawable(requireContext(), R.drawable.bg_book_button)
+					background = ContextCompat.getDrawable(
+						requireContext(),
+						if (isSelected) R.drawable.bg_book_button_selected else R.drawable.bg_book_button
+					)
+					setTextColor(
+						ContextCompat.getColor(
+							requireContext(),
+							if (isSelected) R.color.white else R.color.text_primary
+						)
+					)
 					isClickable = true
 					isFocusable = true
 					layoutParams =

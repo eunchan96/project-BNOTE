@@ -325,7 +325,7 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 	)
 
 	override fun onLocationClicked() {
-		val sheet = BookChapterPickerBottomSheet(primaryTranslation.code)
+		val sheet = BookChapterPickerBottomSheet(primaryTranslation.code, currentBookId)
 		sheet.onVerseSelected = { bookId, chapter, verse ->
 			loadChapter(bookId, chapter, scrollToVerse = verse)
 		}
