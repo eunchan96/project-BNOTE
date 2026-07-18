@@ -17,6 +17,9 @@ interface VerseMemoDao {
 	@Query("SELECT * FROM verse_memos WHERE bookId = :bookId AND chapter = :chapter")
 	suspend fun getForChapter(bookId: Int, chapter: Int): List<VerseMemo>
 
+	@Query("SELECT * FROM verse_memos ORDER BY bookId ASC, chapter ASC, verse ASC")
+	suspend fun getAll(): List<VerseMemo>
+
 	@Query("DELETE FROM verse_memos WHERE bookId = :bookId AND chapter = :chapter AND verse = :verse")
 	suspend fun delete(bookId: Int, chapter: Int, verse: Int)
 }

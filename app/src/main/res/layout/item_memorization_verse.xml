@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="top"
+    android:paddingStart="16dp"
+    android:paddingEnd="4dp"
+    android:paddingTop="14dp"
+    android:paddingBottom="14dp"
+    android:background="@color/input_background">
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/text_verse_ref"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:textColor="@color/brown_primary" />
+
+        <TextView
+            android:id="@+id/text_verse_preview"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textSize="15sp"
+            android:textColor="@color/text_primary"
+            android:maxLines="2"
+            android:ellipsize="end" />
+    </LinearLayout>
+
+    <ImageView
+        android:id="@+id/btn_delete_verse"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:padding="8dp"
+        android:src="@drawable/ic_delete"
+        app:tint="@color/icon_action_tint"
+        android:contentDescription="삭제"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:clickable="true"
+        android:focusable="true" />
+</LinearLayout>

@@ -20,13 +20,18 @@ import androidx.lifecycle.lifecycleScope
 import com.chan.bnote.R
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.profile.ProfileDisplay
+import com.chan.bnote.ui.bible.BookmarkListActivity
+import com.chan.bnote.ui.bible.HighlightListActivity
+import com.chan.bnote.ui.bible.MemoListActivity
+import com.chan.bnote.ui.scrap.ScrapActivity
+import com.chan.bnote.ui.sermon.SermonSearchActivity
 import kotlinx.coroutines.launch
 import java.util.Calendar
 
 /** 내 정보(프로필 요약 + 수정 진입) + 나의 신앙 기록(통독 현황·활동 통계)을 함께 보여주는 화면. */
 class ProfileActivity : AppCompatActivity() {
 
-	private data class StatItem(val label: String, val value: String)
+	private data class StatItem(val label: String, val value: String, val onClick: () -> Unit)
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
@@ -92,16 +97,47 @@ class ProfileActivity : AppCompatActivity() {
 			val verseMemoCount = db.verseMemoDao().count()
 			val wordMemoCount = db.wordMemoDao().count()
 			val sermonCount = db.sermonDao().count()
+			val memorizationCount = db.memorizationVerseDao().count()
 
 			renderReadingStatus(totalRead, totalChapters, percent, currentStreak, longestStreak)
 			renderStatGrid(
 				listOf(
-					StatItem("하이라이트", "${highlightCount}개"),
-					StatItem("북마크", "${bookmarkCount}개"),
-					StatItem("스크랩", "${scrapCount}개"),
-					StatItem("구절 메모", "${verseMemoCount}개"),
-					StatItem("단어 메모", "${wordMemoCount}개"),
-					StatItem("설교노트", "${sermonCount}개")
+					StatItem("하이라이트", "${highlightCount}개") {
+						startActivity(
+							Intent(
+								this@ProfileActivity,
+								HighlightListActivity::class.java
+							)
+						)
+					},
+					StatItem("북마크", "${bookmarkCount}개") {
+						startActivity(BookmarkListActivity.createIntent(this@ProfileActivity))
+					},
+					StatItem("스크랩", "${scrapCount}개") {
+						startActivity(Intent(this@ProfileActivity, ScrapActivity::class.java))
+					},
+					StatItem("구절 메모", "${verseMemoCount}개") {
+						startActivity(MemoListActivity.verseMemoIntent(this@ProfileActivity))
+					},
+					StatItem("단어 메모", "${wordMemoCount}개") {
+						startActivity(MemoListActivity.wordMemoIntent(this@ProfileActivity))
+					},
+					StatItem("설교노트", "${sermonCount}개") {
+						startActivity(
+							Intent(
+								this@ProfileActivity,
+								SermonSearchActivity::class.java
+							)
+						)
+					},
+					StatItem("암송 구절", "${memorizationCount}개") {
+						startActivity(
+							Intent(
+								this@ProfileActivity,
+								MemorizationVerseListActivity::class.java
+							)
+						)
+					}
 				)
 			)
 			renderTopHighlightColor(mostUsedColor?.colorHex, mostUsedColor?.count)
@@ -159,6 +195,12 @@ class ProfileActivity : AppCompatActivity() {
 			layoutParams = LinearLayout.LayoutParams(
 				0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f
 			).apply { marginStart = dp(4); marginEnd = dp(4) }
+			isClickable = true
+			isFocusable = true
+			foreground = ContextCompat.getDrawable(
+				this@ProfileActivity, android.R.drawable.list_selector_background
+			)
+			setOnClickListener { item.onClick() }
 		}
 
 		val valueView = TextView(this).apply {

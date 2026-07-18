@@ -17,6 +17,7 @@ import androidx.lifecycle.lifecycleScope
 import com.chan.bnote.R
 import com.chan.bnote.data.AppSettings
 import com.chan.bnote.data.BibleDatabase
+import com.chan.bnote.data.mypage.MemorizationVerse
 import com.chan.bnote.data.mypage.VerseOfYear
 import com.chan.bnote.data.mypage.VerseOfYearRef
 import com.chan.bnote.data.sermon.SermonBibleRef
@@ -239,6 +240,28 @@ class VerseOfYearEditActivity : AppCompatActivity() {
 					)
 				}
 			)
+
+			// 약속의 말씀에 등록한 구절은 암송 구절 리스트에도 자동으로 들어간다 (이미 있으면 중복 추가하지 않음).
+			for ((ref, text) in bibleRefs) {
+				val alreadyExists = db.memorizationVerseDao().existsCount(
+					ref.startBookId, ref.startChapter, ref.startVerse,
+					ref.endBookId, ref.endChapter, ref.endVerse
+				) > 0
+				if (!alreadyExists) {
+					db.memorizationVerseDao().insert(
+						MemorizationVerse(
+							startBookId = ref.startBookId,
+							startChapter = ref.startChapter,
+							startVerse = ref.startVerse,
+							endBookId = ref.endBookId,
+							endChapter = ref.endChapter,
+							endVerse = ref.endVerse,
+							verseText = text
+						)
+					)
+				}
+			}
+
 			Toast.makeText(this@VerseOfYearEditActivity, "저장됐어요", Toast.LENGTH_SHORT).show()
 			finish()
 		}

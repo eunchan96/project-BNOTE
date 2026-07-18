@@ -60,7 +60,7 @@
             android:layout_height="match_parent"
             android:padding="32dp"
             android:gravity="center"
-            android:text="암송 연습을 하려면 먼저 올해 약속의 말씀에 구절을 등록해주세요."
+            android:text="암송 연습을 하려면 먼저 암송 구절을 등록해주세요."
             android:textSize="14sp"
             android:textColor="@color/text_hint"
             android:visibility="gone" />

@@ -373,6 +373,12 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		dialog.onHymnClicked = {
 			com.chan.bnote.ui.hymn.HymnListActivity.start(requireContext())
 		}
+		dialog.onHighlightClicked = {
+			startActivity(Intent(requireContext(), HighlightListActivity::class.java))
+		}
+		dialog.onMemoClicked = {
+			startActivity(MemoListActivity.verseMemoIntent(requireContext()))
+		}
 		dialog.onAppendixItemSelected = { itemName ->
 			when (itemName) {
 				"주기도문" -> AppendixTextActivity.start(

@@ -12,8 +12,8 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import com.chan.bnote.R
 import com.chan.bnote.data.BibleDatabase
+import com.chan.bnote.data.mypage.MemorizationVerse
 import com.chan.bnote.data.mypage.VerseMemorizationProgress
-import com.chan.bnote.data.mypage.VerseOfYearRef
 import kotlinx.coroutines.launch
 
 class MemorizationPracticeActivity : AppCompatActivity() {
@@ -29,7 +29,7 @@ class MemorizationPracticeActivity : AppCompatActivity() {
 	private lateinit var containerComplete: LinearLayout
 	private lateinit var textCompleteSummary: TextView
 
-	private var verses: List<VerseOfYearRef> = emptyList()
+	private var verses: List<MemorizationVerse> = emptyList()
 	private var currentIndex = 0
 	private var memorizedCount = 0
 
@@ -67,7 +67,7 @@ class MemorizationPracticeActivity : AppCompatActivity() {
 	private fun loadVerses() {
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(applicationContext)
-			val refs = db.verseOfYearRefDao().getAllRefs()
+			val refs = db.memorizationVerseDao().getAll()
 
 			if (refs.isEmpty()) {
 				textEmptyState.visibility = View.VISIBLE
@@ -80,7 +80,7 @@ class MemorizationPracticeActivity : AppCompatActivity() {
 		}
 	}
 
-	private fun startSession(refs: List<VerseOfYearRef>) {
+	private fun startSession(refs: List<MemorizationVerse>) {
 		verses = refs.shuffled()
 		currentIndex = 0
 		memorizedCount = 0
@@ -120,7 +120,7 @@ class MemorizationPracticeActivity : AppCompatActivity() {
 		}
 	}
 
-	private fun recordProgress(ref: VerseOfYearRef, memorized: Boolean) {
+	private fun recordProgress(ref: MemorizationVerse, memorized: Boolean) {
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(applicationContext)
 			val existing = db.verseMemorizationProgressDao().getByRefId(ref.id)

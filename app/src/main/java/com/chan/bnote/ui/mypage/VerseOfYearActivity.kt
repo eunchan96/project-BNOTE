@@ -1,6 +1,5 @@
 package com.chan.bnote.ui.mypage
 
-import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -40,9 +39,6 @@ class VerseOfYearActivity : AppCompatActivity() {
 		}
 
 		findViewById<ImageView>(R.id.btn_top_bar_back).setOnClickListener { finish() }
-		findViewById<TextView>(R.id.btn_practice).setOnClickListener {
-			startActivity(Intent(this, MemorizationPracticeActivity::class.java))
-		}
 		findViewById<TextView>(R.id.btn_add_entry).setOnClickListener {
 			startActivity(VerseOfYearEditActivity.addIntent(this))
 		}
@@ -62,14 +58,8 @@ class VerseOfYearActivity : AppCompatActivity() {
 			val db = BibleDatabase.getInstance(applicationContext)
 			// DAO가 이미 연도 내림차순(최신 연도 우선)으로 반환한다.
 			val entries = db.verseOfYearDao().getAll()
-			val masteredRefIds = db.verseMemorizationProgressDao().getAll()
-				.filter { it.isMastered }
-				.map { it.verseRefId }
-				.toSet()
 			val rows = entries.map { entry ->
-				val refs = db.verseOfYearRefDao().getByYear(entry.year)
-				val masteredCount = refs.count { masteredRefIds.contains(it.id) }
-				VerseOfYearRow(entry, refs, masteredCount)
+				VerseOfYearRow(entry, db.verseOfYearRefDao().getByYear(entry.year))
 			}
 
 			val isEmpty = rows.isEmpty()
@@ -91,8 +81,7 @@ class VerseOfYearActivity : AppCompatActivity() {
 
 private data class VerseOfYearRow(
 	val entry: VerseOfYear,
-	val refs: List<VerseOfYearRef>,
-	val masteredCount: Int
+	val refs: List<VerseOfYearRef>
 )
 
 private class VerseOfYearAdapter(
@@ -104,7 +93,6 @@ private class VerseOfYearAdapter(
 
 	class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
 		val year: TextView = view.findViewById(R.id.text_row_year)
-		val mastery: TextView = view.findViewById(R.id.text_row_mastery)
 		val ref: TextView = view.findViewById(R.id.text_row_ref)
 		val verse: TextView = view.findViewById(R.id.text_row_verse)
 		val note: TextView = view.findViewById(R.id.text_row_note)
@@ -123,16 +111,6 @@ private class VerseOfYearAdapter(
 		val entry = row.entry
 		holder.year.text =
 			if (entry.year == currentYear) "${entry.year}년 (올해)" else "${entry.year}년"
-		if (row.refs.isNotEmpty() && row.masteredCount > 0) {
-			holder.mastery.visibility = View.VISIBLE
-			holder.mastery.text = if (row.masteredCount == row.refs.size) {
-				"🔥 암송 완료"
-			} else {
-				"🔥 ${row.masteredCount}/${row.refs.size} 암송"
-			}
-		} else {
-			holder.mastery.visibility = View.GONE
-		}
 		holder.ref.text = row.refs.joinToString(", ") { it.toDisplayLabel() }
 		holder.verse.text = row.refs.joinToString("\n") { it.verseText }
 		holder.verse.textSize = fontSize.toFloat()
