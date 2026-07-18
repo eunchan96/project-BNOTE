@@ -1,4 +1,4 @@
-package com.chan.bnote.data.genealogy
+package com.chan.bnote.data.knowledge
 
 import android.content.Context
 import kotlinx.coroutines.Dispatchers
@@ -21,7 +21,7 @@ object GenealogyRepository {
 		getAll(context).find { it.id == id }
 
 	private fun load(context: Context): List<GenealogyChart> {
-		val json = context.assets.open("genealogy/genealogy_charts.json")
+		val json = context.assets.open("knowledge/genealogy_charts.json")
 			.bufferedReader(Charsets.UTF_8)
 			.use { it.readText() }
 		val array = JSONArray(json)

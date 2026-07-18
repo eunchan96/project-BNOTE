@@ -80,19 +80,40 @@
             android:name=".ui.mypage.MemorizationVerseDetailActivity"
             android:exported="false" />
         <activity
-            android:name=".ui.figures.BibleKnowledgeHubActivity"
+            android:name=".ui.knowledge.BibleKnowledgeHubActivity"
             android:exported="false" />
         <activity
-            android:name=".ui.figures.BibleFigureListActivity"
+            android:name=".ui.knowledge.BibleFigureListActivity"
             android:exported="false" />
         <activity
-            android:name=".ui.figures.BibleFigureDetailActivity"
+            android:name=".ui.knowledge.BibleFigureDetailActivity"
             android:exported="false" />
         <activity
-            android:name=".ui.places.BiblePlaceListActivity"
+            android:name=".ui.knowledge.BiblePlaceListActivity"
             android:exported="false" />
         <activity
-            android:name=".ui.places.BiblePlaceDetailActivity"
+            android:name=".ui.knowledge.BiblePlaceDetailActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.knowledge.GenealogyListActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.knowledge.GenealogyDetailActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.knowledge.TimelineListActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.knowledge.TopicListActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.knowledge.TopicDetailActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.knowledge.CultureListActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.knowledge.CultureDetailActivity"
             android:exported="false" />
         <activity
             android:name=".ui.mypage.PrayerRequestActivity"

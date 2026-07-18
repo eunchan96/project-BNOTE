@@ -1,4 +1,4 @@
-package com.chan.bnote.ui.timeline
+package com.chan.bnote.ui.knowledge
 
 import android.content.Intent
 import android.graphics.Typeface
@@ -14,8 +14,8 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import com.chan.bnote.MainActivity
 import com.chan.bnote.R
-import com.chan.bnote.data.timeline.TimelineEvent
-import com.chan.bnote.data.timeline.TimelineRepository
+import com.chan.bnote.data.knowledge.TimelineEvent
+import com.chan.bnote.data.knowledge.TimelineRepository
 import kotlinx.coroutines.launch
 
 class TimelineListActivity : AppCompatActivity() {

@@ -1,4 +1,4 @@
-package com.chan.bnote.data.genealogy
+package com.chan.bnote.data.knowledge
 
 data class GenealogyEntry(
 	val name: String,

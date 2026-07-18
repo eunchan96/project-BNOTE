@@ -50,7 +50,7 @@ class MyPageFragment : Fragment(), TopBarActionHandler {
 			startActivity(
 				Intent(
 					requireContext(),
-					com.chan.bnote.ui.figures.BibleKnowledgeHubActivity::class.java
+					com.chan.bnote.ui.knowledge.BibleKnowledgeHubActivity::class.java
 				)
 			)
 		}

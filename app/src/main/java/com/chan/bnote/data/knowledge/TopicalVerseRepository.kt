@@ -1,4 +1,4 @@
-package com.chan.bnote.data.topics
+package com.chan.bnote.data.knowledge
 
 import android.content.Context
 import kotlinx.coroutines.Dispatchers
@@ -21,7 +21,7 @@ object TopicalVerseRepository {
 		getAll(context).find { it.id == id }
 
 	private fun load(context: Context): List<TopicalVerseGroup> {
-		val json = context.assets.open("topics/topical_verses.json")
+		val json = context.assets.open("knowledge/topical_verses.json")
 			.bufferedReader(Charsets.UTF_8)
 			.use { it.readText() }
 		val array = JSONArray(json)

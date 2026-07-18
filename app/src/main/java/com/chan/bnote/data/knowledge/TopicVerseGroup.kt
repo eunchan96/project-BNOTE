@@ -1,4 +1,4 @@
-package com.chan.bnote.data.topics
+package com.chan.bnote.data.knowledge
 
 data class VerseRef(
 	val bookId: Int,

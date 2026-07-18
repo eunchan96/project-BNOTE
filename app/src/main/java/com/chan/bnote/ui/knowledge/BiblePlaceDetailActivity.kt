@@ -1,4 +1,4 @@
-package com.chan.bnote.ui.places
+package com.chan.bnote.ui.knowledge
 
 import android.content.Context
 import android.content.Intent
@@ -13,7 +13,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import com.chan.bnote.MainActivity
 import com.chan.bnote.R
-import com.chan.bnote.data.places.BiblePlaceRepository
+import com.chan.bnote.data.knowledge.BiblePlaceRepository
 import kotlinx.coroutines.launch
 
 class BiblePlaceDetailActivity : AppCompatActivity() {

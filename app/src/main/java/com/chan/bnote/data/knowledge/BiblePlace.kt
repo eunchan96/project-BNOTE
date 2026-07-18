@@ -1,4 +1,4 @@
-package com.chan.bnote.data.places
+package com.chan.bnote.data.knowledge
 
 data class BiblePlace(
 	val id: String,

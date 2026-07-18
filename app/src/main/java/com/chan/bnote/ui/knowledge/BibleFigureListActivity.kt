@@ -1,4 +1,4 @@
-package com.chan.bnote.ui.places
+package com.chan.bnote.ui.knowledge
 
 import android.graphics.Typeface
 import android.os.Bundle
@@ -16,31 +16,31 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import com.chan.bnote.R
-import com.chan.bnote.data.places.BiblePlace
-import com.chan.bnote.data.places.BiblePlaceRepository
+import com.chan.bnote.data.knowledge.BibleFigure
+import com.chan.bnote.data.knowledge.BibleFigureRepository
 import kotlinx.coroutines.launch
 
-class BiblePlaceListActivity : AppCompatActivity() {
+class BibleFigureListActivity : AppCompatActivity() {
 
-	// 목록에서 이 순서대로 카테고리 섹션을 보여준다.
-	private val categoryOrder = listOf("도시", "지역", "산", "강", "바다", "나라")
+	// 목록에서 이 순서대로 카테고리 섹션을 보여준다 (목록에 없는 카테고리는 뒤에 그대로 붙는다).
+	private val categoryOrder = listOf("족장", "지도자", "사사", "왕", "선지자", "사도", "여성", "기타")
 
 	private lateinit var container: LinearLayout
 	private lateinit var emptyText: TextView
-	private var allPlaces: List<BiblePlace> = emptyList()
+	private var allFigures: List<BibleFigure> = emptyList()
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 		enableEdgeToEdge()
-		setContentView(R.layout.activity_bible_place_list)
+		setContentView(R.layout.activity_bible_figure_list)
 
-		ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.place_list_root)) { v, insets ->
+		ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.figure_list_root)) { v, insets ->
 			val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
 			v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
 			insets
 		}
 
-		findViewById<TextView>(R.id.text_top_bar_title).text = "지도 (지명사전)"
+		findViewById<TextView>(R.id.text_top_bar_title).text = "인물사전"
 		findViewById<ImageView>(R.id.btn_top_bar_back).setOnClickListener { finish() }
 
 		container = findViewById(R.id.container_list)
@@ -54,41 +54,41 @@ class BiblePlaceListActivity : AppCompatActivity() {
 			}
 		})
 
-		loadPlaces()
+		loadFigures()
 	}
 
-	private fun loadPlaces() {
+	private fun loadFigures() {
 		lifecycleScope.launch {
-			allPlaces = BiblePlaceRepository.getAll(applicationContext)
-			renderList(allPlaces)
+			allFigures = BibleFigureRepository.getAll(applicationContext)
+			renderList(allFigures)
 		}
 	}
 
-	private fun filter(query: String): List<BiblePlace> {
+	private fun filter(query: String): List<BibleFigure> {
 		val trimmed = query.trim()
-		if (trimmed.isEmpty()) return allPlaces
-		return allPlaces.filter {
+		if (trimmed.isEmpty()) return allFigures
+		return allFigures.filter {
 			it.name.contains(trimmed) || it.otherNames.contains(trimmed) || it.summary.contains(
 				trimmed
 			)
 		}
 	}
 
-	private fun renderList(places: List<BiblePlace>) {
+	private fun renderList(figures: List<BibleFigure>) {
 		container.removeAllViews()
-		if (places.isEmpty()) {
+		if (figures.isEmpty()) {
 			emptyText.visibility = View.VISIBLE
 			return
 		}
 		emptyText.visibility = View.GONE
 
-		val grouped = places.groupBy { it.category }
+		val grouped = figures.groupBy { it.category }
 		val orderedCategories = categoryOrder.filter { grouped.containsKey(it) } +
 				grouped.keys.filter { it !in categoryOrder }
 
 		for (category in orderedCategories) {
 			addHeader(category)
-			grouped[category]?.forEach { place -> addRow(place) }
+			grouped[category]?.forEach { figure -> addRow(figure) }
 		}
 	}
 
@@ -97,42 +97,47 @@ class BiblePlaceListActivity : AppCompatActivity() {
 			text = category
 			textSize = 13f
 			setTypeface(typeface, Typeface.BOLD)
-			setTextColor(ContextCompat.getColor(this@BiblePlaceListActivity, R.color.brown_primary))
+			setTextColor(
+				ContextCompat.getColor(
+					this@BibleFigureListActivity,
+					R.color.brown_primary
+				)
+			)
 			setPadding(dp(16), dp(16), dp(16), dp(6))
 		}
 		container.addView(header)
 	}
 
-	private fun addRow(place: BiblePlace) {
+	private fun addRow(figure: BibleFigure) {
 		val row = LinearLayout(this).apply {
 			orientation = LinearLayout.VERTICAL
 			setPadding(dp(16), dp(10), dp(16), dp(10))
 			background = ContextCompat.getDrawable(
-				this@BiblePlaceListActivity, android.R.drawable.list_selector_background
+				this@BibleFigureListActivity, android.R.drawable.list_selector_background
 			)
 			isClickable = true
 			isFocusable = true
 			setOnClickListener {
 				startActivity(
-					BiblePlaceDetailActivity.createIntent(
-						this@BiblePlaceListActivity,
-						place.id
+					BibleFigureDetailActivity.createIntent(
+						this@BibleFigureListActivity,
+						figure.id
 					)
 				)
 			}
 		}
 		val nameView = TextView(this).apply {
-			text = place.name
+			text = figure.name
 			textSize = 15f
 			setTypeface(typeface, Typeface.BOLD)
-			setTextColor(ContextCompat.getColor(this@BiblePlaceListActivity, R.color.text_primary))
+			setTextColor(ContextCompat.getColor(this@BibleFigureListActivity, R.color.text_primary))
 		}
 		val summaryView = TextView(this).apply {
-			text = place.summary
+			text = figure.summary
 			textSize = 13f
 			setTextColor(
 				ContextCompat.getColor(
-					this@BiblePlaceListActivity,
+					this@BibleFigureListActivity,
 					R.color.text_secondary
 				)
 			)

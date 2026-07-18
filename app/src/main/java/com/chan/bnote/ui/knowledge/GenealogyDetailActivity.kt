@@ -1,4 +1,4 @@
-package com.chan.bnote.ui.genealogy
+package com.chan.bnote.ui.knowledge
 
 import android.content.Context
 import android.content.Intent
@@ -16,8 +16,8 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import com.chan.bnote.MainActivity
 import com.chan.bnote.R
-import com.chan.bnote.data.genealogy.GenealogyEntry
-import com.chan.bnote.data.genealogy.GenealogyRepository
+import com.chan.bnote.data.knowledge.GenealogyEntry
+import com.chan.bnote.data.knowledge.GenealogyRepository
 import kotlinx.coroutines.launch
 
 class GenealogyDetailActivity : AppCompatActivity() {

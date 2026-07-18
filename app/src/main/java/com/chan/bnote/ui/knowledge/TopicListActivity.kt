@@ -1,4 +1,4 @@
-package com.chan.bnote.ui.topics
+package com.chan.bnote.ui.knowledge
 
 import android.os.Bundle
 import android.widget.ImageView
@@ -11,8 +11,8 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import com.chan.bnote.R
-import com.chan.bnote.data.topics.TopicalVerseGroup
-import com.chan.bnote.data.topics.TopicalVerseRepository
+import com.chan.bnote.data.knowledge.TopicalVerseGroup
+import com.chan.bnote.data.knowledge.TopicalVerseRepository
 import kotlinx.coroutines.launch
 
 class TopicListActivity : AppCompatActivity() {

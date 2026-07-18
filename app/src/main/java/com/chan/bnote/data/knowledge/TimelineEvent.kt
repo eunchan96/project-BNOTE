@@ -1,4 +1,4 @@
-package com.chan.bnote.data.timeline
+package com.chan.bnote.data.knowledge
 
 data class TimelineEvent(
 	val id: String,

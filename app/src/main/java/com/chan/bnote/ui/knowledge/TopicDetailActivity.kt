@@ -1,4 +1,4 @@
-package com.chan.bnote.ui.topics
+package com.chan.bnote.ui.knowledge
 
 import android.content.Context
 import android.content.Intent
@@ -17,8 +17,8 @@ import com.chan.bnote.MainActivity
 import com.chan.bnote.R
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.bible.BibleBooks
-import com.chan.bnote.data.topics.TopicalVerseRepository
-import com.chan.bnote.data.topics.VerseRef
+import com.chan.bnote.data.knowledge.TopicalVerseRepository
+import com.chan.bnote.data.knowledge.VerseRef
 import kotlinx.coroutines.launch
 
 class TopicDetailActivity : AppCompatActivity() {

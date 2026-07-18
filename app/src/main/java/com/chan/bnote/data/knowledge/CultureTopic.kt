@@ -1,11 +1,9 @@
-package com.chan.bnote.data.figures
+package com.chan.bnote.data.knowledge
 
-data class BibleFigure(
+data class CultureTopic(
 	val id: String,
-	val name: String,
-	val otherNames: String,
+	val title: String,
 	val category: String,
-	val era: String,
 	val summary: String,
 	val description: String,
 	val keyBookId: Int,

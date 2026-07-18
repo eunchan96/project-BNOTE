@@ -1,4 +1,4 @@
-package com.chan.bnote.data.timeline
+package com.chan.bnote.data.knowledge
 
 import android.content.Context
 import kotlinx.coroutines.Dispatchers
@@ -19,7 +19,7 @@ object TimelineRepository {
 	}
 
 	private fun load(context: Context): List<TimelineEvent> {
-		val json = context.assets.open("timeline/bible_timeline.json")
+		val json = context.assets.open("knowledge/bible_timeline.json")
 			.bufferedReader(Charsets.UTF_8)
 			.use { it.readText() }
 		val array = JSONArray(json)

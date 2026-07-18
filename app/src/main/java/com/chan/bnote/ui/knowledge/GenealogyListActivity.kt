@@ -1,4 +1,4 @@
-package com.chan.bnote.ui.genealogy
+package com.chan.bnote.ui.knowledge
 
 import android.graphics.Typeface
 import android.os.Bundle
@@ -12,8 +12,8 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import com.chan.bnote.R
-import com.chan.bnote.data.genealogy.GenealogyChart
-import com.chan.bnote.data.genealogy.GenealogyRepository
+import com.chan.bnote.data.knowledge.GenealogyChart
+import com.chan.bnote.data.knowledge.GenealogyRepository
 import kotlinx.coroutines.launch
 
 class GenealogyListActivity : AppCompatActivity() {
