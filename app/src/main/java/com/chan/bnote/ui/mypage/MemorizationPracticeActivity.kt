@@ -22,6 +22,7 @@ class MemorizationPracticeActivity : AppCompatActivity() {
 
 	companion object {
 		private const val EXTRA_SINGLE_VERSE_ID = "extra_single_verse_id"
+		private const val EXTRA_GROUP_ID = "extra_group_id"
 
 		/** 전체 암송 구절을 섞어서 연습하는 일반 모드. */
 		fun allVersesIntent(context: Context): Intent =
@@ -31,6 +32,11 @@ class MemorizationPracticeActivity : AppCompatActivity() {
 		fun singleVerseIntent(context: Context, verseId: Long): Intent =
 			Intent(context, MemorizationPracticeActivity::class.java)
 				.putExtra(EXTRA_SINGLE_VERSE_ID, verseId)
+
+		/** 특정 그룹의 구절만 섞어서 연습하는 모드 (그룹 상세 화면의 "연습" 버튼). */
+		fun groupIntent(context: Context, groupId: Long): Intent =
+			Intent(context, MemorizationPracticeActivity::class.java)
+				.putExtra(EXTRA_GROUP_ID, groupId)
 	}
 
 	private lateinit var textProgress: TextView
@@ -51,6 +57,7 @@ class MemorizationPracticeActivity : AppCompatActivity() {
 	private var memorizedCount = 0
 	private var hintLevel = 0
 	private var singleVerseId: Long = -1
+	private var groupId: Long = -1
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
@@ -77,6 +84,7 @@ class MemorizationPracticeActivity : AppCompatActivity() {
 		textCompleteSummary = findViewById(R.id.text_complete_summary)
 
 		singleVerseId = intent.getLongExtra(EXTRA_SINGLE_VERSE_ID, -1)
+		groupId = intent.getLongExtra(EXTRA_GROUP_ID, -1)
 
 		findViewById<ImageView>(R.id.btn_back).setOnClickListener { finish() }
 		btnReveal.setOnClickListener { revealAnswer() }
@@ -92,10 +100,13 @@ class MemorizationPracticeActivity : AppCompatActivity() {
 	private fun loadVerses() {
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(applicationContext)
-			val refs = if (singleVerseId != -1L) {
-				listOfNotNull(db.memorizationVerseDao().getById(singleVerseId))
-			} else {
-				db.memorizationVerseDao().getAll()
+			val refs = when {
+				singleVerseId != -1L -> listOfNotNull(
+					db.memorizationVerseDao().getById(singleVerseId)
+				)
+
+				groupId != -1L -> db.memorizationVerseDao().getByGroup(groupId)
+				else -> db.memorizationVerseDao().getAll()
 			}
 
 			if (refs.isEmpty()) {

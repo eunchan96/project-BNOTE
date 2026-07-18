@@ -21,4 +21,7 @@ interface PrayerRequestDao {
 	// 미응답 항목을 먼저, 그 안에서는 최근 등록 순으로 보여준다.
 	@Query("SELECT * FROM prayer_requests ORDER BY isAnswered ASC, createdAt DESC")
 	suspend fun getAll(): List<PrayerRequest>
+
+	@Query("SELECT COUNT(*) FROM prayer_requests")
+	suspend fun count(): Int
 }

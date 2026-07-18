@@ -60,6 +60,10 @@ class MemorizationVerseListActivity : AppCompatActivity() {
 			startActivity(android.content.Intent(this, MemorizationGroupManageActivity::class.java))
 		}
 		findViewById<TextView>(R.id.btn_add_verse).setOnClickListener { showAddPicker() }
+		findViewById<TextView>(R.id.btn_practice_group).setOnClickListener {
+			val group = selectedGroup ?: return@setOnClickListener
+			startActivity(MemorizationPracticeActivity.groupIntent(this, group.id))
+		}
 
 		onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
 			override fun handleOnBackPressed() {

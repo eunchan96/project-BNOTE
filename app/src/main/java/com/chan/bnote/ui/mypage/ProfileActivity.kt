@@ -98,18 +98,11 @@ class ProfileActivity : AppCompatActivity() {
 			val wordMemoCount = db.wordMemoDao().count()
 			val sermonCount = db.sermonDao().count()
 			val memorizationCount = db.memorizationVerseDao().count()
+			val prayerRequestCount = db.prayerRequestDao().count()
 
 			renderReadingStatus(totalRead, totalChapters, percent, currentStreak, longestStreak)
 			renderStatGrid(
 				listOf(
-					StatItem("하이라이트", "${highlightCount}개") {
-						startActivity(
-							Intent(
-								this@ProfileActivity,
-								HighlightListActivity::class.java
-							)
-						)
-					},
 					StatItem("북마크", "${bookmarkCount}개") {
 						startActivity(BookmarkListActivity.createIntent(this@ProfileActivity))
 					},
@@ -121,6 +114,14 @@ class ProfileActivity : AppCompatActivity() {
 					},
 					StatItem("단어 메모", "${wordMemoCount}개") {
 						startActivity(MemoListActivity.wordMemoIntent(this@ProfileActivity))
+					},
+					StatItem("하이라이트", "${highlightCount}개") {
+						startActivity(
+							Intent(
+								this@ProfileActivity,
+								HighlightListActivity::class.java
+							)
+						)
 					},
 					StatItem("설교노트", "${sermonCount}개") {
 						startActivity(
@@ -135,6 +136,14 @@ class ProfileActivity : AppCompatActivity() {
 							Intent(
 								this@ProfileActivity,
 								MemorizationVerseListActivity::class.java
+							)
+						)
+					},
+					StatItem("기도제목", "${prayerRequestCount}개") {
+						startActivity(
+							Intent(
+								this@ProfileActivity,
+								PrayerRequestActivity::class.java
 							)
 						)
 					}

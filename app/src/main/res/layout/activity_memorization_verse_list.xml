@@ -121,6 +121,17 @@
                 android:textColor="@color/white" />
 
             <TextView
+                android:id="@+id/btn_practice_group"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="12dp"
+                android:text="연습"
+                android:textSize="14sp"
+                android:textColor="@color/white"
+                android:clickable="true"
+                android:focusable="true" />
+
+            <TextView
                 android:id="@+id/btn_add_verse"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
