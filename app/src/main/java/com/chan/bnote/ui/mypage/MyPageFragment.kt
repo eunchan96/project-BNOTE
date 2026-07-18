@@ -5,11 +5,17 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
+import coil.load
 import com.chan.bnote.R
+import com.chan.bnote.data.BibleDatabase
+import com.chan.bnote.data.profile.ProfileDisplay
 import com.chan.bnote.ui.TopBarActionHandler
 import com.chan.bnote.ui.TopBarConfig
+import kotlinx.coroutines.launch
 
 class MyPageFragment : Fragment(), TopBarActionHandler {
 
@@ -22,17 +28,43 @@ class MyPageFragment : Fragment(), TopBarActionHandler {
 	override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 		super.onViewCreated(view, savedInstanceState)
 
+		view.findViewById<View>(R.id.container_profile_thumbnail).setOnClickListener {
+			startActivity(Intent(requireContext(), ProfileActivity::class.java))
+		}
 		view.findViewById<TextView>(R.id.menu_settings).setOnClickListener {
 			startActivity(Intent(requireContext(), SettingsActivity::class.java))
-		}
-		view.findViewById<TextView>(R.id.menu_faith_stats).setOnClickListener {
-			startActivity(Intent(requireContext(), FaithStatsActivity::class.java))
 		}
 		view.findViewById<TextView>(R.id.menu_reading_plan).setOnClickListener {
 			startActivity(Intent(requireContext(), ReadingPlanActivity::class.java))
 		}
 		view.findViewById<TextView>(R.id.menu_verse_of_year).setOnClickListener {
 			startActivity(Intent(requireContext(), VerseOfYearActivity::class.java))
+		}
+	}
+
+	override fun onResume() {
+		super.onResume()
+		// 정보 수정 화면에서 돌아왔을 때 최신 값을 반영하기 위해 매번 다시 불러온다.
+		loadProfileThumbnail()
+	}
+
+	private fun loadProfileThumbnail() {
+		val view = view ?: return
+		lifecycleScope.launch {
+			val db = BibleDatabase.getInstance(requireContext().applicationContext)
+			val profile = db.userProfileDao().get()
+
+			view.findViewById<TextView>(R.id.text_profile_name).text =
+				ProfileDisplay.nameText(profile)
+			view.findViewById<TextView>(R.id.text_profile_meta).text =
+				ProfileDisplay.metaText(profile)
+
+			val photoView = view.findViewById<ImageView>(R.id.img_profile_photo)
+			if (!profile?.photoPath.isNullOrBlank()) {
+				photoView.load(profile?.photoPath) { placeholder(R.drawable.ic_person) }
+			} else {
+				photoView.setImageResource(R.drawable.ic_person)
+			}
 		}
 	}
 

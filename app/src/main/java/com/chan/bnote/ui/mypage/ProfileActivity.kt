@@ -1,5 +1,6 @@
 package com.chan.bnote.ui.mypage
 
+import android.content.Intent
 import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
@@ -16,30 +17,59 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
+import coil.load
 import com.chan.bnote.R
 import com.chan.bnote.data.BibleDatabase
+import com.chan.bnote.data.profile.ProfileDisplay
 import kotlinx.coroutines.launch
 import java.util.Calendar
 
-class FaithStatsActivity : AppCompatActivity() {
+/** 내 정보(프로필 요약 + 수정 진입) + 나의 신앙 기록(통독 현황·활동 통계)을 함께 보여주는 화면. */
+class ProfileActivity : AppCompatActivity() {
 
 	private data class StatItem(val label: String, val value: String)
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 		enableEdgeToEdge()
-		setContentView(R.layout.activity_faith_stats)
+		setContentView(R.layout.activity_profile)
 
-		ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.faith_stats_root)) { v, insets ->
+		ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.profile_root)) { v, insets ->
 			val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
 			v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
 			insets
 		}
 
-		findViewById<TextView>(R.id.text_top_bar_title).text = "나의 신앙 기록"
+		findViewById<TextView>(R.id.text_top_bar_title).text = "내 정보"
 		findViewById<ImageView>(R.id.btn_top_bar_back).setOnClickListener { finish() }
 
+		findViewById<TextView>(R.id.btn_edit_profile).setOnClickListener {
+			startActivity(Intent(this, ProfileEditActivity::class.java))
+		}
+	}
+
+	override fun onResume() {
+		super.onResume()
+		// 정보 수정 화면에서 돌아왔을 때 최신 값을 반영하기 위해 매번 다시 불러온다.
+		loadProfile()
 		loadStats()
+	}
+
+	private fun loadProfile() {
+		lifecycleScope.launch {
+			val db = BibleDatabase.getInstance(applicationContext)
+			val profile = db.userProfileDao().get()
+
+			findViewById<TextView>(R.id.text_profile_name).text = ProfileDisplay.nameText(profile)
+			findViewById<TextView>(R.id.text_profile_meta).text = ProfileDisplay.metaText(profile)
+
+			val photoView = findViewById<ImageView>(R.id.img_profile_photo)
+			if (!profile?.photoPath.isNullOrBlank()) {
+				photoView.load(profile?.photoPath) { placeholder(R.drawable.ic_person) }
+			} else {
+				photoView.setImageResource(R.drawable.ic_person)
+			}
+		}
 	}
 
 	private fun loadStats() {
@@ -127,7 +157,7 @@ class FaithStatsActivity : AppCompatActivity() {
 		val card = LinearLayout(this).apply {
 			orientation = LinearLayout.VERTICAL
 			gravity = Gravity.CENTER_HORIZONTAL
-			background = ContextCompat.getDrawable(this@FaithStatsActivity, R.drawable.bg_stat_card)
+			background = ContextCompat.getDrawable(this@ProfileActivity, R.drawable.bg_stat_card)
 			setPadding(dp(12), dp(16), dp(12), dp(16))
 			layoutParams = LinearLayout.LayoutParams(
 				0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f
@@ -138,12 +168,12 @@ class FaithStatsActivity : AppCompatActivity() {
 			text = item.value
 			textSize = 20f
 			setTypeface(typeface, Typeface.BOLD)
-			setTextColor(ContextCompat.getColor(this@FaithStatsActivity, R.color.brown_primary))
+			setTextColor(ContextCompat.getColor(this@ProfileActivity, R.color.brown_primary))
 		}
 		val labelView = TextView(this).apply {
 			text = item.label
 			textSize = 13f
-			setTextColor(ContextCompat.getColor(this@FaithStatsActivity, R.color.text_secondary))
+			setTextColor(ContextCompat.getColor(this@ProfileActivity, R.color.text_secondary))
 			setPadding(0, dp(4), 0, 0)
 		}
 
