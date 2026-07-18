@@ -130,4 +130,20 @@
         android:layout_height="1dp"
         android:background="@color/divider_light" />
 
+    <TextView
+        android:id="@+id/menu_memorization"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="18dp"
+        android:text="암송 구절"
+        android:textSize="16sp"
+        android:background="?attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/divider_light" />
+
 </LinearLayout>

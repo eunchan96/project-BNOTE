@@ -1,5 +1,7 @@
 package com.chan.bnote.ui.mypage
 
+import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.ImageView
@@ -18,6 +20,19 @@ import kotlinx.coroutines.launch
 
 class MemorizationPracticeActivity : AppCompatActivity() {
 
+	companion object {
+		private const val EXTRA_SINGLE_VERSE_ID = "extra_single_verse_id"
+
+		/** 전체 암송 구절을 섞어서 연습하는 일반 모드. */
+		fun allVersesIntent(context: Context): Intent =
+			Intent(context, MemorizationPracticeActivity::class.java)
+
+		/** 구절 하나만 연습하는 모드 (암송 구절 상세 화면의 "암송하기" 버튼). */
+		fun singleVerseIntent(context: Context, verseId: Long): Intent =
+			Intent(context, MemorizationPracticeActivity::class.java)
+				.putExtra(EXTRA_SINGLE_VERSE_ID, verseId)
+	}
+
 	private lateinit var textProgress: TextView
 	private lateinit var textEmptyState: TextView
 	private lateinit var containerPractice: LinearLayout
@@ -25,6 +40,8 @@ class MemorizationPracticeActivity : AppCompatActivity() {
 	private lateinit var containerVerseCard: LinearLayout
 	private lateinit var textVerseContent: TextView
 	private lateinit var btnReveal: TextView
+	private lateinit var textHint: TextView
+	private lateinit var btnHint: TextView
 	private lateinit var containerAnswerButtons: LinearLayout
 	private lateinit var containerComplete: LinearLayout
 	private lateinit var textCompleteSummary: TextView
@@ -32,6 +49,8 @@ class MemorizationPracticeActivity : AppCompatActivity() {
 	private var verses: List<MemorizationVerse> = emptyList()
 	private var currentIndex = 0
 	private var memorizedCount = 0
+	private var hintLevel = 0
+	private var singleVerseId: Long = -1
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
@@ -51,15 +70,21 @@ class MemorizationPracticeActivity : AppCompatActivity() {
 		containerVerseCard = findViewById(R.id.container_verse_card)
 		textVerseContent = findViewById(R.id.text_verse_content)
 		btnReveal = findViewById(R.id.btn_reveal)
+		textHint = findViewById(R.id.text_hint)
+		btnHint = findViewById(R.id.btn_hint)
 		containerAnswerButtons = findViewById(R.id.container_answer_buttons)
 		containerComplete = findViewById(R.id.container_complete)
 		textCompleteSummary = findViewById(R.id.text_complete_summary)
 
+		singleVerseId = intent.getLongExtra(EXTRA_SINGLE_VERSE_ID, -1)
+
 		findViewById<ImageView>(R.id.btn_back).setOnClickListener { finish() }
 		btnReveal.setOnClickListener { revealAnswer() }
+		btnHint.setOnClickListener { showHint() }
 		findViewById<TextView>(R.id.btn_review_again).setOnClickListener { answerCard(memorized = false) }
 		findViewById<TextView>(R.id.btn_memorized).setOnClickListener { answerCard(memorized = true) }
 		findViewById<TextView>(R.id.btn_restart).setOnClickListener { startSession(verses) }
+		findViewById<TextView>(R.id.btn_quit).setOnClickListener { finish() }
 
 		loadVerses()
 	}
@@ -67,7 +92,11 @@ class MemorizationPracticeActivity : AppCompatActivity() {
 	private fun loadVerses() {
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(applicationContext)
-			val refs = db.memorizationVerseDao().getAll()
+			val refs = if (singleVerseId != -1L) {
+				listOfNotNull(db.memorizationVerseDao().getById(singleVerseId))
+			} else {
+				db.memorizationVerseDao().getAll()
+			}
 
 			if (refs.isEmpty()) {
 				textEmptyState.visibility = View.VISIBLE
@@ -81,7 +110,8 @@ class MemorizationPracticeActivity : AppCompatActivity() {
 	}
 
 	private fun startSession(refs: List<MemorizationVerse>) {
-		verses = refs.shuffled()
+		// 단일 구절 모드에서는 순서를 섞을 필요가 없다.
+		verses = if (singleVerseId != -1L) refs else refs.shuffled()
 		currentIndex = 0
 		memorizedCount = 0
 		showCard(currentIndex)
@@ -94,17 +124,38 @@ class MemorizationPracticeActivity : AppCompatActivity() {
 
 		val ref = verses[index]
 		textProgress.text = "${index + 1} / ${verses.size}"
-		textVerseRef.text = ref.toShortLabel()
+		textVerseRef.text = ref.toDisplayLabel()
 
 		textVerseContent.text = ref.verseText
 		textVerseContent.visibility = View.GONE
 		btnReveal.visibility = View.VISIBLE
 		containerAnswerButtons.visibility = View.GONE
+
+		hintLevel = 0
+		textHint.visibility = View.GONE
+		btnHint.visibility = View.VISIBLE
+		btnHint.text = "힌트 보기"
+	}
+
+	private fun showHint() {
+		hintLevel += 1
+		val ref = verses[currentIndex]
+		textHint.text = buildHintText(ref.verseText, hintLevel)
+		textHint.visibility = View.VISIBLE
+		btnHint.text = "힌트 또 보기"
+	}
+
+	/** [fullText]를 단어 단위로 나눠서, 앞에서부터 [revealedWords]개의 단어만 보여준다. */
+	private fun buildHintText(fullText: String, revealedWords: Int): String {
+		val words = fullText.split(Regex("\\s+")).filter { it.isNotEmpty() }
+		return words.take(revealedWords).joinToString(" ")
 	}
 
 	private fun revealAnswer() {
 		btnReveal.visibility = View.GONE
 		textVerseContent.visibility = View.VISIBLE
+		textHint.visibility = View.GONE
+		btnHint.visibility = View.GONE
 		containerAnswerButtons.visibility = View.VISIBLE
 	}
 
@@ -139,6 +190,8 @@ class MemorizationPracticeActivity : AppCompatActivity() {
 	private fun showComplete() {
 		textVerseRef.visibility = View.GONE
 		containerVerseCard.visibility = View.GONE
+		textHint.visibility = View.GONE
+		btnHint.visibility = View.GONE
 		containerAnswerButtons.visibility = View.GONE
 		containerComplete.visibility = View.VISIBLE
 

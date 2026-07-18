@@ -21,8 +21,8 @@
             android:layout_height="40dp"
             android:padding="8dp"
             android:src="@drawable/ic_chevron_left"
-            android:contentDescription="뒤로가기"
             app:tint="@color/white"
+            android:contentDescription="뒤로가기"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:clickable="true"
             android:focusable="true" />

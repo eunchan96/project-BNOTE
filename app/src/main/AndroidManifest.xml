@@ -30,6 +30,9 @@
             </intent-filter>
         </activity>
         <activity
+            android:name=".ui.scrap.ScrapActivity"
+            android:exported="false" />
+        <activity
             android:name=".ui.scrap.ScrapGroupManageActivity"
             android:exported="false" />
         <activity
@@ -43,15 +46,6 @@
             android:exported="false" />
         <activity
             android:name=".ui.appendix.ResponsiveReadingDetailActivity"
-            android:exported="false" />
-        <activity
-            android:name=".ui.scrap.ScrapActivity"
-            android:exported="false" />
-        <activity
-            android:name=".ui.bible.HighlightListActivity"
-            android:exported="false" />
-        <activity
-            android:name=".ui.bible.MemoListActivity"
             android:exported="false" />
         <activity
             android:name=".ui.sermon.AddSermonActivity"
@@ -80,6 +74,12 @@
             android:name=".ui.mypage.MemorizationPracticeActivity"
             android:exported="false" />
         <activity
+            android:name=".ui.mypage.MemorizationVerseListActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.mypage.MemorizationVerseDetailActivity"
+            android:exported="false" />
+        <activity
             android:name=".ui.mypage.PrayerRequestActivity"
             android:exported="false" />
         <activity
@@ -104,6 +104,12 @@
             android:windowSoftInputMode="adjustResize" />
         <activity
             android:name=".ui.bible.BookmarkListActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.bible.HighlightListActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.bible.MemoListActivity"
             android:exported="false" />
         <activity
             android:name=".ui.hymn.HymnListActivity"

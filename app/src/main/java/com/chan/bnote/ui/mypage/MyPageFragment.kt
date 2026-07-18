@@ -43,6 +43,9 @@ class MyPageFragment : Fragment(), TopBarActionHandler {
 		view.findViewById<TextView>(R.id.menu_prayer_request).setOnClickListener {
 			startActivity(Intent(requireContext(), PrayerRequestActivity::class.java))
 		}
+		view.findViewById<TextView>(R.id.menu_memorization).setOnClickListener {
+			startActivity(Intent(requireContext(), MemorizationVerseListActivity::class.java))
+		}
 	}
 
 	override fun onResume() {

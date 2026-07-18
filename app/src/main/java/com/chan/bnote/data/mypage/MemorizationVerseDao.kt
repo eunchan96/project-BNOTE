@@ -14,6 +14,9 @@ interface MemorizationVerseDao {
 	@Delete
 	suspend fun delete(item: MemorizationVerse)
 
+	@Query("SELECT * FROM memorization_verses WHERE id = :id LIMIT 1")
+	suspend fun getById(id: Long): MemorizationVerse?
+
 	@Query("SELECT * FROM memorization_verses ORDER BY createdAt DESC")
 	suspend fun getAll(): List<MemorizationVerse>
 

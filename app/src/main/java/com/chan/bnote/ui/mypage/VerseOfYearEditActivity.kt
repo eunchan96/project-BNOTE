@@ -107,6 +107,7 @@ class VerseOfYearEditActivity : AppCompatActivity() {
 		}
 
 		findViewById<TextView>(R.id.btn_save_verse_of_year).setOnClickListener { save() }
+		findViewById<TextView>(R.id.btn_go_memorize).setOnClickListener { saveAndGoToMemorize() }
 
 		if (isEditMode) {
 			loadExisting()
@@ -174,7 +175,8 @@ class VerseOfYearEditActivity : AppCompatActivity() {
 			}
 			parts.addAll(filtered.map { it.text })
 		}
-		return parts.joinToString(" ")
+		// 구절이 여러 개면 구절 단위로 줄바꿈해서 저장한다 (단일 구절이면 그냥 한 줄).
+		return parts.joinToString("\n")
 	}
 
 	private fun loadExisting() {
@@ -207,41 +209,23 @@ class VerseOfYearEditActivity : AppCompatActivity() {
 			return
 		}
 
-		val year = if (isEditMode) editingYear else selectedYear
+		lifecycleScope.launch {
+			val year = persistEntry() ?: return@launch
+			Toast.makeText(this@VerseOfYearEditActivity, "저장됐어요", Toast.LENGTH_SHORT).show()
+			finish()
+		}
+	}
+
+	/** 저장 후 곧바로 이 구절들을 암송 구절 리스트에 추가하고 그 화면으로 이동한다. */
+	private fun saveAndGoToMemorize() {
+		if (bibleRefs.isEmpty()) {
+			Toast.makeText(this, "말씀을 하나 이상 추가해주세요", Toast.LENGTH_SHORT).show()
+			return
+		}
 
 		lifecycleScope.launch {
+			persistEntry() ?: return@launch
 			val db = BibleDatabase.getInstance(applicationContext)
-
-			if (!isEditMode) {
-				val existing = db.verseOfYearDao().getByYear(year)
-				if (existing != null) {
-					Toast.makeText(
-						this@VerseOfYearEditActivity,
-						"이미 ${year}년 말씀이 있어요. 목록에서 수정해주세요",
-						Toast.LENGTH_SHORT
-					).show()
-					return@launch
-				}
-			}
-
-			db.verseOfYearDao().upsert(VerseOfYear(year = year, note = noteEdit.text.toString()))
-			db.verseOfYearRefDao().deleteByYear(year)
-			db.verseOfYearRefDao().insertAll(
-				bibleRefs.map { (ref, text) ->
-					VerseOfYearRef(
-						year = year,
-						startBookId = ref.startBookId,
-						startChapter = ref.startChapter,
-						startVerse = ref.startVerse,
-						endBookId = ref.endBookId,
-						endChapter = ref.endChapter,
-						endVerse = ref.endVerse,
-						verseText = text
-					)
-				}
-			)
-
-			// 약속의 말씀에 등록한 구절은 암송 구절 리스트에도 자동으로 들어간다 (이미 있으면 중복 추가하지 않음).
 			for ((ref, text) in bibleRefs) {
 				val alreadyExists = db.memorizationVerseDao().existsCount(
 					ref.startBookId, ref.startChapter, ref.startVerse,
@@ -261,10 +245,50 @@ class VerseOfYearEditActivity : AppCompatActivity() {
 					)
 				}
 			}
-
-			Toast.makeText(this@VerseOfYearEditActivity, "저장됐어요", Toast.LENGTH_SHORT).show()
+			startActivity(
+				Intent(
+					this@VerseOfYearEditActivity,
+					MemorizationVerseListActivity::class.java
+				)
+			)
 			finish()
 		}
+	}
+
+	/** 연도/구절/메모를 저장한다. 이미 존재하는 신규 연도면 null을 반환한다 (호출부에서 그냥 return). */
+	private suspend fun persistEntry(): Int? {
+		val year = if (isEditMode) editingYear else selectedYear
+		val db = BibleDatabase.getInstance(applicationContext)
+
+		if (!isEditMode) {
+			val existing = db.verseOfYearDao().getByYear(year)
+			if (existing != null) {
+				Toast.makeText(
+					this@VerseOfYearEditActivity,
+					"이미 ${year}년 말씀이 있어요. 목록에서 수정해주세요",
+					Toast.LENGTH_SHORT
+				).show()
+				return null
+			}
+		}
+
+		db.verseOfYearDao().upsert(VerseOfYear(year = year, note = noteEdit.text.toString()))
+		db.verseOfYearRefDao().deleteByYear(year)
+		db.verseOfYearRefDao().insertAll(
+			bibleRefs.map { (ref, text) ->
+				VerseOfYearRef(
+					year = year,
+					startBookId = ref.startBookId,
+					startChapter = ref.startChapter,
+					startVerse = ref.startVerse,
+					endBookId = ref.endBookId,
+					endChapter = ref.endChapter,
+					endVerse = ref.endVerse,
+					verseText = text
+				)
+			}
+		)
+		return year
 	}
 
 	private fun confirmDelete() {

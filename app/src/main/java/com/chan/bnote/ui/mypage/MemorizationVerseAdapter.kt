@@ -3,7 +3,6 @@ package com.chan.bnote.ui.mypage
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.chan.bnote.R
@@ -11,14 +10,12 @@ import com.chan.bnote.data.mypage.MemorizationVerse
 
 class MemorizationVerseAdapter(
 	private val items: List<MemorizationVerse>,
-	private val onClick: (MemorizationVerse) -> Unit,
-	private val onDelete: (MemorizationVerse) -> Unit
+	private val onClick: (MemorizationVerse) -> Unit
 ) : RecyclerView.Adapter<MemorizationVerseAdapter.ViewHolder>() {
 
 	class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
 		val ref: TextView = view.findViewById(R.id.text_verse_ref)
 		val preview: TextView = view.findViewById(R.id.text_verse_preview)
-		val deleteBtn: ImageView = view.findViewById(R.id.btn_delete_verse)
 	}
 
 	override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -32,7 +29,6 @@ class MemorizationVerseAdapter(
 		holder.ref.text = item.toDisplayLabel()
 		holder.preview.text = item.verseText
 		holder.itemView.setOnClickListener { onClick(item) }
-		holder.deleteBtn.setOnClickListener { onDelete(item) }
 	}
 
 	override fun getItemCount() = items.size
