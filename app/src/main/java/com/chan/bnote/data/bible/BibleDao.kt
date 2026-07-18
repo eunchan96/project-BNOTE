@@ -35,4 +35,7 @@ interface BibleDao {
     """
 	)
 	suspend fun searchVerses(translation: String, keyword: String): List<BibleVerse>
+
+	@Query("SELECT * FROM bible_verses WHERE translation = :translation ORDER BY RANDOM() LIMIT 1")
+	suspend fun getRandomVerse(translation: String): BibleVerse?
 }

@@ -23,4 +23,7 @@ interface ReadingProgressDao {
 
 	@Query("SELECT * FROM reading_progress")
 	suspend fun getAll(): List<ReadingProgress>
+
+	@Query("SELECT COUNT(*) FROM reading_progress WHERE readAt >= :startInclusive AND readAt < :endExclusive")
+	suspend fun countReadBetween(startInclusive: Long, endExclusive: Long): Int
 }

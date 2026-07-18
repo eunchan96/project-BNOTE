@@ -4,6 +4,7 @@
 
     <!-- 찬송 화면의 유튜브 재생/썸네일 로딩에 필요 -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- 설교 사진 첨부(카메라 촬영)에 필요 -->
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-feature

@@ -28,6 +28,13 @@ object AppSettings {
 	private const val KEY_LAST_READ_CHAPTER = "last_read_chapter"
 	private const val KEY_LAST_TAB = "last_tab"
 
+	private const val KEY_DAILY_VERSE_NOTI_ENABLED = "daily_verse_noti_enabled"
+	private const val KEY_DAILY_VERSE_NOTI_HOUR = "daily_verse_noti_hour"
+	private const val KEY_DAILY_VERSE_NOTI_MINUTE = "daily_verse_noti_minute"
+	private const val KEY_READING_REMINDER_ENABLED = "reading_reminder_enabled"
+	private const val KEY_READING_REMINDER_HOUR = "reading_reminder_hour"
+	private const val KEY_READING_REMINDER_MINUTE = "reading_reminder_minute"
+
 	fun getPrimaryTranslation(context: Context): String {
 		return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
 			.getString(KEY_PRIMARY_TRANSLATION, "NKRV") ?: "NKRV"
@@ -189,5 +196,61 @@ object AppSettings {
 	fun setLastTab(context: Context, tab: String) {
 		context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
 			.edit().putString(KEY_LAST_TAB, tab).apply()
+	}
+
+	// --- 알림/리마인더 ---
+
+	fun isDailyVerseNotiEnabled(context: Context): Boolean {
+		return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.getBoolean(KEY_DAILY_VERSE_NOTI_ENABLED, false)
+	}
+
+	fun setDailyVerseNotiEnabled(context: Context, enabled: Boolean) {
+		context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.edit().putBoolean(KEY_DAILY_VERSE_NOTI_ENABLED, enabled).apply()
+	}
+
+	/** 매일 말씀 알림 시간. 기본값 오전 8시. */
+	fun getDailyVerseNotiTime(context: Context): Pair<Int, Int> {
+		val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+		return prefs.getInt(KEY_DAILY_VERSE_NOTI_HOUR, 8) to prefs.getInt(
+			KEY_DAILY_VERSE_NOTI_MINUTE,
+			0
+		)
+	}
+
+	fun setDailyVerseNotiTime(context: Context, hour: Int, minute: Int) {
+		context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.edit()
+			.putInt(KEY_DAILY_VERSE_NOTI_HOUR, hour)
+			.putInt(KEY_DAILY_VERSE_NOTI_MINUTE, minute)
+			.apply()
+	}
+
+	fun isReadingReminderEnabled(context: Context): Boolean {
+		return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.getBoolean(KEY_READING_REMINDER_ENABLED, false)
+	}
+
+	fun setReadingReminderEnabled(context: Context, enabled: Boolean) {
+		context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.edit().putBoolean(KEY_READING_REMINDER_ENABLED, enabled).apply()
+	}
+
+	/** 통독 리마인더 시간. 기본값 오후 9시. */
+	fun getReadingReminderTime(context: Context): Pair<Int, Int> {
+		val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+		return prefs.getInt(KEY_READING_REMINDER_HOUR, 21) to prefs.getInt(
+			KEY_READING_REMINDER_MINUTE,
+			0
+		)
+	}
+
+	fun setReadingReminderTime(context: Context, hour: Int, minute: Int) {
+		context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.edit()
+			.putInt(KEY_READING_REMINDER_HOUR, hour)
+			.putInt(KEY_READING_REMINDER_MINUTE, minute)
+			.apply()
 	}
 }

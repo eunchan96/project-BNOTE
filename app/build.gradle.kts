@@ -63,4 +63,5 @@ dependencies {
 	implementation(libs.androidx.lifecycle.runtime.ktx)
 	implementation(libs.flexbox)
 	implementation(libs.coil)
+	implementation(libs.androidx.work.runtime.ktx)
 }
