@@ -4,12 +4,16 @@ import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
+import androidx.room.Update
 
 @Dao
 interface MemorizationVerseDao {
 
 	@Insert
 	suspend fun insert(item: MemorizationVerse): Long
+
+	@Update
+	suspend fun update(item: MemorizationVerse)
 
 	@Delete
 	suspend fun delete(item: MemorizationVerse)

@@ -53,7 +53,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:padding="12dp"
-            android:text="+ 추가"
+            android:text="추가"
             android:textSize="14sp"
             android:textColor="@color/white"
             android:clickable="true"
@@ -66,7 +66,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="60dp"
         android:gravity="center"
-        android:text="아직 암송 구절이 없어요.&#10;오른쪽 위 + 추가로 첫 구절을 등록해보세요."
+        android:text="아직 암송 구절이 없어요.&#10;오른쪽 위 추가 버튼을 눌러 첫 구절을 등록해보세요."
         android:textSize="14sp"
         android:textColor="@color/text_hint"
         android:visibility="gone" />

@@ -85,22 +85,35 @@
                 android:textColor="@color/text_primary"
                 tools:text="태초에 하나님이 천지를 창조하시니라" />
 
+            <EditText
+                android:id="@+id/edit_verse_note"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:minHeight="72dp"
+                android:gravity="top"
+                android:hint="이 구절에 대한 메모"
+                android:padding="12dp"
+                android:textSize="14sp"
+                android:textColor="@color/text_primary"
+                android:background="@drawable/bg_book_button" />
+
+            <TextView
+                android:id="@+id/btn_practice_this"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:padding="14dp"
+                android:gravity="center"
+                android:text="암송하기"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="@color/white"
+                android:background="@drawable/bg_save_button"
+                android:clickable="true"
+                android:focusable="true" />
+
         </LinearLayout>
     </ScrollView>
-
-    <TextView
-        android:id="@+id/btn_practice_this"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_margin="20dp"
-        android:padding="14dp"
-        android:gravity="center"
-        android:text="암송하기"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        android:textColor="@color/white"
-        android:background="@drawable/bg_save_button"
-        android:clickable="true"
-        android:focusable="true" />
 
 </LinearLayout>

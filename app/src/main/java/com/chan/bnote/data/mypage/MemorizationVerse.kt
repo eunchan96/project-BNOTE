@@ -16,6 +16,7 @@ data class MemorizationVerse(
 	val endChapter: Int,
 	val endVerse: Int,
 	val verseText: String,
+	val note: String = "",
 	val createdAt: Long = System.currentTimeMillis()
 ) {
 	fun toDisplayLabel(): String {

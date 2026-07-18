@@ -59,7 +59,7 @@ import kotlinx.coroutines.launch
 		Preacher::class, HymnCategory::class, Hymn::class, UserProfile::class,
 		PrayerRequest::class, VerseMemorizationProgress::class, MemorizationVerse::class
 	],
-	version = 19, // 18 -> 19 (독립 암송 구절 리스트(MemorizationVerse) 추가)
+	version = 20, // 19 -> 20 (암송 구절에 메모(note) 필드 추가)
 	exportSchema = false
 )
 abstract class BibleDatabase : RoomDatabase() {

@@ -3,6 +3,7 @@ package com.chan.bnote.ui.mypage
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.widget.EditText
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
@@ -27,6 +28,7 @@ class MemorizationVerseDetailActivity : AppCompatActivity() {
 	}
 
 	private var verse: MemorizationVerse? = null
+	private lateinit var noteEdit: EditText
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
@@ -39,11 +41,18 @@ class MemorizationVerseDetailActivity : AppCompatActivity() {
 			insets
 		}
 
+		noteEdit = findViewById(R.id.edit_verse_note)
+
 		findViewById<ImageView>(R.id.btn_back).setOnClickListener { finish() }
 		findViewById<ImageView>(R.id.btn_delete).setOnClickListener { confirmDelete() }
 		findViewById<TextView>(R.id.btn_practice_this).setOnClickListener { practiceThisVerse() }
 
 		loadVerse()
+	}
+
+	override fun onPause() {
+		super.onPause()
+		saveNote()
 	}
 
 	private fun loadVerse() {
@@ -62,6 +71,21 @@ class MemorizationVerseDetailActivity : AppCompatActivity() {
 			verse = item
 			findViewById<TextView>(R.id.text_verse_ref).text = item.toDisplayLabel()
 			findViewById<TextView>(R.id.text_verse_content).text = item.verseText
+			noteEdit.setText(item.note)
+		}
+	}
+
+	/** 메모는 저장 버튼 없이, 화면을 벗어날 때(뒤로가기·연습하기 이동 포함) 자동으로 저장한다. */
+	private fun saveNote() {
+		val item = verse ?: return
+		val newNote = noteEdit.text.toString()
+		if (newNote == item.note) return
+
+		val updated = item.copy(note = newNote)
+		verse = updated
+		lifecycleScope.launch {
+			val db = BibleDatabase.getInstance(applicationContext)
+			db.memorizationVerseDao().update(updated)
 		}
 	}
 
