@@ -46,6 +46,14 @@ class MyPageFragment : Fragment(), TopBarActionHandler {
 		view.findViewById<TextView>(R.id.menu_memorization).setOnClickListener {
 			startActivity(Intent(requireContext(), MemorizationVerseListActivity::class.java))
 		}
+		view.findViewById<TextView>(R.id.menu_bible_knowledge).setOnClickListener {
+			startActivity(
+				Intent(
+					requireContext(),
+					com.chan.bnote.ui.figures.BibleKnowledgeHubActivity::class.java
+				)
+			)
+		}
 	}
 
 	override fun onResume() {

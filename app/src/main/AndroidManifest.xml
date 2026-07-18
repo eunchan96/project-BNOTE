@@ -80,6 +80,21 @@
             android:name=".ui.mypage.MemorizationVerseDetailActivity"
             android:exported="false" />
         <activity
+            android:name=".ui.figures.BibleKnowledgeHubActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.figures.BibleFigureListActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.figures.BibleFigureDetailActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.places.BiblePlaceListActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.places.BiblePlaceDetailActivity"
+            android:exported="false" />
+        <activity
             android:name=".ui.mypage.PrayerRequestActivity"
             android:exported="false" />
         <activity
