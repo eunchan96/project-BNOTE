@@ -80,16 +80,18 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 			bibleFragment = supportFragmentManager.findFragmentByTag(TAG_BIBLE) as? BibleFragment
 			sermonFragment = supportFragmentManager.findFragmentByTag(TAG_SERMON) as? SermonFragment
 			myPageFragment = supportFragmentManager.findFragmentByTag(TAG_MYPAGE) as? MyPageFragment
-		}
 
-		val savedTab = AppSettings.getLastTab(this)
-
-		// Bundle 복원 타이밍에 기대지 않고, SharedPreferences에 직접 저장해둔 마지막 탭으로 확실하게 되돌린다
-		// (다크모드 전환처럼 배경에 있던 액티비티가 재생성될 때도 안정적으로 동작).
-		when (savedTab) {
-			TAG_SERMON -> switchToSermon()
-			TAG_MYPAGE -> switchToMyPage()
-			else -> switchToBible()
+			// 다크모드 전환 등으로 인한 재생성(recreate())은 사용자가 보던 탭을 그대로 유지한다.
+			val savedTab = AppSettings.getLastTab(this)
+			when (savedTab) {
+				TAG_SERMON -> switchToSermon()
+				TAG_MYPAGE -> switchToMyPage()
+				else -> switchToBible()
+			}
+		} else {
+			// 완전히 새로 앱을 시작할 때는 마지막에 보던 탭이 무엇이었든 항상 성경 탭으로 시작한다.
+			// (성경 탭 자체는 BibleFragment가 마지막으로 읽던 책/장을 스스로 복원한다.)
+			switchToBible()
 		}
 
 		if (savedInstanceState == null) {
