@@ -1,9 +1,11 @@
 package com.chan.bnote.ui.sermon
 
 import android.graphics.Typeface
+import android.text.Editable
 import android.text.Spannable
 import android.text.SpannableString
 import android.text.Spanned
+import android.text.style.ForegroundColorSpan
 import android.text.style.StyleSpan
 import android.text.style.UnderlineSpan
 import androidx.core.text.HtmlCompat
@@ -40,11 +42,24 @@ object RichTextUtils {
 
 	private fun hasRichSpans(spanned: Spanned): Boolean {
 		return spanned.getSpans(0, spanned.length, StyleSpan::class.java).isNotEmpty() ||
-				spanned.getSpans(0, spanned.length, UnderlineSpan::class.java).isNotEmpty()
+				spanned.getSpans(0, spanned.length, UnderlineSpan::class.java).isNotEmpty() ||
+				spanned.getSpans(0, spanned.length, ForegroundColorSpan::class.java).isNotEmpty()
+	}
+
+	/** 선택 구간의 글자 색을 바꾼다. 이미 색이 지정돼 있으면 먼저 지우고 새로 씌운다. */
+	fun applyColor(editable: Editable, start: Int, end: Int, color: Int) {
+		if (start >= end) return
+		val existing = editable.getSpans(start, end, ForegroundColorSpan::class.java)
+		for (span in existing) {
+			if (editable.getSpanStart(span) <= start && editable.getSpanEnd(span) >= end) {
+				editable.removeSpan(span)
+			}
+		}
+		editable.setSpan(ForegroundColorSpan(color), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
 	}
 
 	/** 선택 구간에 굵게/밑줄이 이미 완전히 덮여있는지 보고, 없으면 씌우고 있으면 벗긴다. */
-	fun toggleStyle(editable: android.text.Editable, start: Int, end: Int, bold: Boolean) {
+	fun toggleStyle(editable: Editable, start: Int, end: Int, bold: Boolean) {
 		if (start >= end) return
 		val spanClass = if (bold) StyleSpan::class.java else UnderlineSpan::class.java
 		val existing = editable.getSpans(start, end, spanClass)

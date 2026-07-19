@@ -50,6 +50,7 @@
             android:exported="false" />
         <activity
             android:name=".ui.sermon.AddSermonActivity"
+            android:windowSoftInputMode="adjustResize"
             android:exported="false" />
         <activity
             android:name=".ui.bible.MemoEditorActivity"

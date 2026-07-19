@@ -35,6 +35,7 @@ import com.chan.bnote.data.sermon.Sermon
 import com.chan.bnote.data.sermon.SermonBibleRef
 import com.chan.bnote.data.sermon.SermonPhoto
 import com.chan.bnote.data.sermon.SermonPhotoStorage
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 import java.io.File
 import java.util.Calendar
@@ -155,6 +156,7 @@ class AddSermonActivity : AppCompatActivity() {
 		findViewById<TextView>(R.id.btn_format_underline).setOnClickListener {
 			applyFormatting(bold = false)
 		}
+		findViewById<TextView>(R.id.btn_format_color).setOnClickListener { showColorPicker() }
 
 		btnDate.setOnClickListener {
 			val cal = Calendar.getInstance().apply { timeInMillis = selectedDateMillis }
@@ -287,11 +289,7 @@ class AddSermonActivity : AppCompatActivity() {
 		flexboxRefs.removeAllViews()
 
 		if (bibleRefs.isEmpty()) {
-			flexboxRefs.addView(
-				buildRefBox(
-					"+ 성경 구절 추가",
-					fullWidth = true
-				) { openBibleRangePicker() })
+			flexboxRefs.addView(buildRefBox("본문 선택", fullWidth = true) { openBibleRangePicker() })
 			return
 		}
 
@@ -315,6 +313,9 @@ class AddSermonActivity : AppCompatActivity() {
 		rangePicker.show(supportFragmentManager, "bible_range_picker")
 	}
 
+	// 본문 박스와 옆의 "+" 정사각형 버튼의 높이를 정확히 맞추기 위한 공통 높이.
+	private val refBoxHeight get() = dp(44)
+
 	/** 본문 구절 하나를 나타내는 박스. [fullWidth]면 (아직 구절이 없을 때) 혼자 줄 전체를 채우고,
 	 * 아니면 다른 박스들과 flexGrow로 너비를 나눠 갖는다. 탭하면 그 구절을 지운다(첫 박스 예외: 추가). */
 	private fun buildRefBox(text: String, fullWidth: Boolean, onClick: () -> Unit): View {
@@ -324,7 +325,7 @@ class AddSermonActivity : AppCompatActivity() {
 			gravity = Gravity.CENTER
 			maxLines = 1
 			ellipsize = android.text.TextUtils.TruncateAt.END
-			setPadding(dp(10), dp(12), dp(10), dp(12))
+			setPadding(dp(10), 0, dp(10), 0)
 			setTextColor(ContextCompat.getColor(this@AddSermonActivity, R.color.text_primary))
 			background =
 				ContextCompat.getDrawable(this@AddSermonActivity, R.drawable.bg_book_button)
@@ -332,7 +333,7 @@ class AddSermonActivity : AppCompatActivity() {
 			isFocusable = true
 			layoutParams = com.google.android.flexbox.FlexboxLayout.LayoutParams(
 				if (fullWidth) ViewGroup.LayoutParams.MATCH_PARENT else 0,
-				ViewGroup.LayoutParams.WRAP_CONTENT
+				refBoxHeight
 			).apply {
 				flexGrow = 1f
 				setMargins(dp(2), dp(2), dp(2), dp(2))
@@ -341,7 +342,7 @@ class AddSermonActivity : AppCompatActivity() {
 		}
 	}
 
-	/** 본문이 하나 이상 있을 때, 맨 끝에 붙는 정사각형 "+" 추가 버튼 (너비를 나눠 갖지 않는 고정 크기). */
+	/** 본문이 하나 이상 있을 때, 맨 끝에 붙는 정사각형 "+" 추가 버튼. 본문 박스와 높이를 맞춘 정사각형. */
 	private fun buildAddSquareButton(onClick: () -> Unit): View {
 		return TextView(this).apply {
 			text = "+"
@@ -352,8 +353,9 @@ class AddSermonActivity : AppCompatActivity() {
 				ContextCompat.getDrawable(this@AddSermonActivity, R.drawable.bg_book_button)
 			isClickable = true
 			isFocusable = true
-			val size = dp(48)
-			layoutParams = com.google.android.flexbox.FlexboxLayout.LayoutParams(size, size).apply {
+			layoutParams = com.google.android.flexbox.FlexboxLayout.LayoutParams(
+				refBoxHeight, refBoxHeight
+			).apply {
 				setMargins(dp(2), dp(2), dp(2), dp(2))
 			}
 			setOnClickListener { onClick() }
@@ -362,13 +364,64 @@ class AddSermonActivity : AppCompatActivity() {
 
 	/** 선택한 텍스트에 굵게/밑줄을 씌우거나 벗긴다. 선택 영역이 없으면 안내만 한다. */
 	private fun applyFormatting(bold: Boolean) {
+		val range = requireSelection() ?: return
+		RichTextUtils.toggleStyle(editMemo.text, range.first, range.second, bold)
+	}
+
+	private fun showColorPicker() {
+		val range = requireSelection() ?: return
+
+		val colors = listOf(
+			"#000000" to "검정", "#795548" to "브라운", "#E53935" to "빨강",
+			"#1E88E5" to "파랑", "#43A047" to "초록", "#FB8C00" to "주황"
+		)
+
+		val row = LinearLayout(this).apply {
+			orientation = LinearLayout.HORIZONTAL
+			setPadding(dp(16), dp(8), dp(16), dp(8))
+		}
+		lateinit var dialog: androidx.appcompat.app.AlertDialog
+		for ((hex, name) in colors) {
+			val swatch = View(this).apply {
+				contentDescription = name
+				background = android.graphics.drawable.GradientDrawable().apply {
+					shape = android.graphics.drawable.GradientDrawable.OVAL
+					setColor(android.graphics.Color.parseColor(hex))
+				}
+				layoutParams = LinearLayout.LayoutParams(dp(36), dp(36)).apply {
+					marginEnd = dp(12)
+				}
+				isClickable = true
+				isFocusable = true
+				setOnClickListener {
+					RichTextUtils.applyColor(
+						editMemo.text,
+						range.first,
+						range.second,
+						android.graphics.Color.parseColor(hex)
+					)
+					dialog.dismiss()
+				}
+			}
+			row.addView(swatch)
+		}
+
+		dialog = MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_BNOTE_Dialog)
+			.setTitle("글자 색")
+			.setView(row)
+			.setNegativeButton("취소", null)
+			.show()
+	}
+
+	/** 서식을 적용할 선택 영역을 확인한다. 선택이 없으면 안내 토스트를 띄우고 null을 반환한다. */
+	private fun requireSelection(): Pair<Int, Int>? {
 		val start = editMemo.selectionStart
 		val end = editMemo.selectionEnd
 		if (start == end || start < 0 || end < 0) {
 			Toast.makeText(this, "서식을 적용할 텍스트를 먼저 선택해주세요", Toast.LENGTH_SHORT).show()
-			return
+			return null
 		}
-		RichTextUtils.toggleStyle(editMemo.text, minOf(start, end), maxOf(start, end), bold)
+		return minOf(start, end) to maxOf(start, end)
 	}
 
 	private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
