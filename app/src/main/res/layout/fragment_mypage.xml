@@ -101,26 +101,19 @@
                     android:scrollbars="none"
                     android:paddingStart="12dp"
                     android:paddingEnd="12dp"
+                    android:paddingBottom="16dp"
                     android:clipToPadding="false">
 
                     <LinearLayout
-                        android:id="@+id/container_recent_chapters"
+                        android:id="@+id/container_recent_chips"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal" />
                 </HorizontalScrollView>
 
-                <LinearLayout
-                    android:id="@+id/container_recent_items"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:orientation="vertical" />
-
                 <View
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
-                    android:layout_marginTop="8dp"
                     android:background="@color/divider_light" />
             </LinearLayout>
 

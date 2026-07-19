@@ -1,9 +1,11 @@
 package com.chan.bnote.ui.mypage
 
 import android.content.Intent
-import android.graphics.Typeface
 import android.os.Bundle
-import android.view.Gravity
+import android.text.Spannable
+import android.text.SpannableString
+import android.text.TextUtils
+import android.text.style.ForegroundColorSpan
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -15,20 +17,19 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.chan.bnote.R
 import com.chan.bnote.data.BibleDatabase
-import com.chan.bnote.data.DateUtils
 import com.chan.bnote.data.bible.BibleBooks
 import com.chan.bnote.data.profile.ProfileDisplay
 import com.chan.bnote.ui.BibleNavigationHost
 import com.chan.bnote.ui.TopBarActionHandler
 import com.chan.bnote.ui.TopBarConfig
+import com.chan.bnote.ui.bible.MemoListActivity
 import com.chan.bnote.ui.sermon.SermonDetailActivity
 import kotlinx.coroutines.launch
 
 class MyPageFragment : Fragment(), TopBarActionHandler {
 
-	private data class RecentItem(
-		val typeLabel: String,
-		val title: String,
+	private data class RecentChip(
+		val label: CharSequence,
 		val timestamp: Long,
 		val onClick: () -> Unit
 	)
@@ -103,22 +104,39 @@ class MyPageFragment : Fragment(), TopBarActionHandler {
 			val db = BibleDatabase.getInstance(requireContext().applicationContext)
 
 			val recentChapters = db.recentChapterViewDao().getRecent(5)
-			val recentSermons = db.sermonDao().getRecent(3)
-			val recentMemos = db.verseMemoDao().getRecent(3)
+			val recentSermons = db.sermonDao().getRecent(5)
+			val recentVerseMemos = db.verseMemoDao().getRecent(5)
+			val recentWordMemos = db.wordMemoDao().getRecent(5)
 
 			val container = view.findViewById<LinearLayout>(R.id.container_recent_activity)
-			if (recentChapters.isEmpty() && recentSermons.isEmpty() && recentMemos.isEmpty()) {
+			if (recentChapters.isEmpty() && recentSermons.isEmpty() &&
+				recentVerseMemos.isEmpty() && recentWordMemos.isEmpty()
+			) {
 				container.visibility = View.GONE
 				return@launch
 			}
 			container.visibility = View.VISIBLE
 
-			renderRecentChapters(recentChapters)
+			val chips = mutableListOf<RecentChip>()
 
-			val items = mutableListOf<RecentItem>()
+			// 장: 접미사 없이 그대로 ("창세기 1장")
+			for (chapterView in recentChapters) {
+				val unit = BibleBooks.chapterUnit(chapterView.bookId)
+				chips.add(
+					RecentChip(
+						label = "${BibleBooks.nameOf(chapterView.bookId)} ${chapterView.chapter}${unit}",
+						timestamp = chapterView.viewedAt
+					) { navigateToBible(chapterView.bookId, chapterView.chapter) }
+				)
+			}
+
+			// 설교: "설교제목 설교" ("설교"만 회색)
 			for (sermon in recentSermons) {
-				items.add(
-					RecentItem("설교노트", sermon.title, sermon.createdAt) {
+				chips.add(
+					RecentChip(
+						label = suffixSpan(sermon.title, "설교"),
+						timestamp = sermon.createdAt
+					) {
 						startActivity(
 							SermonDetailActivity.createIntent(
 								requireContext(),
@@ -128,93 +146,97 @@ class MyPageFragment : Fragment(), TopBarActionHandler {
 					}
 				)
 			}
-			for (memo in recentMemos) {
-				val label =
-					"${BibleBooks.nameOf(memo.bookId)} ${memo.chapter}:${memo.verse}  ${memo.text}"
-				items.add(
-					RecentItem("구절 메모", label, memo.updatedAt) {
-						navigateToBible(memo.bookId, memo.chapter)
+
+			// 구절 메모: "창세기 1:1 메모" ("메모"만 회색)
+			for (memo in recentVerseMemos) {
+				val ref = "${BibleBooks.nameOf(memo.bookId)} ${memo.chapter}:${memo.verse}"
+				chips.add(
+					RecentChip(label = suffixSpan(ref, "메모"), timestamp = memo.updatedAt) {
+						startActivity(
+							MemoListActivity.verseMemoEditIntent(
+								requireContext(),
+								memo.id
+							)
+						)
 					}
 				)
 			}
-			renderRecentItems(items.sortedByDescending { it.timestamp }.take(4))
+
+			// 단어 메모: "창세기 1:1 태초에 메모" (실제 단어는 성경 본문에서 찾아와야 함, "메모"만 회색)
+			for (memo in recentWordMemos) {
+				val word = fetchWordMemoWord(
+					db,
+					memo.translation,
+					memo.bookId,
+					memo.chapter,
+					memo.verse,
+					memo.startOffset,
+					memo.endOffset
+				)
+				val ref = "${BibleBooks.nameOf(memo.bookId)} ${memo.chapter}:${memo.verse}" +
+						(if (word.isNotEmpty()) " $word" else "")
+				chips.add(
+					RecentChip(label = suffixSpan(ref, "메모"), timestamp = memo.updatedAt) {
+						startActivity(
+							MemoListActivity.wordMemoEditIntent(
+								requireContext(),
+								memo.id
+							)
+						)
+					}
+				)
+			}
+
+			renderRecentChips(chips.sortedByDescending { it.timestamp }.take(10))
 		}
 	}
 
-	private fun renderRecentChapters(chapters: List<com.chan.bnote.data.mypage.RecentChapterView>) {
+	private suspend fun fetchWordMemoWord(
+		db: BibleDatabase, translation: String, bookId: Int, chapter: Int, verse: Int,
+		startOffset: Int, endOffset: Int
+	): String {
+		val verseText = db.bibleDao().getVerses(translation, bookId, chapter)
+			.find { it.verse == verse }?.text ?: return ""
+		if (startOffset < 0 || endOffset > verseText.length || startOffset >= endOffset) return ""
+		return verseText.substring(startOffset, endOffset)
+	}
+
+	/** "본문 접미사" 형태로, 접미사(마지막 단어)만 회색으로 표시하는 문자열을 만든다. */
+	private fun suffixSpan(prefix: String, suffix: String): CharSequence {
+		val full = "$prefix $suffix"
+		val spannable = SpannableString(full)
+		val start = prefix.length + 1
+		spannable.setSpan(
+			ForegroundColorSpan(ContextCompat.getColor(requireContext(), R.color.text_hint)),
+			start, full.length,
+			Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+		)
+		return spannable
+	}
+
+	private fun renderRecentChips(chips: List<RecentChip>) {
 		val view = view ?: return
-		val container = view.findViewById<LinearLayout>(R.id.container_recent_chapters)
+		val container = view.findViewById<LinearLayout>(R.id.container_recent_chips)
 		container.removeAllViews()
 
-		for (chapterView in chapters) {
-			val unit = BibleBooks.chapterUnit(chapterView.bookId)
-			val chip = TextView(requireContext()).apply {
-				text = "${BibleBooks.nameOf(chapterView.bookId)} ${chapterView.chapter}${unit}"
+		for (chip in chips) {
+			val chipView = TextView(requireContext()).apply {
+				text = chip.label
 				textSize = 13f
+				maxLines = 1
+				ellipsize = TextUtils.TruncateAt.END
+				maxWidth = dp(160)
 				setTextColor(ContextCompat.getColor(requireContext(), R.color.brown_primary))
-				setPadding(dp(14), dp(8), dp(14), dp(8))
+				setPadding(dp(14), dp(10), dp(14), dp(10))
 				background = ContextCompat.getDrawable(requireContext(), R.drawable.bg_chip_outline)
 				isClickable = true
 				isFocusable = true
 				layoutParams = LinearLayout.LayoutParams(
 					LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT
 				).apply { marginEnd = dp(8) }
-				setOnClickListener { navigateToBible(chapterView.bookId, chapterView.chapter) }
+				setOnClickListener { chip.onClick() }
 			}
-			container.addView(chip)
-		}
-	}
-
-	private fun renderRecentItems(items: List<RecentItem>) {
-		val view = view ?: return
-		val container = view.findViewById<LinearLayout>(R.id.container_recent_items)
-		container.removeAllViews()
-
-		for (item in items) {
-			val row = LinearLayout(requireContext()).apply {
-				orientation = LinearLayout.VERTICAL
-				setPadding(dp(16), dp(10), dp(16), dp(10))
-				background = ContextCompat.getDrawable(
-					requireContext(),
-					android.R.drawable.list_selector_background
-				)
-				isClickable = true
-				isFocusable = true
-				setOnClickListener { item.onClick() }
-			}
-			val topRow = LinearLayout(requireContext()).apply {
-				orientation = LinearLayout.HORIZONTAL
-				gravity = Gravity.CENTER_VERTICAL
-			}
-			val typeView = TextView(requireContext()).apply {
-				text = item.typeLabel
-				textSize = 11f
-				setTypeface(typeface, Typeface.BOLD)
-				setTextColor(ContextCompat.getColor(requireContext(), R.color.brown_primary))
-			}
-			val dateView = TextView(requireContext()).apply {
-				text = DateUtils.formatDateShort(item.timestamp)
-				textSize = 11f
-				setTextColor(ContextCompat.getColor(requireContext(), R.color.text_hint))
-				layoutParams =
-					LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
-				gravity = Gravity.END
-			}
-			topRow.addView(typeView)
-			topRow.addView(dateView)
-
-			val titleView = TextView(requireContext()).apply {
-				text = item.title
-				textSize = 14f
-				maxLines = 1
-				ellipsize = android.text.TextUtils.TruncateAt.END
-				setTextColor(ContextCompat.getColor(requireContext(), R.color.text_primary))
-				setPadding(0, dp(2), 0, 0)
-			}
-
-			row.addView(topRow)
-			row.addView(titleView)
-			container.addView(row)
+			container.addView(chipView)
 		}
 	}
 

@@ -1,15 +1,21 @@
 package com.chan.bnote.ui.bible
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.graphics.Typeface
 import android.os.Bundle
+import android.text.Spannable
+import android.text.SpannableString
 import android.text.TextUtils
+import android.text.style.StyleSpan
+import android.view.Gravity
 import android.view.View
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
@@ -19,12 +25,16 @@ import com.chan.bnote.MainActivity
 import com.chan.bnote.R
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.bible.BibleBooks
+import com.chan.bnote.data.memo.VerseMemo
+import com.chan.bnote.data.memo.WordMemo
 import kotlinx.coroutines.launch
 
 class MemoListActivity : AppCompatActivity() {
 
 	companion object {
 		private const val EXTRA_INITIAL_TAB = "extra_initial_tab"
+		private const val EXTRA_OPEN_VERSE_MEMO_ID = "extra_open_verse_memo_id"
+		private const val EXTRA_OPEN_WORD_MEMO_ID = "extra_open_word_memo_id"
 		private const val TAB_VERSE = 0
 		private const val TAB_WORD = 1
 
@@ -33,6 +43,14 @@ class MemoListActivity : AppCompatActivity() {
 
 		fun wordMemoIntent(context: Context): Intent =
 			Intent(context, MemoListActivity::class.java).putExtra(EXTRA_INITIAL_TAB, TAB_WORD)
+
+		/** 목록을 거치지 않고 특정 구절 메모의 편집 화면으로 바로 들어간다 (예: 마이페이지 최근 활동 칩). */
+		fun verseMemoEditIntent(context: Context, memoId: Long): Intent =
+			verseMemoIntent(context).putExtra(EXTRA_OPEN_VERSE_MEMO_ID, memoId)
+
+		/** 목록을 거치지 않고 특정 단어 메모의 편집 화면으로 바로 들어간다. */
+		fun wordMemoEditIntent(context: Context, memoId: Long): Intent =
+			wordMemoIntent(context).putExtra(EXTRA_OPEN_WORD_MEMO_ID, memoId)
 	}
 
 	private lateinit var tabBarContainer: LinearLayout
@@ -40,6 +58,68 @@ class MemoListActivity : AppCompatActivity() {
 	private lateinit var emptyText: TextView
 
 	private var currentTab = TAB_VERSE
+
+	// 편집 중인 메모를 기억해뒀다가, 에디터 결과가 돌아오면 그걸로 저장/삭제한다.
+	private var pendingVerseMemo: VerseMemo? = null
+	private var pendingWordMemo: WordMemo? = null
+
+	private val verseMemoEditorLauncher = registerForActivityResult(
+		ActivityResultContracts.StartActivityForResult()
+	) { result ->
+		val memo = pendingVerseMemo ?: return@registerForActivityResult
+		if (result.resultCode != Activity.RESULT_OK) return@registerForActivityResult
+		val data = result.data
+		when (data?.getStringExtra(MemoEditorActivity.EXTRA_RESULT_ACTION)) {
+			MemoEditorActivity.ACTION_SAVE -> {
+				val text = data.getStringExtra(MemoEditorActivity.EXTRA_RESULT_TEXT)
+				if (text != null) {
+					lifecycleScope.launch {
+						val db = BibleDatabase.getInstance(applicationContext)
+						db.verseMemoDao()
+							.upsert(memo.copy(text = text, updatedAt = System.currentTimeMillis()))
+						loadCurrentTab()
+					}
+				}
+			}
+
+			MemoEditorActivity.ACTION_DELETE -> {
+				lifecycleScope.launch {
+					val db = BibleDatabase.getInstance(applicationContext)
+					db.verseMemoDao().delete(memo.bookId, memo.chapter, memo.verse)
+					loadCurrentTab()
+				}
+			}
+		}
+	}
+
+	private val wordMemoEditorLauncher = registerForActivityResult(
+		ActivityResultContracts.StartActivityForResult()
+	) { result ->
+		val memo = pendingWordMemo ?: return@registerForActivityResult
+		if (result.resultCode != Activity.RESULT_OK) return@registerForActivityResult
+		val data = result.data
+		when (data?.getStringExtra(MemoEditorActivity.EXTRA_RESULT_ACTION)) {
+			MemoEditorActivity.ACTION_SAVE -> {
+				val text = data.getStringExtra(MemoEditorActivity.EXTRA_RESULT_TEXT)
+				if (text != null) {
+					lifecycleScope.launch {
+						val db = BibleDatabase.getInstance(applicationContext)
+						db.wordMemoDao()
+							.update(memo.copy(text = text, updatedAt = System.currentTimeMillis()))
+						loadCurrentTab()
+					}
+				}
+			}
+
+			MemoEditorActivity.ACTION_DELETE -> {
+				lifecycleScope.launch {
+					val db = BibleDatabase.getInstance(applicationContext)
+					db.wordMemoDao().delete(memo)
+					loadCurrentTab()
+				}
+			}
+		}
+	}
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
@@ -62,6 +142,23 @@ class MemoListActivity : AppCompatActivity() {
 		currentTab = intent.getIntExtra(EXTRA_INITIAL_TAB, TAB_VERSE)
 		renderTabs()
 		loadCurrentTab()
+
+		openRequestedMemoDirectly()
+	}
+
+	private fun openRequestedMemoDirectly() {
+		val verseMemoId = intent.getLongExtra(EXTRA_OPEN_VERSE_MEMO_ID, -1L)
+		val wordMemoId = intent.getLongExtra(EXTRA_OPEN_WORD_MEMO_ID, -1L)
+		if (verseMemoId == -1L && wordMemoId == -1L) return
+
+		lifecycleScope.launch {
+			val db = BibleDatabase.getInstance(applicationContext)
+			if (verseMemoId != -1L) {
+				db.verseMemoDao().getById(verseMemoId)?.let { openVerseMemoEditor(it) }
+			} else if (wordMemoId != -1L) {
+				db.wordMemoDao().getById(wordMemoId)?.let { openWordMemoEditor(it, db) }
+			}
+		}
 	}
 
 	private fun renderTabs() {
@@ -95,9 +192,11 @@ class MemoListActivity : AppCompatActivity() {
 						currentBookId = memo.bookId
 						addHeader(BibleBooks.nameOf(currentBookId))
 					}
-					addRow("${memo.chapter}:${memo.verse}  ${memo.text}") {
-						navigateToBible(memo.bookId, memo.chapter)
-					}
+					addRow(
+						label = buildStyledLabel("${memo.chapter}:${memo.verse}", memo.text),
+						onClickEdit = { openVerseMemoEditor(memo) },
+						onClickGoToVerse = { navigateToBible(memo.bookId, memo.chapter) }
+					)
 				}
 			}
 		}
@@ -114,12 +213,80 @@ class MemoListActivity : AppCompatActivity() {
 						currentBookId = memo.bookId
 						addHeader(BibleBooks.nameOf(currentBookId))
 					}
-					addRow("${memo.chapter}:${memo.verse}  ${memo.text}") {
-						navigateToBible(memo.bookId, memo.chapter)
+					// 실제로는 비동기 조회가 필요해서, 우선 뼈대만 넣고 뒤에서 단어를 채워 넣는다.
+					val row = addRow(
+						label = buildStyledLabel("${memo.chapter}:${memo.verse}", memo.text),
+						onClickEdit = { openWordMemoEditor(memo, db) },
+						onClickGoToVerse = { navigateToBible(memo.bookId, memo.chapter) }
+					)
+					lifecycleScope.launch {
+						val word = fetchWordMemoWord(db, memo)
+						if (word.isNotEmpty()) {
+							row.text =
+								buildStyledLabel("${memo.chapter}:${memo.verse} $word", memo.text)
+						}
 					}
 				}
 			}
 		}
+	}
+
+	private suspend fun fetchWordMemoWord(db: BibleDatabase, memo: WordMemo): String {
+		val verseText = db.bibleDao().getVerses(memo.translation, memo.bookId, memo.chapter)
+			.find { it.verse == memo.verse }?.text ?: return ""
+		if (memo.startOffset < 0 || memo.endOffset > verseText.length || memo.startOffset >= memo.endOffset) return ""
+		return verseText.substring(memo.startOffset, memo.endOffset)
+	}
+
+	private fun openVerseMemoEditor(memo: VerseMemo) {
+		lifecycleScope.launch {
+			val db = BibleDatabase.getInstance(applicationContext)
+			val translation =
+				com.chan.bnote.data.AppSettings.getPrimaryTranslation(this@MemoListActivity)
+			val verseText = db.bibleDao().getVerses(translation, memo.bookId, memo.chapter)
+				.find { it.verse == memo.verse }?.text
+
+			pendingVerseMemo = memo
+			verseMemoEditorLauncher.launch(
+				MemoEditorActivity.createIntent(
+					context = this@MemoListActivity,
+					titleText = "${BibleBooks.nameOf(memo.bookId)} ${memo.chapter}:${memo.verse} 메모",
+					previewText = verseText,
+					initialText = memo.text,
+					isExisting = true
+				)
+			)
+		}
+	}
+
+	private fun openWordMemoEditor(memo: WordMemo, db: BibleDatabase) {
+		lifecycleScope.launch {
+			val word = fetchWordMemoWord(db, memo)
+
+			pendingWordMemo = memo
+			wordMemoEditorLauncher.launch(
+				MemoEditorActivity.createIntent(
+					context = this@MemoListActivity,
+					titleText = "${BibleBooks.nameOf(memo.bookId)} ${memo.chapter}:${memo.verse} 메모",
+					previewText = word.ifEmpty { null },
+					initialText = memo.text,
+					isExisting = true
+				)
+			)
+		}
+	}
+
+	/** 앞부분([styledPrefix])만 굵게 + 강조색으로 표시하고, 뒷부분은 평범하게 이어붙인다. */
+	private fun buildStyledLabel(styledPrefix: String, plainSuffix: String): CharSequence {
+		val full = "$styledPrefix  $plainSuffix"
+		val spannable = SpannableString(full)
+		spannable.setSpan(
+			StyleSpan(Typeface.BOLD),
+			0,
+			styledPrefix.length,
+			Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+		)
+		return spannable
 	}
 
 	private inline fun renderGrouped(isEmpty: Boolean, build: () -> Unit) {
@@ -139,22 +306,52 @@ class MemoListActivity : AppCompatActivity() {
 		container.addView(header)
 	}
 
-	private fun addRow(label: String, onClick: () -> Unit) {
-		val row = TextView(this).apply {
-			text = label
-			textSize = 14f
-			setTextColor(ContextCompat.getColor(this@MemoListActivity, R.color.text_primary))
-			maxLines = 2
-			ellipsize = TextUtils.TruncateAt.END
-			setPadding(dp(16), dp(10), dp(16), dp(10))
+	/** 행 전체를 누르면 메모 수정, 오른쪽의 작은 버튼을 누르면 해당 구절로 이동. 콘텐츠 TextView를 반환해서 나중에 텍스트를 바꿔 넣을 수 있게 한다. */
+	private fun addRow(
+		label: CharSequence,
+		onClickEdit: () -> Unit,
+		onClickGoToVerse: () -> Unit
+	): TextView {
+		val row = LinearLayout(this).apply {
+			orientation = LinearLayout.HORIZONTAL
+			gravity = Gravity.CENTER_VERTICAL
 			background = ContextCompat.getDrawable(
 				this@MemoListActivity, android.R.drawable.list_selector_background
 			)
 			isClickable = true
 			isFocusable = true
-			setOnClickListener { onClick() }
+			setOnClickListener { onClickEdit() }
 		}
+
+		val contentView = TextView(this).apply {
+			text = label
+			textSize = 14f
+			setTextColor(ContextCompat.getColor(this@MemoListActivity, R.color.text_primary))
+			maxLines = 2
+			ellipsize = TextUtils.TruncateAt.END
+			setPadding(dp(16), dp(10), dp(8), dp(10))
+			layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+		}
+
+		val goToVerseBtn = ImageView(this).apply {
+			setImageResource(R.drawable.ic_book_open)
+			imageTintList =
+				ContextCompat.getColorStateList(this@MemoListActivity, R.color.icon_action_tint)
+			contentDescription = "구절로 이동"
+			background = ContextCompat.getDrawable(
+				this@MemoListActivity, android.R.drawable.list_selector_background
+			)
+			setPadding(dp(10), dp(10), dp(10), dp(10))
+			isClickable = true
+			isFocusable = true
+			layoutParams = LinearLayout.LayoutParams(dp(40), dp(40)).apply { marginEnd = dp(8) }
+			setOnClickListener { onClickGoToVerse() }
+		}
+
+		row.addView(contentView)
+		row.addView(goToVerseBtn)
 		container.addView(row)
+		return contentView
 	}
 
 	private fun navigateToBible(bookId: Int, chapter: Int) {
