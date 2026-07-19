@@ -36,6 +36,7 @@ import com.chan.bnote.ui.appendix.ResponsiveReadingListActivity
 import com.chan.bnote.ui.appendix.TenCommandmentsActivity
 import com.chan.bnote.ui.common.ColorPickerBottomSheet
 import com.chan.bnote.ui.common.HighlightColors
+import com.chan.bnote.ui.knowledge.BibleKnowledgeHubActivity
 import com.chan.bnote.ui.scrap.ScrapActivity
 import com.chan.bnote.ui.scrap.ScrapGroupPickerBottomSheet
 import kotlinx.coroutines.launch
@@ -340,6 +341,9 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 				stopAutoScroll()
 			}
 			notifyTopBarChanged()
+		}
+		dialog.onBibleKnowledgeClicked = {
+			startActivity(Intent(requireContext(), BibleKnowledgeHubActivity::class.java))
 		}
 		dialog.show(parentFragmentManager, "bible_menu")
 	}

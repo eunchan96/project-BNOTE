@@ -2,6 +2,7 @@ package com.chan.bnote.ui.mypage
 
 import android.Manifest
 import android.app.TimePickerDialog
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -198,6 +199,9 @@ class SettingsActivity : AppCompatActivity() {
 		}
 		findViewById<TextView>(R.id.btn_import_data).setOnClickListener {
 			importDataLauncher.launch(arrayOf("application/zip"))
+		}
+		findViewById<TextView>(R.id.menu_app_info).setOnClickListener {
+			startActivity(Intent(this, AppInfoActivity::class.java))
 		}
 
 		setupNotificationSettings()

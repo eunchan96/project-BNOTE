@@ -1,11 +1,14 @@
 package com.chan.bnote.ui
 
+import com.chan.bnote.R
+
 data class TopBarConfig(
 	val title: String,
 	val showTranslationButton: Boolean = false,
 	val showSearch: Boolean = false,
 	val showBookmarks: Boolean = false,
 	val showMenu: Boolean = false,
+	val menuIconRes: Int = R.drawable.ic_menu,
 	val showChapterNav: Boolean = false,
 	val showReadingPlanCheck: Boolean = false,
 	val isChapterRead: Boolean = false,

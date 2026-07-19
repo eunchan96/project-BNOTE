@@ -21,6 +21,7 @@ import com.chan.bnote.data.AppSettings
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.bible.BibleBooks
 import com.chan.bnote.data.memo.VerseMemo
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 
 class VerseMemoEditorActivity : AppCompatActivity() {
@@ -121,16 +122,26 @@ class VerseMemoEditorActivity : AppCompatActivity() {
 	}
 
 	private fun removeBox(box: MemoBox) {
-		boxes.remove(box)
-		container.removeView(box.root)
 		val existing = box.existing
-		if (existing != null) {
-			anyChangeMade = true
-			lifecycleScope.launch {
-				val db = BibleDatabase.getInstance(applicationContext)
-				db.verseMemoDao().delete(existing)
-			}
+		if (existing == null) {
+			boxes.remove(box)
+			container.removeView(box.root)
+			return
 		}
+		MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_BNOTE_Dialog)
+			.setTitle("메모 삭제")
+			.setMessage("이 메모를 삭제할까요?")
+			.setPositiveButton("삭제") { _, _ ->
+				boxes.remove(box)
+				container.removeView(box.root)
+				anyChangeMade = true
+				lifecycleScope.launch {
+					val db = BibleDatabase.getInstance(applicationContext)
+					db.verseMemoDao().delete(existing)
+				}
+			}
+			.setNegativeButton("취소", null)
+			.show()
 	}
 
 	private fun saveBox(box: MemoBox) {

@@ -28,6 +28,7 @@ class BibleMenuDialogFragment(
 	var onHymnClicked: (() -> Unit)? = null
 	var onHighlightClicked: (() -> Unit)? = null
 	var onMemoClicked: (() -> Unit)? = null
+	var onBibleKnowledgeClicked: (() -> Unit)? = null
 
 	override fun onStart() {
 		super.onStart()
@@ -80,6 +81,10 @@ class BibleMenuDialogFragment(
 
 		view.findViewById<TextView>(R.id.menu_hymn).setOnClickListener {
 			onHymnClicked?.invoke()
+			dismiss()
+		}
+		view.findViewById<TextView>(R.id.menu_bible_knowledge).setOnClickListener {
+			onBibleKnowledgeClicked?.invoke()
 			dismiss()
 		}
 

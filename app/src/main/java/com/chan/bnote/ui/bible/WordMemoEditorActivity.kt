@@ -157,16 +157,27 @@ class WordMemoEditorActivity : AppCompatActivity() {
 	}
 
 	private fun removeBox(box: MemoBox) {
-		boxes.remove(box)
-		container.removeView(box.root)
 		val existing = box.existing
-		if (existing != null) {
-			anyChangeMade = true
-			lifecycleScope.launch {
-				val db = BibleDatabase.getInstance(applicationContext)
-				db.wordMemoDao().delete(existing)
-			}
+		if (existing == null) {
+			// 아직 저장 안 한 빈 박스는 바로 지운다 (확인할 게 없음).
+			boxes.remove(box)
+			container.removeView(box.root)
+			return
 		}
+		MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_BNOTE_Dialog)
+			.setTitle("메모 삭제")
+			.setMessage("이 메모를 삭제할까요?")
+			.setPositiveButton("삭제") { _, _ ->
+				boxes.remove(box)
+				container.removeView(box.root)
+				anyChangeMade = true
+				lifecycleScope.launch {
+					val db = BibleDatabase.getInstance(applicationContext)
+					db.wordMemoDao().delete(existing)
+				}
+			}
+			.setNegativeButton("취소", null)
+			.show()
 	}
 
 	private fun saveBox(box: MemoBox) {
