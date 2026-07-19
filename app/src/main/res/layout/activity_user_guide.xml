@@ -8,16 +8,39 @@
 
     <include layout="@layout/include_activity_top_bar" />
 
+    <EditText
+        android:id="@+id/edit_guide_search"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:hint="기능 검색 (2글자 이상)"
+        android:inputType="text"
+        android:maxLines="1"
+        android:padding="12dp"
+        android:textSize="15sp"
+        android:background="@drawable/bg_book_button" />
+
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <LinearLayout
-            android:id="@+id/container_guide"
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="20dp" />
+            android:layout_height="wrap_content">
+
+            <LinearLayout
+                android:id="@+id/container_category_list"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+
+            <LinearLayout
+                android:id="@+id/container_search_results"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone" />
+        </FrameLayout>
     </ScrollView>
 
 </LinearLayout>
