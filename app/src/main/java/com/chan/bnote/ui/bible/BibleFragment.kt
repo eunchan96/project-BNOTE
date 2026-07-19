@@ -75,42 +75,11 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 	private val selectedVerses = mutableSetOf<Int>()
 	private lateinit var selectionToolbar: View
 
-	// 절 메모 편집 결과를 받기 위한 대기 상태
-	private var pendingVerseMemoVerseNum: Int = 0
-
 	private val verseMemoEditorLauncher = registerForActivityResult(
 		ActivityResultContracts.StartActivityForResult()
 	) { result ->
 		if (result.resultCode == Activity.RESULT_OK) {
-			val data = result.data
-			val verseNum = pendingVerseMemoVerseNum
-			when (data?.getStringExtra(MemoEditorActivity.EXTRA_RESULT_ACTION)) {
-				MemoEditorActivity.ACTION_SAVE -> {
-					val text = data.getStringExtra(MemoEditorActivity.EXTRA_RESULT_TEXT)
-					if (text != null) {
-						lifecycleScope.launch {
-							val db = BibleDatabase.getInstance(requireContext().applicationContext)
-							db.verseMemoDao().upsert(
-								VerseMemo(
-									bookId = currentBookId,
-									chapter = currentChapter,
-									verse = verseNum,
-									text = text
-								)
-							)
-							refreshMemos()
-						}
-					}
-				}
-
-				MemoEditorActivity.ACTION_DELETE -> {
-					lifecycleScope.launch {
-						val db = BibleDatabase.getInstance(requireContext().applicationContext)
-						db.verseMemoDao().delete(currentBookId, currentChapter, verseNum)
-						refreshMemos()
-					}
-				}
-			}
+			lifecycleScope.launch { refreshMemos() }
 		}
 	}
 
@@ -897,15 +866,12 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 	}
 
 	private fun showVerseMemoEditDialog(verseNum: Int, existing: VerseMemo?) {
-		val verseText = currentVerses.firstOrNull { it.verse == verseNum }?.text
-		pendingVerseMemoVerseNum = verseNum
 		verseMemoEditorLauncher.launch(
-			MemoEditorActivity.createIntent(
+			VerseMemoEditorActivity.createIntent(
 				context = requireContext(),
-				titleText = "${BibleBooks.nameOf(currentBookId)} ${currentChapter}:${verseNum} 메모",
-				previewText = verseText,
-				initialText = existing?.text ?: "",
-				isExisting = existing != null
+				bookId = currentBookId,
+				chapter = currentChapter,
+				verse = verseNum
 			)
 		)
 	}

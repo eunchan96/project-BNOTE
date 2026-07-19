@@ -19,5 +19,11 @@ val MIGRATIONS: Array<Migration> = arrayOf(
 			// 단어 메모 "다른 구절에도 추가"로 생긴 복사본의 출처("창 1:1" 형태)를 담는 컬럼.
 			db.execSQL("ALTER TABLE word_memos ADD COLUMN sourceLabel TEXT")
 		}
+	},
+	object : Migration(23, 24) {
+		override fun migrate(db: SupportSQLiteDatabase) {
+			// 구절 메모도 단어 메모처럼 한 구절에 메모를 여러 개 넣을 수 있도록 유니크 제약을 없앤다.
+			db.execSQL("DROP INDEX IF EXISTS index_verse_memos_bookId_chapter_verse")
+		}
 	}
 )

@@ -60,35 +60,11 @@ class MemoListActivity : AppCompatActivity() {
 
 	private var currentTab = TAB_VERSE
 
-	// 편집 중인 구절 메모를 기억해뒀다가, 에디터 결과가 돌아오면 그걸로 저장/삭제한다.
-	private var pendingVerseMemo: VerseMemo? = null
-
 	private val verseMemoEditorLauncher = registerForActivityResult(
 		ActivityResultContracts.StartActivityForResult()
 	) { result ->
-		val memo = pendingVerseMemo ?: return@registerForActivityResult
-		if (result.resultCode != Activity.RESULT_OK) return@registerForActivityResult
-		val data = result.data
-		when (data?.getStringExtra(MemoEditorActivity.EXTRA_RESULT_ACTION)) {
-			MemoEditorActivity.ACTION_SAVE -> {
-				val text = data.getStringExtra(MemoEditorActivity.EXTRA_RESULT_TEXT)
-				if (text != null) {
-					lifecycleScope.launch {
-						val db = BibleDatabase.getInstance(applicationContext)
-						db.verseMemoDao()
-							.upsert(memo.copy(text = text, updatedAt = System.currentTimeMillis()))
-						loadCurrentTab()
-					}
-				}
-			}
-
-			MemoEditorActivity.ACTION_DELETE -> {
-				lifecycleScope.launch {
-					val db = BibleDatabase.getInstance(applicationContext)
-					db.verseMemoDao().delete(memo.bookId, memo.chapter, memo.verse)
-					loadCurrentTab()
-				}
-			}
+		if (result.resultCode == Activity.RESULT_OK) {
+			lifecycleScope.launch { loadCurrentTab() }
 		}
 	}
 
@@ -220,24 +196,14 @@ class MemoListActivity : AppCompatActivity() {
 	}
 
 	private fun openVerseMemoEditor(memo: VerseMemo) {
-		lifecycleScope.launch {
-			val db = BibleDatabase.getInstance(applicationContext)
-			val translation =
-				com.chan.bnote.data.AppSettings.getPrimaryTranslation(this@MemoListActivity)
-			val verseText = db.bibleDao().getVerses(translation, memo.bookId, memo.chapter)
-				.find { it.verse == memo.verse }?.text
-
-			pendingVerseMemo = memo
-			verseMemoEditorLauncher.launch(
-				MemoEditorActivity.createIntent(
-					context = this@MemoListActivity,
-					titleText = "${BibleBooks.nameOf(memo.bookId)} ${memo.chapter}:${memo.verse} 메모",
-					previewText = verseText,
-					initialText = memo.text,
-					isExisting = true
-				)
+		verseMemoEditorLauncher.launch(
+			VerseMemoEditorActivity.createIntent(
+				context = this@MemoListActivity,
+				bookId = memo.bookId,
+				chapter = memo.chapter,
+				verse = memo.verse
 			)
-		}
+		)
 	}
 
 	private fun openWordMemoEditor(memo: WordMemo, db: BibleDatabase) {

@@ -4,12 +4,14 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.View
 import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.addCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -52,10 +54,12 @@ class WordMemoEditorActivity : AppCompatActivity() {
 		}
 	}
 
-	private data class MemoBox(
-		val existing: WordMemo?,
-		val root: LinearLayout,
-		val editText: EditText
+	/** 박스 하나의 상태. existing은 저장되면서 새로 생긴 id로 갱신될 수 있어 var로 둔다. */
+	private class MemoBox(
+		var existing: WordMemo?,
+		val root: View,
+		val editText: EditText,
+		val checkbox: CheckBox
 	)
 
 	private lateinit var translation: String
@@ -65,9 +69,9 @@ class WordMemoEditorActivity : AppCompatActivity() {
 	private var startOffset = 0
 	private var endOffset = 0
 	private var wordText = ""
+	private var anyChangeMade = false
 
 	private lateinit var container: LinearLayout
-	private lateinit var checkboxPropagate: CheckBox
 	private val boxes = mutableListOf<MemoBox>()
 
 	override fun onCreate(savedInstanceState: Bundle?) {
@@ -94,17 +98,22 @@ class WordMemoEditorActivity : AppCompatActivity() {
 		startOffset = intent.getIntExtra(EXTRA_START_OFFSET, 0)
 		endOffset = intent.getIntExtra(EXTRA_END_OFFSET, 0)
 
-		findViewById<ImageView>(R.id.btn_top_bar_back).setOnClickListener { finish() }
+		findViewById<ImageView>(R.id.btn_top_bar_back).setOnClickListener { finishWithResult() }
 
 		container = findViewById(R.id.container_memo_boxes)
-		checkboxPropagate = findViewById(R.id.chk_propagate)
 
 		findViewById<TextView>(R.id.btn_add_memo_box).setOnClickListener {
 			addBox(existing = null)
 		}
-		findViewById<TextView>(R.id.btn_save_word_memo).setOnClickListener { save() }
+
+		onBackPressedDispatcher.addCallback(this) { finishWithResult() }
 
 		loadExisting()
+	}
+
+	private fun finishWithResult() {
+		setResult(if (anyChangeMade) android.app.Activity.RESULT_OK else android.app.Activity.RESULT_CANCELED)
+		finish()
 	}
 
 	private fun loadExisting() {
@@ -117,8 +126,8 @@ class WordMemoEditorActivity : AppCompatActivity() {
 			wordText = verseText.substring(safeStart, safeEnd)
 
 			val unit = BibleBooks.chapterUnit(bookId)
-			findViewById<TextView>(R.id.text_word_context).text =
-				"${BibleBooks.nameOf(bookId)} ${chapter}${unit} ${verse}절 · \"$wordText\""
+			findViewById<TextView>(R.id.text_top_bar_title).text =
+				"${BibleBooks.nameOf(bookId)} ${chapter}${unit} ${verse}절 [$wordText] 메모"
 
 			val existingMemos = db.wordMemoDao()
 				.getAtPosition(translation, bookId, chapter, verse, startOffset, endOffset)
@@ -133,24 +142,24 @@ class WordMemoEditorActivity : AppCompatActivity() {
 
 	private fun addBox(existing: WordMemo?) {
 		val boxView = LayoutInflater.from(this)
-			.inflate(R.layout.item_word_memo_box, container, false) as LinearLayout
+			.inflate(R.layout.item_word_memo_box, container, false)
 
 		val sourceView = boxView.findViewById<TextView>(R.id.text_box_source)
 		if (existing?.sourceLabel != null) {
 			sourceView.text = "출처: ${existing.sourceLabel}"
-			sourceView.visibility = android.view.View.VISIBLE
+			sourceView.visibility = View.VISIBLE
 		}
 
 		val editText = boxView.findViewById<EditText>(R.id.edit_box_text)
 		editText.setText(existing?.text ?: "")
+		val checkbox = boxView.findViewById<CheckBox>(R.id.chk_box_propagate)
 
-		val box = MemoBox(existing, boxView, editText)
+		val box = MemoBox(existing, boxView, editText, checkbox)
 		boxes.add(box)
 		container.addView(boxView)
 
-		boxView.findViewById<ImageView>(R.id.btn_delete_box).setOnClickListener {
-			removeBox(box)
-		}
+		boxView.findViewById<ImageView>(R.id.btn_delete_box).setOnClickListener { removeBox(box) }
+		boxView.findViewById<ImageView>(R.id.btn_save_box).setOnClickListener { saveBox(box) }
 	}
 
 	private fun removeBox(box: MemoBox) {
@@ -158,6 +167,7 @@ class WordMemoEditorActivity : AppCompatActivity() {
 		container.removeView(box.root)
 		val existing = box.existing
 		if (existing != null) {
+			anyChangeMade = true
 			lifecycleScope.launch {
 				val db = BibleDatabase.getInstance(applicationContext)
 				db.wordMemoDao().delete(existing)
@@ -165,63 +175,56 @@ class WordMemoEditorActivity : AppCompatActivity() {
 		}
 	}
 
-	private fun save() {
+	private fun saveBox(box: MemoBox) {
+		val text = box.editText.text.toString().trim()
+		if (text.isEmpty()) {
+			Toast.makeText(this, "메모 내용을 입력해주세요", Toast.LENGTH_SHORT).show()
+			return
+		}
+
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(applicationContext)
-			val savedTexts = mutableListOf<String>()
-
-			for (box in boxes) {
-				val text = box.editText.text.toString().trim()
-				if (text.isEmpty()) continue
-				savedTexts.add(text)
-
-				if (box.existing != null) {
-					if (box.existing.text != text) {
-						db.wordMemoDao().update(
-							box.existing.copy(
-								text = text,
-								updatedAt = System.currentTimeMillis()
-							)
-						)
-					}
-				} else {
-					db.wordMemoDao().insert(
-						WordMemo(
-							translation = translation,
-							bookId = bookId,
-							chapter = chapter,
-							verse = verse,
-							startOffset = startOffset,
-							endOffset = endOffset,
-							text = text
-						)
-					)
+			val existing = box.existing
+			if (existing != null) {
+				if (existing.text != text) {
+					val updated = existing.copy(text = text, updatedAt = System.currentTimeMillis())
+					db.wordMemoDao().update(updated)
+					box.existing = updated
 				}
-			}
-
-			if (checkboxPropagate.isChecked && savedTexts.isNotEmpty()) {
-				propagateToOtherVerses(db, savedTexts)
 			} else {
-				setResult(android.app.Activity.RESULT_OK)
-				finish()
+				val newId = db.wordMemoDao().insert(
+					WordMemo(
+						translation = translation,
+						bookId = bookId,
+						chapter = chapter,
+						verse = verse,
+						startOffset = startOffset,
+						endOffset = endOffset,
+						text = text
+					)
+				)
+				box.existing = db.wordMemoDao().getById(newId)
+			}
+			anyChangeMade = true
+
+			if (box.checkbox.isChecked) {
+				box.checkbox.isChecked = false
+				propagateToOtherVerses(db, text)
+			} else {
+				Toast.makeText(this@WordMemoEditorActivity, "저장됐어요", Toast.LENGTH_SHORT).show()
 			}
 		}
 	}
 
-	private suspend fun propagateToOtherVerses(db: BibleDatabase, texts: List<String>) {
-		if (wordText.isBlank()) {
-			setResult(android.app.Activity.RESULT_OK)
-			finish()
-			return
-		}
+	private suspend fun propagateToOtherVerses(db: BibleDatabase, text: String) {
+		if (wordText.isBlank()) return
 
 		val matches = db.bibleDao().findVersesContainingExact(translation, wordText)
 			.filter { !(it.bookId == bookId && it.chapter == chapter && it.verse == verse) }
 
 		if (matches.isEmpty()) {
-			Toast.makeText(this, "\"$wordText\"가 나오는 다른 구절을 찾지 못했어요", Toast.LENGTH_SHORT).show()
-			setResult(android.app.Activity.RESULT_OK)
-			finish()
+			Toast.makeText(this, "저장됐어요 (\"$wordText\"가 나오는 다른 구절은 못 찾았어요)", Toast.LENGTH_SHORT)
+				.show()
 			return
 		}
 
@@ -235,41 +238,29 @@ class WordMemoEditorActivity : AppCompatActivity() {
 					for (verseRow in matches) {
 						val idx = verseRow.text.indexOf(wordText)
 						if (idx == -1) continue
-						val matchStart = idx
-						val matchEnd = idx + wordText.length
-
-						for (text in texts) {
-							db.wordMemoDao().insert(
-								WordMemo(
-									translation = translation,
-									bookId = verseRow.bookId,
-									chapter = verseRow.chapter,
-									verse = verseRow.verse,
-									startOffset = matchStart,
-									endOffset = matchEnd,
-									text = text,
-									sourceLabel = originLabel
-								)
+						db.wordMemoDao().insert(
+							WordMemo(
+								translation = translation,
+								bookId = verseRow.bookId,
+								chapter = verseRow.chapter,
+								verse = verseRow.verse,
+								startOffset = idx,
+								endOffset = idx + wordText.length,
+								text = text,
+								sourceLabel = originLabel
 							)
-						}
+						)
 					}
 
 					Toast.makeText(
 						this@WordMemoEditorActivity,
-						"${matches.size}개 구절에 추가됐어요",
+						"저장됐고, ${matches.size}개 구절에도 추가됐어요",
 						Toast.LENGTH_SHORT
 					).show()
-					setResult(android.app.Activity.RESULT_OK)
-					finish()
 				}
 			}
-			.setNegativeButton("취소") { _, _ ->
-				setResult(android.app.Activity.RESULT_OK)
-				finish()
-			}
-			.setOnCancelListener {
-				setResult(android.app.Activity.RESULT_OK)
-				finish()
+			.setNegativeButton("추가 안 함") { _, _ ->
+				Toast.makeText(this@WordMemoEditorActivity, "저장됐어요", Toast.LENGTH_SHORT).show()
 			}
 			.show()
 	}
