@@ -11,10 +11,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.chan.bnote.R
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.bible.BibleBooks
-import com.chan.bnote.ui.BibleNavigationHost
+import com.chan.bnote.data.mypage.ReadingProgress
 import com.chan.bnote.ui.DraggableBottomSheet
-import com.chan.bnote.ui.sermon.bybook.ChapterCell
-import com.chan.bnote.ui.sermon.bybook.ChapterGridAdapter
 import kotlinx.coroutines.launch
 
 class ReadingPlanChapterBottomSheet(
@@ -26,9 +24,13 @@ class ReadingPlanChapterBottomSheet(
 	/** 장 읽음 상태를 바꾸고 이 바텀시트가 닫힐 때 호출된다 (전체 진행률 갱신용). */
 	var onDismissed: (() -> Unit)? = null
 
+	private var changed = false
+	private var maxChapter = 1
+	private lateinit var gridAdapter: ReadingPlanChapterGridAdapter
+
 	override fun onDismiss(dialog: android.content.DialogInterface) {
 		super.onDismiss(dialog)
-		onDismissed?.invoke()
+		if (changed) onDismissed?.invoke()
 	}
 
 	override fun onCreateView(
@@ -48,23 +50,40 @@ class ReadingPlanChapterBottomSheet(
 
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(requireContext().applicationContext)
-			val maxChapter = db.bibleDao().getMaxChapter("NKRV", bookId)
-			val readChapters = db.readingProgressDao().getAll()
-				.filter { it.bookId == bookId }
-				.map { it.chapter }
-				.toSet()
+			maxChapter = db.bibleDao().getMaxChapter("NKRV", bookId)
+			val readChapters = loadReadChapters(db)
 
-			val cells = (1..maxChapter).map { chapter ->
-				ChapterCell(
-					chapter,
-					if (chapter in readChapters) listOf("#795548") else emptyList()
-				)
-			}
+			gridAdapter = ReadingPlanChapterGridAdapter(
+				maxChapter = maxChapter,
+				readChapters = readChapters,
+				onToggle = { chapter -> toggleChapter(chapter) },
+				onNavigate = { chapter ->
+					navigateToBible(chapter)
+					dismissAllAndNavigate()
+				}
+			)
+			recyclerView.adapter = gridAdapter
+		}
+	}
 
-			recyclerView.adapter = ChapterGridAdapter(cells, selectedChapter = -1) { cell ->
-				(activity as? BibleNavigationHost)?.navigateToBibleChapter(bookId, cell.chapter)
-				dismissAllAndNavigate()
+	private suspend fun loadReadChapters(db: com.chan.bnote.data.BibleDatabase): Set<Int> {
+		return db.readingProgressDao().getAll()
+			.filter { it.bookId == bookId }
+			.map { it.chapter }
+			.toSet()
+	}
+
+	private fun toggleChapter(chapter: Int) {
+		lifecycleScope.launch {
+			val db = BibleDatabase.getInstance(requireContext().applicationContext)
+			val existing = db.readingProgressDao().get(bookId, chapter)
+			if (existing != null) {
+				db.readingProgressDao().delete(bookId, chapter)
+			} else {
+				db.readingProgressDao().upsert(ReadingProgress(bookId = bookId, chapter = chapter))
 			}
+			changed = true
+			gridAdapter.updateReadChapters(loadReadChapters(db))
 		}
 	}
 
@@ -72,5 +91,17 @@ class ReadingPlanChapterBottomSheet(
 	private fun dismissAllAndNavigate() {
 		dismiss()
 		(parentFragmentManager.findFragmentByTag("reading_plan") as? DraggableBottomSheet)?.dismiss()
+	}
+
+	private fun navigateToBible(chapter: Int) {
+		val intent =
+			android.content.Intent(requireContext(), com.chan.bnote.MainActivity::class.java)
+				.apply {
+					putExtra(com.chan.bnote.MainActivity.EXTRA_NAVIGATE_BOOK_ID, bookId)
+					putExtra(com.chan.bnote.MainActivity.EXTRA_NAVIGATE_CHAPTER, chapter)
+					flags =
+						android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP or android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP
+				}
+		startActivity(intent)
 	}
 }

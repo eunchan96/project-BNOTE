@@ -56,6 +56,16 @@ class BookOnlyPickerBottomSheet : BottomSheetDialogFragment() {
 				}
 				row.addView(button)
 			}
+			// 행에 4개 미만이면(구약 마지막 줄 등) 남는 칸만큼 빈 스페이서를 넣어서 늘어나지 않게 한다.
+			repeat(4 - group.size) {
+				row.addView(View(requireContext()).apply {
+					layoutParams =
+						LinearLayout.LayoutParams(0, 0, 1f).apply {
+							marginStart = dp(4)
+							marginEnd = dp(4)
+						}
+				})
+			}
 			gridContainer.addView(row)
 		}
 	}

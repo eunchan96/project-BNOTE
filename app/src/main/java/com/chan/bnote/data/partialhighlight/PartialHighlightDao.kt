@@ -11,6 +11,17 @@ interface PartialHighlightDao {
 	@Insert
 	suspend fun insert(highlight: PartialHighlight): Long
 
+	@Query("SELECT COUNT(*) FROM partial_highlights")
+	suspend fun countAll(): Int
+
+	@Query(
+		"""
+        SELECT colorHex, COUNT(*) as count FROM partial_highlights
+        GROUP BY colorHex ORDER BY count DESC LIMIT 1
+        """
+	)
+	suspend fun getMostUsedColor(): HighlightColorUsage?
+
 	@Delete
 	suspend fun delete(highlight: PartialHighlight)
 
@@ -20,6 +31,12 @@ interface PartialHighlightDao {
 		bookId: Int,
 		chapter: Int
 	): List<PartialHighlight>
+
+	@Query("SELECT * FROM partial_highlights ORDER BY bookId ASC, chapter ASC, verse ASC")
+	suspend fun getAll(): List<PartialHighlight>
+
+	@Query("DELETE FROM partial_highlights")
+	suspend fun deleteAll()
 
 	@Query(
 		"DELETE FROM partial_highlights WHERE translation = :translation AND bookId = :bookId AND chapter = :chapter AND verse = :verse"
@@ -42,3 +59,5 @@ interface PartialHighlightDao {
 		end: Int
 	)
 }
+
+data class HighlightColorUsage(val colorHex: String, val count: Int)

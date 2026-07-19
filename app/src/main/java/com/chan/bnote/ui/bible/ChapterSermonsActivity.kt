@@ -54,7 +54,7 @@ class ChapterSermonsActivity : AppCompatActivity() {
 		chapter = intent.getIntExtra(EXTRA_CHAPTER, 1)
 
 		findViewById<TextView>(R.id.text_top_bar_title).text =
-			"${BibleBooks.nameOf(bookId)} ${chapter}장의 설교"
+			"${BibleBooks.nameOf(bookId)} ${chapter}${BibleBooks.chapterUnit(bookId)}의 설교"
 		findViewById<ImageView>(R.id.btn_top_bar_back).setOnClickListener { finish() }
 
 		recyclerView = findViewById(R.id.recycler_chapter_sermons)

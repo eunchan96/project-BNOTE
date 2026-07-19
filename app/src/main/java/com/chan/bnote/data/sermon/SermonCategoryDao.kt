@@ -27,6 +27,9 @@ interface SermonCategoryDao {
 	@Query("SELECT * FROM sermon_categories ORDER BY sortOrder")
 	suspend fun getAll(): List<SermonCategory>
 
+	@Query("DELETE FROM sermon_categories")
+	suspend fun deleteAll()
+
 	@Query("SELECT * FROM sermon_categories WHERE id = :id LIMIT 1")
 	suspend fun getById(id: Long): SermonCategory?
 }

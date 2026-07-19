@@ -21,6 +21,9 @@ object BibleBooks {
 
 	fun nameOf(bookId: Int): String = names.getOrElse(bookId - 1) { "알 수 없음" }
 
+	/** 시편(19권)은 "편", 나머지는 "장"으로 부른다. */
+	fun chapterUnit(bookId: Int): String = if (bookId == 19) "편" else "장"
+
 	private val shortNames = listOf(
 		"창", "출", "레", "민", "신",
 		"수", "삿", "룻", "삼상", "삼하",

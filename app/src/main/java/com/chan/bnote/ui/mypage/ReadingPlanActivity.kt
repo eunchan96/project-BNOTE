@@ -2,6 +2,7 @@ package com.chan.bnote.ui.mypage
 
 import android.os.Bundle
 import android.view.Gravity
+import android.view.View
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ProgressBar
@@ -17,6 +18,7 @@ import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.bible.BibleBookGroups
 import com.chan.bnote.data.bible.BibleBooks
 import com.chan.bnote.data.mypage.ReadingProgress
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 
 class ReadingPlanActivity : AppCompatActivity() {
@@ -34,6 +36,20 @@ class ReadingPlanActivity : AppCompatActivity() {
 
 		findViewById<TextView>(R.id.text_top_bar_title).text = "성경읽기표"
 		findViewById<ImageView>(R.id.btn_top_bar_back).setOnClickListener { finish() }
+		findViewById<TextView>(R.id.btn_reset_reading_progress).setOnClickListener {
+			MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_BNOTE_Dialog)
+				.setTitle("성경읽기표 기록 초기화")
+				.setMessage("지금까지 읽음 표시한 모든 기록이 사라져요. 계속할까요?")
+				.setPositiveButton("초기화") { _, _ ->
+					lifecycleScope.launch {
+						val db = BibleDatabase.getInstance(applicationContext)
+						db.readingProgressDao().resetAll()
+						loadProgress()
+					}
+				}
+				.setNegativeButton("취소", null)
+				.show()
+		}
 
 		loadProgress()
 	}
@@ -124,6 +140,17 @@ class ReadingPlanActivity : AppCompatActivity() {
 				container.addView(nameView)
 				container.addView(countView)
 				row.addView(container)
+			}
+			// 행에 4개 미만이면(구약 마지막 줄 등), 남는 칸만큼 빈 스페이서를 넣어서
+			// 실제 칸들이 4등분 폭 그대로 유지되고 늘어나지 않게 한다.
+			repeat(4 - group.size) {
+				row.addView(View(this).apply {
+					layoutParams =
+						LinearLayout.LayoutParams(0, 0, 1f).apply {
+							marginStart = dp(4)
+							marginEnd = dp(4)
+						}
+				})
 			}
 			gridContainer.addView(row)
 		}

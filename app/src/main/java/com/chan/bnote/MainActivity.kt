@@ -8,6 +8,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.fragment.app.Fragment
 import com.chan.bnote.data.AppSettings
 import com.chan.bnote.ui.BibleNavigationHost
 import com.chan.bnote.ui.TopBarActionHandler
@@ -22,6 +23,10 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 	companion object {
 		const val EXTRA_NAVIGATE_BOOK_ID = "extra_navigate_book_id"
 		const val EXTRA_NAVIGATE_CHAPTER = "extra_navigate_chapter"
+
+		private const val TAG_BIBLE = "tab_bible"
+		private const val TAG_SERMON = "tab_sermon"
+		private const val TAG_MYPAGE = "tab_mypage"
 	}
 
 	private lateinit var textCurrentLocation: TextView
@@ -39,6 +44,12 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 	private lateinit var btnAutoScroll: ImageView
 	private lateinit var iconReadingPlanCheck: ImageView
 	private lateinit var iconSermonIndicator: ImageView
+
+	// 탭 전환할 때마다 새로 만들지 않고, 만들어둔 인스턴스를 계속 재사용한다
+	// (그래야 성경 읽던 위치/스크롤 등이 탭을 왔다갔다 해도 유지된다).
+	private var bibleFragment: BibleFragment? = null
+	private var sermonFragment: SermonFragment? = null
+	private var myPageFragment: MyPageFragment? = null
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
@@ -64,11 +75,27 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 		setupTopBarActions()
 		setupBottomNavActions()
 
-		if (savedInstanceState == null) {
-			switchTab(BibleFragment(), navBible)
-			handleNavigationIntent(intent)
+		if (savedInstanceState != null) {
+			// recreate() 등으로 재생성됐을 때, FragmentManager가 이미 복원해둔 인스턴스를 다시 참조만 한다
+			bibleFragment = supportFragmentManager.findFragmentByTag(TAG_BIBLE) as? BibleFragment
+			sermonFragment = supportFragmentManager.findFragmentByTag(TAG_SERMON) as? SermonFragment
+			myPageFragment = supportFragmentManager.findFragmentByTag(TAG_MYPAGE) as? MyPageFragment
+
+			// 다크모드 전환 등으로 인한 재생성(recreate())은 사용자가 보던 탭을 그대로 유지한다.
+			val savedTab = AppSettings.getLastTab(this)
+			when (savedTab) {
+				TAG_SERMON -> switchToSermon()
+				TAG_MYPAGE -> switchToMyPage()
+				else -> switchToBible()
+			}
 		} else {
-			restoreCurrentTabUi() // 추가: recreate() 등으로 재생성됐을 때 현재 화면에 맞게 UI 동기화
+			// 완전히 새로 앱을 시작할 때는 마지막에 보던 탭이 무엇이었든 항상 성경 탭으로 시작한다.
+			// (성경 탭 자체는 BibleFragment가 마지막으로 읽던 책/장을 스스로 복원한다.)
+			switchToBible()
+		}
+
+		if (savedInstanceState == null) {
+			handleNavigationIntent(intent)
 		}
 	}
 
@@ -121,28 +148,60 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 		btnPrevChapter.setOnClickListener { currentHandler()?.onPrevChapterClicked() }
 		btnNextChapter.setOnClickListener { currentHandler()?.onNextChapterClicked() }
 
-		navBible.setOnClickListener { switchTab(BibleFragment(), navBible) }
-		navSermon.setOnClickListener { switchTab(SermonFragment(), navSermon) }
-		navMyPage.setOnClickListener { switchTab(MyPageFragment(), navMyPage) }
+		navBible.setOnClickListener { switchToBible() }
+		navSermon.setOnClickListener { switchToSermon() }
+		navMyPage.setOnClickListener { switchToMyPage() }
 	}
 
-	private fun switchTab(fragment: androidx.fragment.app.Fragment, selectedIcon: ImageView) {
-		supportFragmentManager.beginTransaction()
-			.replace(R.id.fragment_container, fragment)
-			.commitNow()
+	private fun switchToBible() {
+		val fragment = bibleFragment ?: BibleFragment().also { bibleFragment = it }
+		switchTo(fragment, TAG_BIBLE, navBible)
+	}
 
+	private fun switchToSermon() {
+		val fragment = sermonFragment ?: SermonFragment().also { sermonFragment = it }
+		switchTo(fragment, TAG_SERMON, navSermon)
+	}
+
+	private fun switchToMyPage() {
+		val fragment = myPageFragment ?: MyPageFragment().also { myPageFragment = it }
+		switchTo(fragment, TAG_MYPAGE, navMyPage)
+	}
+
+	/**
+	 * 탭 프래그먼트를 새로 만들지 않고(처음 한 번만 add), 이후엔 hide/show만 해서
+	 * 인스턴스 상태(성경 읽던 위치, 스크롤 등)가 탭을 넘나들어도 유지되게 한다.
+	 */
+	private fun switchTo(fragment: Fragment, tag: String, selectedIcon: ImageView) {
+		AppSettings.setLastTab(this, tag)
+		val transaction = supportFragmentManager.beginTransaction()
+		if (!fragment.isAdded) {
+			transaction.add(R.id.fragment_container, fragment, tag)
+		}
+		listOf(bibleFragment, sermonFragment, myPageFragment).forEach { other ->
+			if (other != null && other !== fragment && other.isAdded) {
+				transaction.hide(other)
+			}
+		}
+		transaction.show(fragment)
+		transaction.commitNow()
+
+		updateNavSelection(selectedIcon)
+		(fragment as? TopBarActionHandler)?.let { onTopBarConfigChanged(it.getTopBarConfig()) }
+	}
+
+	private fun updateNavSelection(selectedIcon: ImageView) {
 		listOf(navBible, navSermon, navMyPage).forEach { icon ->
 			icon.setColorFilter(
 				if (icon == selectedIcon) getColor(R.color.bottom_nav_selected)
 				else getColor(R.color.bottom_nav_unselected)
 			)
 		}
-
-		(fragment as? TopBarActionHandler)?.let { onTopBarConfigChanged(it.getTopBarConfig()) }
 	}
 
 	private fun currentHandler(): TopBarActionHandler? {
-		return supportFragmentManager.findFragmentById(R.id.fragment_container) as? TopBarActionHandler
+		return listOfNotNull(bibleFragment, sermonFragment, myPageFragment)
+			.firstOrNull { it.isAdded && !it.isHidden } as? TopBarActionHandler
 	}
 
 	override fun onTopBarConfigChanged(config: TopBarConfig) {
@@ -167,26 +226,15 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 		if (show) android.view.View.VISIBLE else android.view.View.GONE
 
 	override fun navigateToBibleChapter(bookId: Int, chapter: Int) {
-		switchTab(BibleFragment.newInstance(bookId, chapter), navBible)
+		val existing = bibleFragment
+		if (existing != null && existing.isAdded) {
+			switchTo(existing, TAG_BIBLE, navBible)
+			existing.navigateTo(bookId, chapter)
+		} else {
+			val fragment = BibleFragment.newInstance(bookId, chapter)
+			bibleFragment = fragment
+			switchTo(fragment, TAG_BIBLE, navBible)
+		}
 	}
 
-	private fun restoreCurrentTabUi() {
-		val current = supportFragmentManager.findFragmentById(R.id.fragment_container) ?: return
-
-		val selectedIcon = when (current) {
-			is BibleFragment -> navBible
-			is SermonFragment -> navSermon
-			is MyPageFragment -> navMyPage
-			else -> navBible
-		}
-
-		listOf(navBible, navSermon, navMyPage).forEach { icon ->
-			icon.setColorFilter(
-				if (icon == selectedIcon) getColor(R.color.bottom_nav_selected)
-				else getColor(R.color.bottom_nav_unselected)
-			)
-		}
-
-		(current as? TopBarActionHandler)?.let { onTopBarConfigChanged(it.getTopBarConfig()) }
-	}
 }

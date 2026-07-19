@@ -12,6 +12,9 @@ interface SermonDao {
 	@Insert
 	suspend fun insert(sermon: Sermon): Long
 
+	@Query("SELECT COUNT(*) FROM sermons")
+	suspend fun count(): Int
+
 	@Update
 	suspend fun update(sermon: Sermon)
 
@@ -20,6 +23,15 @@ interface SermonDao {
 
 	@Query("SELECT * FROM sermons WHERE id = :id LIMIT 1")
 	suspend fun getById(id: Long): Sermon?
+
+	@Query("SELECT * FROM sermons")
+	suspend fun getAll(): List<Sermon>
+
+	@Query("DELETE FROM sermons")
+	suspend fun deleteAll()
+
+	@Query("SELECT * FROM sermons ORDER BY createdAt DESC LIMIT :limit")
+	suspend fun getRecent(limit: Int): List<Sermon>
 
 	@Query("SELECT * FROM sermons WHERE sermonDate = :dateMillis ORDER BY createdAt DESC")
 	suspend fun getByDate(dateMillis: Long): List<Sermon>

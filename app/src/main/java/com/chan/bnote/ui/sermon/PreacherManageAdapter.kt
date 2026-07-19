@@ -12,12 +12,16 @@ import com.chan.bnote.data.sermon.Preacher
 data class PreacherRow(val preacher: Preacher, val count: Int)
 
 class PreacherManageAdapter(
-	private val rows: List<PreacherRow>,
+	initialRows: List<PreacherRow>,
 	private var isEditMode: Boolean,
 	private val onClick: (Preacher) -> Unit,
 	private val onEdit: (Preacher) -> Unit,
 	private val onDelete: (Preacher) -> Unit
 ) : RecyclerView.Adapter<PreacherManageAdapter.ViewHolder>() {
+
+	// 드래그로 순서를 바꿀 때 어댑터를 통째로 새로 만들지 않고 이 리스트만 직접 움직인다
+	// (재생성하면 드래그 도중 ItemTouchHelper 상태가 꼬여서 튕기는 문제가 있었음).
+	private val rows = initialRows.toMutableList()
 
 	class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
 		val name: TextView = view.findViewById(R.id.text_preacher_name)
@@ -53,4 +57,14 @@ class PreacherManageAdapter(
 		isEditMode = enabled
 		notifyDataSetChanged()
 	}
+
+	/** 드래그 도중 호출됨. 리스트 순서만 바꾸고 애니메이션으로 이동만 알려준다 (전체 재로딩 없음). */
+	fun moveItem(from: Int, to: Int) {
+		if (from !in rows.indices || to !in rows.indices) return
+		val item = rows.removeAt(from)
+		rows.add(to, item)
+		notifyItemMoved(from, to)
+	}
+
+	fun currentOrderIds(): List<Long> = rows.map { it.preacher.id }
 }

@@ -126,7 +126,7 @@ object CitationBubbleHelper {
 				.sortedBy { it.verse }
 				.joinToString("\n") { it.text }
 
-			"$bookName ${group.chapter}장 ${versesLabel}절\n$bodyText"
+			"$bookName ${group.chapter}${BibleBooks.chapterUnit(citation.bookId)} ${versesLabel}절\n$bodyText"
 		}
 		return blocks.joinToString("\n")
 	}

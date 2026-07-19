@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/settings_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -23,7 +24,10 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:padding="16dp">
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:paddingTop="16dp"
+                android:paddingBottom="6dp">
 
                 <TextView
                     android:layout_width="0dp"
@@ -35,11 +39,11 @@
 
                 <TextView
                     android:id="@+id/btn_font_minus"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
                     android:gravity="center"
                     android:text="-"
-                    android:textSize="20sp"
+                    android:textSize="16sp"
                     android:textColor="@color/text_primary"
                     android:background="@drawable/bg_book_button"
                     android:clickable="true"
@@ -55,11 +59,11 @@
 
                 <TextView
                     android:id="@+id/btn_font_plus"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
                     android:gravity="center"
                     android:text="+"
-                    android:textSize="20sp"
+                    android:textSize="16sp"
                     android:textColor="@color/text_primary"
                     android:background="@drawable/bg_book_button"
                     android:clickable="true"
@@ -72,7 +76,10 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:padding="16dp">
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:paddingTop="6dp"
+                android:paddingBottom="16dp">
 
                 <TextView
                     android:layout_width="0dp"
@@ -84,11 +91,11 @@
 
                 <TextView
                     android:id="@+id/btn_speed_minus"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
                     android:gravity="center"
                     android:text="-"
-                    android:textSize="20sp"
+                    android:textSize="16sp"
                     android:textColor="@color/text_primary"
                     android:background="@drawable/bg_book_button"
                     android:clickable="true"
@@ -104,11 +111,11 @@
 
                 <TextView
                     android:id="@+id/btn_speed_plus"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
                     android:gravity="center"
                     android:text="+"
-                    android:textSize="20sp"
+                    android:textSize="16sp"
                     android:textColor="@color/text_primary"
                     android:background="@drawable/bg_book_button"
                     android:clickable="true"
@@ -124,9 +131,11 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:minHeight="56dp"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:padding="16dp">
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp">
 
                 <TextView
                     android:layout_width="0dp"
@@ -146,9 +155,11 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:minHeight="56dp"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:padding="16dp">
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp">
 
                 <TextView
                     android:layout_width="0dp"
@@ -168,9 +179,11 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:minHeight="56dp"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:padding="16dp">
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp">
 
                 <TextView
                     android:layout_width="0dp"
@@ -190,9 +203,11 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:minHeight="56dp"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:padding="16dp">
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp">
 
                 <TextView
                     android:layout_width="0dp"
@@ -219,57 +234,111 @@
                 android:layout_height="1dp"
                 android:background="@color/divider_light" />
 
-            <!-- 자리만 만들어두는 항목들 -->
-            <TextView
-                android:id="@+id/menu_download_translation"
+            <!-- 알림 -->
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:padding="16dp"
-                android:text="대역본 다운로드"
-                android:textSize="16sp"
-                android:textColor="@color/text_primary"
-                android:background="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true" />
+                android:minHeight="56dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp">
 
-            <TextView
-                android:id="@+id/menu_theme_color"
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="매일 말씀 알림"
+                    android:textSize="16sp"
+                    android:textColor="@color/text_primary" />
+
+                <TextView
+                    android:id="@+id/btn_daily_verse_time"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp"
+                    android:paddingTop="4dp"
+                    android:paddingBottom="4dp"
+                    android:textSize="14sp"
+                    android:textColor="@color/brown_primary"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="?attr/selectableItemBackground"
+                    tools:text="오전 8:00" />
+
+                <Switch
+                    android:id="@+id/switch_daily_verse_noti"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp" />
+            </LinearLayout>
+
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:padding="16dp"
-                android:text="테마 및 글자 색상"
-                android:textSize="16sp"
-                android:textColor="@color/text_primary"
-                android:background="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true" />
+                android:minHeight="56dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp">
 
-            <TextView
-                android:id="@+id/menu_cloud_sync"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:padding="16dp"
-                android:text="클라우드 (메모)"
-                android:textSize="16sp"
-                android:textColor="@color/text_primary"
-                android:background="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true" />
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="통독 리마인더"
+                    android:textSize="16sp"
+                    android:textColor="@color/text_primary" />
 
+                <TextView
+                    android:id="@+id/btn_reading_reminder_time"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp"
+                    android:paddingTop="4dp"
+                    android:paddingBottom="4dp"
+                    android:textSize="14sp"
+                    android:textColor="@color/brown_primary"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="?attr/selectableItemBackground"
+                    tools:text="오후 9:00" />
+
+                <Switch
+                    android:id="@+id/switch_reading_reminder"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp" />
+            </LinearLayout>
+
+            <!-- 데이터 내보내기/불러오기 -->
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
                 android:background="@color/divider_light" />
 
-            <!-- 읽음 기록 초기화 -->
             <TextView
-                android:id="@+id/btn_reset_reading_progress"
+                android:id="@+id/btn_export_data"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:padding="16dp"
-                android:text="성경읽기표 기록 초기화"
-                android:textColor="#E53935"
+                android:text="데이터 내보내기"
                 android:textSize="16sp"
+                android:textColor="@color/text_primary"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true" />
+
+            <TextView
+                android:id="@+id/btn_import_data"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="16dp"
+                android:text="데이터 불러오기"
+                android:textSize="16sp"
+                android:textColor="@color/text_primary"
                 android:background="?attr/selectableItemBackground"
                 android:clickable="true"
                 android:focusable="true" />

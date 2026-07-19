@@ -20,7 +20,7 @@ object CopyFormatter {
 		if (referenceStyle == "NONE") {
 			// 기존 형식: 책명 장 헤더 + "절  본문"
 			val bookName = BibleBooks.nameOf(bookId)
-			sb.append("$bookName ${chapter}장\n")
+			sb.append("$bookName ${chapter}${BibleBooks.chapterUnit(bookId)}\n")
 
 			for (v in sortedVerses) {
 				sb.append("${v.verse}  ${v.text}\n")
@@ -33,7 +33,7 @@ object CopyFormatter {
 			for (v in sortedVerses) {
 				val reference = when (referenceStyle) {
 					"SHORT" -> "(${BibleBooks.shortNameOf(bookId)} $chapter:${v.verse})"
-					else -> "(${BibleBooks.nameOf(bookId)} ${chapter}장 ${v.verse}절)"
+					else -> "(${BibleBooks.nameOf(bookId)} ${chapter}${BibleBooks.chapterUnit(bookId)} ${v.verse}절)"
 				}
 				sb.append("$reference ${v.text}\n")
 				if (includeSecondary) {

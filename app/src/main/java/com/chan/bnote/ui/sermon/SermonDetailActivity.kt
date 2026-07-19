@@ -3,9 +3,18 @@ package com.chan.bnote.ui.sermon
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
+import android.graphics.Typeface
 import android.os.Bundle
+import android.text.Spannable
+import android.text.SpannableString
+import android.text.SpannableStringBuilder
+import android.text.style.ForegroundColorSpan
+import android.text.style.StyleSpan
 import android.view.LayoutInflater
+import android.view.View
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.activity.addCallback
 import androidx.activity.enableEdgeToEdge
@@ -14,10 +23,12 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
+import coil.load
 import com.chan.bnote.MainActivity
 import com.chan.bnote.R
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.DateUtils
+import com.chan.bnote.data.memo.CitationParser
 import com.chan.bnote.data.sermon.Sermon
 import com.chan.bnote.ui.bible.CitationBubbleHelper
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -76,6 +87,10 @@ class SermonDetailActivity : AppCompatActivity() {
 					lifecycleScope.launch {
 						val db = BibleDatabase.getInstance(applicationContext)
 						db.sermonBibleRefDao().deleteBySermon(sermon.id)
+						db.sermonPhotoDao().getBySermon(sermon.id).forEach { photo ->
+							com.chan.bnote.data.sermon.SermonPhotoStorage.deleteFile(photo.filePath)
+						}
+						db.sermonPhotoDao().deleteBySermon(sermon.id)
 						db.sermonDao().delete(sermon)
 						changed = true
 						finishWithResult()
@@ -118,7 +133,7 @@ class SermonDetailActivity : AppCompatActivity() {
 			findViewById<com.google.android.flexbox.FlexboxLayout>(R.id.flexbox_detail_refs)
 		val memoView = findViewById<TextView>(R.id.text_sermon_memo)
 
-		// 날짜 · 카테고리 · 설교자
+		// 날짜 · 카테고리(색상 텍스트) · 설교자
 		val preacherName =
 			sermon.preacherId?.let { db.preacherDao().getById(it)?.name } ?: "설교자 미지정"
 		val category = sermon.categoryId?.let { db.sermonCategoryDao().getById(it) }
@@ -126,7 +141,7 @@ class SermonDetailActivity : AppCompatActivity() {
 
 		val metaView = findViewById<TextView>(R.id.text_sermon_meta)
 		if (category != null) {
-			/* val prefix = "$dateLabel · "
+			val prefix = "$dateLabel · "
 			val categoryPart = category.name
 			val suffix = " · $preacherName"
 			val builder = SpannableStringBuilder()
@@ -138,8 +153,8 @@ class SermonDetailActivity : AppCompatActivity() {
 				categoryStart, builder.length,
 				Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
 			)
-			builder.append(suffix)*/
-			metaView.text = "$dateLabel· ${category.name} · $preacherName"
+			builder.append(suffix)
+			metaView.text = builder
 		} else {
 			metaView.text = "$dateLabel · $preacherName"
 		}
@@ -162,14 +177,66 @@ class SermonDetailActivity : AppCompatActivity() {
 			flexbox.addView(chip)
 		}
 
-		// 메모 (인용 구절 밑줄 + 롱프레스 말풍선)
-		val memoText = sermon.memo.ifBlank { "메모가 없어요" }
+		// 메모 (굵게/밑줄 서식 복원 + 인용 구절 강조 + 롱프레스 말풍선)
 		if (sermon.memo.isBlank()) {
-			memoView.text = memoText
+			memoView.text = "메모가 없어요"
 		} else {
-			val (spanned, citations) = CitationBubbleHelper.buildSpannedText(memoText)
-			memoView.text = spanned
+			val restored = RichTextUtils.toEditable(sermon.memo)
+			val plainText = restored.toString()
+
+			val bookCitations = CitationParser.findCitations(plainText)
+			// 본문(성경 구절)이 정확히 하나일 때만, "1절"처럼 절 번호만 있는 표기도 그 본문 기준으로 찾아준다.
+			val verseOnlyCitations = if (refs.size == 1) {
+				CitationParser.findVerseOnlyCitations(
+					plainText,
+					refs[0].startBookId,
+					refs[0].startChapter
+				)
+					.filter { candidate ->
+						bookCitations.none { existing ->
+							existing.range.first <= candidate.range.last && candidate.range.first <= existing.range.last
+						}
+					}
+			} else {
+				emptyList()
+			}
+			val citations = bookCitations + verseOnlyCitations
+
+			val spannable = if (restored is Spannable) restored else SpannableString(restored)
+			for (citation in citations) {
+				val end = (citation.range.last + 1).coerceAtMost(spannable.length)
+				if (citation.range.first >= end) continue
+				// 사용자가 직접 준 굵게/밑줄과 헷갈리지 않도록, 인용구는 밑줄이 아니라 강조색+굵게로 표시한다.
+				spannable.setSpan(
+					ForegroundColorSpan(
+						androidx.core.content.ContextCompat.getColor(
+							this,
+							R.color.brown_primary
+						)
+					),
+					citation.range.first, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+				)
+				spannable.setSpan(
+					StyleSpan(Typeface.BOLD),
+					citation.range.first, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+				)
+			}
+			memoView.text = spannable
 			CitationBubbleHelper.attachTouchHandling(memoView, { citations }, lifecycleScope)
+		}
+
+		// 첨부 사진
+		val photoScroll = findViewById<View>(R.id.scroll_detail_photos)
+		val photoContainer = findViewById<LinearLayout>(R.id.container_detail_photos)
+		photoContainer.removeAllViews()
+		val photos = db.sermonPhotoDao().getBySermon(sermon.id)
+		photoScroll.visibility = if (photos.isEmpty()) View.GONE else View.VISIBLE
+		for (photo in photos) {
+			val thumb = LayoutInflater.from(this)
+				.inflate(R.layout.item_sermon_detail_photo, photoContainer, false) as ImageView
+			thumb.load(photo.filePath)
+			thumb.setOnClickListener { PhotoViewerActivity.start(this, photo.filePath) }
+			photoContainer.addView(thumb)
 		}
 	}
 }

@@ -26,6 +26,8 @@ class BibleMenuDialogFragment(
 	var onAutoScrollToggled: ((Boolean) -> Unit)? = null
 	var onScrapClicked: (() -> Unit)? = null
 	var onHymnClicked: (() -> Unit)? = null
+	var onHighlightClicked: (() -> Unit)? = null
+	var onMemoClicked: (() -> Unit)? = null
 
 	override fun onStart() {
 		super.onStart()
@@ -63,6 +65,16 @@ class BibleMenuDialogFragment(
 	private fun setupViews(view: View) {
 		view.findViewById<TextView>(R.id.menu_scrap).setOnClickListener {
 			onScrapClicked?.invoke()
+			dismiss()
+		}
+
+		view.findViewById<TextView>(R.id.menu_highlight).setOnClickListener {
+			onHighlightClicked?.invoke()
+			dismiss()
+		}
+
+		view.findViewById<TextView>(R.id.menu_memo).setOnClickListener {
+			onMemoClicked?.invoke()
 			dismiss()
 		}
 

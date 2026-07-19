@@ -131,7 +131,9 @@ class SermonByBookFragment : Fragment() {
 
 	private fun loadSermonsForSelectedChapter() {
 		val label = view?.findViewById<TextView>(R.id.text_selected_chapter_label)
-		label?.text = "${BibleBooks.nameOf(currentBookId)} ${selectedChapter}장"
+		label?.text = "${BibleBooks.nameOf(currentBookId)} ${selectedChapter}${
+			BibleBooks.chapterUnit(currentBookId)
+		}"
 
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(requireContext().applicationContext)
