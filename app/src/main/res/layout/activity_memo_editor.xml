@@ -35,7 +35,7 @@
                 android:id="@+id/edit_memo_text"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:minHeight="420dp"
+                android:minHeight="620dp"
                 android:layout_margin="20dp"
                 android:padding="14dp"
                 android:gravity="top"

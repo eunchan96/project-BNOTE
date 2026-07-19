@@ -184,7 +184,7 @@
                     android:id="@+id/edit_memo"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:minHeight="420dp"
+                    android:minHeight="500dp"
                     android:hint="메모"
                     android:gravity="top"
                     android:textSize="16sp"
