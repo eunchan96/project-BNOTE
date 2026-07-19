@@ -301,7 +301,21 @@ class AddSermonActivity : AppCompatActivity() {
 				}
 			)
 		}
-		flexboxRefs.addView(buildAddSquareButton { openBibleRangePicker() })
+		val addButton = buildAddSquareButton { openBibleRangePicker() }
+		flexboxRefs.addView(addButton)
+
+		// 본문 박스들이 실제로 배치된 뒤, 그 높이에 맞춰 "+" 버튼을 정확히 정사각형으로 맞춘다.
+		flexboxRefs.post {
+			val refBox = flexboxRefs.getChildAt(0)
+			val height = refBox?.height ?: 0
+			if (height > 0) {
+				val lp =
+					addButton.layoutParams as com.google.android.flexbox.FlexboxLayout.LayoutParams
+				lp.height = height
+				lp.width = height
+				addButton.layoutParams = lp
+			}
+		}
 	}
 
 	private fun openBibleRangePicker() {
@@ -313,19 +327,17 @@ class AddSermonActivity : AppCompatActivity() {
 		rangePicker.show(supportFragmentManager, "bible_range_picker")
 	}
 
-	// 본문 박스와 옆의 "+" 정사각형 버튼의 높이를 정확히 맞추기 위한 공통 높이.
-	private val refBoxHeight get() = dp(44)
-
 	/** 본문 구절 하나를 나타내는 박스. [fullWidth]면 (아직 구절이 없을 때) 혼자 줄 전체를 채우고,
-	 * 아니면 다른 박스들과 flexGrow로 너비를 나눠 갖는다. 탭하면 그 구절을 지운다(첫 박스 예외: 추가). */
+	 * 아니면 다른 박스들과 flexGrow로 너비를 나눠 갖는다. 탭하면 그 구절을 지운다(첫 박스 예외: 추가).
+	 * 설교자/카테고리 박스와 똑같은 패딩·정렬을 써서 높이와 텍스트 위치를 맞춘다. */
 	private fun buildRefBox(text: String, fullWidth: Boolean, onClick: () -> Unit): View {
 		return TextView(this).apply {
 			this.text = text
 			textSize = 15f
-			gravity = Gravity.CENTER
+			gravity = Gravity.START or Gravity.CENTER_VERTICAL
 			maxLines = 1
 			ellipsize = android.text.TextUtils.TruncateAt.END
-			setPadding(dp(10), 0, dp(10), 0)
+			setPadding(dp(12), dp(8), dp(12), dp(8))
 			setTextColor(ContextCompat.getColor(this@AddSermonActivity, R.color.text_primary))
 			background =
 				ContextCompat.getDrawable(this@AddSermonActivity, R.drawable.bg_book_button)
@@ -333,16 +345,18 @@ class AddSermonActivity : AppCompatActivity() {
 			isFocusable = true
 			layoutParams = com.google.android.flexbox.FlexboxLayout.LayoutParams(
 				if (fullWidth) ViewGroup.LayoutParams.MATCH_PARENT else 0,
-				refBoxHeight
+				ViewGroup.LayoutParams.WRAP_CONTENT
 			).apply {
 				flexGrow = 1f
-				setMargins(dp(2), dp(2), dp(2), dp(2))
+				marginEnd = dp(4)
+				bottomMargin = dp(4)
 			}
 			setOnClickListener { onClick() }
 		}
 	}
 
-	/** 본문이 하나 이상 있을 때, 맨 끝에 붙는 정사각형 "+" 추가 버튼. 본문 박스와 높이를 맞춘 정사각형. */
+	/** 본문이 하나 이상 있을 때, 맨 끝에 붙는 정사각형 "+" 추가 버튼. 실제 크기는 renderBibleRefBoxes()에서
+	 * 본문 박스 높이에 맞춰 다시 정해준다. */
 	private fun buildAddSquareButton(onClick: () -> Unit): View {
 		return TextView(this).apply {
 			text = "+"
@@ -354,9 +368,9 @@ class AddSermonActivity : AppCompatActivity() {
 			isClickable = true
 			isFocusable = true
 			layoutParams = com.google.android.flexbox.FlexboxLayout.LayoutParams(
-				refBoxHeight, refBoxHeight
+				ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
 			).apply {
-				setMargins(dp(2), dp(2), dp(2), dp(2))
+				bottomMargin = dp(4)
 			}
 			setOnClickListener { onClick() }
 		}
