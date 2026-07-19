@@ -210,6 +210,7 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 		btnSearch.visibility = visible(config.showSearch)
 		btnBookmarks.visibility = visible(config.showBookmarks)
 		btnMenu.visibility = visible(config.showMenu)
+		btnMenu.setImageResource(config.menuIconRes)
 		btnPrevChapter.visibility = visible(config.showChapterNav)
 		btnNextChapter.visibility = visible(config.showChapterNav)
 

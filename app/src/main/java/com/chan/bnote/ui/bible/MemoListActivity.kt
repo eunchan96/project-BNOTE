@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.text.Spannable
 import android.text.SpannableString
 import android.text.TextUtils
+import android.text.style.ForegroundColorSpan
 import android.text.style.StyleSpan
 import android.view.Gravity
 import android.view.View
@@ -59,65 +60,19 @@ class MemoListActivity : AppCompatActivity() {
 
 	private var currentTab = TAB_VERSE
 
-	// 편집 중인 메모를 기억해뒀다가, 에디터 결과가 돌아오면 그걸로 저장/삭제한다.
-	private var pendingVerseMemo: VerseMemo? = null
-	private var pendingWordMemo: WordMemo? = null
-
 	private val verseMemoEditorLauncher = registerForActivityResult(
 		ActivityResultContracts.StartActivityForResult()
 	) { result ->
-		val memo = pendingVerseMemo ?: return@registerForActivityResult
-		if (result.resultCode != Activity.RESULT_OK) return@registerForActivityResult
-		val data = result.data
-		when (data?.getStringExtra(MemoEditorActivity.EXTRA_RESULT_ACTION)) {
-			MemoEditorActivity.ACTION_SAVE -> {
-				val text = data.getStringExtra(MemoEditorActivity.EXTRA_RESULT_TEXT)
-				if (text != null) {
-					lifecycleScope.launch {
-						val db = BibleDatabase.getInstance(applicationContext)
-						db.verseMemoDao()
-							.upsert(memo.copy(text = text, updatedAt = System.currentTimeMillis()))
-						loadCurrentTab()
-					}
-				}
-			}
-
-			MemoEditorActivity.ACTION_DELETE -> {
-				lifecycleScope.launch {
-					val db = BibleDatabase.getInstance(applicationContext)
-					db.verseMemoDao().delete(memo.bookId, memo.chapter, memo.verse)
-					loadCurrentTab()
-				}
-			}
+		if (result.resultCode == Activity.RESULT_OK) {
+			lifecycleScope.launch { loadCurrentTab() }
 		}
 	}
 
 	private val wordMemoEditorLauncher = registerForActivityResult(
 		ActivityResultContracts.StartActivityForResult()
 	) { result ->
-		val memo = pendingWordMemo ?: return@registerForActivityResult
-		if (result.resultCode != Activity.RESULT_OK) return@registerForActivityResult
-		val data = result.data
-		when (data?.getStringExtra(MemoEditorActivity.EXTRA_RESULT_ACTION)) {
-			MemoEditorActivity.ACTION_SAVE -> {
-				val text = data.getStringExtra(MemoEditorActivity.EXTRA_RESULT_TEXT)
-				if (text != null) {
-					lifecycleScope.launch {
-						val db = BibleDatabase.getInstance(applicationContext)
-						db.wordMemoDao()
-							.update(memo.copy(text = text, updatedAt = System.currentTimeMillis()))
-						loadCurrentTab()
-					}
-				}
-			}
-
-			MemoEditorActivity.ACTION_DELETE -> {
-				lifecycleScope.launch {
-					val db = BibleDatabase.getInstance(applicationContext)
-					db.wordMemoDao().delete(memo)
-					loadCurrentTab()
-				}
-			}
+		if (result.resultCode == Activity.RESULT_OK) {
+			lifecycleScope.launch { loadCurrentTab() }
 		}
 	}
 
@@ -239,44 +194,31 @@ class MemoListActivity : AppCompatActivity() {
 	}
 
 	private fun openVerseMemoEditor(memo: VerseMemo) {
-		lifecycleScope.launch {
-			val db = BibleDatabase.getInstance(applicationContext)
-			val translation =
-				com.chan.bnote.data.AppSettings.getPrimaryTranslation(this@MemoListActivity)
-			val verseText = db.bibleDao().getVerses(translation, memo.bookId, memo.chapter)
-				.find { it.verse == memo.verse }?.text
-
-			pendingVerseMemo = memo
-			verseMemoEditorLauncher.launch(
-				MemoEditorActivity.createIntent(
-					context = this@MemoListActivity,
-					titleText = "${BibleBooks.nameOf(memo.bookId)} ${memo.chapter}:${memo.verse} 메모",
-					previewText = verseText,
-					initialText = memo.text,
-					isExisting = true
-				)
+		verseMemoEditorLauncher.launch(
+			VerseMemoEditorActivity.createIntent(
+				context = this@MemoListActivity,
+				bookId = memo.bookId,
+				chapter = memo.chapter,
+				verse = memo.verse
 			)
-		}
+		)
 	}
 
 	private fun openWordMemoEditor(memo: WordMemo, db: BibleDatabase) {
-		lifecycleScope.launch {
-			val word = fetchWordMemoWord(db, memo)
-
-			pendingWordMemo = memo
-			wordMemoEditorLauncher.launch(
-				MemoEditorActivity.createIntent(
-					context = this@MemoListActivity,
-					titleText = "${BibleBooks.nameOf(memo.bookId)} ${memo.chapter}:${memo.verse} 메모",
-					previewText = word.ifEmpty { null },
-					initialText = memo.text,
-					isExisting = true
-				)
+		wordMemoEditorLauncher.launch(
+			WordMemoEditorActivity.createIntent(
+				context = this@MemoListActivity,
+				translation = memo.translation,
+				bookId = memo.bookId,
+				chapter = memo.chapter,
+				verse = memo.verse,
+				startOffset = memo.startOffset,
+				endOffset = memo.endOffset
 			)
-		}
+		)
 	}
 
-	/** 앞부분([styledPrefix])만 굵게 + 강조색으로 표시하고, 뒷부분은 평범하게 이어붙인다. */
+	/** 앞부분([styledPrefix])만 굵게로 표시하고, 뒷부분은 평범하게 이어붙인다. */
 	private fun buildStyledLabel(styledPrefix: String, plainSuffix: String): CharSequence {
 		val full = "$styledPrefix  $plainSuffix"
 		val spannable = SpannableString(full)
@@ -285,6 +227,10 @@ class MemoListActivity : AppCompatActivity() {
 			0,
 			styledPrefix.length,
 			Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+		)
+		spannable.setSpan(
+			ForegroundColorSpan(ContextCompat.getColor(this, R.color.text_primary)),
+			0, styledPrefix.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
 		)
 		return spannable
 	}
@@ -296,9 +242,25 @@ class MemoListActivity : AppCompatActivity() {
 	}
 
 	private fun addHeader(bookName: String) {
+		if (container.childCount > 0) {
+			val divider = View(this).apply {
+				layoutParams =
+					LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(1)).apply {
+						topMargin = dp(8)
+					}
+				setBackgroundColor(
+					ContextCompat.getColor(
+						this@MemoListActivity,
+						R.color.divider_light
+					)
+				)
+			}
+			container.addView(divider)
+		}
+
 		val header = TextView(this).apply {
 			text = bookName
-			textSize = 13f
+			textSize = 14f
 			setTypeface(typeface, Typeface.BOLD)
 			setTextColor(ContextCompat.getColor(this@MemoListActivity, R.color.brown_primary))
 			setPadding(dp(16), dp(16), dp(16), dp(6))

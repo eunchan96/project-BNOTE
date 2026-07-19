@@ -63,7 +63,7 @@ import kotlinx.coroutines.launch
 		PrayerRequest::class, VerseMemorizationProgress::class, MemorizationVerse::class,
 		MemorizationGroup::class, RecentChapterView::class
 	],
-	version = 22, // 21 -> 22 (최근 본 장(RecentChapterView) 추가)
+	version = 24, // 23 -> 24 (verse_memos 유니크 제약 제거 - 한 구절에 메모 여러 개 허용)
 	exportSchema = false
 )
 abstract class BibleDatabase : RoomDatabase() {

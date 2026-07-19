@@ -1,6 +1,7 @@
 package com.chan.bnote.data
 
 import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 
 /**
  * 실제 Room 마이그레이션 목록.
@@ -13,10 +14,16 @@ import androidx.room.migration.Migration
  * 실제로 설치돼 있는 가장 오래된 버전이 22이기 때문이다 (이 버전이 사실상 배포 기준점).
  */
 val MIGRATIONS: Array<Migration> = arrayOf(
-	// 예시(다음 버전 올릴 때 이런 식으로 추가):
-	// object : Migration(22, 23) {
-	//     override fun migrate(db: SupportSQLiteDatabase) {
-	//         db.execSQL("ALTER TABLE sermons ADD COLUMN newColumn TEXT NOT NULL DEFAULT ''")
-	//     }
-	// }
+	object : Migration(22, 23) {
+		override fun migrate(db: SupportSQLiteDatabase) {
+			// 단어 메모 "다른 구절에도 추가"로 생긴 복사본의 출처("창 1:1" 형태)를 담는 컬럼.
+			db.execSQL("ALTER TABLE word_memos ADD COLUMN sourceLabel TEXT")
+		}
+	},
+	object : Migration(23, 24) {
+		override fun migrate(db: SupportSQLiteDatabase) {
+			// 구절 메모도 단어 메모처럼 한 구절에 메모를 여러 개 넣을 수 있도록 유니크 제약을 없앤다.
+			db.execSQL("DROP INDEX IF EXISTS index_verse_memos_bookId_chapter_verse")
+		}
+	}
 )

@@ -47,9 +47,6 @@ class MyPageFragment : Fragment(), TopBarActionHandler {
 			startActivity(Intent(requireContext(), ProfileActivity::class.java))
 		}
 		view.findViewById<ImageView>(R.id.img_profile_photo).loadProfilePhoto(null)
-		view.findViewById<TextView>(R.id.menu_settings).setOnClickListener {
-			startActivity(Intent(requireContext(), SettingsActivity::class.java))
-		}
 		view.findViewById<TextView>(R.id.menu_reading_plan).setOnClickListener {
 			startActivity(Intent(requireContext(), ReadingPlanActivity::class.java))
 		}
@@ -61,17 +58,6 @@ class MyPageFragment : Fragment(), TopBarActionHandler {
 		}
 		view.findViewById<TextView>(R.id.menu_memorization).setOnClickListener {
 			startActivity(Intent(requireContext(), MemorizationVerseListActivity::class.java))
-		}
-		view.findViewById<TextView>(R.id.menu_bible_knowledge).setOnClickListener {
-			startActivity(
-				Intent(
-					requireContext(),
-					com.chan.bnote.ui.knowledge.BibleKnowledgeHubActivity::class.java
-				)
-			)
-		}
-		view.findViewById<TextView>(R.id.menu_app_info).setOnClickListener {
-			startActivity(Intent(requireContext(), AppInfoActivity::class.java))
 		}
 	}
 
@@ -246,5 +232,13 @@ class MyPageFragment : Fragment(), TopBarActionHandler {
 
 	private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
 
-	override fun getTopBarConfig() = TopBarConfig(title = "마이페이지", showMenu = false)
+	override fun getTopBarConfig() = TopBarConfig(
+		title = "마이페이지",
+		showMenu = true,
+		menuIconRes = R.drawable.ic_settings
+	)
+
+	override fun onMenuClicked() {
+		startActivity(Intent(requireContext(), SettingsActivity::class.java))
+	}
 }

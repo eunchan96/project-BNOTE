@@ -64,6 +64,18 @@
                     android:background="@color/input_background"
                     android:visibility="gone" />
 
+                <TextView
+                    android:id="@+id/menu_bible_knowledge"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="16dp"
+                    android:text="성경 배경지식"
+                    android:textSize="16sp"
+                    android:textColor="@color/text_primary"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true" />
+
                 <View
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
