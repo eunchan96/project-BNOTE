@@ -43,7 +43,7 @@
             android:layout_height="wrap_content"
             android:padding="12dp"
             android:text="날짜 선택"
-            android:textSize="14sp"
+            android:textSize="15sp"
             android:textColor="@color/white"
             android:clickable="true"
             android:focusable="true" />
@@ -56,37 +56,68 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <EditText
-            android:id="@+id/edit_title"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="제목"
-            android:padding="12dp"
-            android:layout_marginBottom="8dp"
-            android:background="@drawable/bg_book_button" />
-
-        <TextView
-            android:id="@+id/btn_add_bible_ref"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:padding="12dp"
-            android:text="+ 성경 구절 추가"
-            android:background="@drawable/bg_book_button"
-            android:layout_marginBottom="8dp"
-            android:clickable="true"
-            android:focusable="true" />
-
-        <com.google.android.flexbox.FlexboxLayout
-            android:id="@+id/flexbox_bible_refs"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            app:flexWrap="wrap" />
-
+        <!-- 제목 -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:layout_width="44dp"
+                android:layout_height="wrap_content"
+                android:text="제목"
+                android:textSize="15sp"
+                android:textColor="@color/text_secondary" />
+
+            <EditText
+                android:id="@+id/edit_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="제목"
+                android:textSize="15sp"
+                android:padding="12dp"
+                android:background="@drawable/bg_book_button" />
+        </LinearLayout>
+
+        <!-- 본문 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="8dp">
+
+            <TextView
+                android:layout_width="44dp"
+                android:layout_height="wrap_content"
+                android:text="본문"
+                android:textSize="15sp"
+                android:textColor="@color/text_secondary"
+                android:paddingTop="12dp" />
+
+            <com.google.android.flexbox.FlexboxLayout
+                android:id="@+id/flexbox_bible_refs"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                app:flexWrap="wrap" />
+        </LinearLayout>
+
+        <!-- 설교 (설교자 + 카테고리) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="8dp"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:layout_width="44dp"
+                android:layout_height="wrap_content"
+                android:text="설교"
+                android:textSize="15sp"
+                android:textColor="@color/text_secondary" />
 
             <TextView
                 android:id="@+id/btn_pick_preacher"
@@ -96,6 +127,7 @@
                 android:layout_marginEnd="4dp"
                 android:padding="12dp"
                 android:text="설교자 선택"
+                android:textSize="15sp"
                 android:background="@drawable/bg_book_button"
                 android:clickable="true"
                 android:focusable="true" />
@@ -108,11 +140,47 @@
                 android:layout_marginStart="4dp"
                 android:padding="12dp"
                 android:text="카테고리 선택"
+                android:textSize="15sp"
                 android:background="@drawable/bg_book_button"
                 android:clickable="true"
                 android:focusable="true" />
         </LinearLayout>
 
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="6dp">
+
+        <TextView
+            android:id="@+id/btn_format_bold"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="굵게"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_secondary"
+            android:padding="8dp"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true" />
+
+        <TextView
+            android:id="@+id/btn_format_underline"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:text="밑줄"
+            android:textSize="14sp"
+            android:textColor="@color/text_secondary"
+            android:padding="8dp"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true" />
     </LinearLayout>
 
     <EditText
@@ -122,6 +190,7 @@
         android:layout_weight="1"
         android:hint="메모"
         android:gravity="top"
+        android:textSize="15sp"
         android:padding="12dp"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
@@ -137,6 +206,7 @@
         android:layout_marginBottom="8dp"
         android:padding="12dp"
         android:text="+ 사진 추가 (0/5)"
+        android:textSize="15sp"
         android:background="@drawable/bg_book_button"
         android:clickable="true"
         android:focusable="true" />
@@ -168,6 +238,7 @@
         android:layout_marginBottom="16dp"
         android:padding="14dp"
         android:text="저장"
+        android:textSize="15sp"
         android:gravity="center"
         android:textColor="@color/white"
         android:background="@color/brown_primary"

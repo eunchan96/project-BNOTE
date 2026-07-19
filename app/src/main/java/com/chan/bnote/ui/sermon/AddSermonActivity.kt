@@ -10,8 +10,10 @@ import android.os.Bundle
 import android.text.Spannable
 import android.text.SpannableString
 import android.text.style.UnderlineSpan
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -77,6 +79,7 @@ class AddSermonActivity : AppCompatActivity() {
 	private lateinit var btnAddPhoto: TextView
 	private lateinit var scrollPhotos: View
 	private lateinit var photoContainer: LinearLayout
+	private lateinit var editMemo: EditText
 
 	private val pickPhotosLauncher = registerForActivityResult(
 		ActivityResultContracts.PickMultipleVisualMedia(MAX_PHOTOS)
@@ -133,7 +136,7 @@ class AddSermonActivity : AppCompatActivity() {
 		findViewById<ImageView>(R.id.btn_top_bar_back).setOnClickListener { finish() }
 
 		val editTitle = findViewById<EditText>(R.id.edit_title)
-		val editMemo = findViewById<EditText>(R.id.edit_memo)
+		editMemo = findViewById(R.id.edit_memo)
 		btnDate = findViewById(R.id.btn_pick_date)
 		btnPickPreacher = findViewById(R.id.btn_pick_preacher)
 		btnPickCategory = findViewById(R.id.btn_pick_category)
@@ -144,6 +147,14 @@ class AddSermonActivity : AppCompatActivity() {
 
 		updateDateText()
 		renderPhotoThumbnails()
+		renderBibleRefBoxes()
+
+		findViewById<TextView>(R.id.btn_format_bold).setOnClickListener {
+			applyFormatting(bold = true)
+		}
+		findViewById<TextView>(R.id.btn_format_underline).setOnClickListener {
+			applyFormatting(bold = false)
+		}
 
 		btnDate.setOnClickListener {
 			val cal = Calendar.getInstance().apply { timeInMillis = selectedDateMillis }
@@ -177,19 +188,10 @@ class AddSermonActivity : AppCompatActivity() {
 			picker.show(supportFragmentManager, "category_picker")
 		}
 
-		findViewById<TextView>(R.id.btn_add_bible_ref).setOnClickListener {
-			val rangePicker = BibleRangePickerBottomSheet()
-			rangePicker.onRangeSelected = { ref ->
-				bibleRefs.add(ref)
-				renderBibleRefChips()
-			}
-			rangePicker.show(supportFragmentManager, "bible_range_picker")
-		}
-
 		btnAddPhoto.setOnClickListener { showPhotoSourceMenu(it) }
 
 		findViewById<TextView>(R.id.btn_save_sermon).setOnClickListener {
-			save(editTitle.text.toString().trim(), editMemo.text.toString())
+			save(editTitle.text.toString().trim(), editMemo.text)
 		}
 
 		lifecycleScope.launch {
@@ -200,14 +202,14 @@ class AddSermonActivity : AppCompatActivity() {
 				existingSermon = sermon
 				if (sermon != null) {
 					editTitle.setText(sermon.title)
-					editMemo.setText(sermon.memo)
+					editMemo.setText(RichTextUtils.toEditable(sermon.memo))
 					selectedDateMillis = sermon.sermonDate
 					selectedCategoryId = sermon.categoryId
 					selectedPreacherId = sermon.preacherId
 					updateDateText()
 
 					bibleRefs.addAll(db.sermonBibleRefDao().getBySermon(sermon.id))
-					renderBibleRefChips()
+					renderBibleRefBoxes()
 
 					photoPaths.addAll(
 						db.sermonPhotoDao().getBySermon(sermon.id).map { it.filePath })
@@ -281,21 +283,97 @@ class AddSermonActivity : AppCompatActivity() {
 		}
 	}
 
-	private fun renderBibleRefChips() {
+	private fun renderBibleRefBoxes() {
 		flexboxRefs.removeAllViews()
+
+		if (bibleRefs.isEmpty()) {
+			flexboxRefs.addView(
+				buildRefBox(
+					"+ 성경 구절 추가",
+					fullWidth = true
+				) { openBibleRangePicker() })
+			return
+		}
+
 		for (ref in bibleRefs) {
-			val chip = LayoutInflater.from(this)
-				.inflate(R.layout.item_bible_ref_chip, flexboxRefs, false)
-			chip.findViewById<TextView>(R.id.text_chip_label).text = ref.toDisplayLabel()
-			chip.findViewById<TextView>(R.id.btn_remove_chip).setOnClickListener {
-				bibleRefs.remove(ref)
-				renderBibleRefChips()
+			flexboxRefs.addView(
+				buildRefBox(ref.toDisplayLabel(), fullWidth = false) {
+					bibleRefs.remove(ref)
+					renderBibleRefBoxes()
+				}
+			)
+		}
+		flexboxRefs.addView(buildAddSquareButton { openBibleRangePicker() })
+	}
+
+	private fun openBibleRangePicker() {
+		val rangePicker = BibleRangePickerBottomSheet()
+		rangePicker.onRangeSelected = { ref ->
+			bibleRefs.add(ref)
+			renderBibleRefBoxes()
+		}
+		rangePicker.show(supportFragmentManager, "bible_range_picker")
+	}
+
+	/** 본문 구절 하나를 나타내는 박스. [fullWidth]면 (아직 구절이 없을 때) 혼자 줄 전체를 채우고,
+	 * 아니면 다른 박스들과 flexGrow로 너비를 나눠 갖는다. 탭하면 그 구절을 지운다(첫 박스 예외: 추가). */
+	private fun buildRefBox(text: String, fullWidth: Boolean, onClick: () -> Unit): View {
+		return TextView(this).apply {
+			this.text = text
+			textSize = 15f
+			gravity = Gravity.CENTER
+			maxLines = 1
+			ellipsize = android.text.TextUtils.TruncateAt.END
+			setPadding(dp(10), dp(12), dp(10), dp(12))
+			setTextColor(ContextCompat.getColor(this@AddSermonActivity, R.color.text_primary))
+			background =
+				ContextCompat.getDrawable(this@AddSermonActivity, R.drawable.bg_book_button)
+			isClickable = true
+			isFocusable = true
+			layoutParams = com.google.android.flexbox.FlexboxLayout.LayoutParams(
+				if (fullWidth) ViewGroup.LayoutParams.MATCH_PARENT else 0,
+				ViewGroup.LayoutParams.WRAP_CONTENT
+			).apply {
+				flexGrow = 1f
+				setMargins(dp(2), dp(2), dp(2), dp(2))
 			}
-			flexboxRefs.addView(chip)
+			setOnClickListener { onClick() }
 		}
 	}
 
-	private fun save(title: String, memo: String) {
+	/** 본문이 하나 이상 있을 때, 맨 끝에 붙는 정사각형 "+" 추가 버튼 (너비를 나눠 갖지 않는 고정 크기). */
+	private fun buildAddSquareButton(onClick: () -> Unit): View {
+		return TextView(this).apply {
+			text = "+"
+			textSize = 18f
+			gravity = Gravity.CENTER
+			setTextColor(ContextCompat.getColor(this@AddSermonActivity, R.color.brown_primary))
+			background =
+				ContextCompat.getDrawable(this@AddSermonActivity, R.drawable.bg_book_button)
+			isClickable = true
+			isFocusable = true
+			val size = dp(48)
+			layoutParams = com.google.android.flexbox.FlexboxLayout.LayoutParams(size, size).apply {
+				setMargins(dp(2), dp(2), dp(2), dp(2))
+			}
+			setOnClickListener { onClick() }
+		}
+	}
+
+	/** 선택한 텍스트에 굵게/밑줄을 씌우거나 벗긴다. 선택 영역이 없으면 안내만 한다. */
+	private fun applyFormatting(bold: Boolean) {
+		val start = editMemo.selectionStart
+		val end = editMemo.selectionEnd
+		if (start == end || start < 0 || end < 0) {
+			Toast.makeText(this, "서식을 적용할 텍스트를 먼저 선택해주세요", Toast.LENGTH_SHORT).show()
+			return
+		}
+		RichTextUtils.toggleStyle(editMemo.text, minOf(start, end), maxOf(start, end), bold)
+	}
+
+	private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
+
+	private fun save(title: String, memo: CharSequence) {
 		if (title.isEmpty()) {
 			Toast.makeText(this, "제목을 입력해주세요", Toast.LENGTH_SHORT).show()
 			return
@@ -305,6 +383,7 @@ class AddSermonActivity : AppCompatActivity() {
 			Toast.makeText(this, "설교자를 선택해주세요", Toast.LENGTH_SHORT).show()
 			return
 		}
+		val memoText = RichTextUtils.toStorageString(memo)
 
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(applicationContext)
@@ -315,7 +394,7 @@ class AddSermonActivity : AppCompatActivity() {
 				sermonId = db.sermonDao().insert(
 					Sermon(
 						title = title, preacherId = preacherId, sermonDate = selectedDateMillis,
-						categoryId = selectedCategoryId, memo = memo
+						categoryId = selectedCategoryId, memo = memoText
 					)
 				)
 			} else {
@@ -323,7 +402,7 @@ class AddSermonActivity : AppCompatActivity() {
 				db.sermonDao().update(
 					current.copy(
 						title = title, preacherId = preacherId, sermonDate = selectedDateMillis,
-						categoryId = selectedCategoryId, memo = memo
+						categoryId = selectedCategoryId, memo = memoText
 					)
 				)
 				db.sermonBibleRefDao().deleteBySermon(sermonId)

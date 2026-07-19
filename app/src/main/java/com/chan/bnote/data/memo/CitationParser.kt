@@ -44,6 +44,26 @@ object CitationParser {
 		return results
 	}
 
+	// 예: "1절", "23절" — 책/장 표기가 없는 절 번호만. 본문(SermonBibleRef)이 하나뿐인 설교 메모에서,
+	// 그 본문의 책/장을 문맥으로 삼아 절 번호만으로도 인용을 찾아줄 때 쓴다.
+	private val verseOnlyRegex: Regex by lazy { Regex("(\\d{1,3})절") }
+
+	fun findVerseOnlyCitations(text: String, bookId: Int, chapter: Int): List<CitationMatch> {
+		val results = mutableListOf<CitationMatch>()
+		for (match in verseOnlyRegex.findAll(text)) {
+			val verse = match.groupValues[1].toIntOrNull() ?: continue
+			results.add(
+				CitationMatch(
+					range = match.range,
+					bookId = bookId,
+					groups = listOf(CitationGroup(chapter, listOf(VerseSegment(verse, verse)))),
+					rawLabel = match.value
+				)
+			)
+		}
+		return results
+	}
+
 	private fun parseBody(body: String): List<CitationGroup>? {
 		val tokens = body.split(",").map { it.trim() }
 		val groups = mutableListOf<CitationGroup>()

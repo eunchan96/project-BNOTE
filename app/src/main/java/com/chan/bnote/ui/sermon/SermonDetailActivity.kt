@@ -4,10 +4,13 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
+import android.graphics.Typeface
 import android.os.Bundle
 import android.text.Spannable
+import android.text.SpannableString
 import android.text.SpannableStringBuilder
 import android.text.style.ForegroundColorSpan
+import android.text.style.StyleSpan
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.ImageView
@@ -25,6 +28,7 @@ import com.chan.bnote.MainActivity
 import com.chan.bnote.R
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.DateUtils
+import com.chan.bnote.data.memo.CitationParser
 import com.chan.bnote.data.sermon.Sermon
 import com.chan.bnote.ui.bible.CitationBubbleHelper
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -173,13 +177,51 @@ class SermonDetailActivity : AppCompatActivity() {
 			flexbox.addView(chip)
 		}
 
-		// 메모 (인용 구절 밑줄 + 롱프레스 말풍선)
-		val memoText = sermon.memo.ifBlank { "메모가 없어요" }
+		// 메모 (굵게/밑줄 서식 복원 + 인용 구절 강조 + 롱프레스 말풍선)
 		if (sermon.memo.isBlank()) {
-			memoView.text = memoText
+			memoView.text = "메모가 없어요"
 		} else {
-			val (spanned, citations) = CitationBubbleHelper.buildSpannedText(memoText)
-			memoView.text = spanned
+			val restored = RichTextUtils.toEditable(sermon.memo)
+			val plainText = restored.toString()
+
+			val bookCitations = CitationParser.findCitations(plainText)
+			// 본문(성경 구절)이 정확히 하나일 때만, "1절"처럼 절 번호만 있는 표기도 그 본문 기준으로 찾아준다.
+			val verseOnlyCitations = if (refs.size == 1) {
+				CitationParser.findVerseOnlyCitations(
+					plainText,
+					refs[0].startBookId,
+					refs[0].startChapter
+				)
+					.filter { candidate ->
+						bookCitations.none { existing ->
+							existing.range.first <= candidate.range.last && candidate.range.first <= existing.range.last
+						}
+					}
+			} else {
+				emptyList()
+			}
+			val citations = bookCitations + verseOnlyCitations
+
+			val spannable = if (restored is Spannable) restored else SpannableString(restored)
+			for (citation in citations) {
+				val end = (citation.range.last + 1).coerceAtMost(spannable.length)
+				if (citation.range.first >= end) continue
+				// 사용자가 직접 준 굵게/밑줄과 헷갈리지 않도록, 인용구는 밑줄이 아니라 강조색+굵게로 표시한다.
+				spannable.setSpan(
+					ForegroundColorSpan(
+						androidx.core.content.ContextCompat.getColor(
+							this,
+							R.color.brown_primary
+						)
+					),
+					citation.range.first, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+				)
+				spannable.setSpan(
+					StyleSpan(Typeface.BOLD),
+					citation.range.first, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+				)
+			}
+			memoView.text = spannable
 			CitationBubbleHelper.attachTouchHandling(memoView, { citations }, lifecycleScope)
 		}
 
