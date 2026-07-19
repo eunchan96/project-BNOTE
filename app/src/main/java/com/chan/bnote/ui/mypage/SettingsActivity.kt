@@ -200,6 +200,9 @@ class SettingsActivity : AppCompatActivity() {
 		findViewById<TextView>(R.id.btn_import_data).setOnClickListener {
 			importDataLauncher.launch(arrayOf("application/zip"))
 		}
+		findViewById<TextView>(R.id.menu_user_guide).setOnClickListener {
+			startActivity(Intent(this, UserGuideActivity::class.java))
+		}
 		findViewById<TextView>(R.id.menu_app_info).setOnClickListener {
 			startActivity(Intent(this, AppInfoActivity::class.java))
 		}
