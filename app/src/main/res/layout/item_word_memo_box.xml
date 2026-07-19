@@ -5,13 +5,15 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
+    android:background="@drawable/bg_book_button"
     android:layout_marginBottom="16dp">
 
     <TextView
         android:id="@+id/text_box_source"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="4dp"
+        android:layout_marginStart="12dp"
+        android:layout_marginTop="10dp"
         android:textSize="12sp"
         android:textColor="@color/text_hint"
         android:visibility="gone"
@@ -21,17 +23,19 @@
         android:id="@+id/edit_box_text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:minHeight="120dp"
+        android:minHeight="180dp"
         android:gravity="top"
         android:hint="메모"
         android:textSize="15sp"
         android:padding="12dp"
-        android:background="@drawable/bg_book_button" />
+        android:background="@android:color/transparent" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp"
+        android:paddingBottom="4dp"
         android:orientation="horizontal"
         android:gravity="center_vertical">
 

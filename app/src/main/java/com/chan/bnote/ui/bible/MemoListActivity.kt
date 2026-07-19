@@ -220,7 +220,7 @@ class MemoListActivity : AppCompatActivity() {
 		)
 	}
 
-	/** 앞부분([styledPrefix])만 굵게 + 강조색으로 표시하고, 뒷부분은 평범하게 이어붙인다. */
+	/** 앞부분([styledPrefix])만 굵게로 표시하고, 뒷부분은 평범하게 이어붙인다. */
 	private fun buildStyledLabel(styledPrefix: String, plainSuffix: String): CharSequence {
 		val full = "$styledPrefix  $plainSuffix"
 		val spannable = SpannableString(full)
@@ -231,7 +231,7 @@ class MemoListActivity : AppCompatActivity() {
 			Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
 		)
 		spannable.setSpan(
-			ForegroundColorSpan(ContextCompat.getColor(this, R.color.brown_primary)),
+			ForegroundColorSpan(ContextCompat.getColor(this, R.color.text_primary)),
 			0, styledPrefix.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
 		)
 		return spannable
@@ -244,9 +244,25 @@ class MemoListActivity : AppCompatActivity() {
 	}
 
 	private fun addHeader(bookName: String) {
+		if (container.childCount > 0) {
+			val divider = View(this).apply {
+				layoutParams =
+					LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(1)).apply {
+						topMargin = dp(8)
+					}
+				setBackgroundColor(
+					ContextCompat.getColor(
+						this@MemoListActivity,
+						R.color.divider_light
+					)
+				)
+			}
+			container.addView(divider)
+		}
+
 		val header = TextView(this).apply {
 			text = bookName
-			textSize = 13f
+			textSize = 14f
 			setTypeface(typeface, Typeface.BOLD)
 			setTextColor(ContextCompat.getColor(this@MemoListActivity, R.color.brown_primary))
 			setPadding(dp(16), dp(16), dp(16), dp(6))
