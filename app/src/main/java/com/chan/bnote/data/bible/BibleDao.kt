@@ -36,6 +36,17 @@ interface BibleDao {
 	)
 	suspend fun searchVerses(translation: String, keyword: String): List<BibleVerse>
 
+	// 단어 메모 "다른 구절에도 추가"용 — 공백을 지우지 않고 그대로 부분 문자열을 찾는다
+	// (본문에서 정확한 시작/끝 위치를 다시 계산해야 하기 때문에 공백 제거 검색은 쓸 수 없음).
+	@Query(
+		"""
+    SELECT * FROM bible_verses
+    WHERE translation = :translation AND text LIKE '%' || :keyword || '%'
+    ORDER BY bookId, chapter, verse
+    """
+	)
+	suspend fun findVersesContainingExact(translation: String, keyword: String): List<BibleVerse>
+
 	@Query("SELECT * FROM bible_verses WHERE translation = :translation ORDER BY RANDOM() LIMIT 1")
 	suspend fun getRandomVerse(translation: String): BibleVerse?
 }

@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.text.Spannable
 import android.text.SpannableString
 import android.text.TextUtils
+import android.text.style.ForegroundColorSpan
 import android.text.style.StyleSpan
 import android.view.Gravity
 import android.view.View
@@ -59,9 +60,8 @@ class MemoListActivity : AppCompatActivity() {
 
 	private var currentTab = TAB_VERSE
 
-	// 편집 중인 메모를 기억해뒀다가, 에디터 결과가 돌아오면 그걸로 저장/삭제한다.
+	// 편집 중인 구절 메모를 기억해뒀다가, 에디터 결과가 돌아오면 그걸로 저장/삭제한다.
 	private var pendingVerseMemo: VerseMemo? = null
-	private var pendingWordMemo: WordMemo? = null
 
 	private val verseMemoEditorLauncher = registerForActivityResult(
 		ActivityResultContracts.StartActivityForResult()
@@ -95,29 +95,8 @@ class MemoListActivity : AppCompatActivity() {
 	private val wordMemoEditorLauncher = registerForActivityResult(
 		ActivityResultContracts.StartActivityForResult()
 	) { result ->
-		val memo = pendingWordMemo ?: return@registerForActivityResult
-		if (result.resultCode != Activity.RESULT_OK) return@registerForActivityResult
-		val data = result.data
-		when (data?.getStringExtra(MemoEditorActivity.EXTRA_RESULT_ACTION)) {
-			MemoEditorActivity.ACTION_SAVE -> {
-				val text = data.getStringExtra(MemoEditorActivity.EXTRA_RESULT_TEXT)
-				if (text != null) {
-					lifecycleScope.launch {
-						val db = BibleDatabase.getInstance(applicationContext)
-						db.wordMemoDao()
-							.update(memo.copy(text = text, updatedAt = System.currentTimeMillis()))
-						loadCurrentTab()
-					}
-				}
-			}
-
-			MemoEditorActivity.ACTION_DELETE -> {
-				lifecycleScope.launch {
-					val db = BibleDatabase.getInstance(applicationContext)
-					db.wordMemoDao().delete(memo)
-					loadCurrentTab()
-				}
-			}
+		if (result.resultCode == Activity.RESULT_OK) {
+			lifecycleScope.launch { loadCurrentTab() }
 		}
 	}
 
@@ -214,8 +193,10 @@ class MemoListActivity : AppCompatActivity() {
 						addHeader(BibleBooks.nameOf(currentBookId))
 					}
 					// 실제로는 비동기 조회가 필요해서, 우선 뼈대만 넣고 뒤에서 단어를 채워 넣는다.
+					val suffix =
+						if (memo.sourceLabel != null) "${memo.text} (from ${memo.sourceLabel})" else memo.text
 					val row = addRow(
-						label = buildStyledLabel("${memo.chapter}:${memo.verse}", memo.text),
+						label = buildStyledLabel("${memo.chapter}:${memo.verse}", suffix),
 						onClickEdit = { openWordMemoEditor(memo, db) },
 						onClickGoToVerse = { navigateToBible(memo.bookId, memo.chapter) }
 					)
@@ -223,7 +204,7 @@ class MemoListActivity : AppCompatActivity() {
 						val word = fetchWordMemoWord(db, memo)
 						if (word.isNotEmpty()) {
 							row.text =
-								buildStyledLabel("${memo.chapter}:${memo.verse} $word", memo.text)
+								buildStyledLabel("${memo.chapter}:${memo.verse} $word", suffix)
 						}
 					}
 				}
@@ -260,20 +241,17 @@ class MemoListActivity : AppCompatActivity() {
 	}
 
 	private fun openWordMemoEditor(memo: WordMemo, db: BibleDatabase) {
-		lifecycleScope.launch {
-			val word = fetchWordMemoWord(db, memo)
-
-			pendingWordMemo = memo
-			wordMemoEditorLauncher.launch(
-				MemoEditorActivity.createIntent(
-					context = this@MemoListActivity,
-					titleText = "${BibleBooks.nameOf(memo.bookId)} ${memo.chapter}:${memo.verse} 메모",
-					previewText = word.ifEmpty { null },
-					initialText = memo.text,
-					isExisting = true
-				)
+		wordMemoEditorLauncher.launch(
+			WordMemoEditorActivity.createIntent(
+				context = this@MemoListActivity,
+				translation = memo.translation,
+				bookId = memo.bookId,
+				chapter = memo.chapter,
+				verse = memo.verse,
+				startOffset = memo.startOffset,
+				endOffset = memo.endOffset
 			)
-		}
+		)
 	}
 
 	/** 앞부분([styledPrefix])만 굵게 + 강조색으로 표시하고, 뒷부분은 평범하게 이어붙인다. */
@@ -285,6 +263,10 @@ class MemoListActivity : AppCompatActivity() {
 			0,
 			styledPrefix.length,
 			Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+		)
+		spannable.setSpan(
+			ForegroundColorSpan(ContextCompat.getColor(this, R.color.brown_primary)),
+			0, styledPrefix.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
 		)
 		return spannable
 	}

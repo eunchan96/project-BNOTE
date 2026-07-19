@@ -63,7 +63,7 @@ import kotlinx.coroutines.launch
 		PrayerRequest::class, VerseMemorizationProgress::class, MemorizationVerse::class,
 		MemorizationGroup::class, RecentChapterView::class
 	],
-	version = 22, // 21 -> 22 (최근 본 장(RecentChapterView) 추가)
+	version = 23, // 22 -> 23 (word_memos에 sourceLabel 추가 - 다른 구절 복사 메모의 출처 표시)
 	exportSchema = false
 )
 abstract class BibleDatabase : RoomDatabase() {

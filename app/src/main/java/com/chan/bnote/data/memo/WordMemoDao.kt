@@ -35,4 +35,16 @@ interface WordMemoDao {
 
 	@Query("SELECT * FROM word_memos WHERE id = :id LIMIT 1")
 	suspend fun getById(id: Long): WordMemo?
+
+	@Query(
+		"""
+    SELECT * FROM word_memos
+    WHERE translation = :translation AND bookId = :bookId AND chapter = :chapter AND verse = :verse
+      AND startOffset = :startOffset AND endOffset = :endOffset
+    ORDER BY id ASC
+    """
+	)
+	suspend fun getAtPosition(
+		translation: String, bookId: Int, chapter: Int, verse: Int, startOffset: Int, endOffset: Int
+	): List<WordMemo>
 }

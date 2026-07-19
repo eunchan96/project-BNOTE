@@ -433,10 +433,9 @@ object BackupManager {
 		"chapter",
 		chapter
 	); put("verse", verse)
-		put("startOffset", startOffset); put("endOffset", endOffset); put(
-		"text",
-		text
-	); put("updatedAt", updatedAt)
+		put("startOffset", startOffset); put("endOffset", endOffset); put("text", text)
+		sourceLabel?.let { put("sourceLabel", it) }
+		put("updatedAt", updatedAt)
 	}
 
 	private fun wordMemoFromJson(o: JSONObject) = WordMemo(
@@ -447,6 +446,7 @@ object BackupManager {
 		startOffset = o.getInt("startOffset"),
 		endOffset = o.getInt("endOffset"),
 		text = o.getString("text"),
+		sourceLabel = if (o.has("sourceLabel")) o.getString("sourceLabel") else null,
 		updatedAt = o.optLong("updatedAt", System.currentTimeMillis())
 	)
 
