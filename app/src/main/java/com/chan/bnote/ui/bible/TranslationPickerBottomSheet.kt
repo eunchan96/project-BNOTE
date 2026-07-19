@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -21,8 +22,14 @@ class TranslationPickerBottomSheet(
 
 	private lateinit var recyclerView: RecyclerView
 	private lateinit var titleView: TextView
-	private lateinit var backButton: TextView
+	private lateinit var tabBarContainer: LinearLayout
+
+	// 이미 주성경이 정해진 상태로 열리므로, 처음부터 "함께보기" 탭으로 바로 넘어갈 수 있다.
 	private var selectedPrimary: Translation = currentPrimary
+
+	private enum class Step { PRIMARY, SECONDARY }
+
+	private var currentStep = Step.PRIMARY
 
 	override fun onCreateView(
 		inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -35,28 +42,51 @@ class TranslationPickerBottomSheet(
 
 		recyclerView = view.findViewById(R.id.recycler_translation_picker)
 		titleView = view.findViewById(R.id.text_sheet_title)
-		backButton = view.findViewById(R.id.btn_back)
+		tabBarContainer = view.findViewById(R.id.container_tab_bar)
 		recyclerView.layoutManager = LinearLayoutManager(requireContext())
 
-		showPrimaryList()
+		goToStep(Step.PRIMARY)
+	}
+
+	/** 탭 이동(주성경 → 함께보기)과 화면 갱신을 함께 처리하는 진입점. */
+	private fun goToStep(step: Step) {
+		currentStep = step
+		updateHeader()
+		renderTabs()
+		when (step) {
+			Step.PRIMARY -> showPrimaryList()
+			Step.SECONDARY -> showSecondaryList()
+		}
+	}
+
+	private fun updateHeader() {
+		titleView.text = when (currentStep) {
+			Step.PRIMARY -> "주성경 선택"
+			Step.SECONDARY -> "${selectedPrimary.displayName} + 함께보기 선택"
+		}
+	}
+
+	private fun renderTabs() {
+		val tabs = listOf(
+			PickerTab(label = "주성경", enabled = true, selected = currentStep == Step.PRIMARY) {
+				goToStep(Step.PRIMARY)
+			},
+			PickerTab(label = "함께보기", enabled = true, selected = currentStep == Step.SECONDARY) {
+				goToStep(Step.SECONDARY)
+			}
+		)
+		renderPickerTabs(requireContext(), tabBarContainer, tabs)
 	}
 
 	private fun showPrimaryList() {
-		titleView.text = "주성경 선택"
-		backButton.visibility = View.GONE
-
 		val names = Translation.values().map { it.displayName }
 		recyclerView.adapter = SimpleListAdapter(names) { position ->
 			selectedPrimary = Translation.values()[position]
-			showSecondaryList()
+			goToStep(Step.SECONDARY)
 		}
 	}
 
 	private fun showSecondaryList() {
-		titleView.text = "함께보기 선택"
-		backButton.visibility = View.VISIBLE
-		backButton.setOnClickListener { showPrimaryList() }
-
 		// 주성경으로 고른건 함께보기 목록에서 제외
 		val options = Translation.values().filter { it != selectedPrimary }
 		val labels = options.map { it.displayName } + "선택 안 함" // "선택 안 함"을 맨 뒤로
