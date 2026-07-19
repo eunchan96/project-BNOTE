@@ -5,7 +5,7 @@
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:background="@drawable/bg_book_button"
-    android:layout_marginBottom="16dp">
+    android:layout_marginBottom="12dp">
 
     <EditText
         android:id="@+id/edit_box_text"

@@ -144,12 +144,6 @@ class WordMemoEditorActivity : AppCompatActivity() {
 		val boxView = LayoutInflater.from(this)
 			.inflate(R.layout.item_word_memo_box, container, false)
 
-		val sourceView = boxView.findViewById<TextView>(R.id.text_box_source)
-		if (existing?.sourceLabel != null) {
-			sourceView.text = "출처: ${existing.sourceLabel}"
-			sourceView.visibility = View.VISIBLE
-		}
-
 		val editText = boxView.findViewById<EditText>(R.id.edit_box_text)
 		editText.setText(existing?.text ?: "")
 		val checkbox = boxView.findViewById<CheckBox>(R.id.chk_box_propagate)
@@ -234,6 +228,7 @@ class WordMemoEditorActivity : AppCompatActivity() {
 			.setPositiveButton("추가") { _, _ ->
 				lifecycleScope.launch {
 					val originLabel = "${BibleBooks.shortNameOf(bookId)} ${chapter}:${verse}"
+					val propagatedText = "$text (from $originLabel)"
 
 					for (verseRow in matches) {
 						val idx = verseRow.text.indexOf(wordText)
@@ -246,8 +241,7 @@ class WordMemoEditorActivity : AppCompatActivity() {
 								verse = verseRow.verse,
 								startOffset = idx,
 								endOffset = idx + wordText.length,
-								text = text,
-								sourceLabel = originLabel
+								text = propagatedText
 							)
 						)
 					}

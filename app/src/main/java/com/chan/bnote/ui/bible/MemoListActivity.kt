@@ -169,10 +169,8 @@ class MemoListActivity : AppCompatActivity() {
 						addHeader(BibleBooks.nameOf(currentBookId))
 					}
 					// 실제로는 비동기 조회가 필요해서, 우선 뼈대만 넣고 뒤에서 단어를 채워 넣는다.
-					val suffix =
-						if (memo.sourceLabel != null) "${memo.text} (from ${memo.sourceLabel})" else memo.text
 					val row = addRow(
-						label = buildStyledLabel("${memo.chapter}:${memo.verse}", suffix),
+						label = buildStyledLabel("${memo.chapter}:${memo.verse}", memo.text),
 						onClickEdit = { openWordMemoEditor(memo, db) },
 						onClickGoToVerse = { navigateToBible(memo.bookId, memo.chapter) }
 					)
@@ -180,7 +178,7 @@ class MemoListActivity : AppCompatActivity() {
 						val word = fetchWordMemoWord(db, memo)
 						if (word.isNotEmpty()) {
 							row.text =
-								buildStyledLabel("${memo.chapter}:${memo.verse} $word", suffix)
+								buildStyledLabel("${memo.chapter}:${memo.verse} $word", memo.text)
 						}
 					}
 				}
