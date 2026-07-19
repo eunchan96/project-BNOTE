@@ -50,7 +50,7 @@
                 android:layout_marginTop="2dp"
                 android:textSize="13sp"
                 android:textColor="@color/text_secondary"
-                tools:text="은혜교회 · 청년부 · 집사" />
+                tools:text="꿈꾸는좋은교회 · 1남선교회 · 집사" />
         </LinearLayout>
 
         <ImageView
