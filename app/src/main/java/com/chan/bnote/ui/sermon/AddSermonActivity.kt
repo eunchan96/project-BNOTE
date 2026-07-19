@@ -121,7 +121,16 @@ class AddSermonActivity : AppCompatActivity() {
 
 		ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.add_sermon_root)) { v, insets ->
 			val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-			v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+			val ime = insets.getInsets(WindowInsetsCompat.Type.ime())
+			// enableEdgeToEdge()로 인해 decorFitsSystemWindows가 꺼져 있어서, 키보드가 떠도
+			// 기존 windowSoftInputMode="adjustResize"만으로는 화면이 자동으로 줄어들지 않는다.
+			// 키보드 인셋을 직접 소비해서(하단 패딩으로) 삼성노트처럼 키보드 위 공간을 확보해야 한다.
+			v.setPadding(
+				systemBars.left,
+				systemBars.top,
+				systemBars.right,
+				maxOf(systemBars.bottom, ime.bottom)
+			)
 			insets
 		}
 
