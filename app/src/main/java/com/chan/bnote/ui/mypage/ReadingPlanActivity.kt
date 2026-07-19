@@ -18,6 +18,7 @@ import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.bible.BibleBookGroups
 import com.chan.bnote.data.bible.BibleBooks
 import com.chan.bnote.data.mypage.ReadingProgress
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 
 class ReadingPlanActivity : AppCompatActivity() {
@@ -35,6 +36,20 @@ class ReadingPlanActivity : AppCompatActivity() {
 
 		findViewById<TextView>(R.id.text_top_bar_title).text = "성경읽기표"
 		findViewById<ImageView>(R.id.btn_top_bar_back).setOnClickListener { finish() }
+		findViewById<TextView>(R.id.btn_reset_reading_progress).setOnClickListener {
+			MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_BNOTE_Dialog)
+				.setTitle("성경읽기표 기록 초기화")
+				.setMessage("지금까지 읽음 표시한 모든 기록이 사라져요. 계속할까요?")
+				.setPositiveButton("초기화") { _, _ ->
+					lifecycleScope.launch {
+						val db = BibleDatabase.getInstance(applicationContext)
+						db.readingProgressDao().resetAll()
+						loadProgress()
+					}
+				}
+				.setNegativeButton("취소", null)
+				.show()
+		}
 
 		loadProgress()
 	}

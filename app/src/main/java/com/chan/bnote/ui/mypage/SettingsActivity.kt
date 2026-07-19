@@ -21,7 +21,6 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import com.chan.bnote.R
 import com.chan.bnote.data.AppSettings
-import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.backup.BackupManager
 import com.chan.bnote.notification.NotificationScheduler
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -193,41 +192,12 @@ class SettingsActivity : AppCompatActivity() {
 			popup.show()
 		}
 
-		findViewById<TextView>(R.id.menu_download_translation).setOnClickListener {
-			Toast.makeText(this, "대역본 다운로드 (추후 구현)", Toast.LENGTH_SHORT).show()
-		}
-		findViewById<TextView>(R.id.menu_theme_color).setOnClickListener {
-			Toast.makeText(this, "테마 및 글자 색상 (추후 구현)", Toast.LENGTH_SHORT).show()
-		}
-		findViewById<TextView>(R.id.menu_cloud_sync).setOnClickListener {
-			Toast.makeText(
-				this,
-				"클라우드 동기화는 로컬 전용 앱 특성상 추후 검토 예정이에요",
-				Toast.LENGTH_SHORT
-			).show()
-		}
-
 		findViewById<TextView>(R.id.btn_export_data).setOnClickListener {
 			val fileName = "bnote_backup_${System.currentTimeMillis()}.zip"
 			exportDataLauncher.launch(fileName)
 		}
 		findViewById<TextView>(R.id.btn_import_data).setOnClickListener {
 			importDataLauncher.launch(arrayOf("application/zip"))
-		}
-
-		findViewById<TextView>(R.id.btn_reset_reading_progress).setOnClickListener {
-			MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_BNOTE_Dialog)
-				.setTitle("성경읽기표 기록 초기화")
-				.setMessage("지금까지 읽음 표시한 모든 기록이 사라져요. 계속할까요?")
-				.setPositiveButton("초기화") { _, _ ->
-					lifecycleScope.launch {
-						val db = BibleDatabase.getInstance(applicationContext)
-						db.readingProgressDao().resetAll()
-						Toast.makeText(this@SettingsActivity, "초기화됐어요", Toast.LENGTH_SHORT).show()
-					}
-				}
-				.setNegativeButton("취소", null)
-				.show()
 		}
 
 		setupNotificationSettings()

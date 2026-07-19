@@ -46,7 +46,15 @@ class ProfileEditActivity : AppCompatActivity() {
 
 		ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.profile_edit_root)) { v, insets ->
 			val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-			v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+			val ime = insets.getInsets(WindowInsetsCompat.Type.ime())
+			// enableEdgeToEdge()로 decorFitsSystemWindows가 꺼져 있어서, adjustResize만으로는
+			// 키보드가 떠도 화면이 자동으로 줄어들지 않는다 - 키보드 인셋을 직접 소비해줘야 한다.
+			v.setPadding(
+				systemBars.left,
+				systemBars.top,
+				systemBars.right,
+				maxOf(systemBars.bottom, ime.bottom)
+			)
 			insets
 		}
 

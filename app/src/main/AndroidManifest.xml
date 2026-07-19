@@ -89,6 +89,7 @@
             android:exported="false" />
         <activity
             android:name=".ui.mypage.MemorizationVerseDetailActivity"
+            android:windowSoftInputMode="adjustResize"
             android:exported="false" />
         <activity
             android:name=".ui.knowledge.BibleKnowledgeHubActivity"
@@ -137,6 +138,7 @@
             android:exported="false" />
         <activity
             android:name=".ui.mypage.VerseOfYearEditActivity"
+            android:windowSoftInputMode="adjustResize"
             android:exported="false" />
         <activity
             android:name=".ui.sermon.CategoryManageActivity"
