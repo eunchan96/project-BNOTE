@@ -260,7 +260,7 @@ class SermonByPreacherFragment : Fragment() {
 
 	private fun renderPreacherList(rows: List<PreacherRow>) {
 		val adapter = PreacherManageAdapter(
-			rows = rows,
+			initialRows = rows,
 			isEditMode = isPreacherManageMode,
 			onClick = { preacher -> showSermonListStep(preacher) },
 			onEdit = { preacher -> showEditPreacherDialog(preacher) },
@@ -269,17 +269,20 @@ class SermonByPreacherFragment : Fragment() {
 		preacherRecycler.adapter = adapter
 
 		if (preacherSortMode == "CUSTOM") {
-			val dragHelper = ItemTouchHelper(DragReorderHelper { from, to ->
-				if (from in preachers.indices && to in preachers.indices) {
-					val item = preachers.removeAt(from)
-					preachers.add(to, item)
-					AppSettings.setPreacherCustomOrderIds(requireContext(), preachers.map { it.id })
-					loadPreachers()
-				}
-			})
+			// 드래그 도중에는 어댑터를 새로 만들거나 목록을 다시 불러오지 않는다 (그게 "튕기는" 원인이었음).
+			// 이동은 어댑터 안에서만 처리하고, 손을 뗀 순간에만 순서를 저장한다.
+			val dragHelper = ItemTouchHelper(
+				DragReorderHelper(
+					onMove = { from, to -> adapter.moveItem(from, to) },
+					onDragFinished = {
+						AppSettings.setPreacherCustomOrderIds(
+							requireContext(),
+							adapter.currentOrderIds()
+						)
+					}
+				)
+			)
 			dragHelper.attachToRecyclerView(preacherRecycler)
-		} else {
-			ItemTouchHelper(DragReorderHelper { _, _ -> }).attachToRecyclerView(null)
 		}
 	}
 
