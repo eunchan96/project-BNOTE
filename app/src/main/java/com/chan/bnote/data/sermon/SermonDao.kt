@@ -24,6 +24,12 @@ interface SermonDao {
 	@Query("SELECT * FROM sermons WHERE id = :id LIMIT 1")
 	suspend fun getById(id: Long): Sermon?
 
+	@Query("SELECT * FROM sermons")
+	suspend fun getAll(): List<Sermon>
+
+	@Query("DELETE FROM sermons")
+	suspend fun deleteAll()
+
 	@Query("SELECT * FROM sermons ORDER BY createdAt DESC LIMIT :limit")
 	suspend fun getRecent(limit: Int): List<Sermon>
 

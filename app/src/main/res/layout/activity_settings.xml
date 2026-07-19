@@ -342,6 +342,36 @@
                     android:layout_marginStart="4dp" />
             </LinearLayout>
 
+            <!-- 데이터 내보내기/불러오기 -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@color/divider_light" />
+
+            <TextView
+                android:id="@+id/btn_export_data"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="16dp"
+                android:text="데이터 내보내기"
+                android:textSize="16sp"
+                android:textColor="@color/text_primary"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true" />
+
+            <TextView
+                android:id="@+id/btn_import_data"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="16dp"
+                android:text="데이터 불러오기"
+                android:textSize="16sp"
+                android:textColor="@color/text_primary"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true" />
+
             <!-- 읽음 기록 초기화 -->
             <TextView
                 android:id="@+id/btn_reset_reading_progress"

@@ -10,7 +10,7 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.chan.bnote.R
 import com.chan.bnote.data.DateUtils
-import com.chan.bnote.data.prayer.PrayerRequest
+import com.chan.bnote.data.mypage.PrayerRequest
 import com.google.android.material.checkbox.MaterialCheckBox
 
 class PrayerRequestAdapter(

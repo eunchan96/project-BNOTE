@@ -19,6 +19,8 @@ import com.chan.bnote.data.memo.WordMemoDao
 import com.chan.bnote.data.mypage.MemorizationGroup
 import com.chan.bnote.data.mypage.MemorizationVerse
 import com.chan.bnote.data.mypage.MemorizationVerseDao
+import com.chan.bnote.data.mypage.PrayerRequest
+import com.chan.bnote.data.mypage.PrayerRequestDao
 import com.chan.bnote.data.mypage.ReadingProgress
 import com.chan.bnote.data.mypage.ReadingProgressDao
 import com.chan.bnote.data.mypage.RecentChapterView
@@ -31,8 +33,6 @@ import com.chan.bnote.data.mypage.VerseOfYearRef
 import com.chan.bnote.data.mypage.VerseOfYearRefDao
 import com.chan.bnote.data.partialhighlight.PartialHighlight
 import com.chan.bnote.data.partialhighlight.PartialHighlightDao
-import com.chan.bnote.data.prayer.PrayerRequest
-import com.chan.bnote.data.prayer.PrayerRequestDao
 import com.chan.bnote.data.profile.UserProfile
 import com.chan.bnote.data.profile.UserProfileDao
 import com.chan.bnote.data.scrap.Scrap
@@ -99,6 +99,7 @@ abstract class BibleDatabase : RoomDatabase() {
 					BibleDatabase::class.java,
 					"bnote.db"
 				)
+					.addMigrations(*MIGRATIONS)
 					.fallbackToDestructiveMigration()
 					.build()
 				INSTANCE = instance

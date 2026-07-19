@@ -36,6 +36,15 @@ interface ScrapDao {
 	@Query("SELECT * FROM scraps WHERE groupId = :groupId ORDER BY createdAt DESC")
 	suspend fun getScrapsByGroup(groupId: Long): List<Scrap>
 
+	@Query("SELECT * FROM scraps ORDER BY createdAt DESC")
+	suspend fun getAllScraps(): List<Scrap>
+
+	@Query("DELETE FROM scraps")
+	suspend fun deleteAllScraps()
+
+	@Query("DELETE FROM scrap_groups")
+	suspend fun deleteAllGroups()
+
 	// 그룹 삭제 시 그 그룹의 스크랩도 같이 정리
 	@Query("DELETE FROM scraps WHERE groupId = :groupId")
 	suspend fun deleteScrapsByGroup(groupId: Long)

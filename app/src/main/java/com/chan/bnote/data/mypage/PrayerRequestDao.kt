@@ -1,4 +1,4 @@
-package com.chan.bnote.data.prayer
+package com.chan.bnote.data.mypage
 
 import androidx.room.Dao
 import androidx.room.Delete
@@ -24,4 +24,7 @@ interface PrayerRequestDao {
 
 	@Query("SELECT COUNT(*) FROM prayer_requests")
 	suspend fun count(): Int
+
+	@Query("DELETE FROM prayer_requests")
+	suspend fun deleteAll()
 }

@@ -35,6 +35,9 @@ interface PartialHighlightDao {
 	@Query("SELECT * FROM partial_highlights ORDER BY bookId ASC, chapter ASC, verse ASC")
 	suspend fun getAll(): List<PartialHighlight>
 
+	@Query("DELETE FROM partial_highlights")
+	suspend fun deleteAll()
+
 	@Query(
 		"DELETE FROM partial_highlights WHERE translation = :translation AND bookId = :bookId AND chapter = :chapter AND verse = :verse"
 	)

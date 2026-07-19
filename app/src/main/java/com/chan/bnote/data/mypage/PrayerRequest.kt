@@ -1,4 +1,4 @@
-package com.chan.bnote.data.prayer
+package com.chan.bnote.data.mypage
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey

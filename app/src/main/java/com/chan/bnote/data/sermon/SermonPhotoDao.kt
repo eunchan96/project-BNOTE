@@ -13,6 +13,12 @@ interface SermonPhotoDao {
 	@Query("SELECT * FROM sermon_photos WHERE sermonId = :sermonId ORDER BY sortOrder ASC")
 	suspend fun getBySermon(sermonId: Long): List<SermonPhoto>
 
+	@Query("SELECT * FROM sermon_photos")
+	suspend fun getAll(): List<SermonPhoto>
+
+	@Query("DELETE FROM sermon_photos")
+	suspend fun deleteAll()
+
 	@Query("DELETE FROM sermon_photos WHERE sermonId = :sermonId")
 	suspend fun deleteBySermon(sermonId: Long)
 }

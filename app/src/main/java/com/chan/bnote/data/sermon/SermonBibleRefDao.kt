@@ -13,6 +13,12 @@ interface SermonBibleRefDao {
 	@Query("SELECT * FROM sermon_bible_refs WHERE sermonId = :sermonId")
 	suspend fun getBySermon(sermonId: Long): List<SermonBibleRef>
 
+	@Query("SELECT * FROM sermon_bible_refs")
+	suspend fun getAll(): List<SermonBibleRef>
+
+	@Query("DELETE FROM sermon_bible_refs")
+	suspend fun deleteAll()
+
 	@Query("DELETE FROM sermon_bible_refs WHERE sermonId = :sermonId")
 	suspend fun deleteBySermon(sermonId: Long)
 

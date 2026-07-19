@@ -11,6 +11,12 @@ interface BookmarkDao {
 	@Query("SELECT * FROM bible_bookmarks WHERE bookId = :bookId AND chapter = :chapter")
 	suspend fun getBookmarksForChapter(bookId: Int, chapter: Int): List<BibleBookmark>
 
+	@Query("SELECT * FROM bible_bookmarks")
+	suspend fun getAll(): List<BibleBookmark>
+
+	@Query("DELETE FROM bible_bookmarks")
+	suspend fun deleteAll()
+
 	@Insert(onConflict = OnConflictStrategy.REPLACE)
 	suspend fun upsert(bookmark: BibleBookmark)
 

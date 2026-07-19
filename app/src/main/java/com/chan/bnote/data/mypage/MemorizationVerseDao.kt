@@ -57,6 +57,12 @@ interface MemorizationVerseDao {
 	@Query("SELECT * FROM memorization_groups ORDER BY sortOrder")
 	suspend fun getAllGroups(): List<MemorizationGroup>
 
+	@Query("DELETE FROM memorization_verses")
+	suspend fun deleteAllVerses()
+
+	@Query("DELETE FROM memorization_groups")
+	suspend fun deleteAllGroups()
+
 	@Query("SELECT * FROM memorization_verses WHERE groupId = :groupId ORDER BY createdAt DESC")
 	suspend fun getByGroup(groupId: Long): List<MemorizationVerse>
 

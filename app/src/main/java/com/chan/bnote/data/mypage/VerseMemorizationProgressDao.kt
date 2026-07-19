@@ -14,6 +14,9 @@ interface VerseMemorizationProgressDao {
 	@Query("SELECT * FROM verse_memorization_progress")
 	suspend fun getAll(): List<VerseMemorizationProgress>
 
+	@Query("DELETE FROM verse_memorization_progress")
+	suspend fun deleteAll()
+
 	@Insert(onConflict = OnConflictStrategy.REPLACE)
 	suspend fun upsert(progress: VerseMemorizationProgress)
 }

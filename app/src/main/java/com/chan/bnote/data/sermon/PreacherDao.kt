@@ -21,6 +21,9 @@ interface PreacherDao {
 	@Query("SELECT * FROM preachers ORDER BY sortOrder")
 	suspend fun getAll(): List<Preacher>
 
+	@Query("DELETE FROM preachers")
+	suspend fun deleteAll()
+
 	@Query("SELECT * FROM preachers WHERE id = :id LIMIT 1")
 	suspend fun getById(id: Long): Preacher?
 

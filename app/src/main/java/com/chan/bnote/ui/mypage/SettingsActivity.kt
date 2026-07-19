@@ -22,6 +22,7 @@ import androidx.lifecycle.lifecycleScope
 import com.chan.bnote.R
 import com.chan.bnote.data.AppSettings
 import com.chan.bnote.data.BibleDatabase
+import com.chan.bnote.data.backup.BackupManager
 import com.chan.bnote.notification.NotificationScheduler
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
@@ -76,6 +77,30 @@ class SettingsActivity : AppCompatActivity() {
 				}
 			}
 		}
+	}
+
+	private val exportDataLauncher = registerForActivityResult(
+		ActivityResultContracts.CreateDocument("application/zip")
+	) { uri ->
+		if (uri == null) return@registerForActivityResult
+		lifecycleScope.launch {
+			try {
+				BackupManager.export(this@SettingsActivity, uri)
+				Toast.makeText(this@SettingsActivity, "내보내기가 완료됐어요", Toast.LENGTH_SHORT).show()
+			} catch (e: Exception) {
+				Toast.makeText(
+					this@SettingsActivity,
+					"내보내기에 실패했어요: ${e.message}",
+					Toast.LENGTH_LONG
+				).show()
+			}
+		}
+	}
+
+	private val importDataLauncher = registerForActivityResult(
+		ActivityResultContracts.OpenDocument()
+	) { uri ->
+		if (uri != null) confirmImport(uri)
 	}
 
 	override fun onCreate(savedInstanceState: Bundle?) {
@@ -182,6 +207,14 @@ class SettingsActivity : AppCompatActivity() {
 			).show()
 		}
 
+		findViewById<TextView>(R.id.btn_export_data).setOnClickListener {
+			val fileName = "bnote_backup_${System.currentTimeMillis()}.zip"
+			exportDataLauncher.launch(fileName)
+		}
+		findViewById<TextView>(R.id.btn_import_data).setOnClickListener {
+			importDataLauncher.launch(arrayOf("application/zip"))
+		}
+
 		findViewById<TextView>(R.id.btn_reset_reading_progress).setOnClickListener {
 			MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_BNOTE_Dialog)
 				.setTitle("성경읽기표 기록 초기화")
@@ -198,6 +231,29 @@ class SettingsActivity : AppCompatActivity() {
 		}
 
 		setupNotificationSettings()
+	}
+
+	private fun confirmImport(uri: android.net.Uri) {
+		MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_BNOTE_Dialog)
+			.setTitle("데이터 불러오기")
+			.setMessage("지금 앱에 있는 데이터가 전부 이 백업 파일의 내용으로 교체돼요. 계속할까요?")
+			.setPositiveButton("불러오기") { _, _ ->
+				lifecycleScope.launch {
+					try {
+						BackupManager.import(this@SettingsActivity, uri)
+						Toast.makeText(this@SettingsActivity, "불러오기가 완료됐어요", Toast.LENGTH_SHORT)
+							.show()
+					} catch (e: Exception) {
+						Toast.makeText(
+							this@SettingsActivity,
+							"불러오기에 실패했어요: ${e.message}",
+							Toast.LENGTH_LONG
+						).show()
+					}
+				}
+			}
+			.setNegativeButton("취소", null)
+			.show()
 	}
 
 	private fun setupNotificationSettings() {

@@ -30,6 +30,9 @@ interface WordMemoDao {
 	@Query("SELECT * FROM word_memos ORDER BY updatedAt DESC LIMIT :limit")
 	suspend fun getRecent(limit: Int): List<WordMemo>
 
+	@Query("DELETE FROM word_memos")
+	suspend fun deleteAll()
+
 	@Query("SELECT * FROM word_memos WHERE id = :id LIMIT 1")
 	suspend fun getById(id: Long): WordMemo?
 }
