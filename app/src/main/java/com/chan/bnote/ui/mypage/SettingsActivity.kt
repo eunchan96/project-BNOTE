@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.view.View
 import android.view.WindowManager
 import android.widget.ImageView
 import android.widget.PopupMenu
@@ -147,7 +148,7 @@ class SettingsActivity : AppCompatActivity() {
 			AppSettings.setScrollSpeed(this, currentScrollSpeed)
 		}
 
-		findViewById<Switch>(R.id.switch_dark_mode).apply {
+		val switchDarkMode = findViewById<Switch>(R.id.switch_dark_mode).apply {
 			isChecked = AppSettings.isDarkMode(this@SettingsActivity)
 			setOnCheckedChangeListener { _, checked ->
 				AppSettings.setDarkMode(this@SettingsActivity, checked)
@@ -157,20 +158,29 @@ class SettingsActivity : AppCompatActivity() {
 				)
 			}
 		}
+		findViewById<View>(R.id.row_dark_mode_toggle).setOnClickListener {
+			switchDarkMode.isChecked = !switchDarkMode.isChecked
+		}
 
-		findViewById<Switch>(R.id.switch_keep_screen_on).apply {
+		val switchKeepScreenOn = findViewById<Switch>(R.id.switch_keep_screen_on).apply {
 			isChecked = AppSettings.isKeepScreenOn(this@SettingsActivity)
 			setOnCheckedChangeListener { _, checked ->
 				AppSettings.setKeepScreenOn(this@SettingsActivity, checked)
 				applyKeepScreenOn(checked)
 			}
 		}
+		findViewById<View>(R.id.row_keep_screen_on_toggle).setOnClickListener {
+			switchKeepScreenOn.isChecked = !switchKeepScreenOn.isChecked
+		}
 
-		findViewById<Switch>(R.id.switch_copy_secondary).apply {
+		val switchCopySecondary = findViewById<Switch>(R.id.switch_copy_secondary).apply {
 			isChecked = AppSettings.isCopyIncludeSecondary(this@SettingsActivity)
 			setOnCheckedChangeListener { _, checked ->
 				AppSettings.setCopyIncludeSecondary(this@SettingsActivity, checked)
 			}
+		}
+		findViewById<View>(R.id.row_copy_secondary_toggle).setOnClickListener {
+			switchCopySecondary.isChecked = !switchCopySecondary.isChecked
 		}
 
 		val btnReferenceStyle = findViewById<TextView>(R.id.btn_copy_reference_style)
@@ -280,6 +290,13 @@ class SettingsActivity : AppCompatActivity() {
 					NotificationScheduler.scheduleReadingReminder(this, h, m)
 				}
 			}
+		}
+
+		findViewById<View>(R.id.row_daily_verse_toggle).setOnClickListener {
+			switchDailyVerseNoti.isChecked = !switchDailyVerseNoti.isChecked
+		}
+		findViewById<View>(R.id.row_reading_reminder_toggle).setOnClickListener {
+			switchReadingReminder.isChecked = !switchReadingReminder.isChecked
 		}
 	}
 

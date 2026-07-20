@@ -79,12 +79,13 @@ class BibleMenuDialogFragment(
 			dismiss()
 		}
 
-		view.findViewById<TextView>(R.id.menu_hymn).setOnClickListener {
-			onHymnClicked?.invoke()
-			dismiss()
-		}
 		view.findViewById<TextView>(R.id.menu_bible_knowledge).setOnClickListener {
 			onBibleKnowledgeClicked?.invoke()
+			dismiss()
+		}
+
+		view.findViewById<TextView>(R.id.menu_hymn).setOnClickListener {
+			onHymnClicked?.invoke()
 			dismiss()
 		}
 
@@ -129,6 +130,15 @@ class BibleMenuDialogFragment(
 				onAutoScrollToggled?.invoke(checked)
 				dismiss()
 			}
+		}
+
+		view.findViewById<View>(R.id.row_reading_plan_toggle).setOnClickListener {
+			val switch = view.findViewById<Switch>(R.id.switch_reading_plan)
+			switch.isChecked = !switch.isChecked
+		}
+		view.findViewById<View>(R.id.row_auto_scroll_toggle).setOnClickListener {
+			val switch = view.findViewById<Switch>(R.id.switch_auto_scroll)
+			switch.isChecked = !switch.isChecked
 		}
 	}
 

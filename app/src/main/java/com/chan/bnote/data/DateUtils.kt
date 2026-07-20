@@ -21,7 +21,7 @@ object DateUtils {
 	}
 
 	fun formatDateShort(millis: Long): String {
-		return SimpleDateFormat("M/d", Locale.KOREA).format(millis)
+		return SimpleDateFormat("yy/MM/dd", Locale.KOREA).format(millis)
 	}
 
 	fun getMonthStartMillis(year: Int, month0: Int): Long {
