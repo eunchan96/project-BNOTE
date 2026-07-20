@@ -65,6 +65,21 @@ object CitationParser {
 		return results
 	}
 
+	// 예: "(2:1)", "(2:1~5)" — 괄호 안에 책 표기 없이 장:절만. 본문(SermonBibleRef)이 하나뿐인 설교
+	// 메모에서, 그 본문의 책을 문맥으로 삼아 다른 장/절을 가리킬 때 쓴다.
+	private val chapterVerseRegex: Regex by lazy { Regex("\\(($bodyPattern)\\)") }
+
+	fun findChapterVerseCitations(text: String, bookId: Int): List<CitationMatch> {
+		val results = mutableListOf<CitationMatch>()
+		for (match in chapterVerseRegex.findAll(text)) {
+			val body = match.groupValues[1]
+			val groups = parseBody(body) ?: continue
+			if (groups.isEmpty()) continue
+			results.add(CitationMatch(match.range, bookId, groups, match.value))
+		}
+		return results
+	}
+
 	private fun parseBody(body: String): List<CitationGroup>? {
 		val tokens = body.split(",").map { it.trim() }
 		val groups = mutableListOf<CitationGroup>()

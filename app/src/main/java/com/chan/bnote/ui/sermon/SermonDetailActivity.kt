@@ -185,22 +185,25 @@ class SermonDetailActivity : AppCompatActivity() {
 			val plainText = restored.toString()
 
 			val bookCitations = CitationParser.findCitations(plainText)
-			// 본문(성경 구절)이 정확히 하나일 때만, "1절"처럼 절 번호만 있는 표기도 그 본문 기준으로 찾아준다.
-			val verseOnlyCitations = if (refs.size == 1) {
-				CitationParser.findVerseOnlyCitations(
+			// 본문(성경 구절)이 정확히 하나일 때만, "1절"처럼 절 번호만 있는 표기나 "(2:1)"처럼
+			// 책 표기 없는 장:절 표기도 그 본문 기준으로 찾아준다.
+			val contextualCitations = if (refs.size == 1) {
+				val verseOnly = CitationParser.findVerseOnlyCitations(
 					plainText,
 					refs[0].startBookId,
 					refs[0].startChapter
 				)
-					.filter { candidate ->
-						bookCitations.none { existing ->
-							existing.range.first <= candidate.range.last && candidate.range.first <= existing.range.last
-						}
+				val chapterVerse =
+					CitationParser.findChapterVerseCitations(plainText, refs[0].startBookId)
+				(verseOnly + chapterVerse).filter { candidate ->
+					bookCitations.none { existing ->
+						existing.range.first <= candidate.range.last && candidate.range.first <= existing.range.last
 					}
+				}
 			} else {
 				emptyList()
 			}
-			val citations = bookCitations + verseOnlyCitations
+			val citations = bookCitations + contextualCitations
 
 			val spannable = if (restored is Spannable) restored else SpannableString(restored)
 			for (citation in citations) {
