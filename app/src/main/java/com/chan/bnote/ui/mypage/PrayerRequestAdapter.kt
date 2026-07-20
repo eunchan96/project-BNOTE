@@ -15,7 +15,9 @@ import com.google.android.material.checkbox.MaterialCheckBox
 
 class PrayerRequestAdapter(
 	private val items: List<PrayerRequest>,
+	private val isManageMode: Boolean,
 	private val onToggleAnswered: (PrayerRequest) -> Unit,
+	private val onEdit: (PrayerRequest) -> Unit,
 	private val onDelete: (PrayerRequest) -> Unit
 ) : RecyclerView.Adapter<PrayerRequestAdapter.ViewHolder>() {
 
@@ -23,6 +25,7 @@ class PrayerRequestAdapter(
 		val checkbox: MaterialCheckBox = view.findViewById(R.id.checkbox_answered)
 		val content: TextView = view.findViewById(R.id.text_prayer_content)
 		val date: TextView = view.findViewById(R.id.text_prayer_date)
+		val editBtn: ImageView = view.findViewById(R.id.btn_edit_prayer)
 		val deleteBtn: ImageView = view.findViewById(R.id.btn_delete_prayer)
 	}
 
@@ -52,7 +55,11 @@ class PrayerRequestAdapter(
 			holder.date.text = DateUtils.formatDate(item.createdAt)
 		}
 
+		holder.editBtn.visibility = if (isManageMode) View.VISIBLE else View.GONE
+		holder.deleteBtn.visibility = if (isManageMode) View.VISIBLE else View.GONE
+
 		holder.checkbox.setOnCheckedChangeListener { _, _ -> onToggleAnswered(item) }
+		holder.editBtn.setOnClickListener { onEdit(item) }
 		holder.deleteBtn.setOnClickListener { onDelete(item) }
 	}
 

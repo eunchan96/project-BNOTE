@@ -13,6 +13,7 @@ import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.bible.BibleBooks
 import com.chan.bnote.data.mypage.ReadingProgress
 import com.chan.bnote.ui.DraggableBottomSheet
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 
 class ReadingPlanChapterBottomSheet(
@@ -63,7 +64,47 @@ class ReadingPlanChapterBottomSheet(
 				}
 			)
 			recyclerView.adapter = gridAdapter
+
+			view.findViewById<TextView>(R.id.btn_mark_all_read)
+				.setOnClickListener { confirmMarkAllRead() }
+			view.findViewById<TextView>(R.id.btn_reset_book_progress)
+				.setOnClickListener { confirmResetBook() }
 		}
+	}
+
+	private fun confirmMarkAllRead() {
+		MaterialAlertDialogBuilder(requireContext(), R.style.ThemeOverlay_BNOTE_Dialog)
+			.setTitle("전체 읽음 처리")
+			.setMessage("${BibleBooks.nameOf(bookId)} 전체 ${maxChapter}장을 읽음으로 표시할까요?")
+			.setPositiveButton("전체 읽음") { _, _ ->
+				lifecycleScope.launch {
+					val db = BibleDatabase.getInstance(requireContext().applicationContext)
+					for (chapter in 1..maxChapter) {
+						db.readingProgressDao()
+							.upsert(ReadingProgress(bookId = bookId, chapter = chapter))
+					}
+					changed = true
+					gridAdapter.updateReadChapters(loadReadChapters(db))
+				}
+			}
+			.setNegativeButton("취소", null)
+			.show()
+	}
+
+	private fun confirmResetBook() {
+		MaterialAlertDialogBuilder(requireContext(), R.style.ThemeOverlay_BNOTE_Dialog)
+			.setTitle("읽음 기록 초기화")
+			.setMessage("${BibleBooks.nameOf(bookId)}의 읽음 기록을 전부 지울까요?")
+			.setPositiveButton("초기화") { _, _ ->
+				lifecycleScope.launch {
+					val db = BibleDatabase.getInstance(requireContext().applicationContext)
+					db.readingProgressDao().deleteByBook(bookId)
+					changed = true
+					gridAdapter.updateReadChapters(loadReadChapters(db))
+				}
+			}
+			.setNegativeButton("취소", null)
+			.show()
 	}
 
 	private suspend fun loadReadChapters(db: com.chan.bnote.data.BibleDatabase): Set<Int> {

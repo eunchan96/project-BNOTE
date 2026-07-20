@@ -70,9 +70,10 @@ class ReadingPlanActivity : AppCompatActivity() {
 
 			val overallText = findViewById<TextView>(R.id.text_overall_progress)
 			val progressBar = findViewById<ProgressBar>(R.id.progress_overall)
-			val percent = if (totalChapters > 0) (totalRead * 100 / totalChapters) else 0
-			overallText.text = "전체 $totalRead / $totalChapters 장 읽음 ($percent%)"
-			progressBar.progress = percent
+			val percentValue = if (totalChapters > 0) (totalRead * 100.0 / totalChapters) else 0.0
+			val percentText = String.format(java.util.Locale.KOREA, "%.1f", percentValue)
+			overallText.text = "전체 $totalRead / $totalChapters 장 읽음 (${percentText}%)"
+			progressBar.progress = percentValue.toInt()
 
 			renderBookGrid(maxChapterByBook, readByBook)
 		}

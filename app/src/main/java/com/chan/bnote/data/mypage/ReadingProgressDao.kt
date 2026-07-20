@@ -17,6 +17,10 @@ interface ReadingProgressDao {
 	@Query("DELETE FROM reading_progress WHERE bookId = :bookId AND chapter = :chapter")
 	suspend fun delete(bookId: Int, chapter: Int)
 
+	// 성경읽기표 책별 바텀시트의 "초기화" 버튼용
+	@Query("DELETE FROM reading_progress WHERE bookId = :bookId")
+	suspend fun deleteByBook(bookId: Int)
+
 	// 설정 화면(D단계)에서 "읽음 기록 초기화" 버튼에 연결할 함수
 	@Query("DELETE FROM reading_progress")
 	suspend fun resetAll()

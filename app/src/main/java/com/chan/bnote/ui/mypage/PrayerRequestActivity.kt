@@ -25,6 +25,8 @@ class PrayerRequestActivity : AppCompatActivity() {
 
 	private lateinit var recyclerView: RecyclerView
 	private lateinit var emptyStateText: TextView
+	private lateinit var btnManage: TextView
+	private var isManageMode = false
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
@@ -41,8 +43,14 @@ class PrayerRequestActivity : AppCompatActivity() {
 		emptyStateText = findViewById(R.id.text_empty_state)
 		recyclerView.layoutManager = LinearLayoutManager(this)
 
+		btnManage = findViewById(R.id.btn_manage_prayer)
 		findViewById<ImageView>(R.id.btn_back).setOnClickListener { finish() }
 		findViewById<TextView>(R.id.btn_add_prayer).setOnClickListener { showAddDialog() }
+		btnManage.setOnClickListener {
+			isManageMode = !isManageMode
+			btnManage.text = if (isManageMode) "완료" else "관리"
+			loadItems()
+		}
 
 		loadItems()
 	}
@@ -55,7 +63,9 @@ class PrayerRequestActivity : AppCompatActivity() {
 			emptyStateText.visibility = if (items.isEmpty()) View.VISIBLE else View.GONE
 			recyclerView.adapter = PrayerRequestAdapter(
 				items = items,
+				isManageMode = isManageMode,
 				onToggleAnswered = { item -> toggleAnswered(item) },
+				onEdit = { item -> showEditDialog(item) },
 				onDelete = { item -> confirmDelete(item) }
 			)
 		}
@@ -75,19 +85,8 @@ class PrayerRequestActivity : AppCompatActivity() {
 	}
 
 	private fun showAddDialog() {
-		val editText = EditText(this).apply {
-			hint = "기도제목을 적어보세요"
-			setPadding(48, 32, 48, 32)
-			textSize = 15f
-			minLines = 3
-			gravity = Gravity.TOP or Gravity.START
-			background =
-				ContextCompat.getDrawable(this@PrayerRequestActivity, R.drawable.bg_book_button)
-		}
-		val container = FrameLayout(this).apply {
-			setPadding(dp(24), dp(16), dp(24), dp(0))
-			addView(editText)
-		}
+		val editText = buildDialogEditText()
+		val container = wrapInDialogContainer(editText)
 		MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_BNOTE_Dialog)
 			.setTitle("기도제목 추가")
 			.setView(container)
@@ -103,6 +102,45 @@ class PrayerRequestActivity : AppCompatActivity() {
 			}
 			.setNegativeButton("취소", null)
 			.show()
+	}
+
+	private fun showEditDialog(item: PrayerRequest) {
+		val editText = buildDialogEditText().apply { setText(item.content) }
+		val container = wrapInDialogContainer(editText)
+		MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_BNOTE_Dialog)
+			.setTitle("기도제목 수정")
+			.setView(container)
+			.setPositiveButton("저장") { _, _ ->
+				val text = editText.text.toString().trim()
+				if (text.isNotEmpty()) {
+					lifecycleScope.launch {
+						val db = BibleDatabase.getInstance(applicationContext)
+						db.prayerRequestDao().update(item.copy(content = text))
+						loadItems()
+					}
+				}
+			}
+			.setNegativeButton("취소", null)
+			.show()
+	}
+
+	private fun buildDialogEditText(): EditText {
+		return EditText(this).apply {
+			hint = "기도제목을 적어보세요"
+			setPadding(48, 32, 48, 32)
+			textSize = 15f
+			minLines = 3
+			gravity = Gravity.TOP or Gravity.START
+			background =
+				ContextCompat.getDrawable(this@PrayerRequestActivity, R.drawable.bg_book_button)
+		}
+	}
+
+	private fun wrapInDialogContainer(editText: EditText): FrameLayout {
+		return FrameLayout(this).apply {
+			setPadding(dp(24), dp(16), dp(24), dp(0))
+			addView(editText)
+		}
 	}
 
 	private fun confirmDelete(item: PrayerRequest) {
