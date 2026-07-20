@@ -9,9 +9,11 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.FileProvider
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.chan.bnote.R
+import com.chan.bnote.data.CrashLogger
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 class AppInfoActivity : AppCompatActivity() {
@@ -70,13 +72,26 @@ class AppInfoActivity : AppCompatActivity() {
 	}
 
 	private fun openContactEmail() {
-		val intent = Intent(Intent.ACTION_SENDTO).apply {
-			data = Uri.parse("mailto:")
-			putExtra(Intent.EXTRA_EMAIL, arrayOf(CONTACT_EMAIL))
-			putExtra(Intent.EXTRA_SUBJECT, "[BNOTE] 문의/피드백")
+		val logFile = CrashLogger.getLatestLogFile(this)
+		val intent = if (logFile != null) {
+			val logUri = FileProvider.getUriForFile(this, "$packageName.fileprovider", logFile)
+			Intent(Intent.ACTION_SEND).apply {
+				type = "text/plain"
+				putExtra(Intent.EXTRA_EMAIL, arrayOf(CONTACT_EMAIL))
+				putExtra(Intent.EXTRA_SUBJECT, "[BNOTE] 문의/피드백")
+				putExtra(Intent.EXTRA_TEXT, "최근 오류 기록을 함께 첨부했어요. 어떤 상황이었는지도 같이 적어주시면 도움이 많이 돼요!")
+				putExtra(Intent.EXTRA_STREAM, logUri)
+				addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+			}
+		} else {
+			Intent(Intent.ACTION_SENDTO).apply {
+				data = Uri.parse("mailto:")
+				putExtra(Intent.EXTRA_EMAIL, arrayOf(CONTACT_EMAIL))
+				putExtra(Intent.EXTRA_SUBJECT, "[BNOTE] 문의/피드백")
+			}
 		}
 		try {
-			startActivity(intent)
+			startActivity(Intent.createChooser(intent, "메일 앱 선택"))
 		} catch (e: Exception) {
 			Toast.makeText(this, "메일 앱을 찾을 수 없어요. $CONTACT_EMAIL 로 연락해주세요", Toast.LENGTH_LONG)
 				.show()
