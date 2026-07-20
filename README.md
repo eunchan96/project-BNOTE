@@ -60,9 +60,7 @@ BNOTE는 서버 없이 완전히 기기 안에서만 동작하는 안드로이�
 - **비동기 처리**: Kotlin Coroutines
 - **이미지 로딩**: [Coil](https://github.com/coil-kt/coil)
 - **레이아웃**: [Flexbox for Android](https://github.com/google/flexbox-layout)
-- **백그라운드 작업
-  **: [WorkManager](https://developer.android.com/topic/libraries/architecture/workmanager) (알림
-  스케줄링)
+- **백그라운드 작업**: [WorkManager](https://developer.android.com/topic/libraries/architecture/workmanager) (알림 스케줄링)
 - **시작화면**: [Core SplashScreen](https://developer.android.com/develop/ui/views/launch/splash-screen)
 
 | 항목                   | 값                |
