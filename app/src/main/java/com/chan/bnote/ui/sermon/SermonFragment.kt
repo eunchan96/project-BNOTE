@@ -11,7 +11,8 @@ import com.chan.bnote.R
 import com.chan.bnote.ui.TopBarActionHandler
 import com.chan.bnote.ui.TopBarConfig
 import com.chan.bnote.ui.sermon.bybook.SermonByBookFragment
-import com.chan.bnote.ui.sermon.calendar.CalendarSermonFragment
+import com.chan.bnote.ui.sermon.bycalendar.CalendarSermonFragment
+import com.chan.bnote.ui.sermon.bypreacher.SermonByPreacherFragment
 
 class SermonFragment : Fragment(), TopBarActionHandler {
 

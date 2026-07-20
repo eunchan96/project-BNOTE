@@ -22,7 +22,7 @@ import com.chan.bnote.R
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.bible.BibleBooks
 import com.chan.bnote.data.bible.BibleVerse
-import com.chan.bnote.data.partialhighlight.PartialHighlight
+import com.chan.bnote.data.bible.partialhighlight.PartialHighlight
 import kotlinx.coroutines.launch
 
 class HighlightListActivity : AppCompatActivity() {

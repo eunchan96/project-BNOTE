@@ -17,11 +17,11 @@ import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.bible.BibleBooks
 import com.chan.bnote.data.sermon.ChapterMarker
 import com.chan.bnote.data.sermon.Sermon
-import com.chan.bnote.ui.bible.BookOnlyPickerBottomSheet
-import com.chan.bnote.ui.sermon.AddSermonActivity
-import com.chan.bnote.ui.sermon.SermonDetailActivity
+import com.chan.bnote.ui.bible.picker.BookOnlyPickerBottomSheet
 import com.chan.bnote.ui.sermon.SermonRowAdapter
 import com.chan.bnote.ui.sermon.SermonRowBuilder
+import com.chan.bnote.ui.sermon.addsermon.AddSermonActivity
+import com.chan.bnote.ui.sermon.detail.SermonDetailActivity
 import kotlinx.coroutines.launch
 
 class SermonByBookFragment : Fragment() {

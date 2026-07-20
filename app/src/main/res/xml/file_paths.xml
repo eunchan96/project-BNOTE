@@ -3,4 +3,7 @@
     <files-path
         name="sermon_photos"
         path="sermon_photos/" />
+    <files-path
+        name="crash_logs"
+        path="crash_logs/" />
 </paths>

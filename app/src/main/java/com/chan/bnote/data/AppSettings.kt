@@ -15,6 +15,9 @@ object AppSettings {
 	private const val KEY_PREACHER_SORT_MODE = "preacher_sort_mode" // "NAME" or "CUSTOM"
 	private const val KEY_PREACHER_CUSTOM_ORDER = "preacher_custom_order" // 쉼표 구분 문자열
 	private const val KEY_SERMON_SORT_MODE = "sermon_sort_mode" // "DATE" or "BIBLE"
+	private const val KEY_BIBLE_SEARCH_HISTORY = "bible_search_history" // 구분자로 이어붙인 문자열, 최신순
+	private const val SEARCH_HISTORY_DELIMITER = "\u001E"
+	private const val MAX_SEARCH_HISTORY = 20
 
 	private const val DEFAULT_FONT_SIZE = 16
 	const val MIN_FONT_SIZE = 12
@@ -116,6 +119,38 @@ object AppSettings {
 	fun setPreacherCustomOrderIds(context: Context, ids: List<Long>) {
 		context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
 			.edit().putString(KEY_PREACHER_CUSTOM_ORDER, ids.joinToString(",")).apply()
+	}
+
+	// --- 성경 검색 기록 (최신순, 최대 MAX_SEARCH_HISTORY개, 중복 없음) ---
+
+	fun getBibleSearchHistory(context: Context): List<String> {
+		val raw = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.getString(KEY_BIBLE_SEARCH_HISTORY, "") ?: ""
+		return if (raw.isBlank()) emptyList() else raw.split(SEARCH_HISTORY_DELIMITER)
+			.filter { it.isNotBlank() }
+	}
+
+	fun addBibleSearchHistory(context: Context, keyword: String) {
+		val trimmed = keyword.trim()
+		if (trimmed.isEmpty()) return
+		val updated = mutableListOf(trimmed)
+		updated.addAll(getBibleSearchHistory(context).filter { it != trimmed })
+		saveBibleSearchHistory(context, updated.take(MAX_SEARCH_HISTORY))
+	}
+
+	fun removeBibleSearchHistory(context: Context, keyword: String) {
+		saveBibleSearchHistory(context, getBibleSearchHistory(context).filter { it != keyword })
+	}
+
+	fun clearBibleSearchHistory(context: Context) {
+		saveBibleSearchHistory(context, emptyList())
+	}
+
+	private fun saveBibleSearchHistory(context: Context, history: List<String>) {
+		context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.edit()
+			.putString(KEY_BIBLE_SEARCH_HISTORY, history.joinToString(SEARCH_HISTORY_DELIMITER))
+			.apply()
 	}
 
 	fun getSermonSortMode(context: Context): String {

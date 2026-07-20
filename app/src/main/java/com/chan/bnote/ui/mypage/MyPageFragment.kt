@@ -18,12 +18,20 @@ import androidx.lifecycle.lifecycleScope
 import com.chan.bnote.R
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.bible.BibleBooks
-import com.chan.bnote.data.profile.ProfileDisplay
+import com.chan.bnote.data.mypage.profile.ProfileDisplay
 import com.chan.bnote.ui.BibleNavigationHost
 import com.chan.bnote.ui.TopBarActionHandler
 import com.chan.bnote.ui.TopBarConfig
-import com.chan.bnote.ui.bible.MemoListActivity
-import com.chan.bnote.ui.sermon.SermonDetailActivity
+import com.chan.bnote.ui.bible.memo.MemoListActivity
+import com.chan.bnote.ui.mypage.memorization.MemorizationVerseListActivity
+import com.chan.bnote.ui.mypage.prayer.PrayerRequestActivity
+import com.chan.bnote.ui.mypage.profile.ProfileActivity
+import com.chan.bnote.ui.mypage.profile.loadProfilePhoto
+import com.chan.bnote.ui.mypage.profile.setNameWithPosition
+import com.chan.bnote.ui.mypage.readingplan.ReadingPlanActivity
+import com.chan.bnote.ui.mypage.settings.SettingsActivity
+import com.chan.bnote.ui.mypage.verseofyear.VerseOfYearActivity
+import com.chan.bnote.ui.sermon.detail.SermonDetailActivity
 import kotlinx.coroutines.launch
 
 class MyPageFragment : Fragment(), TopBarActionHandler {

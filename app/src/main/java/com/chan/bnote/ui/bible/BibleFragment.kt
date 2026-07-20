@@ -20,13 +20,13 @@ import com.chan.bnote.data.bible.BibleBooks
 import com.chan.bnote.data.bible.BibleSeeder
 import com.chan.bnote.data.bible.BibleVerse
 import com.chan.bnote.data.bible.Translation
-import com.chan.bnote.data.bookmark.BibleBookmark
-import com.chan.bnote.data.memo.VerseMemo
-import com.chan.bnote.data.memo.WordMemo
+import com.chan.bnote.data.bible.bookmark.BibleBookmark
+import com.chan.bnote.data.bible.memo.VerseMemo
+import com.chan.bnote.data.bible.memo.WordMemo
+import com.chan.bnote.data.bible.partialhighlight.PartialHighlight
+import com.chan.bnote.data.bible.scrap.Scrap
 import com.chan.bnote.data.mypage.CopyFormatter
-import com.chan.bnote.data.mypage.ReadingProgress
-import com.chan.bnote.data.partialhighlight.PartialHighlight
-import com.chan.bnote.data.scrap.Scrap
+import com.chan.bnote.data.mypage.readingplan.ReadingProgress
 import com.chan.bnote.ui.TopBarActionHandler
 import com.chan.bnote.ui.TopBarConfig
 import com.chan.bnote.ui.TopBarConfigListener
@@ -34,11 +34,17 @@ import com.chan.bnote.ui.appendix.AppendixTextActivity
 import com.chan.bnote.ui.appendix.AppendixTextType
 import com.chan.bnote.ui.appendix.ResponsiveReadingListActivity
 import com.chan.bnote.ui.appendix.TenCommandmentsActivity
+import com.chan.bnote.ui.bible.hymn.HymnListActivity
+import com.chan.bnote.ui.bible.memo.MemoListActivity
+import com.chan.bnote.ui.bible.memo.VerseMemoEditorActivity
+import com.chan.bnote.ui.bible.memo.WordMemoEditorActivity
+import com.chan.bnote.ui.bible.picker.BookChapterPickerBottomSheet
+import com.chan.bnote.ui.bible.picker.TranslationPickerBottomSheet
+import com.chan.bnote.ui.bible.scrap.ScrapActivity
+import com.chan.bnote.ui.bible.scrap.ScrapGroupPickerBottomSheet
 import com.chan.bnote.ui.common.ColorPickerBottomSheet
 import com.chan.bnote.ui.common.HighlightColors
 import com.chan.bnote.ui.knowledge.BibleKnowledgeHubActivity
-import com.chan.bnote.ui.scrap.ScrapActivity
-import com.chan.bnote.ui.scrap.ScrapGroupPickerBottomSheet
 import kotlinx.coroutines.launch
 
 class BibleFragment : Fragment(), TopBarActionHandler {
@@ -293,7 +299,7 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 			)
 		}
 		dialog.onHymnClicked = {
-			com.chan.bnote.ui.hymn.HymnListActivity.start(requireContext())
+			HymnListActivity.start(requireContext())
 		}
 		dialog.onHighlightClicked = {
 			startActivity(Intent(requireContext(), HighlightListActivity::class.java))

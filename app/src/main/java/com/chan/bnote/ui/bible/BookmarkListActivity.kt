@@ -20,7 +20,7 @@ import com.chan.bnote.R
 import com.chan.bnote.data.AppSettings
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.bible.BibleBooks
-import com.chan.bnote.data.bookmark.BookmarkedVerseRow
+import com.chan.bnote.data.bible.bookmark.BookmarkedVerseRow
 import kotlinx.coroutines.launch
 
 class BookmarkListActivity : AppCompatActivity() {

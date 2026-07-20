@@ -6,7 +6,11 @@
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler_verses"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+        android:scrollbars="vertical"
+        android:scrollbarSize="3dp"
+        android:scrollbarStyle="outsideOverlay"
+        android:fadeScrollbars="true" />
 
     <include layout="@layout/include_selection_toolbar" />
 

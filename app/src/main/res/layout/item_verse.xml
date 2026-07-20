@@ -11,7 +11,7 @@
         android:layout_height="wrap_content"
         android:paddingStart="12dp"
         android:paddingEnd="12dp"
-        android:paddingTop="12dp"
+        android:paddingTop="10dp"
         android:paddingBottom="0dp"
         android:textSize="14sp"
         android:textStyle="bold"
@@ -23,17 +23,19 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:paddingStart="12dp"
+        android:paddingStart="6dp"
         android:paddingEnd="12dp"
         android:paddingTop="4dp"
-        android:paddingBottom="12dp">
+        android:paddingBottom="8dp">
 
         <TextView
             android:id="@+id/text_verse_number"
-            android:layout_width="wrap_content"
+            android:layout_width="26dp"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="8dp"
+            android:layout_marginEnd="4dp"
             android:layout_marginTop="3dp"
+            android:gravity="center"
+            android:maxLines="1"
             android:textStyle="bold"
             android:textColor="@color/text_secondary" />
 

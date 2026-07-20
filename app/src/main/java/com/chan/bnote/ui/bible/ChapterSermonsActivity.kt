@@ -16,9 +16,9 @@ import com.chan.bnote.R
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.DateUtils
 import com.chan.bnote.data.bible.BibleBooks
-import com.chan.bnote.ui.sermon.SermonDetailActivity
 import com.chan.bnote.ui.sermon.SermonRowAdapter
 import com.chan.bnote.ui.sermon.SermonRowData
+import com.chan.bnote.ui.sermon.detail.SermonDetailActivity
 import kotlinx.coroutines.launch
 
 class ChapterSermonsActivity : AppCompatActivity() {

@@ -17,10 +17,10 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.chan.bnote.R
 import com.chan.bnote.data.bible.BibleVerse
-import com.chan.bnote.data.bookmark.BibleBookmark
-import com.chan.bnote.data.memo.VerseMemo
-import com.chan.bnote.data.memo.WordMemo
-import com.chan.bnote.data.partialhighlight.PartialHighlight
+import com.chan.bnote.data.bible.bookmark.BibleBookmark
+import com.chan.bnote.data.bible.memo.VerseMemo
+import com.chan.bnote.data.bible.memo.WordMemo
+import com.chan.bnote.data.bible.partialhighlight.PartialHighlight
 import com.chan.bnote.ui.common.HighlightColors
 
 class VerseAdapter(
@@ -42,6 +42,15 @@ class VerseAdapter(
 	companion object {
 		private const val ID_HIGHLIGHT = 9001
 		private const val ID_MEMO = 9002
+	}
+
+	// 장의 최대 절 번호 자릿수에 따라 절 번호 칸 너비를 정한다 (1~2자리 장에서 괜히 넓지 않게).
+	private val numberColumnWidthDp: Int by lazy {
+		val maxVerse = verses.maxOfOrNull { it.verse } ?: 1
+		when {
+			maxVerse >= 100 -> 26
+			else -> 20
+		}
 	}
 
 	class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -73,7 +82,7 @@ class VerseAdapter(
 
 		// 장이 소제목 없이 1절부터 바로 시작하면 맨 위가 너무 붙어 보여서 여백을 더 준다.
 		val extraTopSpacing = position == 0 && titleText.isNullOrBlank()
-		val topPaddingDp = if (extraTopSpacing) 16 else 4
+		val topPaddingDp = if (extraTopSpacing) 12 else 4
 		val topPaddingPx = (topPaddingDp * context.resources.displayMetrics.density).toInt()
 		holder.contentRow.setPadding(
 			holder.contentRow.paddingLeft,
@@ -81,6 +90,12 @@ class VerseAdapter(
 			holder.contentRow.paddingRight,
 			holder.contentRow.paddingBottom
 		)
+
+		// 절 번호 칸 너비를 장의 최대 절 번호 자릿수에 맞춘다.
+		val numberWidthPx = (numberColumnWidthDp * context.resources.displayMetrics.density).toInt()
+		if (holder.number.layoutParams.width != numberWidthPx) {
+			holder.number.layoutParams = holder.number.layoutParams.apply { width = numberWidthPx }
+		}
 
 		// 절 번호: 구절 메모 있으면 밑줄
 		val verseMemo = verseMemos[verseItem.verse]

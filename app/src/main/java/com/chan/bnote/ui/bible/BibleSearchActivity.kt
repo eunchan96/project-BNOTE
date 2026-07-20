@@ -6,10 +6,12 @@ import android.content.Intent
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
+import android.view.LayoutInflater
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -44,6 +46,8 @@ class BibleSearchActivity : AppCompatActivity() {
 	private lateinit var editSearch: EditText
 	private lateinit var recyclerView: RecyclerView
 	private lateinit var emptyText: TextView
+	private lateinit var historyContainer: View
+	private lateinit var historyItemsContainer: LinearLayout
 	private var searchJob: Job? = null
 
 	override fun onCreate(savedInstanceState: Bundle?) {
@@ -71,6 +75,8 @@ class BibleSearchActivity : AppCompatActivity() {
 		editSearch = findViewById(R.id.edit_search)
 		recyclerView = findViewById(R.id.recycler_search_results)
 		emptyText = findViewById(R.id.text_search_empty)
+		historyContainer = findViewById(R.id.container_search_history)
+		historyItemsContainer = findViewById(R.id.container_search_history_items)
 		recyclerView.layoutManager = LinearLayoutManager(this)
 
 		editSearch.addTextChangedListener(object : TextWatcher {
@@ -80,6 +86,8 @@ class BibleSearchActivity : AppCompatActivity() {
 				onQueryChanged(translation, s?.toString().orEmpty())
 			}
 		})
+
+		showSearchHistory()
 
 		editSearch.requestFocus()
 		editSearch.postDelayed({
@@ -94,11 +102,11 @@ class BibleSearchActivity : AppCompatActivity() {
 		val normalizedLength = keyword.replace(" ", "").length
 
 		if (keyword.isBlank()) {
-			emptyText.text = "검색어를 입력해주세요"
-			emptyText.visibility = View.VISIBLE
-			recyclerView.visibility = View.GONE
+			showSearchHistory()
 			return
 		}
+
+		historyContainer.visibility = View.GONE
 
 		if (normalizedLength < 2) {
 			emptyText.text = "2글자 이상 입력해주세요"
@@ -110,7 +118,10 @@ class BibleSearchActivity : AppCompatActivity() {
 		searchJob = lifecycleScope.launch {
 			delay(300)
 			val db = BibleDatabase.getInstance(applicationContext)
-			val results = db.bibleDao().searchVerses(translation, keyword.trim())
+			val trimmedKeyword = keyword.trim()
+			val results = db.bibleDao().searchVerses(translation, trimmedKeyword)
+
+			AppSettings.addBibleSearchHistory(this@BibleSearchActivity, trimmedKeyword)
 
 			if (results.isEmpty()) {
 				emptyText.text = "검색 결과가 없어요"
@@ -131,6 +142,42 @@ class BibleSearchActivity : AppCompatActivity() {
 				setResult(Activity.RESULT_OK, result)
 				finish()
 			}
+		}
+	}
+
+	/** 검색 전 상태: 결과/안내 문구는 숨기고, 검색 기록이 있으면 보여준다. */
+	private fun showSearchHistory() {
+		searchJob?.cancel()
+		recyclerView.visibility = View.GONE
+
+		val history = AppSettings.getBibleSearchHistory(this)
+		if (history.isEmpty()) {
+			emptyText.text = "검색어를 입력해주세요"
+			emptyText.visibility = View.VISIBLE
+			historyContainer.visibility = View.GONE
+			return
+		}
+
+		emptyText.visibility = View.GONE
+		historyContainer.visibility = View.VISIBLE
+		renderSearchHistory(history)
+	}
+
+	private fun renderSearchHistory(history: List<String>) {
+		historyItemsContainer.removeAllViews()
+		for (keyword in history) {
+			val row = LayoutInflater.from(this)
+				.inflate(R.layout.item_search_history_row, historyItemsContainer, false)
+			row.findViewById<TextView>(R.id.text_history_keyword).text = keyword
+			row.setOnClickListener {
+				editSearch.setText(keyword)
+				editSearch.setSelection(keyword.length)
+			}
+			row.findViewById<ImageView>(R.id.btn_remove_history).setOnClickListener {
+				AppSettings.removeBibleSearchHistory(this, keyword)
+				showSearchHistory()
+			}
+			historyItemsContainer.addView(row)
 		}
 	}
 }
