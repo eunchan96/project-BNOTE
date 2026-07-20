@@ -17,10 +17,10 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.chan.bnote.R
 import com.chan.bnote.data.bible.BibleVerse
-import com.chan.bnote.data.bookmark.BibleBookmark
-import com.chan.bnote.data.memo.VerseMemo
-import com.chan.bnote.data.memo.WordMemo
-import com.chan.bnote.data.partialhighlight.PartialHighlight
+import com.chan.bnote.data.bible.bookmark.BibleBookmark
+import com.chan.bnote.data.bible.memo.VerseMemo
+import com.chan.bnote.data.bible.memo.WordMemo
+import com.chan.bnote.data.bible.partialhighlight.PartialHighlight
 import com.chan.bnote.ui.common.HighlightColors
 
 class VerseAdapter(

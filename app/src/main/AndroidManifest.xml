@@ -33,10 +33,10 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".ui.scrap.ScrapActivity"
+            android:name=".ui.bible.scrap.ScrapActivity"
             android:exported="false" />
         <activity
-            android:name=".ui.scrap.ScrapGroupManageActivity"
+            android:name=".ui.bible.scrap.ScrapGroupManageActivity"
             android:exported="false" />
         <activity
             android:name=".ui.appendix.AppendixTextActivity"
@@ -51,60 +51,60 @@
             android:name=".ui.appendix.ResponsiveReadingDetailActivity"
             android:exported="false" />
         <activity
-            android:name=".ui.sermon.AddSermonActivity"
+            android:name=".ui.sermon.addsermon.AddSermonActivity"
             android:windowSoftInputMode="adjustResize"
             android:exported="false" />
         <activity
-            android:name=".ui.bible.MemoEditorActivity"
+            android:name=".ui.bible.memo.MemoEditorActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
         <activity
-            android:name=".ui.bible.WordMemoEditorActivity"
+            android:name=".ui.bible.memo.WordMemoEditorActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
         <activity
-            android:name=".ui.bible.VerseMemoEditorActivity"
+            android:name=".ui.bible.memo.VerseMemoEditorActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
         <activity
-            android:name=".ui.mypage.SettingsActivity"
+            android:name=".ui.mypage.settings.SettingsActivity"
             android:exported="false" />
         <activity
-            android:name=".ui.mypage.ReadingPlanActivity"
+            android:name=".ui.mypage.readingplan.ReadingPlanActivity"
             android:exported="false" />
         <activity
-            android:name=".ui.mypage.ProfileActivity"
+            android:name=".ui.mypage.profile.ProfileActivity"
             android:exported="false" />
         <activity
-            android:name=".ui.mypage.ProfileEditActivity"
+            android:name=".ui.mypage.profile.ProfileEditActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
         <activity
-            android:name=".ui.mypage.VerseOfYearActivity"
+            android:name=".ui.mypage.verseofyear.VerseOfYearActivity"
             android:exported="false" />
         <activity
-            android:name=".ui.mypage.MemorizationPracticeActivity"
+            android:name=".ui.mypage.memorization.MemorizationPracticeActivity"
             android:exported="false" />
         <activity
-            android:name=".ui.mypage.MemorizationVerseListActivity"
+            android:name=".ui.mypage.memorization.MemorizationVerseListActivity"
             android:exported="false" />
         <activity
-            android:name=".ui.mypage.MemorizationGroupManageActivity"
+            android:name=".ui.mypage.memorization.MemorizationGroupManageActivity"
             android:exported="false" />
         <activity
-            android:name=".ui.mypage.AppInfoActivity"
+            android:name=".ui.mypage.settings.AppInfoActivity"
             android:exported="false" />
         <activity
-            android:name=".ui.mypage.UserGuideActivity"
+            android:name=".ui.mypage.guide.UserGuideActivity"
             android:exported="false" />
         <activity
-            android:name=".ui.mypage.UserGuideDetailActivity"
+            android:name=".ui.mypage.guide.UserGuideDetailActivity"
             android:exported="false" />
         <activity
-            android:name=".ui.mypage.OpenSourceLicensesActivity"
+            android:name=".ui.mypage.settings.OpenSourceLicensesActivity"
             android:exported="false" />
         <activity
-            android:name=".ui.mypage.MemorizationVerseDetailActivity"
+            android:name=".ui.mypage.memorization.MemorizationVerseDetailActivity"
             android:windowSoftInputMode="adjustResize"
             android:exported="false" />
         <activity
@@ -150,17 +150,17 @@
             android:name=".ui.knowledge.ParableDetailActivity"
             android:exported="false" />
         <activity
-            android:name=".ui.mypage.PrayerRequestActivity"
+            android:name=".ui.mypage.prayer.PrayerRequestActivity"
             android:exported="false" />
         <activity
-            android:name=".ui.mypage.VerseOfYearEditActivity"
+            android:name=".ui.mypage.verseofyear.VerseOfYearEditActivity"
             android:windowSoftInputMode="adjustResize"
             android:exported="false" />
         <activity
             android:name=".ui.sermon.CategoryManageActivity"
             android:exported="false" />
         <activity
-            android:name=".ui.sermon.SermonDetailActivity"
+            android:name=".ui.sermon.detail.SermonDetailActivity"
             android:exported="false" />
         <activity
             android:name=".ui.bible.ChapterSermonsActivity"
@@ -180,19 +180,19 @@
             android:name=".ui.bible.HighlightListActivity"
             android:exported="false" />
         <activity
-            android:name=".ui.bible.MemoListActivity"
+            android:name=".ui.bible.memo.MemoListActivity"
             android:exported="false" />
         <activity
-            android:name=".ui.hymn.HymnListActivity"
+            android:name=".ui.bible.hymn.HymnListActivity"
             android:exported="false" />
         <activity
-            android:name=".ui.hymn.HymnCategoryGridActivity"
+            android:name=".ui.bible.hymn.HymnCategoryGridActivity"
             android:exported="false" />
         <activity
-            android:name=".ui.hymn.HymnDetailActivity"
+            android:name=".ui.bible.hymn.HymnDetailActivity"
             android:exported="false" />
         <activity
-            android:name=".ui.sermon.PhotoViewerActivity"
+            android:name=".ui.sermon.addsermon.PhotoViewerActivity"
             android:exported="false" />
 
         <provider
