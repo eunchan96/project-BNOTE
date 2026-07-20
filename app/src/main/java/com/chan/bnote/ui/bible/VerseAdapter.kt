@@ -82,7 +82,7 @@ class VerseAdapter(
 
 		// 장이 소제목 없이 1절부터 바로 시작하면 맨 위가 너무 붙어 보여서 여백을 더 준다.
 		val extraTopSpacing = position == 0 && titleText.isNullOrBlank()
-		val topPaddingDp = if (extraTopSpacing) 16 else 4
+		val topPaddingDp = if (extraTopSpacing) 12 else 4
 		val topPaddingPx = (topPaddingDp * context.resources.displayMetrics.density).toInt()
 		holder.contentRow.setPadding(
 			holder.contentRow.paddingLeft,
