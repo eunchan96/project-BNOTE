@@ -13,7 +13,7 @@
     <!-- 시작화면(스플래시): 브라운 배경 + 책 아이콘, 뜬 뒤 바로 본 테마로 전환 -->
     <style name="Theme.BNOTE.Splash" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">@color/brown_primary</item>
-        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_bible_only</item>
         <item name="postSplashScreenTheme">@style/Theme.BNOTE</item>
     </style>
 
