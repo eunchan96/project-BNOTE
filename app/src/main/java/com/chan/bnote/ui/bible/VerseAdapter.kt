@@ -44,6 +44,15 @@ class VerseAdapter(
 		private const val ID_MEMO = 9002
 	}
 
+	// 장의 최대 절 번호 자릿수에 따라 절 번호 칸 너비를 정한다 (1~2자리 장에서 괜히 넓지 않게).
+	private val numberColumnWidthDp: Int by lazy {
+		val maxVerse = verses.maxOfOrNull { it.verse } ?: 1
+		when {
+			maxVerse >= 100 -> 26
+			else -> 20
+		}
+	}
+
 	class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
 		val root: View = view.findViewById(R.id.item_root)
 		val contentRow: View = view.findViewById(R.id.content_row)
@@ -81,6 +90,12 @@ class VerseAdapter(
 			holder.contentRow.paddingRight,
 			holder.contentRow.paddingBottom
 		)
+
+		// 절 번호 칸 너비를 장의 최대 절 번호 자릿수에 맞춘다.
+		val numberWidthPx = (numberColumnWidthDp * context.resources.displayMetrics.density).toInt()
+		if (holder.number.layoutParams.width != numberWidthPx) {
+			holder.number.layoutParams = holder.number.layoutParams.apply { width = numberWidthPx }
+		}
 
 		// 절 번호: 구절 메모 있으면 밑줄
 		val verseMemo = verseMemos[verseItem.verse]

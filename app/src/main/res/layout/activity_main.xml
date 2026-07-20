@@ -39,7 +39,7 @@
             android:padding="8dp"
             android:text="창세기 1장"
             android:textColor="@color/white"
-            android:textSize="16sp"
+            android:textSize="17sp"
             android:textStyle="bold"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:clickable="true"
