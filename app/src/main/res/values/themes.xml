@@ -10,6 +10,13 @@
 
     <style name="Theme.BNOTE" parent="Base.Theme.BNOTE" />
 
+    <!-- 시작화면(스플래시): 브라운 배경 + 책 아이콘, 뜬 뒤 바로 본 테마로 전환 -->
+    <style name="Theme.BNOTE.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/brown_primary</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <item name="postSplashScreenTheme">@style/Theme.BNOTE</item>
+    </style>
+
     <style name="RightPanelDialog" parent="Theme.AppCompat.Dialog">
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowIsFloating">false</item>

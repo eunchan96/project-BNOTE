@@ -6,6 +6,7 @@ import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
@@ -52,6 +53,7 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 	private var myPageFragment: MyPageFragment? = null
 
 	override fun onCreate(savedInstanceState: Bundle?) {
+		installSplashScreen()
 		super.onCreate(savedInstanceState)
 
 		val darkMode = AppSettings.isDarkMode(this)
