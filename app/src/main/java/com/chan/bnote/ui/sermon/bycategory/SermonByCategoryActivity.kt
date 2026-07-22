@@ -9,8 +9,12 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.fragment.app.Fragment
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -22,8 +26,8 @@ import com.chan.bnote.ui.sermon.SermonRowBuilder
 import com.chan.bnote.ui.sermon.detail.SermonDetailActivity
 import kotlinx.coroutines.launch
 
-/** 설교를 카테고리별로 모아보는 화면 (설교 탭의 하위 탭 중 하나). */
-class SermonByCategoryFragment : Fragment() {
+/** 설교를 카테고리별로 모아보는 화면. 설교 탭 메뉴(≡) > 카테고리별 보기에서 연다. */
+class SermonByCategoryActivity : AppCompatActivity() {
 
 	private data class CategoryRow(val category: SermonCategory?, val count: Int)
 
@@ -45,26 +49,31 @@ class SermonByCategoryFragment : Fragment() {
 		}
 	}
 
-	override fun onCreateView(
-		inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
-	): View {
-		return inflater.inflate(R.layout.fragment_sermon_by_category, container, false)
-	}
+	override fun onCreate(savedInstanceState: Bundle?) {
+		super.onCreate(savedInstanceState)
+		enableEdgeToEdge()
+		setContentView(R.layout.activity_sermon_by_category)
 
-	override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-		super.onViewCreated(view, savedInstanceState)
+		ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.sermon_by_category_root)) { v, insets ->
+			val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+			v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+			insets
+		}
 
-		categoryListContainer = view.findViewById(R.id.container_category_list)
-		sermonListContainer = view.findViewById(R.id.container_category_sermons)
-		categoryRecycler = view.findViewById(R.id.recycler_categories)
-		sermonRecycler = view.findViewById(R.id.recycler_category_sermons)
-		selectedCategoryText = view.findViewById(R.id.text_selected_category)
-		emptyText = view.findViewById(R.id.text_empty_category_sermons)
+		findViewById<TextView>(R.id.text_top_bar_title).text = "카테고리별 보기"
+		findViewById<ImageView>(R.id.btn_top_bar_back).setOnClickListener { finish() }
 
-		categoryRecycler.layoutManager = LinearLayoutManager(requireContext())
-		sermonRecycler.layoutManager = LinearLayoutManager(requireContext())
+		categoryListContainer = findViewById(R.id.container_category_list)
+		sermonListContainer = findViewById(R.id.container_category_sermons)
+		categoryRecycler = findViewById(R.id.recycler_categories)
+		sermonRecycler = findViewById(R.id.recycler_category_sermons)
+		selectedCategoryText = findViewById(R.id.text_selected_category)
+		emptyText = findViewById(R.id.text_empty_category_sermons)
 
-		view.findViewById<ImageView>(R.id.btn_back_from_category_detail).setOnClickListener {
+		categoryRecycler.layoutManager = LinearLayoutManager(this)
+		sermonRecycler.layoutManager = LinearLayoutManager(this)
+
+		findViewById<ImageView>(R.id.btn_back_from_category_detail).setOnClickListener {
 			categoryListContainer.visibility = View.VISIBLE
 			sermonListContainer.visibility = View.GONE
 			selectedCategory = null
@@ -81,7 +90,7 @@ class SermonByCategoryFragment : Fragment() {
 
 	private fun loadCategories() {
 		lifecycleScope.launch {
-			val db = BibleDatabase.getInstance(requireContext().applicationContext)
+			val db = BibleDatabase.getInstance(applicationContext)
 			val categories = db.sermonCategoryDao().getAll()
 			val allSermons = db.sermonDao().getAll()
 
@@ -109,8 +118,8 @@ class SermonByCategoryFragment : Fragment() {
 					drawable.shape = GradientDrawable.OVAL
 					val colorHex = row.category?.colorHex ?: String.format(
 						"#%06X",
-						0xFFFFFF and androidx.core.content.ContextCompat.getColor(
-							requireContext(), R.color.category_none
+						0xFFFFFF and ContextCompat.getColor(
+							this@SermonByCategoryActivity, R.color.category_none
 						)
 					)
 					drawable.setColor(Color.parseColor(colorHex))
@@ -133,7 +142,7 @@ class SermonByCategoryFragment : Fragment() {
 
 	private fun loadSermonsForCategory(category: SermonCategory?) {
 		lifecycleScope.launch {
-			val db = BibleDatabase.getInstance(requireContext().applicationContext)
+			val db = BibleDatabase.getInstance(applicationContext)
 			val allSermons = db.sermonDao().getAll()
 			val filtered = allSermons.filter { it.categoryId == category?.id }
 				.sortedByDescending { it.sermonDate }
@@ -145,7 +154,7 @@ class SermonByCategoryFragment : Fragment() {
 			sermonRecycler.adapter = SermonRowAdapter(rows) { sermon ->
 				sermonDetailLauncher.launch(
 					SermonDetailActivity.createIntent(
-						requireContext(),
+						this@SermonByCategoryActivity,
 						sermon.id
 					)
 				)
