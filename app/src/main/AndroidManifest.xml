@@ -160,9 +160,6 @@
             android:windowSoftInputMode="adjustResize"
             android:exported="false" />
         <activity
-            android:name=".ui.sermon.bycategory.SermonByCategoryActivity"
-            android:exported="false" />
-        <activity
             android:name=".ui.sermon.CategoryManageActivity"
             android:exported="false" />
         <activity
@@ -175,6 +172,9 @@
             android:name=".ui.sermon.SermonSearchActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name=".ui.sermon.bycategory.SermonByCategoryActivity"
+            android:exported="false" />
         <activity
             android:name=".ui.bible.BibleSearchActivity"
             android:exported="false"
