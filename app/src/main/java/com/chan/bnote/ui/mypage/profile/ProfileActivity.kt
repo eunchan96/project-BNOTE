@@ -87,7 +87,7 @@ class ProfileActivity : AppCompatActivity() {
 			val totalChapters = maxChapterByBook.values.sum()
 			val readList = db.readingProgressDao().getAll()
 			val totalRead = readList.size
-			val percent = if (totalChapters > 0) (totalRead * 100 / totalChapters) else 0
+			val percent = if (totalChapters > 0) (totalRead * 100.0 / totalChapters) else 0.0
 
 			val (currentStreak, longestStreak) = calculateStreak(readList.map { it.readAt })
 
@@ -156,11 +156,12 @@ class ProfileActivity : AppCompatActivity() {
 	}
 
 	private fun renderReadingStatus(
-		totalRead: Int, totalChapters: Int, percent: Int, currentStreak: Int, longestStreak: Int
+		totalRead: Int, totalChapters: Int, percent: Double, currentStreak: Int, longestStreak: Int
 	) {
+		val percentText = String.format(java.util.Locale.KOREA, "%.1f", percent)
 		findViewById<TextView>(R.id.text_reading_summary).text =
-			"전체 $totalRead / ${totalChapters}장 읽음 ($percent%)"
-		findViewById<ProgressBar>(R.id.progress_reading_percent).progress = percent
+			"전체 $totalRead / ${totalChapters}장 읽음 (${percentText}%)"
+		findViewById<ProgressBar>(R.id.progress_reading_percent).progress = percent.toInt()
 
 		val streakText = findViewById<TextView>(R.id.text_streak)
 		streakText.text = if (currentStreak > 0) {
