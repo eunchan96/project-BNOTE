@@ -12,6 +12,7 @@ import com.chan.bnote.ui.TopBarActionHandler
 import com.chan.bnote.ui.TopBarConfig
 import com.chan.bnote.ui.sermon.bybook.SermonByBookFragment
 import com.chan.bnote.ui.sermon.bycalendar.CalendarSermonFragment
+import com.chan.bnote.ui.sermon.bycategory.SermonByCategoryFragment
 import com.chan.bnote.ui.sermon.bypreacher.SermonByPreacherFragment
 
 class SermonFragment : Fragment(), TopBarActionHandler {
@@ -32,6 +33,7 @@ class SermonFragment : Fragment(), TopBarActionHandler {
 		subtabCalendar = view.findViewById(R.id.subtab_calendar)
 		subtabByBook = view.findViewById(R.id.subtab_by_book)
 		subtabByPreacher = view.findViewById(R.id.subtab_by_preacher)
+		subtabByCategory = view.findViewById(R.id.subtab_by_category)
 
 		subtabCalendar.setOnClickListener { switchSubTab(CalendarSermonFragment(), subtabCalendar) }
 		subtabByBook.setOnClickListener { switchSubTab(SermonByBookFragment(), subtabByBook) }
@@ -40,6 +42,9 @@ class SermonFragment : Fragment(), TopBarActionHandler {
 				SermonByPreacherFragment(),
 				subtabByPreacher
 			)
+		}
+		subtabByCategory.setOnClickListener {
+			switchSubTab(SermonByCategoryFragment(), subtabByCategory)
 		}
 
 		if (savedInstanceState == null) {
@@ -52,7 +57,7 @@ class SermonFragment : Fragment(), TopBarActionHandler {
 			.replace(R.id.sermon_sub_container, fragment)
 			.commit()
 
-		listOf(subtabCalendar, subtabByBook, subtabByPreacher).forEach {
+		listOf(subtabCalendar, subtabByBook, subtabByPreacher, subtabByCategory).forEach {
 			val isSelected = it == selected
 			it.setTextColor(
 				resources.getColor(
