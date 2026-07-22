@@ -42,6 +42,19 @@ class VerseAdapter(
 	companion object {
 		private const val ID_HIGHLIGHT = 9001
 		private const val ID_MEMO = 9002
+
+		// 시편(bookId=19)은 전통적으로 5권으로 나뉜다: 1권 1~41편, 2권 42~72편, 3권 73~89편, 4권 90~106편, 5권 107~150편.
+		private fun psalmsBookPartLabel(bookId: Int, chapter: Int, verse: Int): String? {
+			if (bookId != 19 || verse != 1) return null
+			return when (chapter) {
+				1 -> "제일권"
+				42 -> "제이권"
+				73 -> "제삼권"
+				90 -> "제사권"
+				107 -> "제오권"
+				else -> null
+			}
+		}
 	}
 
 	// 장의 최대 절 번호 자릿수에 따라 절 번호 칸 너비를 정한다 (1~2자리 장에서 괜히 넓지 않게).
@@ -60,6 +73,7 @@ class VerseAdapter(
 		val number: TextView = view.findViewById(R.id.text_verse_number)
 		val content: TextView = view.findViewById(R.id.text_verse_content)
 		val secondaryContent: TextView = view.findViewById(R.id.text_verse_content_secondary)
+		val bookPart: TextView = view.findViewById(R.id.text_verse_book_part)
 	}
 
 	override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -72,6 +86,15 @@ class VerseAdapter(
 		val isSelected = selectedVerses.contains(verseItem.verse)
 		val context = holder.itemView.context
 
+		val bookPartLabel =
+			psalmsBookPartLabel(verseItem.bookId, verseItem.chapter, verseItem.verse)
+		if (bookPartLabel != null) {
+			holder.bookPart.text = "[$bookPartLabel]"
+			holder.bookPart.visibility = View.VISIBLE
+		} else {
+			holder.bookPart.visibility = View.GONE
+		}
+
 		val titleText = verseItem.title
 		if (!titleText.isNullOrBlank()) {
 			holder.title.text = "<$titleText>"
@@ -80,8 +103,8 @@ class VerseAdapter(
 			holder.title.visibility = View.GONE
 		}
 
-		// 장이 소제목 없이 1절부터 바로 시작하면 맨 위가 너무 붙어 보여서 여백을 더 준다.
-		val extraTopSpacing = position == 0 && titleText.isNullOrBlank()
+		// 장이 소제목·권 표시 없이 1절부터 바로 시작하면 맨 위가 너무 붙어 보여서 여백을 더 준다.
+		val extraTopSpacing = position == 0 && titleText.isNullOrBlank() && bookPartLabel == null
 		val topPaddingDp = if (extraTopSpacing) 12 else 4
 		val topPaddingPx = (topPaddingDp * context.resources.displayMetrics.density).toInt()
 		holder.contentRow.setPadding(

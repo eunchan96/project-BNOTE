@@ -6,6 +6,19 @@
     android:orientation="vertical">
 
     <TextView
+        android:id="@+id/text_verse_book_part"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:paddingTop="14dp"
+        android:paddingBottom="0dp"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:textColor="@color/brown_light"
+        android:visibility="gone" />
+
+    <TextView
         android:id="@+id/text_verse_title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
