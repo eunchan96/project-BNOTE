@@ -299,19 +299,22 @@ class AddSermonActivity : AppCompatActivity() {
 		flexboxRefs.removeAllViews()
 
 		if (bibleRefs.isEmpty()) {
-			flexboxRefs.addView(buildRefBox("본문 선택", fullWidth = true) { openBibleRangePicker() })
+			flexboxRefs.addView(buildRefBox("본문 선택", fullWidth = true) {
+				openBibleRangePicker(
+					existing = null
+				)
+			})
 			return
 		}
 
 		for (ref in bibleRefs) {
 			flexboxRefs.addView(
 				buildRefBox(ref.toDisplayLabel(), fullWidth = false) {
-					bibleRefs.remove(ref)
-					renderBibleRefBoxes()
+					openBibleRangePicker(existing = ref)
 				}
 			)
 		}
-		val addButton = buildAddSquareButton { openBibleRangePicker() }
+		val addButton = buildAddSquareButton { openBibleRangePicker(existing = null) }
 		flexboxRefs.addView(addButton)
 
 		// 본문 박스들이 실제로 배치된 뒤, 그 높이에 맞춰 "+" 버튼을 정확히 정사각형으로 맞춘다.
@@ -328,10 +331,20 @@ class AddSermonActivity : AppCompatActivity() {
 		}
 	}
 
-	private fun openBibleRangePicker() {
+	private fun openBibleRangePicker(existing: SermonBibleRef?) {
 		val rangePicker = BibleRangePickerBottomSheet()
+		rangePicker.existingRef = existing
 		rangePicker.onRangeSelected = { ref ->
-			bibleRefs.add(ref)
+			if (existing != null) {
+				val index = bibleRefs.indexOf(existing)
+				if (index != -1) bibleRefs[index] = ref else bibleRefs.add(ref)
+			} else {
+				bibleRefs.add(ref)
+			}
+			renderBibleRefBoxes()
+		}
+		rangePicker.onDeleteRequested = {
+			bibleRefs.remove(existing)
 			renderBibleRefBoxes()
 		}
 		rangePicker.show(supportFragmentManager, "bible_range_picker")

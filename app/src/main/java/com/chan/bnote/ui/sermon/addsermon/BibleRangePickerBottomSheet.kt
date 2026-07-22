@@ -29,6 +29,10 @@ class BibleRangePickerBottomSheet : DraggableBottomSheet() {
 	// sermonId는 저장 시점에 채워지므로 0으로 임시 세팅
 	var onRangeSelected: ((SermonBibleRef) -> Unit)? = null
 
+	// 이미 추가된 본문을 다시 눌러서 열 때, 그 정보로 미리 채워서 보여준다.
+	var existingRef: SermonBibleRef? = null
+	var onDeleteRequested: (() -> Unit)? = null
+
 	private lateinit var recyclerView: RecyclerView
 	private lateinit var scrollBookGrid: ScrollView
 	private lateinit var bookGridContainer: LinearLayout
@@ -36,6 +40,7 @@ class BibleRangePickerBottomSheet : DraggableBottomSheet() {
 	private lateinit var checkboxMulti: MaterialCheckBox
 	private lateinit var textSelectedStart: TextView
 	private lateinit var tabBarContainer: LinearLayout
+	private lateinit var btnDelete: TextView
 
 	// "여러 구절 선택하기" 체크 여부
 	private var isMultiMode = false
@@ -70,7 +75,26 @@ class BibleRangePickerBottomSheet : DraggableBottomSheet() {
 		checkboxMulti = view.findViewById(R.id.checkbox_multi_select)
 		textSelectedStart = view.findViewById(R.id.text_selected_start)
 		tabBarContainer = view.findViewById(R.id.container_tab_bar)
+		btnDelete = view.findViewById(R.id.btn_delete_ref)
 
+		// 이미 추가된 본문을 다시 눌러서 연 경우: 그 정보로 미리 채워둔다. (여러 구절 범위였으면 끝 장까지만
+		// 미리 채우고, 끝 절은 다시 골라야 한다 — 상태 변수 구조상 끝 절만 별도로 들고 있지 않아서다.)
+		val existing = existingRef
+		if (existing != null) {
+			bookId = existing.startBookId
+			startChapter = existing.startChapter
+			startVerse = existing.startVerse
+			if (existing.endChapter != existing.startChapter || existing.endVerse != existing.startVerse) {
+				isMultiMode = true
+			}
+			btnDelete.visibility = View.VISIBLE
+			btnDelete.setOnClickListener {
+				onDeleteRequested?.invoke()
+				dismiss()
+			}
+		}
+
+		checkboxMulti.isChecked = isMultiMode
 		checkboxMulti.setOnCheckedChangeListener { _, checked ->
 			isMultiMode = checked
 			// 체크박스는 첫 번째(시작) 선택 단계에서만 보이므로, 이미 고른 책/장/절은
