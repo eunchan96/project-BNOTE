@@ -119,9 +119,14 @@ class SermonByBookFragment : Fragment() {
 
 	// 구간(예: 1~3장)에 걸친 마커를 장 단위로 펼쳐서, 걸쳐있는 모든 장에 같은 색이 표시되게 함
 	private fun buildColorsByChapter(markers: List<ChapterMarker>): Map<Int, List<String>> {
+		val fallbackColorHex = String.format(
+			"#%06X", 0xFFFFFF and androidx.core.content.ContextCompat.getColor(
+				requireContext(), R.color.category_none
+			)
+		)
 		val result = mutableMapOf<Int, MutableList<String>>()
 		for (marker in markers) {
-			val color = marker.colorHex ?: continue
+			val color = marker.colorHex ?: fallbackColorHex
 			for (chapter in marker.startChapter..marker.endChapter) {
 				result.getOrPut(chapter) { mutableListOf() }.add(color)
 			}

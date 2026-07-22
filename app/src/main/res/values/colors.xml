@@ -19,7 +19,7 @@
     <color name="text_secondary">#757575</color>
     <color name="text_hint">#9E9E9E</color>
     <!-- 카테고리 미지정 설교의 기본 색상 (라이트 모드에서도 잘 보이도록) -->
-    <color name="category_none">#9E9E9E</color>
+    <color name="category_none">#D6D6D6</color>
     <color name="input_background">#F5F5F5</color>
     <color name="highlight_yellow">#FFF9C4</color>
 

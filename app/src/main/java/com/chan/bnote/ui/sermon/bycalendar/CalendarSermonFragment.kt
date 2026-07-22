@@ -117,8 +117,13 @@ class CalendarSermonFragment : Fragment() {
 			val endMillis = DateUtils.getMonthEndMillisExclusive(currentYear, currentMonth0)
 			val markers = db.sermonDao().getSermonMarkersInRange(startMillis, endMillis)
 
+			val fallbackColorHex = String.format(
+				"#%06X", 0xFFFFFF and androidx.core.content.ContextCompat.getColor(
+					requireContext(), R.color.category_none
+				)
+			)
 			val colorsByDate = markers.groupBy { it.sermonDate }
-				.mapValues { entry -> entry.value.mapNotNull { it.colorHex } }
+				.mapValues { entry -> entry.value.map { it.colorHex ?: fallbackColorHex } }
 
 			val cells = buildMonthCells(currentYear, currentMonth0, colorsByDate)
 			gridRecycler.adapter = CalendarGridAdapter(cells, selectedDate) { cell ->
