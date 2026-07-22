@@ -261,7 +261,7 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 	}
 
 	override fun onTranslationClicked() {
-		val sheet = TranslationPickerBottomSheet(primaryTranslation)
+		val sheet = TranslationPickerBottomSheet(primaryTranslation, secondaryTranslation)
 		sheet.onTranslationsSelected = { primary, secondary ->
 			primaryTranslation = primary
 			secondaryTranslation = secondary

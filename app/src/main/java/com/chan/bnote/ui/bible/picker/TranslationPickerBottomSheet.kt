@@ -14,7 +14,8 @@ import com.chan.bnote.ui.common.SimpleListAdapter
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 
 class TranslationPickerBottomSheet(
-	private val currentPrimary: Translation
+	private val currentPrimary: Translation,
+	private val currentSecondary: Translation?
 ) : BottomSheetDialogFragment() {
 
 	// primary는 항상 값 있음, secondary는 "선택 안 함"일 경우 null
@@ -80,7 +81,8 @@ class TranslationPickerBottomSheet(
 
 	private fun showPrimaryList() {
 		val names = Translation.values().map { it.displayName }
-		recyclerView.adapter = SimpleListAdapter(names) { position ->
+		val selectedIndex = Translation.values().indexOf(selectedPrimary)
+		recyclerView.adapter = SimpleListAdapter(names, selectedIndex) { position ->
 			selectedPrimary = Translation.values()[position]
 			goToStep(Step.SECONDARY)
 		}
@@ -90,8 +92,10 @@ class TranslationPickerBottomSheet(
 		// 주성경으로 고른건 함께보기 목록에서 제외
 		val options = Translation.values().filter { it != selectedPrimary }
 		val labels = options.map { it.displayName } + "선택 안 함" // "선택 안 함"을 맨 뒤로
+		val selectedIndex =
+			if (currentSecondary == null) options.size else options.indexOf(currentSecondary)
 
-		recyclerView.adapter = SimpleListAdapter(labels) { position ->
+		recyclerView.adapter = SimpleListAdapter(labels, selectedIndex) { position ->
 			if (position == options.size) {
 				// 마지막 항목 = "선택 안 함"
 				onTranslationsSelected?.invoke(selectedPrimary, null)
