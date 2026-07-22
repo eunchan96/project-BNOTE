@@ -55,10 +55,6 @@
             android:windowSoftInputMode="adjustResize"
             android:exported="false" />
         <activity
-            android:name=".ui.bible.memo.MemoEditorActivity"
-            android:exported="false"
-            android:windowSoftInputMode="adjustResize" />
-        <activity
             android:name=".ui.bible.memo.WordMemoEditorActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
@@ -160,7 +156,7 @@
             android:windowSoftInputMode="adjustResize"
             android:exported="false" />
         <activity
-            android:name=".ui.sermon.CategoryManageActivity"
+            android:name=".ui.sermon.category.CategoryManageActivity"
             android:exported="false" />
         <activity
             android:name=".ui.sermon.detail.SermonDetailActivity"
@@ -172,6 +168,9 @@
             android:name=".ui.sermon.SermonSearchActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name=".ui.sermon.category.CategorySermonListActivity"
+            android:exported="false" />
         <activity
             android:name=".ui.bible.BibleSearchActivity"
             android:exported="false"

@@ -1,6 +1,5 @@
-package com.chan.bnote.ui.sermon
+package com.chan.bnote.ui.sermon.category
 
-import android.app.Activity
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
@@ -12,7 +11,6 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
@@ -24,14 +22,13 @@ import com.chan.bnote.R
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.sermon.sermoncategory.SermonCategory
 import com.chan.bnote.ui.common.ColorPickerBottomSheet
-import com.chan.bnote.ui.sermon.detail.SermonDetailActivity
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 
 /**
  * 설교 카테고리 관리 + 카테고리별 보기를 합친 화면.
- * 평소엔 카테고리를 눌러서 그 카테고리의 설교 목록을 보고, "관리"를 누르면 각 항목에
- * 수정/삭제 아이콘이 나타나서 관리할 수 있다.
+ * 평소엔 카테고리를 눌러서 그 카테고리의 설교 목록 화면(CategorySermonListActivity)으로 이동하고,
+ * "관리"를 누르면 각 항목에 수정/삭제 아이콘이 나타나서 관리할 수 있다.
  */
 class CategoryManageActivity : AppCompatActivity() {
 
@@ -40,23 +37,9 @@ class CategoryManageActivity : AppCompatActivity() {
 	private lateinit var recyclerView: RecyclerView
 	private lateinit var btnManage: TextView
 	private lateinit var btnAdd: TextView
-	private lateinit var sermonListContainer: View
-	private lateinit var sermonRecycler: RecyclerView
-	private lateinit var selectedCategoryText: TextView
-	private lateinit var emptyText: TextView
 
 	private var categories: List<SermonCategory> = emptyList()
 	private var isManageMode = false
-	private var selectedCategory: SermonCategory? = null
-
-	private val sermonDetailLauncher = registerForActivityResult(
-		ActivityResultContracts.StartActivityForResult()
-	) { result ->
-		if (result.resultCode == Activity.RESULT_OK) {
-			loadCategories()
-			selectedCategory?.let { loadSermonsForCategory(it) }
-		}
-	}
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
@@ -75,11 +58,6 @@ class CategoryManageActivity : AppCompatActivity() {
 		recyclerView.layoutManager = LinearLayoutManager(this)
 		btnManage = findViewById(R.id.btn_manage_category)
 		btnAdd = findViewById(R.id.btn_add_category)
-		sermonListContainer = findViewById(R.id.container_category_sermons)
-		sermonRecycler = findViewById(R.id.recycler_category_sermons)
-		selectedCategoryText = findViewById(R.id.text_selected_category)
-		emptyText = findViewById(R.id.text_empty_category_sermons)
-		sermonRecycler.layoutManager = LinearLayoutManager(this)
 
 		btnManage.setOnClickListener {
 			isManageMode = !isManageMode
@@ -89,19 +67,12 @@ class CategoryManageActivity : AppCompatActivity() {
 		}
 		btnAdd.setOnClickListener { showEditDialog(null) }
 
-		findViewById<ImageView>(R.id.btn_back_from_category_detail).setOnClickListener {
-			recyclerView.visibility = View.VISIBLE
-			sermonListContainer.visibility = View.GONE
-			selectedCategory = null
-		}
-
 		loadCategories()
 	}
 
 	override fun onResume() {
 		super.onResume()
 		loadCategories()
-		selectedCategory?.let { loadSermonsForCategory(it) }
 	}
 
 	private fun loadCategories() {
@@ -158,6 +129,9 @@ class CategoryManageActivity : AppCompatActivity() {
 					drawable.setColor(Color.parseColor(colorHex))
 					holder.dot.background = drawable
 					holder.name.text = row.category?.name ?: "미분류"
+
+					// 관리 중일 땐 수정/삭제 아이콘이 그 자리를 대신하니 개수는 굳이 안 보여줘도 된다.
+					holder.count.visibility = if (isManageMode) View.GONE else View.VISIBLE
 					holder.count.text = "${row.count}개"
 
 					// 미분류는 실제 카테고리가 아니라서 수정/삭제 대상이 아니다.
@@ -167,11 +141,13 @@ class CategoryManageActivity : AppCompatActivity() {
 
 					holder.itemView.setOnClickListener {
 						if (isManageMode) return@setOnClickListener
-						selectedCategory = row.category
-						recyclerView.visibility = View.GONE
-						sermonListContainer.visibility = View.VISIBLE
-						selectedCategoryText.text = row.category?.name ?: "미분류"
-						loadSermonsForCategory(row.category)
+						startActivity(
+							CategorySermonListActivity.createIntent(
+								this@CategoryManageActivity,
+								row.category?.id,
+								row.category?.name ?: "미분류"
+							)
+						)
 					}
 					holder.editBtn.setOnClickListener { row.category?.let { showEditDialog(it) } }
 					holder.deleteBtn.setOnClickListener {
@@ -180,28 +156,6 @@ class CategoryManageActivity : AppCompatActivity() {
 				}
 
 				override fun getItemCount() = rows.size
-			}
-		}
-	}
-
-	private fun loadSermonsForCategory(category: SermonCategory?) {
-		lifecycleScope.launch {
-			val db = BibleDatabase.getInstance(applicationContext)
-			val allSermons = db.sermonDao().getAll()
-			val filtered = allSermons.filter { it.categoryId == category?.id }
-				.sortedByDescending { it.sermonDate }
-
-			emptyText.visibility = if (filtered.isEmpty()) View.VISIBLE else View.GONE
-			sermonRecycler.visibility = if (filtered.isEmpty()) View.GONE else View.VISIBLE
-
-			val rows = SermonRowBuilder.build(db, filtered, useDateLabel = true)
-			sermonRecycler.adapter = SermonRowAdapter(rows) { sermon ->
-				sermonDetailLauncher.launch(
-					SermonDetailActivity.createIntent(
-						this@CategoryManageActivity,
-						sermon.id
-					)
-				)
 			}
 		}
 	}

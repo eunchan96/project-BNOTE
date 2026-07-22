@@ -13,6 +13,7 @@ import com.chan.bnote.ui.TopBarConfig
 import com.chan.bnote.ui.sermon.bybook.SermonByBookFragment
 import com.chan.bnote.ui.sermon.bycalendar.CalendarSermonFragment
 import com.chan.bnote.ui.sermon.bypreacher.SermonByPreacherFragment
+import com.chan.bnote.ui.sermon.category.CategoryManageActivity
 
 class SermonFragment : Fragment(), TopBarActionHandler {
 
