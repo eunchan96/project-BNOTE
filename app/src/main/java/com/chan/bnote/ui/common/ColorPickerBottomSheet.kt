@@ -20,7 +20,8 @@ class ColorPickerBottomSheet(
 	companion object {
 		val palette = listOf(
 			"#FB8C00", "#FDD835", "#8E24AA", "#795548", "#212121", "#E53935",
-			"#43A047", "#1E88E5", "#00897B", "#5E35B1", "#F06292", "#6D4C41"
+			"#43A047", "#1E88E5", "#00897B", "#5E35B1", "#F06292", "#6D4C41",
+			"#9E9E9E", "#00ACC1", "#3949AB", "#7CB342", "#FF7043", "#546E7A"
 		)
 	}
 
