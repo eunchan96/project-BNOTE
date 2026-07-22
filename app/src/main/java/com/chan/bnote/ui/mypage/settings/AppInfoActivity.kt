@@ -39,6 +39,9 @@ class AppInfoActivity : AppCompatActivity() {
 
 		findViewById<TextView>(R.id.text_version).text = buildVersionLabel()
 
+		findViewById<TextView>(R.id.menu_version_history).setOnClickListener {
+			startActivity(Intent(this, VersionHistoryActivity::class.java))
+		}
 		findViewById<TextView>(R.id.menu_open_source).setOnClickListener {
 			startActivity(Intent(this, OpenSourceLicensesActivity::class.java))
 		}

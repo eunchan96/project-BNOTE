@@ -104,6 +104,9 @@
             android:name=".ui.mypage.settings.OpenSourceLicensesActivity"
             android:exported="false" />
         <activity
+            android:name=".ui.mypage.settings.VersionHistoryActivity"
+            android:exported="false" />
+        <activity
             android:name=".ui.mypage.memorization.MemorizationVerseDetailActivity"
             android:windowSoftInputMode="adjustResize"
             android:exported="false" />
