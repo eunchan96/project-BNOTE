@@ -40,11 +40,16 @@ class SermonRowAdapter(
 		holder.date.text = row.dateLabel
 		holder.bibleRef.text = row.bibleRefLabel
 		holder.colorBar.setBackgroundColor(
-			try {
-				Color.parseColor(row.colorHex ?: "#E0E0E0")
-			} catch (e: Exception) {
-				Color.LTGRAY
-			}
+			row.colorHex?.let {
+				try {
+					Color.parseColor(it)
+				} catch (e: Exception) {
+					null
+				}
+			} ?: androidx.core.content.ContextCompat.getColor(
+				holder.itemView.context,
+				R.color.category_none
+			)
 		)
 		holder.itemView.setOnClickListener { onClick(row.sermon) }
 	}
