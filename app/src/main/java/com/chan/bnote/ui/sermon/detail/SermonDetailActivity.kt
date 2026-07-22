@@ -244,5 +244,47 @@ class SermonDetailActivity : AppCompatActivity() {
 			thumb.setOnClickListener { PhotoViewerActivity.start(this, photo.filePath) }
 			photoContainer.addView(thumb)
 		}
+
+		// 링크 (유튜브면 바로 임베드, 아니면 눌러서 브라우저로 열기)
+		val webView = findViewById<android.webkit.WebView>(R.id.webview_sermon_link)
+		val plainLinkView = findViewById<TextView>(R.id.text_sermon_link_plain)
+		val link = sermon.link
+		if (link.isNullOrBlank()) {
+			webView.visibility = View.GONE
+			plainLinkView.visibility = View.GONE
+		} else {
+			val videoId = extractYoutubeId(link)
+			if (videoId != null) {
+				webView.visibility = View.VISIBLE
+				plainLinkView.visibility = View.GONE
+				webView.settings.javaScriptEnabled = true
+				val embedOrigin = "https://bnote.app"
+				val html = """
+					<html><body style="margin:0;padding:0;">
+					<iframe width="100%" height="100%"
+						src="https://www.youtube.com/embed/$videoId?playsinline=1&origin=$embedOrigin"
+						frameborder="0" allowfullscreen></iframe>
+					</body></html>
+				""".trimIndent()
+				webView.loadDataWithBaseURL(embedOrigin, html, "text/html", "utf-8", null)
+			} else {
+				webView.visibility = View.GONE
+				plainLinkView.visibility = View.VISIBLE
+				plainLinkView.setOnClickListener {
+					startActivity(Intent(Intent.ACTION_VIEW, android.net.Uri.parse(link)))
+				}
+			}
+		}
+	}
+
+	/** youtube.com/watch?v=ID 및 youtu.be/ID 형식 모두 지원. */
+	private fun extractYoutubeId(url: String): String? {
+		val watchRegex = Regex("[?&]v=([a-zA-Z0-9_-]{6,})")
+		watchRegex.find(url)?.let { return it.groupValues[1] }
+
+		val shortRegex = Regex("youtu\\.be/([a-zA-Z0-9_-]{6,})")
+		shortRegex.find(url)?.let { return it.groupValues[1] }
+
+		return null
 	}
 }

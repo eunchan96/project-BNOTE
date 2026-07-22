@@ -12,5 +12,6 @@ data class Sermon(
 	val sermonDate: Long,
 	val categoryId: Long?,
 	val memo: String = "",
+	val link: String? = null,
 	val createdAt: Long = System.currentTimeMillis()
 )

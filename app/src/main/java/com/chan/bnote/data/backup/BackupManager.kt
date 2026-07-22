@@ -246,6 +246,7 @@ object BackupManager {
 					sermonDate = obj.getLong("sermonDate"),
 					categoryId = oldCategoryId?.let { categoryIdMap[it] },
 					memo = obj.optString("memo", ""),
+					link = if (obj.has("link")) obj.getString("link") else null,
 					createdAt = obj.optLong("createdAt", System.currentTimeMillis())
 				)
 			)
@@ -466,7 +467,9 @@ object BackupManager {
 		preacherId?.let { put("preacherId", it) }
 		put("sermonDate", sermonDate)
 		categoryId?.let { put("categoryId", it) }
-		put("memo", memo); put("createdAt", createdAt)
+		put("memo", memo)
+		link?.let { put("link", it) }
+		put("createdAt", createdAt)
 	}
 
 	private fun SermonBibleRef.toJson() = JSONObject().apply {

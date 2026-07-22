@@ -148,6 +148,7 @@ class AddSermonActivity : AppCompatActivity() {
 
 		val editTitle = findViewById<EditText>(R.id.edit_title)
 		editMemo = findViewById(R.id.edit_memo)
+		val editLink = findViewById<EditText>(R.id.edit_sermon_link)
 		btnDate = findViewById(R.id.btn_pick_date)
 		btnPickPreacher = findViewById(R.id.btn_pick_preacher)
 		btnPickCategory = findViewById(R.id.btn_pick_category)
@@ -203,7 +204,7 @@ class AddSermonActivity : AppCompatActivity() {
 		btnAddPhoto.setOnClickListener { showPhotoSourceMenu(it) }
 
 		findViewById<TextView>(R.id.btn_save_sermon).setOnClickListener {
-			save(editTitle.text.toString().trim(), editMemo.text)
+			save(editTitle.text.toString().trim(), editMemo.text, editLink.text.toString().trim())
 		}
 
 		lifecycleScope.launch {
@@ -215,6 +216,7 @@ class AddSermonActivity : AppCompatActivity() {
 				if (sermon != null) {
 					editTitle.setText(sermon.title)
 					editMemo.setText(RichTextUtils.toEditable(sermon.memo))
+					editLink.setText(sermon.link ?: "")
 					selectedDateMillis = sermon.sermonDate
 					selectedCategoryId = sermon.categoryId
 					selectedPreacherId = sermon.preacherId
@@ -463,7 +465,7 @@ class AddSermonActivity : AppCompatActivity() {
 
 	private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
 
-	private fun save(title: String, memo: CharSequence) {
+	private fun save(title: String, memo: CharSequence, link: String) {
 		if (title.isEmpty()) {
 			Toast.makeText(this, "제목을 입력해주세요", Toast.LENGTH_SHORT).show()
 			return
@@ -474,6 +476,7 @@ class AddSermonActivity : AppCompatActivity() {
 			return
 		}
 		val memoText = RichTextUtils.toStorageString(memo)
+		val linkValue = link.trim().ifEmpty { null }
 
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(applicationContext)
@@ -484,7 +487,7 @@ class AddSermonActivity : AppCompatActivity() {
 				sermonId = db.sermonDao().insert(
 					Sermon(
 						title = title, preacherId = preacherId, sermonDate = selectedDateMillis,
-						categoryId = selectedCategoryId, memo = memoText
+						categoryId = selectedCategoryId, memo = memoText, link = linkValue
 					)
 				)
 			} else {
@@ -492,7 +495,7 @@ class AddSermonActivity : AppCompatActivity() {
 				db.sermonDao().update(
 					current.copy(
 						title = title, preacherId = preacherId, sermonDate = selectedDateMillis,
-						categoryId = selectedCategoryId, memo = memoText
+						categoryId = selectedCategoryId, memo = memoText, link = linkValue
 					)
 				)
 				db.sermonBibleRefDao().deleteBySermon(sermonId)

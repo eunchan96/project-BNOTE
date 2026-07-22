@@ -25,5 +25,11 @@ val MIGRATIONS: Array<Migration> = arrayOf(
 			// 구절 메모도 단어 메모처럼 한 구절에 메모를 여러 개 넣을 수 있도록 유니크 제약을 없앤다.
 			db.execSQL("DROP INDEX IF EXISTS index_verse_memos_bookId_chapter_verse")
 		}
+	},
+	object : Migration(24, 25) {
+		override fun migrate(db: SupportSQLiteDatabase) {
+			// 설교 detail 화면에 임베드할 링크(주로 유튜브) 컬럼. 기존 설교는 전부 NULL(링크 없음)로 유지된다.
+			db.execSQL("ALTER TABLE sermons ADD COLUMN link TEXT")
+		}
 	}
 )
