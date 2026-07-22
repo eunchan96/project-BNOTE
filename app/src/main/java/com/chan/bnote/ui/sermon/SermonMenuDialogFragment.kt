@@ -15,7 +15,6 @@ import com.chan.bnote.R
 class SermonMenuDialogFragment : DialogFragment() {
 
 	var onCategoryManageClicked: (() -> Unit)? = null
-	var onCategoryViewClicked: (() -> Unit)? = null
 
 	override fun onStart() {
 		super.onStart()
@@ -48,10 +47,6 @@ class SermonMenuDialogFragment : DialogFragment() {
 
 		view.findViewById<TextView>(R.id.menu_category_manage).setOnClickListener {
 			onCategoryManageClicked?.invoke()
-			dismiss()
-		}
-		view.findViewById<TextView>(R.id.menu_category_view).setOnClickListener {
-			onCategoryViewClicked?.invoke()
 			dismiss()
 		}
 

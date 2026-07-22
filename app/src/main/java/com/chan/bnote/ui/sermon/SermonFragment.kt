@@ -74,14 +74,6 @@ class SermonFragment : Fragment(), TopBarActionHandler {
 		dialog.onCategoryManageClicked = {
 			startActivity(Intent(requireContext(), CategoryManageActivity::class.java))
 		}
-		dialog.onCategoryViewClicked = {
-			startActivity(
-				Intent(
-					requireContext(),
-					com.chan.bnote.ui.sermon.bycategory.SermonByCategoryActivity::class.java
-				)
-			)
-		}
 		dialog.show(parentFragmentManager, "sermon_menu")
 	}
 
