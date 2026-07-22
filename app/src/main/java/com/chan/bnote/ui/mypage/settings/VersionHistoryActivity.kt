@@ -29,15 +29,18 @@ class VersionHistoryActivity : AppCompatActivity() {
 		findViewById<ImageView>(R.id.btn_top_bar_back).setOnClickListener { finish() }
 
 		val container = findViewById<LinearLayout>(R.id.container_version_history)
-		for ((index, entry) in VersionHistory.entries.reversed().withIndex()) {
-			addEntry(container, entry, addTopDivider = index != 0)
+		val reversed = VersionHistory.entries.reversed()
+		for ((index, entry) in reversed.withIndex()) {
+			// 최신 버전(맨 위)만 기본으로 펼쳐두고, 나머지는 접어둔다.
+			addEntry(container, entry, addTopDivider = index != 0, initiallyExpanded = index == 0)
 		}
 	}
 
 	private fun addEntry(
 		container: LinearLayout,
 		entry: VersionHistory.Entry,
-		addTopDivider: Boolean
+		addTopDivider: Boolean,
+		initiallyExpanded: Boolean
 	) {
 		if (addTopDivider) {
 			val divider = android.view.View(this).apply {
@@ -55,7 +58,20 @@ class VersionHistoryActivity : AppCompatActivity() {
 
 		val block = LinearLayout(this).apply {
 			orientation = LinearLayout.VERTICAL
+		}
+
+		var isExpanded = initiallyExpanded
+
+		val header = LinearLayout(this).apply {
+			orientation = LinearLayout.HORIZONTAL
+			gravity = android.view.Gravity.CENTER_VERTICAL
 			setPadding(dp(16), dp(16), dp(16), dp(16))
+			isClickable = true
+			isFocusable = true
+			background = ContextCompat.getDrawable(
+				this@VersionHistoryActivity,
+				android.R.drawable.list_selector_background
+			)
 		}
 
 		val versionView = TextView(this).apply {
@@ -63,9 +79,21 @@ class VersionHistoryActivity : AppCompatActivity() {
 			textSize = 16f
 			setTypeface(typeface, Typeface.BOLD)
 			setTextColor(ContextCompat.getColor(this@VersionHistoryActivity, R.color.brown_primary))
+			layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
 		}
-		block.addView(versionView)
+		val arrowView = TextView(this).apply {
+			text = if (isExpanded) "▾" else "▸"
+			textSize = 16f
+			setTextColor(ContextCompat.getColor(this@VersionHistoryActivity, R.color.text_hint))
+		}
+		header.addView(versionView)
+		header.addView(arrowView)
 
+		val changesContainer = LinearLayout(this).apply {
+			orientation = LinearLayout.VERTICAL
+			setPadding(dp(16), 0, dp(16), dp(16))
+			visibility = if (isExpanded) android.view.View.VISIBLE else android.view.View.GONE
+		}
 		for (change in entry.changes) {
 			val changeView = TextView(this).apply {
 				text = "· $change"
@@ -77,10 +105,20 @@ class VersionHistoryActivity : AppCompatActivity() {
 					)
 				)
 				setPadding(0, dp(6), 0, 0)
+				setLineSpacing(dp(2).toFloat(), 1f)
 			}
-			block.addView(changeView)
+			changesContainer.addView(changeView)
 		}
 
+		header.setOnClickListener {
+			isExpanded = !isExpanded
+			changesContainer.visibility =
+				if (isExpanded) android.view.View.VISIBLE else android.view.View.GONE
+			arrowView.text = if (isExpanded) "▾" else "▸"
+		}
+
+		block.addView(header)
+		block.addView(changesContainer)
 		container.addView(block)
 	}
 
