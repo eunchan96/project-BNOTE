@@ -11,7 +11,9 @@ class DailyVerseWorker(context: Context, params: WorkerParameters) :
 
 	override suspend fun doWork(): Result {
 		val db = BibleDatabase.getInstance(applicationContext)
-		val verse = db.bibleDao().getRandomVerse("NKRV") ?: return Result.success()
+		val ref = CuratedVerses.list.random()
+		val verse = db.bibleDao().getVerses("NKRV", ref.bookId, ref.chapter)
+			.find { it.verse == ref.verse } ?: return Result.success()
 
 		val unit = BibleBooks.chapterUnit(verse.bookId)
 		val label = "${BibleBooks.nameOf(verse.bookId)} ${verse.chapter}${unit} ${verse.verse}절"
