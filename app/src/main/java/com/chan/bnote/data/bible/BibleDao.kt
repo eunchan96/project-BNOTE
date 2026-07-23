@@ -13,6 +13,10 @@ interface BibleDao {
 	@Query("SELECT COUNT(*) FROM bible_verses WHERE translation = :translation")
 	suspend fun countForTranslation(translation: String): Int
 
+	// 성경 본문 데이터를 다시 심을 때(재시딩) 그 번역본만 싹 지우고 새로 넣기 위한 것
+	@Query("DELETE FROM bible_verses WHERE translation = :translation")
+	suspend fun deleteTranslation(translation: String)
+
 	@Query("SELECT DISTINCT bookId FROM bible_verses WHERE translation = :translation ORDER BY bookId")
 	suspend fun getBookIds(translation: String): List<Int>
 

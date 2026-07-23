@@ -7,9 +7,31 @@ import java.io.FileNotFoundException
 
 object BibleSeeder {
 
+	private const val PREFS_NAME = "bible_seed_prefs"
+	private const val KEY_SEED_VERSION = "seed_version"
+
+	// 성경 본문 assets(JSON)를 고칠 때마다 이 숫자를 1씩 올린다.
+	// 그러면 이미 앱을 쓰고 있던 사용자도 다음 실행 시 그 번역본만 자동으로 다시 심어진다.
+	private const val SEED_VERSION = 1
+
+	// 배포 전 오탈자 등을 계속 확인하는 동안엔 true로 두면 매번(앱 실행마다) 무조건 다시 심는다.
+	// 실제 배포 전에는 반드시 false로 바꿔서, 위 SEED_VERSION 번호로만 재시딩되게 할 것.
+	private const val FORCE_RESEED_EVERY_LAUNCH = true
+
 	suspend fun seedIfEmpty(context: Context, db: BibleDatabase) {
+		val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+		val appliedVersion = prefs.getInt(KEY_SEED_VERSION, -1)
+		val needsReseed = FORCE_RESEED_EVERY_LAUNCH || appliedVersion != SEED_VERSION
+
 		for (translation in Translation.values()) {
+			if (needsReseed) {
+				db.bibleDao().deleteTranslation(translation.code)
+			}
 			seedTranslationIfEmpty(context, db, translation)
+		}
+
+		if (needsReseed) {
+			prefs.edit().putInt(KEY_SEED_VERSION, SEED_VERSION).apply()
 		}
 	}
 
