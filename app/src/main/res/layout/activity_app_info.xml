@@ -68,6 +68,26 @@
         android:background="@color/divider_light" />
 
     <TextView
+        android:id="@+id/menu_seed_reconciliation"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="18dp"
+        android:text="본문 수정 확인 필요"
+        android:textSize="16sp"
+        android:textColor="#E53935"
+        android:background="?attr/selectableItemBackground"
+        android:visibility="gone"
+        android:clickable="true"
+        android:focusable="true" />
+
+    <View
+        android:id="@+id/divider_seed_reconciliation"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/divider_light"
+        android:visibility="gone" />
+
+    <TextView
         android:id="@+id/menu_open_source"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

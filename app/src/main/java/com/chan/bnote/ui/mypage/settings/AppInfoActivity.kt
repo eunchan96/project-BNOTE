@@ -42,10 +42,24 @@ class AppInfoActivity : AppCompatActivity() {
 		findViewById<TextView>(R.id.menu_version_history).setOnClickListener {
 			startActivity(Intent(this, VersionHistoryActivity::class.java))
 		}
+		findViewById<TextView>(R.id.menu_seed_reconciliation).setOnClickListener {
+			startActivity(Intent(this, SeedReconciliationActivity::class.java))
+		}
 		findViewById<TextView>(R.id.menu_open_source).setOnClickListener {
 			startActivity(Intent(this, OpenSourceLicensesActivity::class.java))
 		}
 		findViewById<TextView>(R.id.menu_contact).setOnClickListener { showContactDialog() }
+	}
+
+	override fun onResume() {
+		super.onResume()
+		val count = com.chan.bnote.data.bible.SeedReconciliationReport.count(this)
+		val visibility = if (count > 0) android.view.View.VISIBLE else android.view.View.GONE
+		findViewById<TextView>(R.id.menu_seed_reconciliation).apply {
+			this.visibility = visibility
+			text = "본문 수정 확인 필요 (${count}개)"
+		}
+		findViewById<android.view.View>(R.id.divider_seed_reconciliation).visibility = visibility
 	}
 
 	private fun buildVersionLabel(): String {

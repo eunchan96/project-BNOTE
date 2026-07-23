@@ -4,12 +4,16 @@ import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
+import androidx.room.Update
 
 @Dao
 interface PartialHighlightDao {
 
 	@Insert
 	suspend fun insert(highlight: PartialHighlight): Long
+
+	@Update
+	suspend fun update(highlight: PartialHighlight)
 
 	@Query("SELECT COUNT(*) FROM partial_highlights")
 	suspend fun countAll(): Int
