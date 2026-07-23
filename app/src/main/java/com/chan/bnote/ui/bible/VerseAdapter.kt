@@ -1,10 +1,12 @@
 package com.chan.bnote.ui.bible
 
 import android.graphics.Color
+import android.graphics.Typeface
 import android.text.Spannable
 import android.text.SpannableString
 import android.text.style.BackgroundColorSpan
 import android.text.style.ForegroundColorSpan
+import android.text.style.StyleSpan
 import android.text.style.UnderlineSpan
 import android.view.ActionMode
 import android.view.LayoutInflater
@@ -42,6 +44,9 @@ class VerseAdapter(
 	companion object {
 		private const val ID_HIGHLIGHT = 9001
 		private const val ID_MEMO = 9002
+
+		// 절 본문 중간에 <소제목> 형태로 박혀있는 걸 찾는다 (극히 드문 예외 케이스용).
+		private val MID_VERSE_TITLE_REGEX = Regex("<[^<>]+>")
 
 		// 시편(bookId=19)은 전통적으로 5권으로 나뉜다: 1권 1~41편, 2권 42~72편, 3권 73~89편, 4권 90~106편, 5권 107~150편.
 		private fun psalmsBookPartLabel(bookId: Int, chapter: Int, verse: Int): String? {
@@ -138,6 +143,22 @@ class VerseAdapter(
 		holder.content.textSize = fontSize.toFloat()
 
 		val spannable = SpannableString(verseItem.text)
+
+		// 아주 드물게 절 본문 중간에 소제목이 끼어드는 경우(예: 창 35:22)를 위한 처리.
+		// 실제 글자는 그대로 두고(그래야 하이라이트/메모 위치가 안 어긋남) 스타일만 입힌다.
+		for (match in MID_VERSE_TITLE_REGEX.findAll(verseItem.text)) {
+			spannable.setSpan(
+				StyleSpan(Typeface.BOLD), match.range.first, match.range.last + 1,
+				Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+			)
+			spannable.setSpan(
+				ForegroundColorSpan(
+					androidx.core.content.ContextCompat.getColor(context, R.color.brown_primary)
+				),
+				match.range.first, match.range.last + 1, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+			)
+		}
+
 		for (h in highlightsByVerse[verseItem.verse].orEmpty()) {
 			val start = h.startOffset.coerceIn(0, spannable.length)
 			val end = h.endOffset.coerceIn(start, spannable.length)
