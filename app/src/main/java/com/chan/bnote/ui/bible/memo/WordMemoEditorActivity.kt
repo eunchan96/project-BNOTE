@@ -152,6 +152,10 @@ class WordMemoEditorActivity : AppCompatActivity() {
 
 		val editText = boxView.findViewById<EditText>(R.id.edit_box_text)
 		editText.setText(existing?.text ?: "")
+		com.chan.bnote.ui.common.LinkifyHelper.applySmartLinks(editText)
+		editText.setOnFocusChangeListener { _, hasFocus ->
+			if (!hasFocus) com.chan.bnote.ui.common.LinkifyHelper.applySmartLinks(editText)
+		}
 		val checkbox = boxView.findViewById<CheckBox>(R.id.chk_box_propagate)
 
 		val box = MemoBox(existing, boxView, editText, checkbox)

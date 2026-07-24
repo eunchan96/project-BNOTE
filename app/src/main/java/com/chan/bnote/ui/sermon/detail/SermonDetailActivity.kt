@@ -229,6 +229,7 @@ class SermonDetailActivity : AppCompatActivity() {
 			}
 			memoView.text = spannable
 			CitationBubbleHelper.attachTouchHandling(memoView, { citations }, lifecycleScope)
+			com.chan.bnote.ui.common.LinkifyHelper.applySmartLinks(memoView)
 		}
 
 		// 첨부 사진
