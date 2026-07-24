@@ -318,12 +318,12 @@ class SettingsActivity : AppCompatActivity() {
 
 	private fun updateDailyVerseTimeLabel() {
 		val (h, m) = AppSettings.getDailyVerseNotiTime(this)
-		btnDailyVerseTime.text = formatTime(h, m)
+		btnDailyVerseTime.text = "${formatTime(h, m)} ▾"
 	}
 
 	private fun updateReadingReminderTimeLabel() {
 		val (h, m) = AppSettings.getReadingReminderTime(this)
-		btnReadingReminderTime.text = formatTime(h, m)
+		btnReadingReminderTime.text = "${formatTime(h, m)} ▾"
 	}
 
 	private fun formatTime(hour: Int, minute: Int): String {

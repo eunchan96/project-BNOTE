@@ -21,6 +21,7 @@ class AppInfoActivity : AppCompatActivity() {
 	companion object {
 		private const val CONTACT_EMAIL = "taegwon02@gmail.com"
 		private const val KAKAO_OPEN_CHAT_URL = "https://open.kakao.com/o/sfqUXEEi"
+		private const val GITHUB_URL = "https://github.com/eunchan96/project-BNOTE"
 	}
 
 	override fun onCreate(savedInstanceState: Bundle?) {
@@ -47,6 +48,9 @@ class AppInfoActivity : AppCompatActivity() {
 		}
 		findViewById<TextView>(R.id.menu_open_source).setOnClickListener {
 			startActivity(Intent(this, OpenSourceLicensesActivity::class.java))
+		}
+		findViewById<TextView>(R.id.menu_github).setOnClickListener {
+			startActivity(Intent(Intent.ACTION_VIEW, android.net.Uri.parse(GITHUB_URL)))
 		}
 		findViewById<TextView>(R.id.menu_contact).setOnClickListener { showContactDialog() }
 	}
