@@ -184,8 +184,8 @@ class SettingsActivity : AppCompatActivity() {
 		}
 
 		findViewById<TextView>(R.id.btn_copy_reference_style).setOnClickListener {
-			com.chan.bnote.ui.bible.CopyFormatBottomSheet()
-				.show(supportFragmentManager, "copy_format")
+			com.chan.bnote.ui.bible.CopyFormatPickerBottomSheet()
+				.show(supportFragmentManager, "copy_format_picker")
 		}
 
 		findViewById<TextView>(R.id.btn_export_data).setOnClickListener {

@@ -30,7 +30,6 @@ object CopyFormatter {
 			if (includeSecondary) {
 				secondaryMap?.get(v.verse)?.let { sec -> body = "$body\n   ${sec.fullText}" }
 			}
-			if (config.quoteVerse) body = "\"$body\""
 			return if (showNumber) {
 				"${
 					formatVerseNumber(
@@ -53,7 +52,9 @@ object CopyFormatter {
 				val reference =
 					buildInlineReference(bookId, chapter, firstVerse, lastVerse, isMulti, config)
 				val showNumber = isMulti && config.showVerseNumberWhenMulti
-				val body = sortedVerses.joinToString(multiSep) { verseLine(it, showNumber) }
+				var body = sortedVerses.joinToString(multiSep) { verseLine(it, showNumber) }
+				// 따옴표는 절 하나하나가 아니라, 선택한 구절 전체를 한 번만 감싼다.
+				if (config.quoteVerse) body = "\"$body\""
 				when (config.refPosition) {
 					CopyFormatConfig.RefPosition.BEFORE -> "$reference $body"
 					CopyFormatConfig.RefPosition.AFTER -> "$body $reference"
@@ -63,7 +64,8 @@ object CopyFormatter {
 			CopyFormatConfig.Separator.NEWLINE -> {
 				val header = buildHeaderReference(bookId, chapter, config)
 				// 줄바꿈 형식에선 절 번호가 없으면 어느 절인지 알 수 없으니 항상 표시한다.
-				val body = sortedVerses.joinToString(multiSep) { verseLine(it, true) }
+				var body = sortedVerses.joinToString(multiSep) { verseLine(it, true) }
+				if (config.quoteVerse) body = "\"$body\""
 				"$header\n$body"
 			}
 		}
@@ -78,11 +80,7 @@ object CopyFormatter {
 		isMulti: Boolean,
 		config: CopyFormatConfig
 	): String {
-		val bookName = if (config.refLength == CopyFormatConfig.RefLength.LONG) {
-			BibleBooks.nameOf(bookId)
-		} else {
-			BibleBooks.shortNameOf(bookId)
-		}
+		val bookName = bookNameFor(bookId, config)
 		val sp = if (config.refSpacing) " " else ""
 
 		val core = if (config.refLength == CopyFormatConfig.RefLength.LONG) {
@@ -90,6 +88,7 @@ object CopyFormatter {
 			val versePart = if (isMulti) "$firstVerse~${lastVerse}절" else "${firstVerse}절"
 			"$bookName$sp$chapter$unit$sp$versePart"
 		} else {
+			// 짧게/중간 둘 다 "장:절" 표기를 쓰고, 책이름 길이만 다르다.
 			val versePart = if (isMulti) "$firstVerse~$lastVerse" else "$firstVerse"
 			"$bookName$sp$chapter:$versePart"
 		}
@@ -97,17 +96,21 @@ object CopyFormatter {
 		return wrapWithBracket(core, config.refBracket)
 	}
 
-	/** 줄바꿈 형식일 때 맨 위에 오는 "창세기 1장" 같은 헤더. 절 정보는 각 줄에서 따로 보여주므로 안 붙인다. */
+	/** 줄바꿈 형식일 때 맨 위에 오는 "(창세기 1장)" 같은 헤더. 절 정보는 각 줄에서 따로 보여주므로 안 붙인다. */
 	private fun buildHeaderReference(bookId: Int, chapter: Int, config: CopyFormatConfig): String {
-		val bookName = if (config.refLength == CopyFormatConfig.RefLength.LONG) {
-			BibleBooks.nameOf(bookId)
-		} else {
-			BibleBooks.shortNameOf(bookId)
-		}
+		val bookName = bookNameFor(bookId, config)
 		val sp = if (config.refSpacing) " " else ""
 		val unit = BibleBooks.chapterUnit(bookId)
-		return "$bookName$sp$chapter$unit"
+		val core = "$bookName$sp$chapter$unit"
+		return wrapWithBracket(core, config.refBracket)
 	}
+
+	private fun bookNameFor(bookId: Int, config: CopyFormatConfig): String =
+		if (config.refLength == CopyFormatConfig.RefLength.SHORT) {
+			BibleBooks.shortNameOf(bookId)
+		} else {
+			BibleBooks.nameOf(bookId)
+		}
 
 	private fun wrapWithBracket(text: String, bracket: CopyFormatConfig.RefBracket): String =
 		when (bracket) {

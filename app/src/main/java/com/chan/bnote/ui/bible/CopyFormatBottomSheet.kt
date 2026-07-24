@@ -21,13 +21,19 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 
-/** 복사할 때 쓸 형식을 자유롭게 조합해서 미리보고, 이름 붙여 저장해뒀다가 나중에 다시 불러올 수 있는 화면. */
+/** 복사 형식 하나를 새로 만들거나 수정하는 화면. existingPresetId가 있으면 수정 모드. */
 class CopyFormatBottomSheet : BottomSheetDialogFragment() {
 
+	var existingPresetId: Long? = null
+	var onSaved: (() -> Unit)? = null
+
+	private var existingPreset: CopyFormatPreset? = null
 	private var config: CopyFormatConfig = CopyFormatConfig()
 	private lateinit var groupsContainer: LinearLayout
-	private lateinit var presetsContainer: LinearLayout
 	private lateinit var previewText: TextView
+	private lateinit var titleView: TextView
+	private lateinit var btnSaveInPlace: TextView
+	private lateinit var btnSaveAsNew: TextView
 
 	// 미리보기용 샘플 데이터: 창세기 1:1~2
 	private val sampleVerses = listOf(
@@ -50,26 +56,45 @@ class CopyFormatBottomSheet : BottomSheetDialogFragment() {
 	override fun onCreateView(
 		inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
 	): View {
-		return inflater.inflate(R.layout.bottom_sheet_copy_format, container, false)
+		return inflater.inflate(R.layout.bottom_sheet_copy_format_editor, container, false)
 	}
 
 	override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 		super.onViewCreated(view, savedInstanceState)
 
-		config = AppSettings.getActiveCopyFormat(requireContext())
+		titleView = view.findViewById(R.id.text_copy_format_editor_title)
 		groupsContainer = view.findViewById(R.id.container_option_groups)
-		presetsContainer = view.findViewById(R.id.container_saved_presets)
 		previewText = view.findViewById(R.id.text_copy_format_preview)
+		btnSaveInPlace = view.findViewById(R.id.btn_save_in_place)
+		btnSaveAsNew = view.findViewById(R.id.btn_save_as_new)
 
-		buildOptionGroups()
-		updatePreview()
-		loadPresets()
+		lifecycleScope.launch {
+			val presetId = existingPresetId
+			if (presetId != null) {
+				val db = BibleDatabase.getInstance(requireContext().applicationContext)
+				existingPreset = db.copyFormatPresetDao().getById(presetId)
+			}
+			config = existingPreset?.toConfig() ?: AppSettings.getActiveCopyFormat(requireContext())
 
-		view.findViewById<TextView>(R.id.btn_save_as_preset).setOnClickListener { showSaveDialog() }
-		view.findViewById<TextView>(R.id.btn_apply_copy_format).setOnClickListener {
-			AppSettings.setActiveCopyFormat(requireContext(), config)
-			dismiss()
+			titleView.text = if (existingPreset != null) "형식 수정" else "형식 추가"
+			btnSaveInPlace.visibility = if (existingPreset != null) View.VISIBLE else View.GONE
+			btnSaveAsNew.text = if (existingPreset != null) "다른 이름으로 저장" else "저장"
+
+			buildOptionGroups()
+			updatePreview()
 		}
+
+		btnSaveInPlace.setOnClickListener {
+			val preset = existingPreset ?: return@setOnClickListener
+			lifecycleScope.launch {
+				val db = BibleDatabase.getInstance(requireContext().applicationContext)
+				db.copyFormatPresetDao().update(preset.copy(configJson = config.toJson()))
+				AppSettings.setActiveCopyFormat(requireContext(), config)
+				onSaved?.invoke()
+				dismiss()
+			}
+		}
+		btnSaveAsNew.setOnClickListener { showSaveAsDialog() }
 	}
 
 	private fun buildOptionGroups() {
@@ -113,6 +138,9 @@ class CopyFormatBottomSheet : BottomSheetDialogFragment() {
 				"짧게 (창 1:1)" to (config.refLength == CopyFormatConfig.RefLength.SHORT) to {
 					config = config.copy(refLength = CopyFormatConfig.RefLength.SHORT)
 				},
+				"중간 (창세기 1:1)" to (config.refLength == CopyFormatConfig.RefLength.MEDIUM) to {
+					config = config.copy(refLength = CopyFormatConfig.RefLength.MEDIUM)
+				},
 				"길게 (창세기 1장 1절)" to (config.refLength == CopyFormatConfig.RefLength.LONG) to {
 					config = config.copy(refLength = CopyFormatConfig.RefLength.LONG)
 				}
@@ -140,7 +168,7 @@ class CopyFormatBottomSheet : BottomSheetDialogFragment() {
 			)
 		}
 
-		addGroup("구절 앞뒤 큰따옴표") {
+		addGroup("구절 앞뒤 큰따옴표 (선택한 구절 전체를 한 번에 묶어요)") {
 			listOf(
 				"안 붙임" to !config.quoteVerse to { config = config.copy(quoteVerse = false) },
 				"붙임" to config.quoteVerse to { config = config.copy(quoteVerse = true) }
@@ -245,109 +273,10 @@ class CopyFormatBottomSheet : BottomSheetDialogFragment() {
 		previewText.text = preview
 	}
 
-	private fun loadPresets() {
-		lifecycleScope.launch {
-			val db = BibleDatabase.getInstance(requireContext().applicationContext)
-			seedDefaultPresetsIfNeeded(db)
-			val presets = db.copyFormatPresetDao().getAll()
-
-			presetsContainer.removeAllViews()
-			requireView().findViewById<TextView>(R.id.text_no_presets).visibility =
-				if (presets.isEmpty()) View.VISIBLE else View.GONE
-
-			for (preset in presets) {
-				val row = LinearLayout(requireContext()).apply {
-					orientation = LinearLayout.HORIZONTAL
-					gravity = android.view.Gravity.CENTER_VERTICAL
-					setPadding(dp(16), dp(10), dp(16), dp(10))
-					isClickable = true
-					isFocusable = true
-					background = ContextCompat.getDrawable(
-						requireContext(),
-						android.R.drawable.list_selector_background
-					)
-				}
-				val nameView = TextView(requireContext()).apply {
-					text = preset.name
-					textSize = 15f
-					setTextColor(ContextCompat.getColor(requireContext(), R.color.text_primary))
-					layoutParams =
-						LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
-				}
-				val deleteView = TextView(requireContext()).apply {
-					text = "삭제"
-					textSize = 13f
-					setTextColor(ContextCompat.getColor(requireContext(), R.color.text_hint))
-					setPadding(dp(8), dp(8), dp(8), dp(8))
-					isClickable = true
-					isFocusable = true
-					setOnClickListener {
-						lifecycleScope.launch {
-							db.copyFormatPresetDao().delete(preset)
-							loadPresets()
-						}
-					}
-				}
-				row.addView(nameView)
-				row.addView(deleteView)
-				row.setOnClickListener {
-					config = preset.toConfig()
-					buildOptionGroups()
-					updatePreview()
-				}
-				presetsContainer.addView(row)
-			}
-		}
-	}
-
-	/** 기본으로 제공하는 형식 3개. 사용자가 처음 이 화면을 열 때 한 번만 심고, 그 뒤로는 자유롭게
-	 * 수정 · 삭제할 수 있는 그냥 평범한 프리셋이다(다시 자동으로 채워지지 않는다). */
-	private suspend fun seedDefaultPresetsIfNeeded(db: BibleDatabase) {
-		val prefs = requireContext().getSharedPreferences(
-			"copy_format_prefs",
-			android.content.Context.MODE_PRIVATE
-		)
-		if (prefs.getBoolean("default_presets_seeded", false)) return
-
-		val defaults = listOf(
-			"창세기 1장 (줄바꿈형)" to CopyFormatConfig(
-				refVerseSeparator = CopyFormatConfig.Separator.NEWLINE,
-				multiVerseSeparator = CopyFormatConfig.Separator.NEWLINE,
-				refLength = CopyFormatConfig.RefLength.LONG,
-				refSpacing = true,
-				verseNumberStyle = CopyFormatConfig.VerseNumberStyle.PLAIN,
-				verseNumberSpacing = 2
-			),
-			"(창 1:1~2) 짧은형" to CopyFormatConfig(
-				refVerseSeparator = CopyFormatConfig.Separator.SPACE,
-				multiVerseSeparator = CopyFormatConfig.Separator.SPACE,
-				refPosition = CopyFormatConfig.RefPosition.BEFORE,
-				refLength = CopyFormatConfig.RefLength.SHORT,
-				refSpacing = true,
-				refBracket = CopyFormatConfig.RefBracket.PAREN,
-				showVerseNumberWhenMulti = false
-			),
-			"~ (창세기 1장 1~2절)" to CopyFormatConfig(
-				refVerseSeparator = CopyFormatConfig.Separator.SPACE,
-				multiVerseSeparator = CopyFormatConfig.Separator.NEWLINE,
-				refPosition = CopyFormatConfig.RefPosition.AFTER,
-				refLength = CopyFormatConfig.RefLength.LONG,
-				refSpacing = true,
-				refBracket = CopyFormatConfig.RefBracket.PAREN,
-				showVerseNumberWhenMulti = false
-			)
-		)
-
-		for ((name, cfg) in defaults) {
-			db.copyFormatPresetDao()
-				.insert(CopyFormatPreset(name = name, configJson = cfg.toJson()))
-		}
-		prefs.edit().putBoolean("default_presets_seeded", true).apply()
-	}
-
-	private fun showSaveDialog() {
+	private fun showSaveAsDialog() {
 		val editText = EditText(requireContext()).apply {
 			hint = "형식 이름 (예: 카톡용, 노션용)"
+			setText(existingPreset?.let { "${it.name} 사본" } ?: "")
 			setPadding(48, 32, 48, 32)
 			textSize = 15f
 			background = ContextCompat.getDrawable(requireContext(), R.drawable.bg_book_button)
@@ -358,7 +287,7 @@ class CopyFormatBottomSheet : BottomSheetDialogFragment() {
 		}
 
 		MaterialAlertDialogBuilder(requireContext(), R.style.ThemeOverlay_BNOTE_Dialog)
-			.setTitle("이 형식 저장")
+			.setTitle("이름 지정")
 			.setView(container)
 			.setPositiveButton("저장") { _, _ ->
 				val name = editText.text.toString().trim()
@@ -368,7 +297,9 @@ class CopyFormatBottomSheet : BottomSheetDialogFragment() {
 					db.copyFormatPresetDao().insert(
 						CopyFormatPreset(name = name, configJson = config.toJson())
 					)
-					loadPresets()
+					AppSettings.setActiveCopyFormat(requireContext(), config)
+					onSaved?.invoke()
+					dismiss()
 				}
 			}
 			.setNegativeButton("취소", null)
