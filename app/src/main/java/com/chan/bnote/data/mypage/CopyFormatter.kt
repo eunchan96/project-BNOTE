@@ -2,15 +2,19 @@ package com.chan.bnote.data.mypage
 
 import com.chan.bnote.data.bible.BibleBooks
 import com.chan.bnote.data.bible.BibleVerse
+import com.chan.bnote.data.bible.SecondaryVerseText
 
 object CopyFormatter {
+
+	private fun BibleVerse.fullText(): String =
+		if (!text2.isNullOrBlank()) "$text $text2" else text
 
 	fun format(
 		bookId: Int,
 		chapter: Int,
 		verses: List<BibleVerse>,
 		selectedVerseNumbers: Set<Int>,
-		secondaryMap: Map<Int, String>?,
+		secondaryMap: Map<Int, SecondaryVerseText>?,
 		includeSecondary: Boolean,
 		referenceStyle: String // "NONE" | "SHORT" | "LONG"
 	): String {
@@ -23,9 +27,9 @@ object CopyFormatter {
 			sb.append("$bookName ${chapter}${BibleBooks.chapterUnit(bookId)}\n")
 
 			for (v in sortedVerses) {
-				sb.append("${v.verse}  ${v.text}\n")
+				sb.append("${v.verse}  ${v.fullText()}\n")
 				if (includeSecondary) {
-					secondaryMap?.get(v.verse)?.let { sb.append("   $it\n") }
+					secondaryMap?.get(v.verse)?.let { sb.append("   ${it.fullText}\n") }
 				}
 			}
 		} else {
@@ -35,9 +39,9 @@ object CopyFormatter {
 					"SHORT" -> "(${BibleBooks.shortNameOf(bookId)} $chapter:${v.verse})"
 					else -> "(${BibleBooks.nameOf(bookId)} ${chapter}${BibleBooks.chapterUnit(bookId)} ${v.verse}절)"
 				}
-				sb.append("$reference ${v.text}\n")
+				sb.append("$reference ${v.fullText()}\n")
 				if (includeSecondary) {
-					secondaryMap?.get(v.verse)?.let { sb.append("   $it\n") }
+					secondaryMap?.get(v.verse)?.let { sb.append("   ${it.fullText}\n") }
 				}
 			}
 		}

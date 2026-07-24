@@ -107,7 +107,7 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 	}
 
 	private var currentVerses: List<BibleVerse> = emptyList()
-	private var currentSecondaryMap: Map<Int, String>? = null
+	private var currentSecondaryMap: Map<Int, com.chan.bnote.data.bible.SecondaryVerseText>? = null
 	private var currentHighlights: Map<Int, List<PartialHighlight>> = emptyMap()
 
 	private lateinit var highlightColorToolbar: View
@@ -432,7 +432,13 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 			)
 			val verses = db.bibleDao().getVerses(primaryTranslation.code, bookId, chapter)
 			val secondaryMap = secondaryTranslation?.let { sec ->
-				db.bibleDao().getVerses(sec.code, bookId, chapter).associate { it.verse to it.text }
+				db.bibleDao().getVerses(sec.code, bookId, chapter)
+					.associate {
+						it.verse to com.chan.bnote.data.bible.SecondaryVerseText(
+							it.text,
+							it.text2
+						)
+					}
 			}
 			currentVerses = verses
 			currentSecondaryMap = secondaryMap
