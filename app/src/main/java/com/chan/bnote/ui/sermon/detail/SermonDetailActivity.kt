@@ -278,13 +278,16 @@ class SermonDetailActivity : AppCompatActivity() {
 		}
 	}
 
-	/** youtube.com/watch?v=ID 및 youtu.be/ID 형식 모두 지원. */
+	/** youtube.com/watch?v=ID, youtu.be/ID, youtube.com/live/ID, youtube.com/shorts/ID 형식 모두 지원. */
 	private fun extractYoutubeId(url: String): String? {
 		val watchRegex = Regex("[?&]v=([a-zA-Z0-9_-]{6,})")
 		watchRegex.find(url)?.let { return it.groupValues[1] }
 
 		val shortRegex = Regex("youtu\\.be/([a-zA-Z0-9_-]{6,})")
 		shortRegex.find(url)?.let { return it.groupValues[1] }
+
+		val liveOrShortsRegex = Regex("youtube\\.com/(?:live|shorts)/([a-zA-Z0-9_-]{6,})")
+		liveOrShortsRegex.find(url)?.let { return it.groupValues[1] }
 
 		return null
 	}
