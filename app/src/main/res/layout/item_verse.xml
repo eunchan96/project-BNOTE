@@ -74,28 +74,55 @@
                 android:textSize="15sp"
                 android:textColor="@color/brown_light"
                 android:visibility="gone" />
+        </LinearLayout>
+    </LinearLayout>
 
-            <!-- 아주 드물게 절이 소제목으로 둘로 쪼개지는 경우(예: 창 35:22)를 위한 뷰들.
-                 평소엔 gone 상태. -->
-            <TextView
-                android:id="@+id/text_verse_mid_title"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:textColor="@color/brown_primary"
-                android:visibility="gone" />
+    <!-- 아주 드물게 절이 소제목으로 둘로 쪼개지는 경우(예: 창 35:22)를 위한 뷰들. 평소엔 gone 상태.
+         text_verse_title(맨 위 소제목)과 똑같이 절 번호 칸 offset 없이 왼쪽에 붙게 별도 줄로 뺐다. -->
+    <TextView
+        android:id="@+id/text_verse_mid_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:paddingTop="0dp"
+        android:paddingBottom="0dp"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:textColor="@color/brown_primary"
+        android:visibility="gone" />
+
+    <LinearLayout
+        android:id="@+id/content_row2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingStart="6dp"
+        android:paddingEnd="12dp"
+        android:paddingTop="6dp"
+        android:paddingBottom="8dp"
+        android:visibility="gone">
+
+        <!-- 절 번호 칸 폭에 맞춰 어댑터에서 너비를 맞춰준다(숫자 없이 빈 칸으로 들여쓰기만 맞춤). -->
+        <View
+            android:id="@+id/spacer_verse_number2"
+            android:layout_width="26dp"
+            android:layout_height="1dp"
+            android:layout_marginEnd="4dp" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
 
             <TextView
                 android:id="@+id/text_verse_content2"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
                 android:textSize="16sp"
                 android:textColor="@color/text_primary"
-                android:textIsSelectable="true"
-                android:visibility="gone" />
+                android:textIsSelectable="true" />
 
             <TextView
                 android:id="@+id/text_verse_content_secondary2"

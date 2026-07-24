@@ -70,6 +70,8 @@ class VerseAdapter(
 	class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
 		val root: View = view.findViewById(R.id.item_root)
 		val contentRow: View = view.findViewById(R.id.content_row)
+		val contentRow2: View = view.findViewById(R.id.content_row2)
+		val spacerNumber2: View = view.findViewById(R.id.spacer_verse_number2)
 		val title: TextView = view.findViewById(R.id.text_verse_title)
 		val number: TextView = view.findViewById(R.id.text_verse_number)
 		val content: TextView = view.findViewById(R.id.text_verse_content)
@@ -118,10 +120,14 @@ class VerseAdapter(
 			holder.contentRow.paddingBottom
 		)
 
-		// 절 번호 칸 너비를 장의 최대 절 번호 자릿수에 맞춘다.
+		// 절 번호 칸 너비를 장의 최대 절 번호 자릿수에 맞춘다. (아래 소제목 뒷부분 줄의 빈 칸도 같이 맞춘다)
 		val numberWidthPx = (numberColumnWidthDp * context.resources.displayMetrics.density).toInt()
 		if (holder.number.layoutParams.width != numberWidthPx) {
 			holder.number.layoutParams = holder.number.layoutParams.apply { width = numberWidthPx }
+		}
+		if (holder.spacerNumber2.layoutParams.width != numberWidthPx) {
+			holder.spacerNumber2.layoutParams =
+				holder.spacerNumber2.layoutParams.apply { width = numberWidthPx }
 		}
 
 		// 절 번호: 구절 메모 있으면 밑줄
@@ -164,7 +170,7 @@ class VerseAdapter(
 
 			holder.midTitle.text = "<$title2>"
 			holder.midTitle.visibility = View.VISIBLE
-			holder.content2.visibility = View.VISIBLE
+			holder.contentRow2.visibility = View.VISIBLE
 			holder.content2.text =
 				buildAnnotatedSpannable(context, text2 ?: "", highlightsSeg1, wordMemosSeg1)
 			bindInteractiveText(
@@ -177,7 +183,7 @@ class VerseAdapter(
 		} else {
 			// 소제목이 없으면(그 번역본엔 이 절에 소제목이 없는 경우) 절대 나누지 않고 한 덩어리로 보여준다.
 			holder.midTitle.visibility = View.GONE
-			holder.content2.visibility = View.GONE
+			holder.contentRow2.visibility = View.GONE
 
 			if (!text2.isNullOrBlank()) {
 				// text2 데이터 자체는 있지만(다른 번역본엔 소제목이 있어서 나뉜 자리) 이 번역본엔 소제목이
