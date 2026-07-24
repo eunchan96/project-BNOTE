@@ -1,8 +1,8 @@
 package com.chan.bnote.ui.common
 
 import android.content.Context
+import android.graphics.Rect
 import android.util.AttributeSet
-import android.view.View
 import android.widget.ScrollView
 
 /**
@@ -10,13 +10,14 @@ import android.widget.ScrollView
  * 담으려고 위쪽으로 크게 끌어올린다. 큰 멀티라인 EditText(설교 메모 등)에서는 이게 위쪽 내용(제목 등)을
  * 필요 이상으로 화면 밖으로 밀어내서 불편하다.
  *
- * 그렇다고 자동 스크롤을 아예 꺼버리면, 포커스 받은 필드가 화면 아래쪽(키보드에 가려진 곳)에 있을 때
- * 전혀 안 끌어올려져서 오히려 안 보이는 문제가 생긴다. 그래서 "박스 전체"가 아니라 "박스의 맨 위 부분
- * 정도만" 화면에 들어오도록 최소한으로만 스크롤하도록 바꿨다 — 필요할 땐 끌어올리되, 박스가 크다고
- * 필요 이상으로 많이 스크롤하지는 않는다.
+ * (이전 시도) requestChildFocus를 통째로 오버라이드해서 super를 안 불렀더니, 포커스가 프레임워크에
+ * 제대로 전파가 안 돼서 키보드(IME)가 이상하게 동작하는(엔터/백스페이스 안 먹는) 부작용이 생겼다.
+ * 포커스 전파는 반드시 정상적으로 이뤄져야 한다.
  *
- * 타이핑하면서 커서 위치를 따라가는 스크롤(requestChildRectangleOnScreen, EditText가 커서만 보이게
- * 최소한으로 스크롤하는 것)은 건드리지 않는다 — 타이핑 중엔 원래도 필요한 만큼만 스크롤되는 동작이다.
+ * 그래서 방식을 바꿨다: requestChildFocus는 건드리지 않고(포커스 전파 정상), 스크롤이 "얼마나"
+ * 움직일지 계산하는 computeScrollDeltaToGetChildRectOnScreen만 가로채서, 포커스된 박스가 아무리 커도
+ * 위쪽 일부만 화면에 들어오면 되는 걸로 계산하게 만들었다. 이러면 스크롤 자체(과하게 끌어올리는 것)만
+ * 줄어들고, 포커스/키보드 동작은 원래 그대로 정상 작동한다.
  */
 class NoAutoScrollScrollView @JvmOverloads constructor(
 	context: Context,
@@ -27,15 +28,16 @@ class NoAutoScrollScrollView @JvmOverloads constructor(
 	// 포커스 받은 박스가 아무리 커도, 이 높이 정도만 화면에 보이면 충분하다고 보고 그만큼만 끌어올린다.
 	private val maxFocusScrollTargetDp = 120
 
-	override fun requestChildFocus(child: View?, focused: View?) {
-		val target = focused ?: return
+	override fun computeScrollDeltaToGetChildRectOnScreen(rect: Rect?): Int {
+		if (rect == null) return super.computeScrollDeltaToGetChildRectOnScreen(rect)
+
 		val maxHeightPx = (maxFocusScrollTargetDp * resources.displayMetrics.density).toInt()
-		val limitedHeight = minOf(target.height, maxHeightPx)
-		// 박스 전체가 아니라 위쪽 일부만 담은 사각형을 화면에 보이게 요청 → 그만큼만 스크롤된다.
-		requestChildRectangleOnScreen(
-			target,
-			android.graphics.Rect(0, 0, target.width, limitedHeight),
-			false
-		)
+		if (rect.height() <= maxHeightPx) {
+			return super.computeScrollDeltaToGetChildRectOnScreen(rect)
+		}
+
+		// 사각형(포커스된 박스)이 너무 크면, 위쪽 일부만 담은 사각형으로 줄여서 그만큼만 스크롤되게 한다.
+		val limited = Rect(rect.left, rect.top, rect.right, rect.top + maxHeightPx)
+		return super.computeScrollDeltaToGetChildRectOnScreen(limited)
 	}
 }
