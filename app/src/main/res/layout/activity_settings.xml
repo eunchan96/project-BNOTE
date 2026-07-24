@@ -225,7 +225,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="복사 시 구절 표기"
+                    android:text="복사 형식"
                     android:textSize="16sp"
                     android:textColor="@color/text_primary" />
 
@@ -233,7 +233,7 @@
                     android:id="@+id/btn_copy_reference_style"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="표기 안 함 ▾"
+                    android:text="설정하기 ▾"
                     android:textSize="13sp"
                     android:textColor="@color/brown_primary"
                     android:padding="8dp"

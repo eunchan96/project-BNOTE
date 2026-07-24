@@ -9,7 +9,6 @@ import android.os.Bundle
 import android.view.View
 import android.view.WindowManager
 import android.widget.ImageView
-import android.widget.PopupMenu
 import android.widget.Switch
 import android.widget.TextView
 import android.widget.Toast
@@ -184,24 +183,9 @@ class SettingsActivity : AppCompatActivity() {
 			switchCopySecondary.isChecked = !switchCopySecondary.isChecked
 		}
 
-		val btnReferenceStyle = findViewById<TextView>(R.id.btn_copy_reference_style)
-		updateReferenceStyleLabel(btnReferenceStyle)
-		btnReferenceStyle.setOnClickListener {
-			val popup = PopupMenu(this, btnReferenceStyle)
-			popup.menu.add(0, 0, 0, "표기 안 함")
-			popup.menu.add(0, 1, 1, "짧게 (창 1:1)")
-			popup.menu.add(0, 2, 2, "길게 (창세기 1장 1절)")
-			popup.setOnMenuItemClickListener { item ->
-				val style = when (item.itemId) {
-					1 -> "SHORT"
-					2 -> "LONG"
-					else -> "NONE"
-				}
-				AppSettings.setCopyReferenceStyle(this, style)
-				updateReferenceStyleLabel(btnReferenceStyle)
-				true
-			}
-			popup.show()
+		findViewById<TextView>(R.id.btn_copy_reference_style).setOnClickListener {
+			com.chan.bnote.ui.bible.CopyFormatBottomSheet()
+				.show(supportFragmentManager, "copy_format")
 		}
 
 		findViewById<TextView>(R.id.btn_export_data).setOnClickListener {
@@ -357,14 +341,6 @@ class SettingsActivity : AppCompatActivity() {
 			window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 		} else {
 			window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-		}
-	}
-
-	private fun updateReferenceStyleLabel(button: TextView) {
-		button.text = when (AppSettings.getCopyReferenceStyle(this)) {
-			"SHORT" -> "짧게 (창 1:1) ▾"
-			"LONG" -> "길게 (창세기 1장 1절) ▾"
-			else -> "표기 안 함 ▾"
 		}
 	}
 }

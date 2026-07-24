@@ -26,7 +26,7 @@ object AppSettings {
 	private const val KEY_SCROLL_SPEED = "scroll_speed" // 1(느림)~5(빠름)
 	private const val KEY_KEEP_SCREEN_ON = "keep_screen_on"
 	private const val KEY_COPY_INCLUDE_SECONDARY = "copy_include_secondary"
-	private const val KEY_COPY_REFERENCE_STYLE = "copy_reference_style" // NONE | SHORT | LONG
+	private const val KEY_ACTIVE_COPY_FORMAT = "active_copy_format_json"
 	private const val KEY_LAST_READ_BOOK_ID = "last_read_book_id"
 	private const val KEY_LAST_READ_CHAPTER = "last_read_chapter"
 	private const val KEY_LAST_TAB = "last_tab"
@@ -193,14 +193,17 @@ object AppSettings {
 			.edit().putBoolean(KEY_COPY_INCLUDE_SECONDARY, enabled).apply()
 	}
 
-	fun getCopyReferenceStyle(context: Context): String {
-		return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
-			.getString(KEY_COPY_REFERENCE_STYLE, "NONE") ?: "NONE"
+	/** 지금 복사할 때 실제로 쓰는 형식. 저장된 프리셋 중 하나일 수도, 임시로 만져본 값일 수도 있다. */
+	fun getActiveCopyFormat(context: Context): com.chan.bnote.data.mypage.CopyFormatConfig {
+		val raw = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.getString(KEY_ACTIVE_COPY_FORMAT, null)
+			?: return com.chan.bnote.data.mypage.CopyFormatConfig()
+		return com.chan.bnote.data.mypage.CopyFormatConfig.fromJson(raw)
 	}
 
-	fun setCopyReferenceStyle(context: Context, style: String) {
+	fun setActiveCopyFormat(context: Context, config: com.chan.bnote.data.mypage.CopyFormatConfig) {
 		context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
-			.edit().putString(KEY_COPY_REFERENCE_STYLE, style).apply()
+			.edit().putString(KEY_ACTIVE_COPY_FORMAT, config.toJson()).apply()
 	}
 
 	/** 마지막으로 읽던 위치 - 앱을 완전히 껐다 켜도 이 위치로 열리게 하기 위함. */

@@ -640,7 +640,7 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		if (selectedVerses.isEmpty()) return
 
 		val includeSecondary = AppSettings.isCopyIncludeSecondary(requireContext())
-		val referenceStyle = AppSettings.getCopyReferenceStyle(requireContext())
+		val activeConfig = AppSettings.getActiveCopyFormat(requireContext())
 
 		val text = CopyFormatter.format(
 			bookId = currentBookId,
@@ -649,7 +649,7 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 			selectedVerseNumbers = selectedVerses,
 			secondaryMap = if (includeSecondary) currentSecondaryMap else null,
 			includeSecondary = includeSecondary,
-			referenceStyle = referenceStyle
+			config = activeConfig
 		)
 
 		val clipboard = requireContext().getSystemService(android.content.Context.CLIPBOARD_SERVICE)

@@ -41,5 +41,20 @@ val MIGRATIONS: Array<Migration> = arrayOf(
 			db.execSQL("ALTER TABLE word_memos ADD COLUMN segment INTEGER NOT NULL DEFAULT 0")
 			db.execSQL("ALTER TABLE partial_highlights ADD COLUMN segment INTEGER NOT NULL DEFAULT 0")
 		}
+	},
+	object : Migration(26, 27) {
+		override fun migrate(db: SupportSQLiteDatabase) {
+			// 사용자가 직접 만든 복사 형식을 이름 붙여 저장해두는 테이블.
+			db.execSQL(
+				"""
+				CREATE TABLE IF NOT EXISTS copy_format_presets (
+					id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+					name TEXT NOT NULL,
+					configJson TEXT NOT NULL,
+					createdAt INTEGER NOT NULL
+				)
+				""".trimIndent()
+			)
+		}
 	}
 )
