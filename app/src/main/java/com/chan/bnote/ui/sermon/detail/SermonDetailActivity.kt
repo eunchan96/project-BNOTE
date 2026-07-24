@@ -3,7 +3,6 @@ package com.chan.bnote.ui.sermon.detail
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Bundle
 import android.text.Spannable
@@ -132,53 +131,77 @@ class SermonDetailActivity : AppCompatActivity() {
 	private suspend fun render(db: com.chan.bnote.data.BibleDatabase) {
 		findViewById<TextView>(R.id.text_top_bar_title).text = sermon.title
 
-		val flexbox =
-			findViewById<com.google.android.flexbox.FlexboxLayout>(R.id.flexbox_detail_refs)
 		val memoView = findViewById<TextView>(R.id.text_sermon_memo)
 
-		// 날짜 · 카테고리(색상 텍스트) · 설교자
 		val preacherName =
 			sermon.preacherId?.let { db.preacherDao().getById(it)?.name } ?: "설교자 미지정"
 		val category = sermon.categoryId?.let { db.sermonCategoryDao().getById(it) }
 		val dateLabel = DateUtils.formatDate(sermon.sermonDate)
 
-		val metaView = findViewById<TextView>(R.id.text_sermon_meta)
-		if (category != null) {
-			val prefix = "$dateLabel · "
-			val categoryPart = category.name
-			val suffix = " · $preacherName"
-			val builder = SpannableStringBuilder()
-			builder.append(prefix)
-			val categoryStart = builder.length
-			builder.append(categoryPart)
-			builder.setSpan(
-				ForegroundColorSpan(Color.parseColor(category.colorHex)),
-				categoryStart, builder.length,
-				Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-			)
-			builder.append(suffix)
-			metaView.text = builder
+		// 상단바: 제목 대신 "2026년 7월 24일 [주일 낮예배]" 형태로
+		findViewById<TextView>(R.id.text_top_bar_title).text = if (category != null) {
+			"$dateLabel [${category.name}]"
 		} else {
-			metaView.text = "$dateLabel · $preacherName"
+			dateLabel
 		}
 
-		// 성경 구절 칩 (탭하면 해당 성경 위치로 이동)
-		flexbox.removeAllViews()
 		val refs = db.sermonBibleRefDao().getBySermon(sermon.id)
-		for (ref in refs) {
-			val chip = LayoutInflater.from(this)
-				.inflate(R.layout.item_bible_ref_chip_compact, flexbox, false)
-			chip.findViewById<TextView>(R.id.text_chip_label).text = ref.toDisplayLabel()
-			chip.setOnClickListener {
-				val intent = Intent(this, MainActivity::class.java).apply {
-					putExtra(MainActivity.EXTRA_NAVIGATE_BOOK_ID, ref.startBookId)
-					putExtra(MainActivity.EXTRA_NAVIGATE_CHAPTER, ref.startChapter)
-					flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-				}
-				startActivity(intent)
+
+		// 본문 정보: "제목 : ~ / 본문 : ~(밑줄, 누르면 이동) / 설교 : ~"
+		val infoView = findViewById<TextView>(R.id.text_sermon_info)
+		val infoBuilder = SpannableStringBuilder()
+		infoBuilder.append("제목 : ${sermon.title}\n")
+		infoBuilder.append("본문 : ")
+
+		val refClickRanges =
+			mutableListOf<Triple<Int, Int, com.chan.bnote.data.sermon.SermonBibleRef>>()
+		if (refs.isEmpty()) {
+			infoBuilder.append("없음")
+		} else {
+			for ((index, ref) in refs.withIndex()) {
+				val start = infoBuilder.length
+				infoBuilder.append(ref.toDisplayLabel())
+				val end = infoBuilder.length
+				refClickRanges.add(Triple(start, end, ref))
+				infoBuilder.setSpan(
+					android.text.style.UnderlineSpan(),
+					start,
+					end,
+					Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+				)
+				if (index != refs.lastIndex) infoBuilder.append(", ")
 			}
-			flexbox.addView(chip)
 		}
+		infoBuilder.append("\n설교 : $preacherName")
+
+		for ((start, end, ref) in refClickRanges) {
+			infoBuilder.setSpan(
+				object : android.text.style.ClickableSpan() {
+					override fun onClick(widget: View) {
+						val intent =
+							Intent(this@SermonDetailActivity, MainActivity::class.java).apply {
+								putExtra(MainActivity.EXTRA_NAVIGATE_BOOK_ID, ref.startBookId)
+								putExtra(MainActivity.EXTRA_NAVIGATE_CHAPTER, ref.startChapter)
+								putExtra(MainActivity.EXTRA_NAVIGATE_VERSE, ref.startVerse)
+								flags =
+									Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+							}
+						startActivity(intent)
+					}
+
+					override fun updateDrawState(ds: android.text.TextPaint) {
+						super.updateDrawState(ds)
+						ds.color = androidx.core.content.ContextCompat.getColor(
+							this@SermonDetailActivity, R.color.brown_primary
+						)
+						ds.isUnderlineText = true
+					}
+				},
+				start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+			)
+		}
+		infoView.text = infoBuilder
+		infoView.movementMethod = android.text.method.LinkMovementMethod.getInstance()
 
 		// 메모 (굵게/밑줄 서식 복원 + 인용 구절 강조 + 롱프레스 말풍선)
 		if (sermon.memo.isBlank()) {

@@ -35,7 +35,7 @@
             android:layout_weight="1"
             android:layout_marginStart="4dp"
             android:text="설교"
-            android:textSize="18sp"
+            android:textSize="16sp"
             android:textStyle="bold"
             android:textColor="@color/white"
             android:maxLines="1"
@@ -78,18 +78,12 @@
             android:padding="20dp">
 
             <TextView
-                android:id="@+id/text_sermon_meta"
+                android:id="@+id/text_sermon_info"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textSize="13sp"
-                android:textColor="@color/text_secondary" />
-
-            <com.google.android.flexbox.FlexboxLayout
-                android:id="@+id/flexbox_detail_refs"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                app:flexWrap="wrap" />
+                android:textSize="15sp"
+                android:lineSpacingExtra="4dp"
+                android:textColor="@color/text_primary" />
 
             <View
                 android:layout_width="match_parent"

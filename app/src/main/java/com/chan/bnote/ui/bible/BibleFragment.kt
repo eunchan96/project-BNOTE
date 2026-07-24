@@ -60,12 +60,14 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 	companion object {
 		private const val ARG_BOOK_ID = "bookId"
 		private const val ARG_CHAPTER = "chapter"
+		private const val ARG_VERSE = "verse"
 
-		fun newInstance(bookId: Int, chapter: Int): BibleFragment {
+		fun newInstance(bookId: Int, chapter: Int, verse: Int? = null): BibleFragment {
 			val fragment = BibleFragment()
 			fragment.arguments = android.os.Bundle().apply {
 				putInt(ARG_BOOK_ID, bookId)
 				putInt(ARG_CHAPTER, chapter)
+				if (verse != null) putInt(ARG_VERSE, verse)
 			}
 			return fragment
 		}
@@ -210,7 +212,8 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 				?: AppSettings.getLastReadBookId(requireContext())
 			val startChapter = arguments?.getInt(ARG_CHAPTER)
 				?: AppSettings.getLastReadChapter(requireContext())
-			loadChapter(startBookId, startChapter)
+			val startVerse = arguments?.takeIf { it.containsKey(ARG_VERSE) }?.getInt(ARG_VERSE)
+			loadChapter(startBookId, startChapter, scrollToVerse = startVerse)
 		}
 
 		view.findViewById<TextView>(R.id.btn_cancel_selection).setOnClickListener {
