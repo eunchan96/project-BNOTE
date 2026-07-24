@@ -43,13 +43,18 @@ object BibleSeeder {
 
 	private data class VerseKey(val bookId: Int, val chapter: Int, val verse: Int)
 
+	/** 절 하나의 두 조각(본문, 소제목 뒷부분) 텍스트. 대부분은 second가 null. */
+	private data class VerseSegments(val first: String, val second: String?)
+
 	/**
 	 * 본문을 통째로 지우고 다시 심되, 단어 메모 · 부분 하이라이트(글자 위치로 anchor된 데이터)가
-	 * 깨지지 않도록 최대한 다시 맞춰준다.
+	 * 깨지지 않도록 최대한 다시 맞춰준다. segment(0=본문, 1=절이 소제목으로 쪼개진 경우의 뒷부분)별로
+	 * 따로 다룬다.
 	 *
-	 * 방식: 지우기 전 각 anchor가 가리키던 "글자 조각"을 미리 기억해뒀다가, 새 본문에서 같은 조각을
-	 * 다시 찾아서 위치를 옮겨준다. 못 찾으면(그 단어 자체가 고쳐지면서 없어진 경우) 위치를 그대로 두고
-	 * 로그에 남긴다 — 데이터를 임의로 지우기보다는, 사람이 나중에 직접 확인할 수 있게 남겨두는 쪽을 택했다.
+	 * 방식: 지우기 전 각 anchor가 가리키던 "글자 조각"을 미리 기억해뒀다가, 새 본문의 같은 segment에서
+	 * 같은 조각을 다시 찾아서 위치를 옮겨준다. 못 찾으면(그 단어 자체가 고쳐지면서 없어진 경우) 위치를
+	 * 그대로 두고 로그·리포트에 남긴다 — 데이터를 임의로 지우기보다는, 사람이 나중에 직접 확인할 수 있게
+	 * 남겨두는 쪽을 택했다.
 	 */
 	private suspend fun reconcileAndReseedTranslation(
 		context: Context,
@@ -62,8 +67,9 @@ object BibleSeeder {
 			seedTranslationIfEmpty(context, db, translation)
 			return emptyList()
 		}
-		val oldTextByKey =
-			oldVerses.associate { VerseKey(it.bookId, it.chapter, it.verse) to it.text }
+		val oldSegmentsByKey = oldVerses.associate {
+			VerseKey(it.bookId, it.chapter, it.verse) to VerseSegments(it.text, it.text2)
+		}
 
 		val wordMemos = db.wordMemoDao().getAll().filter { it.translation == translation.code }
 		val highlights =
@@ -71,20 +77,22 @@ object BibleSeeder {
 
 		val wordMemoOldSnippet = wordMemos.associateWith {
 			snippetOf(
-				oldTextByKey,
+				oldSegmentsByKey,
 				it.bookId,
 				it.chapter,
 				it.verse,
+				it.segment,
 				it.startOffset,
 				it.endOffset
 			)
 		}
 		val highlightOldSnippet = highlights.associateWith {
 			snippetOf(
-				oldTextByKey,
+				oldSegmentsByKey,
 				it.bookId,
 				it.chapter,
 				it.verse,
+				it.segment,
 				it.startOffset,
 				it.endOffset
 			)
@@ -94,8 +102,9 @@ object BibleSeeder {
 		seedTranslationIfEmpty(context, db, translation)
 
 		val newVerses = db.bibleDao().getAllForTranslation(translation.code)
-		val newTextByKey =
-			newVerses.associate { VerseKey(it.bookId, it.chapter, it.verse) to it.text }
+		val newSegmentsByKey = newVerses.associate {
+			VerseKey(it.bookId, it.chapter, it.verse) to VerseSegments(it.text, it.text2)
+		}
 
 		var relocated = 0
 		val unresolvedIssues = mutableListOf<SeedReconciliationReport.Issue>()
@@ -104,7 +113,9 @@ object BibleSeeder {
 		for (memo in wordMemos) {
 			val oldSnippet = wordMemoOldSnippet[memo]
 			if (oldSnippet.isNullOrEmpty()) continue
-			val newText = newTextByKey[VerseKey(memo.bookId, memo.chapter, memo.verse)] ?: continue
+			val newText =
+				textOf(newSegmentsByKey, memo.bookId, memo.chapter, memo.verse, memo.segment)
+					?: continue
 
 			val stillValid = memo.endOffset <= newText.length &&
 					newText.substring(memo.startOffset, memo.endOffset) == oldSnippet
@@ -130,7 +141,7 @@ object BibleSeeder {
 				)
 				Log.w(
 					TAG,
-					"단어 메모 위치를 다시 못 찾음: ${translation.code} ${memo.bookId}:${memo.chapter}:${memo.verse}" +
+					"단어 메모 위치를 다시 못 찾음: ${translation.code} ${memo.bookId}:${memo.chapter}:${memo.verse}(segment=${memo.segment})" +
 							" 원래 단어=\"$oldSnippet\" 메모 내용=\"${memo.text}\" (위치는 그대로 둠, 직접 확인 필요)"
 				)
 			}
@@ -139,9 +150,13 @@ object BibleSeeder {
 		for (highlight in highlights) {
 			val oldSnippet = highlightOldSnippet[highlight]
 			if (oldSnippet.isNullOrEmpty()) continue
-			val newText =
-				newTextByKey[VerseKey(highlight.bookId, highlight.chapter, highlight.verse)]
-					?: continue
+			val newText = textOf(
+				newSegmentsByKey,
+				highlight.bookId,
+				highlight.chapter,
+				highlight.verse,
+				highlight.segment
+			) ?: continue
 
 			val stillValid = highlight.endOffset <= newText.length &&
 					newText.substring(highlight.startOffset, highlight.endOffset) == oldSnippet
@@ -170,7 +185,7 @@ object BibleSeeder {
 				)
 				Log.w(
 					TAG,
-					"부분 하이라이트 위치를 다시 못 찾음: ${translation.code} ${highlight.bookId}:${highlight.chapter}:${highlight.verse}" +
+					"부분 하이라이트 위치를 다시 못 찾음: ${translation.code} ${highlight.bookId}:${highlight.chapter}:${highlight.verse}(segment=${highlight.segment})" +
 							" 원래 글자=\"$oldSnippet\" (위치는 그대로 둠, 직접 확인 필요)"
 				)
 			}
@@ -186,11 +201,19 @@ object BibleSeeder {
 		return unresolvedIssues
 	}
 
+	private fun textOf(
+		segmentsByKey: Map<VerseKey, VerseSegments>,
+		bookId: Int, chapter: Int, verse: Int, segment: Int
+	): String? {
+		val segments = segmentsByKey[VerseKey(bookId, chapter, verse)] ?: return null
+		return if (segment == 1) segments.second else segments.first
+	}
+
 	private fun snippetOf(
-		textByKey: Map<VerseKey, String>,
-		bookId: Int, chapter: Int, verse: Int, startOffset: Int, endOffset: Int
+		segmentsByKey: Map<VerseKey, VerseSegments>,
+		bookId: Int, chapter: Int, verse: Int, segment: Int, startOffset: Int, endOffset: Int
 	): String {
-		val text = textByKey[VerseKey(bookId, chapter, verse)] ?: return ""
+		val text = textOf(segmentsByKey, bookId, chapter, verse, segment) ?: return ""
 		val start = startOffset.coerceIn(0, text.length)
 		val end = endOffset.coerceIn(start, text.length)
 		return text.substring(start, end)
@@ -223,7 +246,10 @@ object BibleSeeder {
 					chapter = obj.getInt("chapter"),
 					verse = obj.getInt("verse"),
 					text = obj.getString("text"),
-					title = if (obj.has("title") && !obj.isNull("title")) obj.getString("title") else null
+					title = if (obj.has("title") && !obj.isNull("title")) obj.getString("title") else null,
+					// 절 중간에 소제목이 오는 극소수 예외 구절(예: 창 35:22)에서만 쓰인다.
+					title2 = if (obj.has("title_2") && !obj.isNull("title_2")) obj.getString("title_2") else null,
+					text2 = if (obj.has("text_2") && !obj.isNull("text_2")) obj.getString("text_2") else null
 				)
 			)
 		}

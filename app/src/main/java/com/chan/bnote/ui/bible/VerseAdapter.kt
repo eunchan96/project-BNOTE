@@ -36,17 +36,14 @@ class VerseAdapter(
 	private var wordMemosByVerse: Map<Int, List<WordMemo>>,
 	private val onVerseTap: (verse: Int) -> Unit,
 	private val onVerseMemoView: (verse: Int, memo: VerseMemo) -> Unit,
-	private val onHighlightRequested: (verse: Int, start: Int, end: Int) -> Unit,
-	private val onWordMemoCreate: (verse: Int, start: Int, end: Int) -> Unit,
+	private val onHighlightRequested: (verse: Int, start: Int, end: Int, segment: Int) -> Unit,
+	private val onWordMemoCreate: (verse: Int, start: Int, end: Int, segment: Int) -> Unit,
 	private val onWordMemoView: (verse: Int, memo: WordMemo) -> Unit
 ) : RecyclerView.Adapter<VerseAdapter.ViewHolder>() {
 
 	companion object {
 		private const val ID_HIGHLIGHT = 9001
 		private const val ID_MEMO = 9002
-
-		// 절 본문 중간에 <소제목> 형태로 박혀있는 걸 찾는다 (극히 드문 예외 케이스용).
-		private val MID_VERSE_TITLE_REGEX = Regex("<[^<>]+>")
 
 		// 시편(bookId=19)은 전통적으로 5권으로 나뉜다: 1권 1~41편, 2권 42~72편, 3권 73~89편, 4권 90~106편, 5권 107~150편.
 		private fun psalmsBookPartLabel(bookId: Int, chapter: Int, verse: Int): String? {
@@ -77,6 +74,8 @@ class VerseAdapter(
 		val title: TextView = view.findViewById(R.id.text_verse_title)
 		val number: TextView = view.findViewById(R.id.text_verse_number)
 		val content: TextView = view.findViewById(R.id.text_verse_content)
+		val midTitle: TextView = view.findViewById(R.id.text_verse_mid_title)
+		val content2: TextView = view.findViewById(R.id.text_verse_content2)
 		val secondaryContent: TextView = view.findViewById(R.id.text_verse_content_secondary)
 		val bookPart: TextView = view.findViewById(R.id.text_verse_book_part)
 	}
@@ -141,25 +140,97 @@ class VerseAdapter(
 		}
 
 		holder.content.textSize = fontSize.toFloat()
+		holder.content2.textSize = fontSize.toFloat()
 
-		val spannable = SpannableString(verseItem.text)
+		val highlightsSeg0 = highlightsByVerse[verseItem.verse].orEmpty().filter { it.segment == 0 }
+		val highlightsSeg1 = highlightsByVerse[verseItem.verse].orEmpty().filter { it.segment == 1 }
+		val wordMemosSeg0 = wordMemosByVerse[verseItem.verse].orEmpty().filter { it.segment == 0 }
+		val wordMemosSeg1 = wordMemosByVerse[verseItem.verse].orEmpty().filter { it.segment == 1 }
 
-		// 아주 드물게 절 본문 중간에 소제목이 끼어드는 경우(예: 창 35:22)를 위한 처리.
-		// 실제 글자는 그대로 두고(그래야 하이라이트/메모 위치가 안 어긋남) 스타일만 입힌다.
-		for (match in MID_VERSE_TITLE_REGEX.findAll(verseItem.text)) {
+		holder.content.text =
+			buildAnnotatedSpannable(context, verseItem.text, highlightsSeg0, wordMemosSeg0)
+		bindInteractiveText(
+			holder,
+			holder.content,
+			verseItem,
+			segment = 0,
+			wordMemosOfSegment = wordMemosSeg0
+		)
+
+		// 아주 드물게, 절 본문이 소제목으로 둘로 쪼개지는 경우(예: 창 35:22)
+		val title2 = verseItem.title2
+		val text2 = verseItem.text2
+		if (!title2.isNullOrBlank() && !text2.isNullOrBlank()) {
+			holder.midTitle.text = "<$title2>"
+			holder.midTitle.visibility = View.VISIBLE
+			holder.content2.visibility = View.VISIBLE
+			holder.content2.text =
+				buildAnnotatedSpannable(context, text2, highlightsSeg1, wordMemosSeg1)
+			bindInteractiveText(
+				holder,
+				holder.content2,
+				verseItem,
+				segment = 1,
+				wordMemosOfSegment = wordMemosSeg1
+			)
+		} else {
+			holder.midTitle.visibility = View.GONE
+			holder.content2.visibility = View.GONE
+		}
+
+		val secondaryText = secondaryTextByVerse?.get(verseItem.verse)
+		if (secondaryText != null) {
+			holder.secondaryContent.text = secondaryText
+			holder.secondaryContent.textSize = (fontSize - 1).toFloat()
+			holder.secondaryContent.visibility = View.VISIBLE
+		} else {
+			holder.secondaryContent.visibility = View.GONE
+		}
+
+		holder.root.setBackgroundColor(
+			if (isSelected) ContextCompat.getColor(
+				context,
+				R.color.verse_selected_bg
+			) else Color.TRANSPARENT
+		)
+
+		val tapListener = View.OnClickListener { onVerseTap(verseItem.verse) }
+		holder.root.setOnClickListener(tapListener)
+
+		// 절 번호: 메모 있으면 메모 보기, 없으면 기존처럼 선택 토글
+		holder.number.setOnClickListener {
+			val memo = verseMemos[verseItem.verse]
+			if (memo != null) {
+				onVerseMemoView(verseItem.verse, memo)
+			} else {
+				onVerseTap(verseItem.verse)
+			}
+		}
+	}
+
+	/** 하이라이트 배경 + 소제목 스타일 + 단어 메모 밑줄까지 입힌 SpannableString을 만든다. */
+	private fun buildAnnotatedSpannable(
+		context: android.content.Context,
+		text: String,
+		highlights: List<PartialHighlight>,
+		wordMemos: List<WordMemo>
+	): SpannableString {
+		val spannable = SpannableString(text)
+
+		// 아주 드물게 절 본문 중간에 <소제목>이 그대로 남아있는 경우(현재는 title2/text2로 분리해서
+		// 안 쓰지만, 혹시 남아있을 수 있어 안전하게 계속 처리)를 위한 스타일링.
+		for (match in Regex("<[^<>]+>").findAll(text)) {
 			spannable.setSpan(
 				StyleSpan(Typeface.BOLD), match.range.first, match.range.last + 1,
 				Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
 			)
 			spannable.setSpan(
-				ForegroundColorSpan(
-					androidx.core.content.ContextCompat.getColor(context, R.color.brown_primary)
-				),
+				ForegroundColorSpan(ContextCompat.getColor(context, R.color.brown_primary)),
 				match.range.first, match.range.last + 1, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
 			)
 		}
 
-		for (h in highlightsByVerse[verseItem.verse].orEmpty()) {
+		for (h in highlights) {
 			val start = h.startOffset.coerceIn(0, spannable.length)
 			val end = h.endOffset.coerceIn(start, spannable.length)
 			if (start < end) {
@@ -183,38 +254,29 @@ class VerseAdapter(
 				)
 			}
 		}
-		for (m in wordMemosByVerse[verseItem.verse].orEmpty()) {
+		for (m in wordMemos) {
 			val start = m.startOffset.coerceIn(0, spannable.length)
 			val end = m.endOffset.coerceIn(start, spannable.length)
 			if (start < end) {
 				spannable.setSpan(UnderlineSpan(), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
 			}
 		}
-		holder.content.text = spannable
+		return spannable
+	}
 
-		val secondaryText = secondaryTextByVerse?.get(verseItem.verse)
-		if (secondaryText != null) {
-			holder.secondaryContent.text = secondaryText
-			holder.secondaryContent.textSize = (fontSize - 1).toFloat()
-			holder.secondaryContent.visibility = View.VISIBLE
-		} else {
-			holder.secondaryContent.visibility = View.GONE
-		}
-
-		holder.root.setBackgroundColor(
-			if (isSelected) ContextCompat.getColor(
-				context,
-				R.color.verse_selected_bg
-			) else Color.TRANSPARENT
-		)
-
-		val tapListener = View.OnClickListener { onVerseTap(verseItem.verse) }
-		holder.root.setOnClickListener(tapListener)
-
+	/** 탭으로 절 선택, 드래그로 부분 선택 후 하이라이트/메모 팝업까지 — content/content2 둘 다 동일하게 쓴다. */
+	private fun bindInteractiveText(
+		holder: ViewHolder,
+		textView: TextView,
+		verseItem: BibleVerse,
+		segment: Int,
+		wordMemosOfSegment: List<WordMemo>
+	) {
+		val context = textView.context
 		var downTime = 0L
 		var downX = 0f
 		var downY = 0f
-		holder.content.setOnTouchListener { _, event ->
+		textView.setOnTouchListener { _, event ->
 			when (event.actionMasked) {
 				android.view.MotionEvent.ACTION_DOWN -> {
 					downTime = System.currentTimeMillis()
@@ -235,18 +297,8 @@ class VerseAdapter(
 			false // 롱프레스로 텍스트 선택하는 기존 동작은 그대로 유지
 		}
 
-		// 절 번호: 메모 있으면 메모 보기, 없으면 기존처럼 선택 토글
-		holder.number.setOnClickListener {
-			val memo = verseMemos[verseItem.verse]
-			if (memo != null) {
-				onVerseMemoView(verseItem.verse, memo)
-			} else {
-				onVerseTap(verseItem.verse)
-			}
-		}
-
-		holder.content.setTextIsSelectable(true)
-		holder.content.customSelectionActionModeCallback = object : ActionMode.Callback {
+		textView.setTextIsSelectable(true)
+		textView.customSelectionActionModeCallback = object : ActionMode.Callback {
 			override fun onCreateActionMode(mode: ActionMode?, menu: Menu?): Boolean {
 				menu?.add(0, ID_HIGHLIGHT, 0, "하이라이트")
 				menu?.add(0, ID_MEMO, 1, "메모")
@@ -256,25 +308,25 @@ class VerseAdapter(
 			override fun onPrepareActionMode(mode: ActionMode?, menu: Menu?): Boolean = false
 
 			override fun onActionItemClicked(mode: ActionMode?, item: MenuItem?): Boolean {
-				val start = holder.content.selectionStart
-				val end = holder.content.selectionEnd
+				val start = textView.selectionStart
+				val end = textView.selectionEnd
 				if (start !in 0 until end) return false
 
 				when (item?.itemId) {
 					ID_HIGHLIGHT -> {
-						onHighlightRequested(verseItem.verse, start, end)
+						onHighlightRequested(verseItem.verse, start, end, segment)
 						mode?.finish()
 						return true
 					}
 
 					ID_MEMO -> {
-						val overlapping = wordMemosByVerse[verseItem.verse]?.firstOrNull { m ->
+						val overlapping = wordMemosOfSegment.firstOrNull { m ->
 							!(end <= m.startOffset || start >= m.endOffset)
 						}
 						if (overlapping != null) {
 							onWordMemoView(verseItem.verse, overlapping)
 						} else {
-							onWordMemoCreate(verseItem.verse, start, end)
+							onWordMemoCreate(verseItem.verse, start, end, segment)
 						}
 						mode?.finish()
 						return true

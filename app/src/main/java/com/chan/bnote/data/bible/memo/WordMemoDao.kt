@@ -40,11 +40,17 @@ interface WordMemoDao {
 		"""
     SELECT * FROM word_memos
     WHERE translation = :translation AND bookId = :bookId AND chapter = :chapter AND verse = :verse
-      AND startOffset = :startOffset AND endOffset = :endOffset
+      AND startOffset = :startOffset AND endOffset = :endOffset AND segment = :segment
     ORDER BY id ASC
     """
 	)
 	suspend fun getAtPosition(
-		translation: String, bookId: Int, chapter: Int, verse: Int, startOffset: Int, endOffset: Int
+		translation: String,
+		bookId: Int,
+		chapter: Int,
+		verse: Int,
+		startOffset: Int,
+		endOffset: Int,
+		segment: Int
 	): List<WordMemo>
 }

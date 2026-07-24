@@ -47,6 +47,14 @@ import com.chan.bnote.ui.common.HighlightColors
 import com.chan.bnote.ui.knowledge.BibleKnowledgeHubActivity
 import kotlinx.coroutines.launch
 
+/** 부분 하이라이트 대상 (segment: 0=본문, 1=절이 소제목으로 쪼개진 경우의 뒷부분). */
+private data class HighlightSelection(
+	val verse: Int,
+	val start: Int,
+	val end: Int,
+	val segment: Int
+)
+
 class BibleFragment : Fragment(), TopBarActionHandler {
 
 	companion object {
@@ -104,8 +112,7 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 
 	private lateinit var highlightColorToolbar: View
 	private var pendingHighlightVerses: List<Int>? = null   // 절 탭 선택 → 전체 하이라이트용
-	private var pendingHighlightRange: Triple<Int, Int, Int>? =
-		null // 부분 하이라이트용 (verse, start, end)
+	private var pendingHighlightRange: HighlightSelection? = null // 부분 하이라이트용
 
 	private var currentVerseMemos: Map<Int, VerseMemo> = emptyMap()
 	private var currentWordMemos: Map<Int, List<WordMemo>> = emptyMap()
@@ -461,16 +468,17 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 				wordMemosByVerse = currentWordMemos,
 				onVerseTap = { verseNum -> toggleVerseSelection(verseNum) },
 				onVerseMemoView = { verseNum, memo -> showVerseMemoDialog(verseNum, memo) },
-				onHighlightRequested = { verseNum, start, end ->
-					pendingHighlightRange = Triple(verseNum, start, end)
+				onHighlightRequested = { verseNum, start, end, segment ->
+					pendingHighlightRange = HighlightSelection(verseNum, start, end, segment)
 					pendingHighlightVerses = null
 					showHighlightColorToolbar()
 				},
-				onWordMemoCreate = { verseNum, start, end ->
+				onWordMemoCreate = { verseNum, start, end, segment ->
 					showWordMemoEditDialog(
 						verseNum,
 						start,
 						end,
+						segment,
 						null
 					)
 				},
@@ -740,9 +748,9 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 	}
 
 	private fun hasExistingHighlightForPending(): Boolean {
-		pendingHighlightRange?.let { (verseNum, start, end) ->
+		pendingHighlightRange?.let { (verseNum, start, end, segment) ->
 			val overlaps = currentHighlights[verseNum]?.any { h ->
-				!(end <= h.startOffset || start >= h.endOffset)
+				h.segment == segment && !(end <= h.startOffset || start >= h.endOffset)
 			} ?: false
 			return overlaps
 		}
@@ -788,7 +796,7 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(requireContext().applicationContext)
 
-			pendingHighlightRange?.let { (verseNum, start, end) ->
+			pendingHighlightRange?.let { (verseNum, start, end, segment) ->
 				db.partialHighlightDao().insert(
 					PartialHighlight(
 						translation = primaryTranslation.code,
@@ -797,6 +805,7 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 						verse = verseNum,
 						startOffset = start,
 						endOffset = end,
+						segment = segment,
 						colorHex = colorHex
 					)
 				)
@@ -894,6 +903,7 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		verseNum: Int,
 		start: Int,
 		end: Int,
+		segment: Int,
 		existing: WordMemo?
 	) {
 		wordMemoEditorLauncher.launch(
@@ -904,13 +914,14 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 				chapter = currentChapter,
 				verse = verseNum,
 				startOffset = start,
-				endOffset = end
+				endOffset = end,
+				segment = segment
 			)
 		)
 	}
 
 	private fun showWordMemoViewDialog(verseNum: Int, memo: WordMemo) {
-		showWordMemoEditDialog(verseNum, memo.startOffset, memo.endOffset, memo)
+		showWordMemoEditDialog(verseNum, memo.startOffset, memo.endOffset, memo.segment, memo)
 	}
 
 	private suspend fun refreshMemos() {

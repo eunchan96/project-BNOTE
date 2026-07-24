@@ -215,7 +215,8 @@ class MemoListActivity : AppCompatActivity() {
 				chapter = memo.chapter,
 				verse = memo.verse,
 				startOffset = memo.startOffset,
-				endOffset = memo.endOffset
+				endOffset = memo.endOffset,
+				segment = memo.segment
 			)
 		)
 	}

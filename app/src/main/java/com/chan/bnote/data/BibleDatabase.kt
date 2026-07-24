@@ -63,7 +63,7 @@ import kotlinx.coroutines.launch
 		PrayerRequest::class, VerseMemorizationProgress::class, MemorizationVerse::class,
 		MemorizationGroup::class, RecentChapterView::class
 	],
-	version = 25, // 24 -> 25 (sermons에 link 컬럼 추가 - 설교노트 유튜브 등 링크 임베드)
+	version = 26, // 25 -> 26 (bible_verses에 title2/text2, word_memos/partial_highlights에 segment 추가 - 절 중간 소제목 지원)
 	exportSchema = false
 )
 abstract class BibleDatabase : RoomDatabase() {

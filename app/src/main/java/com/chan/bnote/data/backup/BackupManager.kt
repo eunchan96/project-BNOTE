@@ -382,7 +382,10 @@ object BackupManager {
 		"chapter",
 		chapter
 	); put("verse", verse)
-		put("startOffset", startOffset); put("endOffset", endOffset); put("colorHex", colorHex)
+		put("startOffset", startOffset); put("endOffset", endOffset); put(
+		"segment",
+		segment
+	); put("colorHex", colorHex)
 	}
 
 	private fun highlightFromJson(o: JSONObject) = PartialHighlight(
@@ -392,6 +395,7 @@ object BackupManager {
 		verse = o.getInt("verse"),
 		startOffset = o.getInt("startOffset"),
 		endOffset = o.getInt("endOffset"),
+		segment = o.optInt("segment", 0),
 		colorHex = o.optString("colorHex", "#FFF9C4")
 	)
 
@@ -434,7 +438,10 @@ object BackupManager {
 		"chapter",
 		chapter
 	); put("verse", verse)
-		put("startOffset", startOffset); put("endOffset", endOffset); put("text", text)
+		put("startOffset", startOffset); put("endOffset", endOffset); put(
+		"segment",
+		segment
+	); put("text", text)
 		sourceLabel?.let { put("sourceLabel", it) }
 		put("updatedAt", updatedAt)
 	}
@@ -446,6 +453,7 @@ object BackupManager {
 		verse = o.getInt("verse"),
 		startOffset = o.getInt("startOffset"),
 		endOffset = o.getInt("endOffset"),
+		segment = o.optInt("segment", 0),
 		text = o.getString("text"),
 		sourceLabel = if (o.has("sourceLabel")) o.getString("sourceLabel") else null,
 		updatedAt = o.optLong("updatedAt", System.currentTimeMillis())

@@ -31,5 +31,15 @@ val MIGRATIONS: Array<Migration> = arrayOf(
 			// 설교 detail 화면에 임베드할 링크(주로 유튜브) 컬럼. 기존 설교는 전부 NULL(링크 없음)로 유지된다.
 			db.execSQL("ALTER TABLE sermons ADD COLUMN link TEXT")
 		}
+	},
+	object : Migration(25, 26) {
+		override fun migrate(db: SupportSQLiteDatabase) {
+			// 절 중간에 소제목이 오는 극소수 예외 구절(예: 창 35:22)을 위한 컬럼들.
+			db.execSQL("ALTER TABLE bible_verses ADD COLUMN title2 TEXT")
+			db.execSQL("ALTER TABLE bible_verses ADD COLUMN text2 TEXT")
+			// 기존 단어메모/부분하이라이트는 전부 앞부분(text, segment=0)을 가리키던 것들이라 기본값 0이면 안전하다.
+			db.execSQL("ALTER TABLE word_memos ADD COLUMN segment INTEGER NOT NULL DEFAULT 0")
+			db.execSQL("ALTER TABLE partial_highlights ADD COLUMN segment INTEGER NOT NULL DEFAULT 0")
+		}
 	}
 )

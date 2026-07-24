@@ -66,6 +66,28 @@
                 android:textColor="@color/text_primary"
                 android:textIsSelectable="true" />
 
+            <!-- 아주 드물게 절이 소제목으로 둘로 쪼개지는 경우(예: 창 35:22)를 위한 뷰들.
+                 평소엔 gone 상태. -->
+            <TextView
+                android:id="@+id/text_verse_mid_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="@color/brown_primary"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/text_verse_content2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:textSize="16sp"
+                android:textColor="@color/text_primary"
+                android:textIsSelectable="true"
+                android:visibility="gone" />
+
             <TextView
                 android:id="@+id/text_verse_content_secondary"
                 android:layout_width="match_parent"

@@ -33,6 +33,7 @@ class WordMemoEditorActivity : AppCompatActivity() {
 		private const val EXTRA_VERSE = "extra_verse"
 		private const val EXTRA_START_OFFSET = "extra_start_offset"
 		private const val EXTRA_END_OFFSET = "extra_end_offset"
+		private const val EXTRA_SEGMENT = "extra_segment"
 
 		fun createIntent(
 			context: Context,
@@ -41,7 +42,8 @@ class WordMemoEditorActivity : AppCompatActivity() {
 			chapter: Int,
 			verse: Int,
 			startOffset: Int,
-			endOffset: Int
+			endOffset: Int,
+			segment: Int = 0
 		): Intent {
 			return Intent(context, WordMemoEditorActivity::class.java).apply {
 				putExtra(EXTRA_TRANSLATION, translation)
@@ -50,6 +52,7 @@ class WordMemoEditorActivity : AppCompatActivity() {
 				putExtra(EXTRA_VERSE, verse)
 				putExtra(EXTRA_START_OFFSET, startOffset)
 				putExtra(EXTRA_END_OFFSET, endOffset)
+				putExtra(EXTRA_SEGMENT, segment)
 			}
 		}
 	}
@@ -68,6 +71,7 @@ class WordMemoEditorActivity : AppCompatActivity() {
 	private var verse = 0
 	private var startOffset = 0
 	private var endOffset = 0
+	private var segment = 0
 	private var wordText = ""
 	private var anyChangeMade = false
 
@@ -97,6 +101,7 @@ class WordMemoEditorActivity : AppCompatActivity() {
 		verse = intent.getIntExtra(EXTRA_VERSE, 1)
 		startOffset = intent.getIntExtra(EXTRA_START_OFFSET, 0)
 		endOffset = intent.getIntExtra(EXTRA_END_OFFSET, 0)
+		segment = intent.getIntExtra(EXTRA_SEGMENT, 0)
 
 		findViewById<ImageView>(R.id.btn_top_bar_back).setOnClickListener { finishWithResult() }
 
@@ -119,8 +124,9 @@ class WordMemoEditorActivity : AppCompatActivity() {
 	private fun loadExisting() {
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(applicationContext)
-			val verseText = db.bibleDao().getVerses(translation, bookId, chapter)
-				.find { it.verse == verse }?.text ?: ""
+			val verseRow =
+				db.bibleDao().getVerses(translation, bookId, chapter).find { it.verse == verse }
+			val verseText = if (segment == 1) verseRow?.text2 ?: "" else verseRow?.text ?: ""
 			val safeStart = startOffset.coerceIn(0, verseText.length)
 			val safeEnd = endOffset.coerceIn(safeStart, verseText.length)
 			wordText = verseText.substring(safeStart, safeEnd)
@@ -130,7 +136,7 @@ class WordMemoEditorActivity : AppCompatActivity() {
 				"${BibleBooks.nameOf(bookId)} ${chapter}${unit} ${verse}절 [$wordText] 메모"
 
 			val existingMemos = db.wordMemoDao()
-				.getAtPosition(translation, bookId, chapter, verse, startOffset, endOffset)
+				.getAtPosition(translation, bookId, chapter, verse, startOffset, endOffset, segment)
 
 			if (existingMemos.isEmpty()) {
 				addBox(existing = null)
@@ -205,6 +211,7 @@ class WordMemoEditorActivity : AppCompatActivity() {
 						verse = verse,
 						startOffset = startOffset,
 						endOffset = endOffset,
+						segment = segment,
 						text = text
 					)
 				)
