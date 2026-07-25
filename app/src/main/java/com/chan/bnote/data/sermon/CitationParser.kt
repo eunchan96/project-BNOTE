@@ -44,20 +44,24 @@ object CitationParser {
 		return results
 	}
 
-	// 예: "1절", "23절", "1~5절" — 책/장 표기가 없는 절 번호(또는 범위)만. 본문(SermonBibleRef)이 하나뿐인
-	// 설교 메모에서, 그 본문의 책/장을 문맥으로 삼아 절 번호만으로도 인용을 찾아줄 때 쓴다.
-	private val verseOnlyRegex: Regex by lazy { Regex("(\\d{1,3})(?:~(\\d{1,3}))?절") }
+	// 예: "1절", "23절", "1~5절", "1,3절", "1~2,5절" — 책/장 표기가 없는 절 번호(단독/범위/콤마로 여러 개)만.
+	// 본문(SermonBibleRef)이 하나뿐인 설교 메모에서, 그 본문의 책/장을 문맥으로 삼아 절 번호만으로도
+	// 인용을 찾아줄 때 쓴다.
+	private val verseOnlyRegex: Regex by lazy {
+		Regex("((?:\\d{1,3}(?:~\\d{1,3})?)(?:,\\s?\\d{1,3}(?:~\\d{1,3})?)*)절")
+	}
 
 	fun findVerseOnlyCitations(text: String, bookId: Int, chapter: Int): List<CitationMatch> {
 		val results = mutableListOf<CitationMatch>()
 		for (match in verseOnlyRegex.findAll(text)) {
-			val start = match.groupValues[1].toIntOrNull() ?: continue
-			val end = match.groupValues[2].toIntOrNull() ?: start
+			val body = match.groupValues[1]
+			val segments = body.split(",").mapNotNull { parseVerseToken(it.trim()) }
+			if (segments.isEmpty()) continue
 			results.add(
 				CitationMatch(
 					range = match.range,
 					bookId = bookId,
-					groups = listOf(CitationGroup(chapter, listOf(VerseSegment(start, end)))),
+					groups = listOf(CitationGroup(chapter, segments)),
 					rawLabel = match.value
 				)
 			)
