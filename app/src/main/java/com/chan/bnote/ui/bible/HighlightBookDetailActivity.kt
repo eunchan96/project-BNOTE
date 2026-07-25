@@ -24,6 +24,7 @@ import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.bible.BibleBooks
 import com.chan.bnote.data.bible.BibleVerse
 import com.chan.bnote.data.bible.partialhighlight.PartialHighlight
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 /** 한 책의 하이라이트만 모아서 장별로 보여준다. HighlightListActivity(책 목록)에서 책을 누르면 열린다. */
@@ -40,6 +41,7 @@ class HighlightBookDetailActivity : AppCompatActivity() {
 	private var bookId: Int = 1
 	private lateinit var container: LinearLayout
 	private lateinit var emptyText: TextView
+	private var loadJob: Job? = null
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
@@ -60,8 +62,8 @@ class HighlightBookDetailActivity : AppCompatActivity() {
 		container = findViewById(R.id.container_list)
 		emptyText = findViewById(R.id.text_empty)
 		emptyText.text = "이 책엔 하이라이트한 구절이 없어요."
-
-		loadHighlights()
+		// onResume이 onCreate 직후에도 항상 한 번 불리므로, 목록은 거기서만 불러온다
+		// (여기서도 부르면 두 번 겹쳐 불러오게 된다).
 	}
 
 	override fun onResume() {
@@ -69,8 +71,11 @@ class HighlightBookDetailActivity : AppCompatActivity() {
 		loadHighlights()
 	}
 
+	/** 화면을 열 때마다(혹은 다시 돌아올 때마다) 이전 로딩이 아직 끝나지 않았으면 취소하고 새로
+	 * 시작한다 — 두 번 겹쳐 불려서 목록이 이상하게 섞이는 걸 막기 위한 안전장치. */
 	private fun loadHighlights() {
-		lifecycleScope.launch {
+		loadJob?.cancel()
+		loadJob = lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(applicationContext)
 			val highlights = db.partialHighlightDao().getAll().filter { it.bookId == bookId }
 
@@ -85,32 +90,45 @@ class HighlightBookDetailActivity : AppCompatActivity() {
 			val verseTextCache = mutableMapOf<Pair<Int, Int>, List<BibleVerse>>()
 			container.removeAllViews()
 
-			var currentChapter = -1
-			for (highlight in highlights) {
-				if (highlight.chapter != currentChapter) {
-					currentChapter = highlight.chapter
-					addHeader("$currentChapter$unit")
-				}
+			// chapter별로 확실하게 묶는다(정렬 순서에 기대지 않고, 진짜로 같은 장인 것끼리 모은다).
+			val byChapter = highlights.groupBy { it.chapter }.toSortedMap()
+			for ((chapter, chapterHighlights) in byChapter) {
+				addHeader("$chapter$unit")
 
-				val verses = verseTextCache.getOrPut(highlight.bookId to highlight.chapter) {
-					db.bibleDao()
-						.getVerses(highlight.translation, highlight.bookId, highlight.chapter)
-				}
-				val fullText = verses.find { it.verse == highlight.verse }?.text ?: ""
-				val preview = if (
-					highlight.startOffset in 0..fullText.length &&
-					highlight.endOffset in highlight.startOffset..fullText.length
-				) {
-					fullText.substring(highlight.startOffset, highlight.endOffset)
-				} else {
-					fullText
-				}
+				// 절이 소제목으로 둘로 나뉘는 예외 구절은 같은 절에 하이라이트가 segment별로 2개
+				// 생기는데(둘 다 덮으려고), 목록에서는 한 절이니까 한 줄로 합쳐서 보여준다.
+				val byVerse = chapterHighlights.groupBy { it.verse }.toSortedMap()
+				for ((verseNum, verseHighlights) in byVerse) {
+					val sorted = verseHighlights.sortedBy { it.segment }
+					val previewParts = sorted.map { highlight ->
+						val verses =
+							verseTextCache.getOrPut(highlight.bookId to highlight.chapter) {
+								db.bibleDao().getVerses(
+									highlight.translation,
+									highlight.bookId,
+									highlight.chapter
+								)
+							}
+						val verseRow = verses.find { it.verse == highlight.verse }
+						val fullText =
+							if (highlight.segment == 1) verseRow?.text2 else verseRow?.text
+						val safeText = fullText ?: ""
+						if (
+							highlight.startOffset in 0..safeText.length &&
+							highlight.endOffset in highlight.startOffset..safeText.length
+						) {
+							safeText.substring(highlight.startOffset, highlight.endOffset)
+						} else {
+							safeText
+						}
+					}
 
-				addRow(
-					label = "${highlight.verse}절  $preview",
-					colorHex = highlight.colorHex,
-					highlight = highlight
-				)
+					addRow(
+						label = "$verseNum" + "절  " + previewParts.joinToString(" "),
+						colorHex = sorted.first().colorHex,
+						highlight = sorted.first()
+					)
+				}
 			}
 		}
 	}

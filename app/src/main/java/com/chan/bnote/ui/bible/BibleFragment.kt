@@ -1038,9 +1038,27 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 							verse = verseNum,
 							startOffset = 0,
 							endOffset = verseData.text.length,
+							segment = 0,
 							colorHex = colorHex
 						)
 					)
+					// 절이 소제목으로 둘로 나뉘는 극소수 예외 구절(예: 창 35:22)은 뒷부분(text2)도
+					// 마저 하이라이트해야 "전체 하이라이트"가 진짜 전체를 덮는다.
+					val text2 = verseData.text2
+					if (!text2.isNullOrBlank()) {
+						db.partialHighlightDao().insert(
+							PartialHighlight(
+								translation = primaryTranslation.code,
+								bookId = currentBookId,
+								chapter = currentChapter,
+								verse = verseNum,
+								startOffset = 0,
+								endOffset = text2.length,
+								segment = 1,
+								colorHex = colorHex
+							)
+						)
+					}
 				}
 			}
 

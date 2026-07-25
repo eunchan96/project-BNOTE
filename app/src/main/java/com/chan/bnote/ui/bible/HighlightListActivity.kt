@@ -18,6 +18,7 @@ import androidx.lifecycle.lifecycleScope
 import com.chan.bnote.R
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.bible.BibleBooks
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 /** 하이라이트를 책별로 모아서 보여준다. 책을 누르면 그 책의 하이라이트만 보이는 화면으로 넘어간다. */
@@ -25,6 +26,7 @@ class HighlightListActivity : AppCompatActivity() {
 
 	private lateinit var container: LinearLayout
 	private lateinit var emptyText: TextView
+	private var loadJob: Job? = null
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
@@ -43,17 +45,17 @@ class HighlightListActivity : AppCompatActivity() {
 		container = findViewById(R.id.container_list)
 		emptyText = findViewById(R.id.text_empty)
 		emptyText.text = "아직 하이라이트한 구절이 없어요."
-
-		loadBooks()
+		// onResume이 onCreate 직후에도 항상 한 번 불리므로, 목록은 거기서만 불러온다.
 	}
 
 	override fun onResume() {
 		super.onResume()
-		loadBooks() // 책 상세에서 하이라이트를 지우고 돌아왔을 수도 있으니 다시 확인한다.
+		loadBooks() // 처음 열릴 때도, 상세에서 하이라이트를 지우고 돌아왔을 때도 여기서 다시 확인한다.
 	}
 
 	private fun loadBooks() {
-		lifecycleScope.launch {
+		loadJob?.cancel()
+		loadJob = lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(applicationContext)
 			val highlights = db.partialHighlightDao().getAll()
 
@@ -65,7 +67,11 @@ class HighlightListActivity : AppCompatActivity() {
 			emptyText.visibility = View.GONE
 
 			// bookId 순으로 이미 정렬돼서 오므로, 순서대로 세면서 묶으면 책별 개수가 자연스럽게 나온다.
-			val countsByBook = highlights.groupingBy { it.bookId }.eachCount()
+			// segment 0/1로 나뉜 하이라이트(절이 소제목으로 둘로 쪼개지는 예외 구절)는 같은 절이니까
+			// 실제 "절 개수"를 셀 땐 (장,절) 기준 고유 개수로 세야 한다(row 개수 그대로 세면 2개로 뻥튀기됨).
+			val countsByBook = highlights
+				.groupBy { it.bookId }
+				.mapValues { (_, list) -> list.map { it.chapter to it.verse }.distinct().size }
 
 			container.removeAllViews()
 			for ((bookId, count) in countsByBook) {
