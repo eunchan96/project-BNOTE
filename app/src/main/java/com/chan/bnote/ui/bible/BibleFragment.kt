@@ -193,6 +193,9 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		recyclerView = view.findViewById(R.id.recycler_verses)
 		recyclerView.layoutManager = LinearLayoutManager(requireContext())
 		recyclerView.clipToPadding = false
+		previewRecyclerView = view.findViewById(R.id.recycler_verses_preview)
+		previewRecyclerView.layoutManager = LinearLayoutManager(requireContext())
+		previewRecyclerView.isNestedScrollingEnabled = false
 		attachChapterSwipeGesture()
 
 		selectionToolbar = view.findViewById(R.id.container_selection_toolbar)
@@ -364,52 +367,159 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		dialog.show(parentFragmentManager, "bible_menu")
 	}
 
-	/** 설정에서 "스와이프로 장 이동"을 켰을 때, 좌우로 크게 휙 넘기면 이전/다음 장으로 이동한다.
-	 * 절 선택이나 텍스트 드래그 선택 같은 평소 동작을 방해하지 않도록, RecyclerView가 실제로
-	 * 터치를 가로채지는 않고(onInterceptTouchEvent가 항상 false를 반환) 제스처만 곁다리로 감지한다. */
-	private fun attachChapterSwipeGesture() {
-		val gestureDetector = android.view.GestureDetector(
-			requireContext(),
-			object : android.view.GestureDetector.SimpleOnGestureListener() {
-				override fun onFling(
-					e1: android.view.MotionEvent?,
-					e2: android.view.MotionEvent,
-					velocityX: Float,
-					velocityY: Float
-				): Boolean {
-					if (!AppSettings.isChapterSwipeEnabled(requireContext())) return false
-					val startX = e1?.x ?: return false
-					val startY = e1.y
-					val deltaX = e2.x - startX
-					val deltaY = e2.y - startY
+	private var swipeStartX = 0f
+	private var swipeStartY = 0f
+	private var isDraggingChapter = false
+	private var pendingNextVerses: List<BibleVerse>? = null
+	private var pendingPrevVerses: List<BibleVerse>? = null
+	private lateinit var previewRecyclerView: RecyclerView
 
-					val minDistancePx = 120 * resources.displayMetrics.density
-					val minVelocity = 400 * resources.displayMetrics.density
+	/** 드래그 시작하자마자 다음/이전 장 데이터를 미리 받아둔다. 그래야 드래그하는 동안 바로 옆에서
+	 * 실시간으로 따라 들어오는 걸 보여줄 수 있다. */
+	private fun prefetchAdjacentChapters() {
+		pendingNextVerses = null
+		pendingPrevVerses = null
+		lifecycleScope.launch {
+			val db = BibleDatabase.getInstance(requireContext().applicationContext)
+			val maxChapter = db.bibleDao().getMaxChapter(primaryTranslation.code, currentBookId)
 
-					if (kotlin.math.abs(deltaX) > minDistancePx &&
-						kotlin.math.abs(deltaX) > kotlin.math.abs(deltaY) * 2 &&
-						kotlin.math.abs(velocityX) > minVelocity
-					) {
-						if (deltaX < 0) onNextChapterClicked() else onPrevChapterClicked()
-						return true
-					}
-					return false
-				}
+			pendingNextVerses = when {
+				currentChapter < maxChapter ->
+					db.bibleDao()
+						.getVerses(primaryTranslation.code, currentBookId, currentChapter + 1)
+
+				currentBookId < 66 ->
+					db.bibleDao().getVerses(primaryTranslation.code, currentBookId + 1, 1)
+
+				else -> null
 			}
-		)
+
+			pendingPrevVerses = when {
+				currentChapter > 1 ->
+					db.bibleDao()
+						.getVerses(primaryTranslation.code, currentBookId, currentChapter - 1)
+
+				currentBookId > 1 -> {
+					val prevBook = currentBookId - 1
+					val prevMaxChapter =
+						db.bibleDao().getMaxChapter(primaryTranslation.code, prevBook)
+					db.bibleDao().getVerses(primaryTranslation.code, prevBook, prevMaxChapter)
+				}
+
+				else -> null
+			}
+		}
+	}
+
+	/** 손가락을 따라 본문이 실시간으로 밀려나고, 그 자리로 다음/이전 장이 옆에서 따라 들어온다. */
+	private fun updateChapterDrag(deltaX: Float) {
+		val width = recyclerView.width.toFloat()
+		if (width <= 0f) return
+
+		recyclerView.translationX = deltaX
+
+		val isNext = deltaX < 0
+		val previewVerses = if (isNext) pendingNextVerses else pendingPrevVerses
+		if (previewVerses.isNullOrEmpty()) {
+			previewRecyclerView.visibility = View.GONE
+			return
+		}
+
+		if (previewRecyclerView.tag !== previewVerses) {
+			previewRecyclerView.adapter = VersePreviewAdapter(previewVerses)
+			previewRecyclerView.tag = previewVerses
+		}
+		previewRecyclerView.visibility = View.VISIBLE
+		previewRecyclerView.translationX = deltaX + (if (isNext) width else -width)
+	}
+
+	/** 손을 뗐을 때: 충분히 많이 끌었으면 마저 넘기고(장 이동 실행), 아니면 제자리로 돌아온다. */
+	private fun finishChapterDrag(deltaX: Float) {
+		val width = recyclerView.width.toFloat()
+		if (width <= 0f) {
+			resetChapterDrag()
+			return
+		}
+
+		val isNext = deltaX < 0
+		val hasTarget =
+			if (isNext) !pendingNextVerses.isNullOrEmpty() else !pendingPrevVerses.isNullOrEmpty()
+		val threshold = width * 0.32f
+
+		if (kotlin.math.abs(deltaX) > threshold && hasTarget) {
+			recyclerView.animate()
+				.translationX(if (isNext) -width else width)
+				.setDuration(180)
+				.withEndAction {
+					if (isNext) onNextChapterClicked() else onPrevChapterClicked()
+					resetChapterDrag()
+				}
+				.start()
+			previewRecyclerView.animate().translationX(0f).setDuration(180).start()
+		} else {
+			recyclerView.animate().translationX(0f).setDuration(180).start()
+			previewRecyclerView.animate()
+				.translationX(if (isNext) width else -width)
+				.setDuration(180)
+				.withEndAction { previewRecyclerView.visibility = View.GONE }
+				.start()
+		}
+	}
+
+	private fun resetChapterDrag() {
+		recyclerView.translationX = 0f
+		previewRecyclerView.visibility = View.GONE
+		previewRecyclerView.translationX = 0f
+		previewRecyclerView.tag = null
+	}
+
+	/** 설정에서 "스와이프로 장 이동"을 켰을 때, 좌우로 드래그하면 손가락을 따라 실시간으로 넘어간다
+	 * (인스타 스토리처럼 다음/이전 장이 옆에서 미리 보이면서 따라 들어옴). 절 선택이나 텍스트 드래그
+	 * 선택 같은 평소 동작을 방해하지 않도록, 뚜렷한 가로 드래그로 판단될 때만 가로챈다. */
+	private fun attachChapterSwipeGesture() {
+		val touchSlop = android.view.ViewConfiguration.get(requireContext()).scaledTouchSlop
 
 		recyclerView.addOnItemTouchListener(object : RecyclerView.OnItemTouchListener {
 			override fun onInterceptTouchEvent(
 				rv: RecyclerView,
 				e: android.view.MotionEvent
 			): Boolean {
-				if (AppSettings.isChapterSwipeEnabled(requireContext())) {
-					gestureDetector.onTouchEvent(e)
+				if (!AppSettings.isChapterSwipeEnabled(requireContext())) return false
+
+				when (e.actionMasked) {
+					android.view.MotionEvent.ACTION_DOWN -> {
+						swipeStartX = e.x
+						swipeStartY = e.y
+						isDraggingChapter = false
+					}
+
+					android.view.MotionEvent.ACTION_MOVE -> {
+						val deltaX = e.x - swipeStartX
+						val deltaY = e.y - swipeStartY
+						if (!isDraggingChapter &&
+							kotlin.math.abs(deltaX) > touchSlop * 2 &&
+							kotlin.math.abs(deltaX) > kotlin.math.abs(deltaY) * 2
+						) {
+							isDraggingChapter = true
+							prefetchAdjacentChapters()
+						}
+						if (isDraggingChapter) return true
+					}
 				}
-				return false // 항상 통과시켜서 절 선택/텍스트 드래그 선택은 평소처럼 동작하게 둔다.
+				return false
 			}
 
-			override fun onTouchEvent(rv: RecyclerView, e: android.view.MotionEvent) {}
+			override fun onTouchEvent(rv: RecyclerView, e: android.view.MotionEvent) {
+				if (!isDraggingChapter) return
+				when (e.actionMasked) {
+					android.view.MotionEvent.ACTION_MOVE -> updateChapterDrag(e.x - swipeStartX)
+					android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL -> {
+						finishChapterDrag(e.x - swipeStartX)
+						isDraggingChapter = false
+					}
+				}
+			}
+
 			override fun onRequestDisallowInterceptTouchEvent(disallowIntercept: Boolean) {}
 		})
 	}
@@ -446,23 +556,33 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 	 * 여기서 다시 확인해서 반영한다. hide()/show() 방식의 탭 전환은 onResume이 아니라 이 콜백을 탄다. */
 	override fun onHiddenChanged(hidden: Boolean) {
 		super.onHiddenChanged(hidden)
-		if (!hidden) refreshFontSizeIfChanged()
+		if (!hidden) refreshOnReturnToTab()
 	}
 
 	override fun onResume() {
 		super.onResume()
-		refreshFontSizeIfChanged()
+		refreshOnReturnToTab()
 	}
 
-	private fun refreshFontSizeIfChanged() {
+	/** 탭 전환이나 설정 화면 등 다른 곳에서 돌아왔을 때, 그 사이에 바뀌었을 수 있는 것들을 다시 확인한다:
+	 * 글자 크기, 성경읽기표 표시 방식/상태, 그리고 그 사이에 이 장에 설교노트가 추가/삭제됐을 수도 있으니
+	 * 설교 아이콘 표시 여부까지. */
+	private fun refreshOnReturnToTab() {
 		if (!::adapter.isInitialized) return
 		val newFontSize = AppSettings.getFontSize(requireContext())
 		if (newFontSize != currentFontSize) {
 			currentFontSize = newFontSize
 			adapter.updateFontSize(currentFontSize)
 		}
+		scrollSpeed = AppSettings.getScrollSpeed(requireContext())
 		updateReadingCheckBottomButton()
-		notifyTopBarChanged()
+
+		lifecycleScope.launch {
+			val db = BibleDatabase.getInstance(requireContext().applicationContext)
+			hasSermonForChapter =
+				db.sermonDao().getByBookChapter(currentBookId, currentChapter).isNotEmpty()
+			notifyTopBarChanged()
+		}
 	}
 
 	override fun onSermonIconClicked() {

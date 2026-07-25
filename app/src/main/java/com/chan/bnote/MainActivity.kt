@@ -115,6 +115,16 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 		handleNavigationIntent(intent)
 	}
 
+	override fun onResume() {
+		super.onResume()
+		// 설정 화면에서 "화면 켜짐 유지"를 바꾸고 돌아왔을 수도 있으니 다시 확인해서 반영한다.
+		if (AppSettings.isKeepScreenOn(this)) {
+			window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+		} else {
+			window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+		}
+	}
+
 	private fun handleNavigationIntent(intent: android.content.Intent) {
 		if (!intent.hasExtra(EXTRA_NAVIGATE_BOOK_ID)) return
 		val bookId = intent.getIntExtra(EXTRA_NAVIGATE_BOOK_ID, -1)

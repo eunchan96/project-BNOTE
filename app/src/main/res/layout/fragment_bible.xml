@@ -12,6 +12,13 @@
         android:scrollbarStyle="outsideOverlay"
         android:fadeScrollbars="true" />
 
+    <!-- 스와이프로 장 넘길 때, 다음/이전 장이 옆에서 따라 들어오는 미리보기(인터랙션 없는 단순 표시용). -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recycler_verses_preview"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone" />
+
     <include layout="@layout/include_selection_toolbar" />
 
     <include layout="@layout/include_highlight_color_toolbar" />

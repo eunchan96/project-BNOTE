@@ -33,7 +33,13 @@ class BibleReadingFooterAdapter(
 
 	override fun onBindViewHolder(holder: ViewHolder, position: Int) {
 		holder.button.visibility = if (showButton) View.VISIBLE else View.GONE
-		holder.button.text = if (isChapterRead) "읽은 장이에요 (탭하면 취소)" else "읽음 표시하기"
+		if (isChapterRead) {
+			holder.button.text = "읽은 장이에요 (탭하면 취소)"
+			holder.button.setBackgroundResource(R.drawable.bg_read_done_button)
+		} else {
+			holder.button.text = "읽음 표시하기"
+			holder.button.setBackgroundResource(R.drawable.bg_save_button)
+		}
 		holder.button.setOnClickListener { onButtonClick() }
 	}
 
