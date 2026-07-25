@@ -9,6 +9,7 @@
     android:layout_marginBottom="24dp"
     android:visibility="gone"
     android:elevation="8dp"
+    android:background="@drawable/bg_selection_toolbar"
     android:scrollbars="none">
 
     <LinearLayout
@@ -16,7 +17,6 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:background="@drawable/bg_selection_toolbar"
         android:paddingStart="4dp"
         android:paddingEnd="4dp">
 
