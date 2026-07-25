@@ -192,6 +192,7 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		recyclerView = view.findViewById(R.id.recycler_verses)
 		recyclerView.layoutManager = LinearLayoutManager(requireContext())
 		recyclerView.clipToPadding = false
+		attachChapterSwipeGesture()
 
 		selectionToolbar = view.findViewById(R.id.container_selection_toolbar)
 		highlightColorToolbar = view.findViewById(R.id.scroll_highlight_toolbar)
@@ -362,6 +363,56 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 			startActivity(Intent(requireContext(), BibleKnowledgeHubActivity::class.java))
 		}
 		dialog.show(parentFragmentManager, "bible_menu")
+	}
+
+	/** 설정에서 "스와이프로 장 이동"을 켰을 때, 좌우로 크게 휙 넘기면 이전/다음 장으로 이동한다.
+	 * 절 선택이나 텍스트 드래그 선택 같은 평소 동작을 방해하지 않도록, RecyclerView가 실제로
+	 * 터치를 가로채지는 않고(onInterceptTouchEvent가 항상 false를 반환) 제스처만 곁다리로 감지한다. */
+	private fun attachChapterSwipeGesture() {
+		val gestureDetector = android.view.GestureDetector(
+			requireContext(),
+			object : android.view.GestureDetector.SimpleOnGestureListener() {
+				override fun onFling(
+					e1: android.view.MotionEvent?,
+					e2: android.view.MotionEvent,
+					velocityX: Float,
+					velocityY: Float
+				): Boolean {
+					if (!AppSettings.isChapterSwipeEnabled(requireContext())) return false
+					val startX = e1?.x ?: return false
+					val startY = e1.y
+					val deltaX = e2.x - startX
+					val deltaY = e2.y - startY
+
+					val minDistancePx = 120 * resources.displayMetrics.density
+					val minVelocity = 400 * resources.displayMetrics.density
+
+					if (kotlin.math.abs(deltaX) > minDistancePx &&
+						kotlin.math.abs(deltaX) > kotlin.math.abs(deltaY) * 2 &&
+						kotlin.math.abs(velocityX) > minVelocity
+					) {
+						if (deltaX < 0) onNextChapterClicked() else onPrevChapterClicked()
+						return true
+					}
+					return false
+				}
+			}
+		)
+
+		recyclerView.addOnItemTouchListener(object : RecyclerView.OnItemTouchListener {
+			override fun onInterceptTouchEvent(
+				rv: RecyclerView,
+				e: android.view.MotionEvent
+			): Boolean {
+				if (AppSettings.isChapterSwipeEnabled(requireContext())) {
+					gestureDetector.onTouchEvent(e)
+				}
+				return false // 항상 통과시켜서 절 선택/텍스트 드래그 선택은 평소처럼 동작하게 둔다.
+			}
+
+			override fun onTouchEvent(rv: RecyclerView, e: android.view.MotionEvent) {}
+			override fun onRequestDisallowInterceptTouchEvent(disallowIntercept: Boolean) {}
+		})
 	}
 
 	override fun onPrevChapterClicked() {

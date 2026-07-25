@@ -173,6 +173,16 @@ class SettingsActivity : AppCompatActivity() {
 			switchKeepScreenOn.isChecked = !switchKeepScreenOn.isChecked
 		}
 
+		val switchChapterSwipe = findViewById<Switch>(R.id.switch_chapter_swipe).apply {
+			isChecked = AppSettings.isChapterSwipeEnabled(this@SettingsActivity)
+			setOnCheckedChangeListener { _, checked ->
+				AppSettings.setChapterSwipeEnabled(this@SettingsActivity, checked)
+			}
+		}
+		findViewById<View>(R.id.row_chapter_swipe_toggle).setOnClickListener {
+			switchChapterSwipe.isChecked = !switchChapterSwipe.isChecked
+		}
+
 		val switchCopySecondary = findViewById<Switch>(R.id.switch_copy_secondary).apply {
 			isChecked = AppSettings.isCopyIncludeSecondary(this@SettingsActivity)
 			setOnCheckedChangeListener { _, checked ->
