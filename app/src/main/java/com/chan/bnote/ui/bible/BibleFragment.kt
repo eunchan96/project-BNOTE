@@ -193,12 +193,18 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		recyclerView = view.findViewById(R.id.recycler_verses)
 		recyclerView.layoutManager = LinearLayoutManager(requireContext())
 		recyclerView.clipToPadding = false
+		// 기본 아이템 애니메이터가 어댑터 내용이 바뀔 때마다 오래된 내용과 새 내용을 겹쳐서
+		// 크로스페이드시키는데, 이게 스와이프 전환 중 "글자가 겹쳐 보이는" 원인이었다. 우리가
+		// translationX로 직접 밀고 당기는 걸로 전환을 처리하니, 이 자동 애니메이션은 꺼둔다.
+		recyclerView.itemAnimator = null
 		previewNextRecyclerView = view.findViewById(R.id.recycler_verses_preview_next)
 		previewNextRecyclerView.layoutManager = LinearLayoutManager(requireContext())
 		previewNextRecyclerView.isNestedScrollingEnabled = false
+		previewNextRecyclerView.itemAnimator = null
 		previewPrevRecyclerView = view.findViewById(R.id.recycler_verses_preview_prev)
 		previewPrevRecyclerView.layoutManager = LinearLayoutManager(requireContext())
 		previewPrevRecyclerView.isNestedScrollingEnabled = false
+		previewPrevRecyclerView.itemAnimator = null
 		attachChapterSwipeGesture()
 
 		selectionToolbar = view.findViewById(R.id.container_selection_toolbar)
