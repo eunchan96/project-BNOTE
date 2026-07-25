@@ -185,6 +185,9 @@
             android:name=".ui.bible.HighlightListActivity"
             android:exported="false" />
         <activity
+            android:name=".ui.bible.HighlightBookDetailActivity"
+            android:exported="false" />
+        <activity
             android:name=".ui.bible.memo.MemoListActivity"
             android:exported="false" />
         <activity
