@@ -26,6 +26,7 @@ object AppSettings {
 	private const val KEY_SCROLL_SPEED = "scroll_speed" // 1(느림)~5(빠름)
 	private const val KEY_KEEP_SCREEN_ON = "keep_screen_on"
 	private const val KEY_CHAPTER_SWIPE_ENABLED = "chapter_swipe_enabled"
+	private const val KEY_READING_CHECK_BOTTOM_BUTTON = "reading_check_bottom_button"
 	private const val KEY_COPY_INCLUDE_SECONDARY = "copy_include_secondary"
 	private const val KEY_ACTIVE_COPY_FORMAT = "active_copy_format_json"
 	private const val KEY_LAST_READ_BOOK_ID = "last_read_book_id"
@@ -192,6 +193,17 @@ object AppSettings {
 	fun setChapterSwipeEnabled(context: Context, enabled: Boolean) {
 		context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
 			.edit().putBoolean(KEY_CHAPTER_SWIPE_ENABLED, enabled).apply()
+	}
+
+	/** 기본은 상단바 체크 아이콘, 켜면 성경 탭 하단 버튼으로 표시한다. */
+	fun isReadingCheckBottomButtonMode(context: Context): Boolean {
+		return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.getBoolean(KEY_READING_CHECK_BOTTOM_BUTTON, false)
+	}
+
+	fun setReadingCheckBottomButtonMode(context: Context, enabled: Boolean) {
+		context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.edit().putBoolean(KEY_READING_CHECK_BOTTOM_BUTTON, enabled).apply()
 	}
 
 	fun isCopyIncludeSecondary(context: Context): Boolean {

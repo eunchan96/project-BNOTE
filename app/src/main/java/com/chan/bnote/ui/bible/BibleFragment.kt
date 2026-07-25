@@ -87,6 +87,7 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 	private var isChapterRead = false
 	private var isAutoScrollEnabled = false
 	private var isAutoScrolling = false
+	private lateinit var readingFooterAdapter: BibleReadingFooterAdapter
 	private var hasSermonForChapter = false
 
 	private val selectedVerses = mutableSetOf<Int>()
@@ -198,12 +199,8 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		highlightColorToolbar = view.findViewById(R.id.scroll_highlight_toolbar)
 
 		val bottomSpace = (resources.displayMetrics.heightPixels * 0.3f).toInt()
-		recyclerView.setPadding(
-			recyclerView.paddingLeft,
-			recyclerView.paddingTop,
-			recyclerView.paddingRight,
-			bottomSpace
-		)
+		readingFooterAdapter =
+			BibleReadingFooterAdapter(bottomSpace) { onReadingPlanCheckClicked() }
 
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(requireContext().applicationContext)
@@ -256,7 +253,9 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		showBookmarks = true,
 		showMenu = true,
 		showChapterNav = true,
-		showReadingPlanCheck = isReadingPlanEnabled,
+		showReadingPlanCheck = isReadingPlanEnabled && !AppSettings.isReadingCheckBottomButtonMode(
+			requireContext()
+		),
 		isChapterRead = isChapterRead,
 		showAutoScrollButton = isAutoScrollEnabled,
 		isAutoScrolling = isAutoScrolling,
@@ -462,6 +461,8 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 			currentFontSize = newFontSize
 			adapter.updateFontSize(currentFontSize)
 		}
+		updateReadingCheckBottomButton()
+		notifyTopBarChanged()
 	}
 
 	override fun onSermonIconClicked() {
@@ -500,6 +501,7 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 			val bookmarkMap = db.bookmarkDao().getBookmarksForChapter(bookId, chapter)
 				.associateBy { it.verse }.toMutableMap()
 			isChapterRead = db.readingProgressDao().get(bookId, chapter) != null
+			updateReadingCheckBottomButton()
 			hasSermonForChapter =
 				db.sermonDao().getByBookChapter(bookId, chapter).isNotEmpty()
 
@@ -544,7 +546,8 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 				},
 				onWordMemoView = { verseNum, memo -> showWordMemoViewDialog(verseNum, memo) }
 			)
-			recyclerView.adapter = adapter
+			recyclerView.adapter =
+				androidx.recyclerview.widget.ConcatAdapter(adapter, readingFooterAdapter)
 
 			scrollToVerse?.let { verseNum ->
 				val index = verses.indexOfFirst { it.verse == verseNum }
@@ -624,8 +627,19 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 				)
 			}
 			isChapterRead = !isChapterRead
+			updateReadingCheckBottomButton()
 			notifyTopBarChanged()
 		}
+	}
+
+	/** 설정에서 "하단 버튼으로 표시"를 켰을 때만 스크롤 맨 끝 여백에 이 버튼을 보여주고, 읽음 여부에
+	 * 따라 문구를 바꾼다. 다시 누르면 읽음 표시를 취소할 수 있다(onReadingPlanCheckClicked가 토글이라
+	 * 그대로 재사용). */
+	private fun updateReadingCheckBottomButton() {
+		if (!::readingFooterAdapter.isInitialized) return
+		val shouldShow = isReadingPlanEnabled &&
+				AppSettings.isReadingCheckBottomButtonMode(requireContext())
+		readingFooterAdapter.update(shouldShow, isChapterRead)
 	}
 
 	private fun toggleVerseSelection(verseNum: Int) {

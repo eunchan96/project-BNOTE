@@ -211,6 +211,34 @@
                     android:layout_height="wrap_content" />
             </LinearLayout>
 
+            <!-- 성경읽기표 체크 표시 방식 -->
+            <LinearLayout
+                android:id="@+id/row_reading_check_position_toggle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="56dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="성경읽기표 체크를 하단 버튼으로 표시"
+                    android:textSize="16sp"
+                    android:textColor="@color/text_primary" />
+
+                <Switch
+                    android:id="@+id/switch_reading_check_position"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+
             <!-- 함께보기 포함 -->
             <LinearLayout
                 android:id="@+id/row_copy_secondary_toggle"

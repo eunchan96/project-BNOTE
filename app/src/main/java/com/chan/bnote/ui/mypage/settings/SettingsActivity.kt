@@ -183,6 +183,17 @@ class SettingsActivity : AppCompatActivity() {
 			switchChapterSwipe.isChecked = !switchChapterSwipe.isChecked
 		}
 
+		val switchReadingCheckPosition =
+			findViewById<Switch>(R.id.switch_reading_check_position).apply {
+				isChecked = AppSettings.isReadingCheckBottomButtonMode(this@SettingsActivity)
+				setOnCheckedChangeListener { _, checked ->
+					AppSettings.setReadingCheckBottomButtonMode(this@SettingsActivity, checked)
+				}
+			}
+		findViewById<View>(R.id.row_reading_check_position_toggle).setOnClickListener {
+			switchReadingCheckPosition.isChecked = !switchReadingCheckPosition.isChecked
+		}
+
 		val switchCopySecondary = findViewById<Switch>(R.id.switch_copy_secondary).apply {
 			isChecked = AppSettings.isCopyIncludeSecondary(this@SettingsActivity)
 			setOnCheckedChangeListener { _, checked ->
