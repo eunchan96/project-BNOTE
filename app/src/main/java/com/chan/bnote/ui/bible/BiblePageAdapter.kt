@@ -62,6 +62,10 @@ class BiblePageAdapter(private val fragment: BibleFragment) :
 				recyclerView.adapter =
 					androidx.recyclerview.widget.ConcatAdapter(page.adapter, footer)
 				fragment.registerPageFooter(bookId, chapter, footer)
+				// onPageSelected 시점엔 이 페이지의 뷰홀더/어댑터가 아직 준비 안 됐을 수 있어서(타이밍 문제),
+				// 데이터 로드가 끝나는 이 시점에도 다시 한번 알려서 fragment.adapter가 확실히 채워지게 한다.
+				// (그렇지 않으면 lateinit adapter가 초기화되기 전에 절을 탭했을 때 앱이 튕겼다.)
+				fragment.onPageDataReady(bookId, chapter, recyclerView, page.adapter)
 
 				fragment.consumePendingScrollVerse(bookId, chapter)?.let { verseNum ->
 					val index = page.verses.indexOfFirst { it.verse == verseNum }

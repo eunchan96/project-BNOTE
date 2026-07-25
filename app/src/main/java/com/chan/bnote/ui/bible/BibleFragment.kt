@@ -403,6 +403,21 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 
 	/** ViewPager2가 새 페이지에 자리잡았을 때(스와이프든, setCurrentItem 호출이든) 불린다.
 	 * 이 장을 "진짜 현재 장"으로 취급하도록 프래그먼트 레벨 상태를 전부 다시 맞춘다. */
+	/** 페이지 하나의 데이터/어댑터가 다 준비됐을 때 BiblePageAdapter가 불러준다. onBiblePageSettled의
+	 * 뷰홀더 조회가 타이밍상 아직 준비 안 된 페이지를 못 찾는 경우가 있어서, 그 보완으로 여기서도
+	 * "지금 보이는 장이 맞으면" recyclerView/adapter를 채워준다. 이게 없으면 lateinit adapter가 아직
+	 * 초기화되기 전에 절을 탭했을 때 앱이 튕길 수 있다. */
+	fun onPageDataReady(
+		bookId: Int,
+		chapter: Int,
+		pageRecyclerView: RecyclerView,
+		pageAdapter: VerseAdapter
+	) {
+		if (bookId != currentBookId || chapter != currentChapter) return
+		recyclerView = pageRecyclerView
+		adapter = pageAdapter
+	}
+
 	private fun onBiblePageSettled(position: Int) {
 		val (bookId, chapter) = BibleChapterIndex.chapterAt(position) ?: return
 		val changed = bookId != currentBookId || chapter != currentChapter
@@ -753,7 +768,7 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		} else {
 			selectedVerses.add(verseNum)
 		}
-		adapter.updateSelection(selectedVerses.toSet())
+		if (::adapter.isInitialized) adapter.updateSelection(selectedVerses.toSet())
 		updateToolbarVisibility()
 	}
 
