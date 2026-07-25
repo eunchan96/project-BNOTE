@@ -33,7 +33,8 @@ class DailyVerseWorker(context: Context, params: WorkerParameters) :
 			title = "오늘의 말씀 · $label",
 			content = verseText,
 			bookId = verse.bookId,
-			chapter = verse.chapter
+			chapter = verse.chapter,
+			verse = verse.verse
 		)
 		return Result.success()
 	}

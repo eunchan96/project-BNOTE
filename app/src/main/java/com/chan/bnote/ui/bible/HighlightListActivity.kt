@@ -138,14 +138,21 @@ class HighlightListActivity : AppCompatActivity() {
 
 		row.addView(swatch)
 		row.addView(text)
-		row.setOnClickListener { navigateToBible(highlight.bookId, highlight.chapter) }
+		row.setOnClickListener {
+			navigateToBible(
+				highlight.bookId,
+				highlight.chapter,
+				highlight.verse
+			)
+		}
 		container.addView(row)
 	}
 
-	private fun navigateToBible(bookId: Int, chapter: Int) {
+	private fun navigateToBible(bookId: Int, chapter: Int, verse: Int) {
 		val intent = Intent(this, MainActivity::class.java).apply {
 			putExtra(MainActivity.EXTRA_NAVIGATE_BOOK_ID, bookId)
 			putExtra(MainActivity.EXTRA_NAVIGATE_CHAPTER, chapter)
+			putExtra(MainActivity.EXTRA_NAVIGATE_VERSE, verse)
 			flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
 		}
 		startActivity(intent)

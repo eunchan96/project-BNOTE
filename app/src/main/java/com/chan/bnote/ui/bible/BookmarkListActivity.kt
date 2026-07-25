@@ -28,6 +28,7 @@ class BookmarkListActivity : AppCompatActivity() {
 	companion object {
 		const val EXTRA_RESULT_BOOK_ID = "extra_result_book_id"
 		const val EXTRA_RESULT_CHAPTER = "extra_result_chapter"
+		const val EXTRA_RESULT_VERSE = "extra_result_verse"
 
 		fun createIntent(context: Context): Intent =
 			Intent(context, BookmarkListActivity::class.java)
@@ -95,6 +96,7 @@ class BookmarkListActivity : AppCompatActivity() {
 				val result = Intent()
 					.putExtra(EXTRA_RESULT_BOOK_ID, row.bookId)
 					.putExtra(EXTRA_RESULT_CHAPTER, row.chapter)
+					.putExtra(EXTRA_RESULT_VERSE, row.verse)
 				setResult(Activity.RESULT_OK, result)
 				finish()
 			},

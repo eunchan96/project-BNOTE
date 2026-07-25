@@ -186,8 +186,9 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 			val data = result.data ?: return@registerForActivityResult
 			val bookId = data.getIntExtra(BookmarkListActivity.EXTRA_RESULT_BOOK_ID, -1)
 			val chapter = data.getIntExtra(BookmarkListActivity.EXTRA_RESULT_CHAPTER, -1)
+			val verse = data.getIntExtra(BookmarkListActivity.EXTRA_RESULT_VERSE, -1)
 			if (bookId > 0 && chapter > 0) {
-				loadChapter(bookId, chapter)
+				loadChapter(bookId, chapter, scrollToVerse = if (verse > 0) verse else null)
 			}
 		}
 	}
@@ -311,6 +312,21 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 			secondaryTranslation = secondary
 			AppSettings.setPrimaryTranslation(requireContext(), primary.code)
 			AppSettings.setSecondaryTranslation(requireContext(), secondary?.code)
+
+			// 번역본만 바뀌는 거라 지금 보고 있던 절 그대로 유지해야 하는데, 그냥 다시 그리면 맨 위(1절)로
+			// 올라가 버린다. 그래서 지금 화면에 보이는 첫 절을 미리 기억해뒀다가 그 절로 다시 스크롤한다.
+			if (::recyclerView.isInitialized) {
+				val layoutManager =
+					recyclerView.layoutManager as? androidx.recyclerview.widget.LinearLayoutManager
+				val firstVisiblePosition = layoutManager?.findFirstVisibleItemPosition() ?: -1
+				val visibleVerse = currentVerses.getOrNull(firstVisiblePosition)?.verse
+				if (visibleVerse != null) {
+					pendingScrollBookId = currentBookId
+					pendingScrollChapter = currentChapter
+					pendingScrollVerse = visibleVerse
+				}
+			}
+
 			// 번역본이 바뀌면 모든 페이지의 본문이 다 바뀌어야 하니, 지금 페이지들을 전부 다시 그리게 한다.
 			pageFooters.clear()
 			pageAdapter.notifyDataSetChanged()
