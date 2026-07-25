@@ -95,6 +95,7 @@ dependencies {
 	androidTestImplementation(libs.androidx.espresso.core)
 
 	implementation(libs.androidx.recyclerview)
+	implementation(libs.androidx.viewpager2)
 	implementation(libs.androidx.lifecycle.runtime.ktx)
 	implementation(libs.flexbox)
 	implementation(libs.coil)

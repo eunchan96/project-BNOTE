@@ -11,14 +11,15 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
-import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.viewpager2.widget.ViewPager2
 import com.chan.bnote.R
 import com.chan.bnote.data.AppSettings
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.bible.BibleBooks
 import com.chan.bnote.data.bible.BibleSeeder
 import com.chan.bnote.data.bible.BibleVerse
+import com.chan.bnote.data.bible.SecondaryVerseText
 import com.chan.bnote.data.bible.Translation
 import com.chan.bnote.data.bible.bookmark.BibleBookmark
 import com.chan.bnote.data.bible.memo.VerseMemo
@@ -26,6 +27,7 @@ import com.chan.bnote.data.bible.memo.WordMemo
 import com.chan.bnote.data.bible.partialhighlight.PartialHighlight
 import com.chan.bnote.data.bible.scrap.Scrap
 import com.chan.bnote.data.mypage.CopyFormatter
+import com.chan.bnote.data.mypage.RecentChapterView
 import com.chan.bnote.data.mypage.readingplan.ReadingProgress
 import com.chan.bnote.ui.TopBarActionHandler
 import com.chan.bnote.ui.TopBarConfig
@@ -55,6 +57,18 @@ private data class HighlightSelection(
 	val segment: Int
 )
 
+/** 한 페이지(장) 분량의 데이터 + 이미 다 만들어진 실제 인터랙티브 어댑터. */
+class BiblePageData(
+	val verses: List<BibleVerse>,
+	val secondaryMap: Map<Int, SecondaryVerseText>?,
+	val highlights: Map<Int, List<PartialHighlight>>,
+	val verseMemos: Map<Int, VerseMemo>,
+	val wordMemos: Map<Int, List<WordMemo>>,
+	val isRead: Boolean,
+	val hasSermon: Boolean,
+	val adapter: VerseAdapter
+)
+
 class BibleFragment : Fragment(), TopBarActionHandler {
 
 	companion object {
@@ -73,8 +87,18 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		}
 	}
 
+	private lateinit var viewPager: ViewPager2
+	private lateinit var pageAdapter: BiblePageAdapter
+
+	// 지금 실제로 보이는 페이지(장)의 RecyclerView/VerseAdapter. ViewPager2가 페이지를 바꿀 때마다
+	// onPageSelected에서 갱신된다 — 그 외 코드는 예전처럼 이 필드들만 보고 그대로 쓰면 된다.
 	private lateinit var recyclerView: RecyclerView
 	private lateinit var adapter: VerseAdapter
+
+	private val pageFooters = mutableMapOf<Pair<Int, Int>, BibleReadingFooterAdapter>()
+	private var pendingScrollBookId: Int? = null
+	private var pendingScrollChapter: Int? = null
+	private var pendingScrollVerse: Int? = null
 
 	private var currentBookId = 1
 	private var currentChapter = 1
@@ -87,7 +111,6 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 	private var isChapterRead = false
 	private var isAutoScrollEnabled = false
 	private var isAutoScrolling = false
-	private lateinit var readingFooterAdapter: BibleReadingFooterAdapter
 	private var hasSermonForChapter = false
 
 	private val selectedVerses = mutableSetOf<Int>()
@@ -110,7 +133,7 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 	}
 
 	private var currentVerses: List<BibleVerse> = emptyList()
-	private var currentSecondaryMap: Map<Int, com.chan.bnote.data.bible.SecondaryVerseText>? = null
+	private var currentSecondaryMap: Map<Int, SecondaryVerseText>? = null
 	private var currentHighlights: Map<Int, List<PartialHighlight>> = emptyMap()
 
 	private lateinit var highlightColorToolbar: View
@@ -190,40 +213,38 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		isAutoScrollEnabled = AppSettings.isAutoScrollEnabled(requireContext())
 		scrollSpeed = AppSettings.getScrollSpeed(requireContext())
 
-		recyclerView = view.findViewById(R.id.recycler_verses)
-		recyclerView.layoutManager = LinearLayoutManager(requireContext())
-		recyclerView.clipToPadding = false
-		// 기본 아이템 애니메이터가 어댑터 내용이 바뀔 때마다 오래된 내용과 새 내용을 겹쳐서
-		// 크로스페이드시키는데, 이게 스와이프 전환 중 "글자가 겹쳐 보이는" 원인이었다. 우리가
-		// translationX로 직접 밀고 당기는 걸로 전환을 처리하니, 이 자동 애니메이션은 꺼둔다.
-		recyclerView.itemAnimator = null
-		previewNextRecyclerView = view.findViewById(R.id.recycler_verses_preview_next)
-		previewNextRecyclerView.layoutManager = LinearLayoutManager(requireContext())
-		previewNextRecyclerView.isNestedScrollingEnabled = false
-		previewNextRecyclerView.itemAnimator = null
-		previewPrevRecyclerView = view.findViewById(R.id.recycler_verses_preview_prev)
-		previewPrevRecyclerView.layoutManager = LinearLayoutManager(requireContext())
-		previewPrevRecyclerView.isNestedScrollingEnabled = false
-		previewPrevRecyclerView.itemAnimator = null
-		attachChapterSwipeGesture()
+		viewPager = view.findViewById(R.id.view_pager_bible)
+		pageAdapter = BiblePageAdapter(this)
+		viewPager.offscreenPageLimit = 1
+		viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
+			override fun onPageSelected(position: Int) {
+				super.onPageSelected(position)
+				onBiblePageSettled(position)
+			}
+		})
 
 		selectionToolbar = view.findViewById(R.id.container_selection_toolbar)
 		highlightColorToolbar = view.findViewById(R.id.scroll_highlight_toolbar)
 
-		val bottomSpace = (resources.displayMetrics.heightPixels * 0.3f).toInt()
-		readingFooterAdapter =
-			BibleReadingFooterAdapter(bottomSpace) { onReadingPlanCheckClicked() }
-
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(requireContext().applicationContext)
 			BibleSeeder.seedIfEmpty(requireContext().applicationContext, db)
+			BibleChapterIndex.ensureLoaded(db, primaryTranslation.code)
 
 			val startBookId = arguments?.getInt(ARG_BOOK_ID)
 				?: AppSettings.getLastReadBookId(requireContext())
 			val startChapter = arguments?.getInt(ARG_CHAPTER)
 				?: AppSettings.getLastReadChapter(requireContext())
 			val startVerse = arguments?.takeIf { it.containsKey(ARG_VERSE) }?.getInt(ARG_VERSE)
-			loadChapter(startBookId, startChapter, scrollToVerse = startVerse)
+
+			currentBookId = startBookId
+			currentChapter = startChapter
+			pendingScrollBookId = startBookId
+			pendingScrollChapter = startChapter
+			pendingScrollVerse = startVerse
+
+			viewPager.adapter = pageAdapter
+			viewPager.setCurrentItem(BibleChapterIndex.positionOf(startBookId, startChapter), false)
 		}
 
 		view.findViewById<TextView>(R.id.btn_cancel_selection).setOnClickListener {
@@ -289,7 +310,10 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 			secondaryTranslation = secondary
 			AppSettings.setPrimaryTranslation(requireContext(), primary.code)
 			AppSettings.setSecondaryTranslation(requireContext(), secondary?.code)
-			loadChapter(currentBookId, currentChapter)
+			// 번역본이 바뀌면 모든 페이지의 본문이 다 바뀌어야 하니, 지금 페이지들을 전부 다시 그리게 한다.
+			pageFooters.clear()
+			pageAdapter.notifyDataSetChanged()
+			onBiblePageSettled(viewPager.currentItem)
 		}
 		sheet.show(parentFragmentManager, "translation_picker")
 	}
@@ -376,104 +400,68 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		dialog.show(parentFragmentManager, "bible_menu")
 	}
 
-	private var swipeStartX = 0f
-	private var swipeStartY = 0f
-	private var isDraggingChapter = false
-	private var pendingNextChapter: PrewarmedChapter? = null
-	private var pendingPrevChapter: PrewarmedChapter? = null
-	private lateinit var previewNextRecyclerView: RecyclerView
-	private lateinit var previewPrevRecyclerView: RecyclerView
+	/** ViewPager2가 새 페이지에 자리잡았을 때(스와이프든, setCurrentItem 호출이든) 불린다.
+	 * 이 장을 "진짜 현재 장"으로 취급하도록 프래그먼트 레벨 상태를 전부 다시 맞춘다. */
+	private fun onBiblePageSettled(position: Int) {
+		val (bookId, chapter) = BibleChapterIndex.chapterAt(position) ?: return
+		val changed = bookId != currentBookId || chapter != currentChapter
+		currentBookId = bookId
+		currentChapter = chapter
 
-	/** 미리 통째로 로드해둔 장 하나(진짜 본문 + 하이라이트 + 메모 + 실제 인터랙티브 어댑터까지 전부).
-	 * 스와이프가 완료되면 이걸 그대로 "현재 장"으로 승격시키므로, 미리보기와 실제 화면이 완전히 같다. */
-	private inner class PrewarmedChapter(
-		val bookId: Int,
-		val chapter: Int,
-		val verses: List<BibleVerse>,
-		val secondaryMap: Map<Int, com.chan.bnote.data.bible.SecondaryVerseText>?,
-		val bookmarkMap: MutableMap<Int, BibleBookmark>,
-		val highlights: Map<Int, List<PartialHighlight>>,
-		val verseMemos: Map<Int, VerseMemo>,
-		val wordMemos: Map<Int, List<WordMemo>>,
-		val isRead: Boolean,
-		val hasSermon: Boolean,
-		val adapter: VerseAdapter
-	)
+		if (changed) {
+			clearSelection()
+			stopAutoScroll()
+			isAutoScrolling = false
+		}
+		AppSettings.setLastRead(requireContext(), bookId, chapter)
 
-	/** 장이 다 로드된 직후(드래그 시작 시점이 아니라) 다음/이전 장을 통째로(본문·하이라이트·메모·실제
-	 * 어댑터까지) 미리 만들어서 미리보기 RecyclerView에 얹어둔다. 실제 화면과 완전히 똑같은 걸 미리
-	 * 만들어두는 거라, 스와이프가 끝나면 다시 불러올 필요 없이 그대로 "진짜 현재 장"으로 바꿔치기한다. */
-	private fun prewarmAdjacentChapters() {
-		pendingNextChapter = null
-		pendingPrevChapter = null
-		previewNextRecyclerView.visibility = View.INVISIBLE
-		previewPrevRecyclerView.visibility = View.INVISIBLE
-
-		val requestBookId = currentBookId
-		val requestChapter = currentChapter
+		// ViewPager2 안쪽 RecyclerView에서 지금 페이지의 뷰홀더를 찾아 recyclerView/adapter를 갱신한다.
+		val innerRecyclerView = viewPager.getChildAt(0) as? RecyclerView
+		val holder =
+			innerRecyclerView?.findViewHolderForAdapterPosition(position) as? BiblePageAdapter.PageViewHolder
+		holder?.currentRecyclerView()?.let { rv ->
+			recyclerView = rv
+			(rv.adapter as? androidx.recyclerview.widget.ConcatAdapter)
+				?.adapters
+				?.filterIsInstance<VerseAdapter>()
+				?.firstOrNull()
+				?.let { adapter = it }
+		}
 
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(requireContext().applicationContext)
-			val maxChapter = db.bibleDao().getMaxChapter(primaryTranslation.code, requestBookId)
-
-			val nextTarget = when {
-				requestChapter < maxChapter -> requestBookId to (requestChapter + 1)
-				requestBookId < 66 -> (requestBookId + 1) to 1
-				else -> null
+			currentVerses = db.bibleDao().getVerses(primaryTranslation.code, bookId, chapter)
+			currentSecondaryMap = secondaryTranslation?.let { sec ->
+				db.bibleDao().getVerses(sec.code, bookId, chapter)
+					.associate { it.verse to SecondaryVerseText(it.text, it.text2) }
 			}
-			val prevTarget = when {
-				requestChapter > 1 -> requestBookId to (requestChapter - 1)
-				requestBookId > 1 -> {
-					val prevBook = requestBookId - 1
-					prevBook to db.bibleDao().getMaxChapter(primaryTranslation.code, prevBook)
-				}
+			currentHighlights = db.partialHighlightDao()
+				.getForChapter(primaryTranslation.code, bookId, chapter)
+				.groupBy { it.verse }
+			currentVerseMemos =
+				db.verseMemoDao().getForChapter(bookId, chapter).associateBy { it.verse }
+			currentWordMemos =
+				db.wordMemoDao().getForChapter(primaryTranslation.code, bookId, chapter)
+					.groupBy { it.verse }
+			isChapterRead = db.readingProgressDao().get(bookId, chapter) != null
+			hasSermonForChapter = db.sermonDao().getByBookChapter(bookId, chapter).isNotEmpty()
+			db.recentChapterViewDao().upsert(RecentChapterView(bookId = bookId, chapter = chapter))
 
-				else -> null
-			}
-
-			val next = nextTarget?.let { (b, c) -> buildPrewarmedChapter(db, b, c) }
-			val prev = prevTarget?.let { (b, c) -> buildPrewarmedChapter(db, b, c) }
-
-			// 그 사이에 사용자가 다른 장으로 넘어갔으면 이 결과는 버린다.
-			if (requestBookId != currentBookId || requestChapter != currentChapter) return@launch
-
-			pendingNextChapter = next
-			pendingPrevChapter = prev
-
-			val width = recyclerView.width.toFloat().takeIf { it > 0f } ?: 1080f
-			if (next != null) {
-				previewNextRecyclerView.adapter =
-					androidx.recyclerview.widget.ConcatAdapter(next.adapter, previewFooterAdapter())
-				previewNextRecyclerView.translationX = width
-			}
-			if (prev != null) {
-				previewPrevRecyclerView.adapter =
-					androidx.recyclerview.widget.ConcatAdapter(prev.adapter, previewFooterAdapter())
-				previewPrevRecyclerView.translationX = -width
-			}
+			notifyTopBarChanged()
+			updateReadingCheckBottomButton()
 		}
 	}
 
-	/** 미리보기용 footer는 그냥 빈 여백만 있으면 된다(읽음 버튼은 실제로 그 장이 될 때만 의미 있음). */
-	private fun previewFooterAdapter(): BibleReadingFooterAdapter {
-		val bottomSpace = (resources.displayMetrics.heightPixels * 0.3f).toInt()
-		return BibleReadingFooterAdapter(bottomSpace) {}
-	}
-
-	private suspend fun buildPrewarmedChapter(
-		db: BibleDatabase,
-		bookId: Int,
-		chapter: Int
-	): PrewarmedChapter {
+	/** 한 페이지(장) 분량의 본문 · 하이라이트 · 북마크 · 메모를 전부 불러와서 실제 인터랙티브
+	 * VerseAdapter까지 만들어서 반환한다. BiblePageAdapter가 페이지를 바인딩할 때 이걸 부른다.
+	 * 콜백들은 currentBookId/currentChapter를 참조하는데, 이 값들은 onBiblePageSettled에서 항상
+	 * "지금 보이는 페이지"에 맞게 갱신돼 있으므로 실제로 상호작용이 일어날 땐 항상 정확하다. */
+	suspend fun loadPageData(bookId: Int, chapter: Int): BiblePageData {
+		val db = BibleDatabase.getInstance(requireContext().applicationContext)
 		val verses = db.bibleDao().getVerses(primaryTranslation.code, bookId, chapter)
 		val secondaryMap = secondaryTranslation?.let { sec ->
 			db.bibleDao().getVerses(sec.code, bookId, chapter)
-				.associate {
-					it.verse to com.chan.bnote.data.bible.SecondaryVerseText(
-						it.text,
-						it.text2
-					)
-				}
+				.associate { it.verse to SecondaryVerseText(it.text, it.text2) }
 		}
 		val bookmarkMap = db.bookmarkDao().getBookmarksForChapter(bookId, chapter)
 			.associateBy { it.verse }.toMutableMap()
@@ -486,12 +474,18 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		val wordMemos = db.wordMemoDao().getForChapter(primaryTranslation.code, bookId, chapter)
 			.groupBy { it.verse }
 
-		val chapterAdapter = VerseAdapter(
+		val initialSelection = if (bookId == currentBookId && chapter == currentChapter) {
+			selectedVerses.toSet()
+		} else {
+			emptySet()
+		}
+
+		val pageAdapterInstance = VerseAdapter(
 			verses = verses,
 			secondaryTextByVerse = secondaryMap,
 			bookmarks = bookmarkMap,
 			fontSize = currentFontSize,
-			selectedVerses = emptySet(),
+			selectedVerses = initialSelection,
 			highlightsByVerse = highlights,
 			verseMemos = verseMemos,
 			wordMemosByVerse = wordMemos,
@@ -508,197 +502,88 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 			onWordMemoView = { verseNum, memo -> showWordMemoViewDialog(verseNum, memo) }
 		)
 
-		return PrewarmedChapter(
-			bookId, chapter, verses, secondaryMap, bookmarkMap, highlights,
-			verseMemos, wordMemos, isRead, hasSermon, chapterAdapter
+		return BiblePageData(
+			verses,
+			secondaryMap,
+			highlights,
+			verseMemos,
+			wordMemos,
+			isRead,
+			hasSermon,
+			pageAdapterInstance
 		)
 	}
 
-	/** 미리 만들어둔 장을 그대로 "진짜 현재 장"으로 바꿔치기한다 — 다시 불러오는 과정이 없어서
-	 * 미리보기와 실제 화면이 완전히 똑같고, 전환도 순간적이다. */
-	private fun promoteChapter(prewarmed: PrewarmedChapter) {
-		currentBookId = prewarmed.bookId
-		currentChapter = prewarmed.chapter
-		currentVerses = prewarmed.verses
-		currentSecondaryMap = prewarmed.secondaryMap
-		currentHighlights = prewarmed.highlights
-		currentVerseMemos = prewarmed.verseMemos
-		currentWordMemos = prewarmed.wordMemos
-		isChapterRead = prewarmed.isRead
-		hasSermonForChapter = prewarmed.hasSermon
-		clearSelection()
+	/** 페이지마다 자기만의 "읽음 표시" 하단 버튼(footer)을 갖는다. */
+	fun createFooterAdapterFor(
+		bookId: Int,
+		chapter: Int,
+		isRead: Boolean
+	): BibleReadingFooterAdapter {
+		val bottomSpace = (resources.displayMetrics.heightPixels * 0.3f).toInt()
+		val footer =
+			BibleReadingFooterAdapter(bottomSpace) { onReadingCheckToggledForPage(bookId, chapter) }
+		val shouldShow =
+			isReadingPlanEnabled && AppSettings.isReadingCheckBottomButtonMode(requireContext())
+		footer.update(shouldShow, isRead)
+		return footer
+	}
 
-		adapter = prewarmed.adapter
-		recyclerView.adapter =
-			androidx.recyclerview.widget.ConcatAdapter(adapter, readingFooterAdapter)
-		recyclerView.scrollToPosition(0)
+	fun registerPageFooter(bookId: Int, chapter: Int, footer: BibleReadingFooterAdapter) {
+		pageFooters[bookId to chapter] = footer
+	}
 
-		AppSettings.setLastRead(requireContext(), currentBookId, currentChapter)
-		updateReadingCheckBottomButton()
-		notifyTopBarChanged()
+	/** loadChapter(bookId, chapter, scrollToVerse)로 요청해둔 "그 장에 도착하면 이 절로 스크롤"
+	 * 요청을 페이지가 로드될 때 한 번만 꺼내 쓴다. */
+	fun consumePendingScrollVerse(bookId: Int, chapter: Int): Int? {
+		if (pendingScrollBookId == bookId && pendingScrollChapter == chapter) {
+			val verse = pendingScrollVerse
+			pendingScrollBookId = null
+			pendingScrollChapter = null
+			pendingScrollVerse = null
+			return verse
+		}
+		return null
+	}
 
+	/** 상단 아이콘이든 하단 버튼이든, 읽음 표시를 누르면 결국 이걸 탄다. */
+	private fun onReadingCheckToggledForPage(bookId: Int, chapter: Int) {
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(requireContext().applicationContext)
-			db.recentChapterViewDao().upsert(
-				com.chan.bnote.data.mypage.RecentChapterView(
-					bookId = currentBookId,
-					chapter = currentChapter
-				)
-			)
-		}
-
-		if (AppSettings.isChapterSwipeEnabled(requireContext())) {
-			recyclerView.post { prewarmAdjacentChapters() }
-		}
-	}
-
-	/** 손가락을 따라 본문이 실시간으로 밀려나고, 그 자리로 다음/이전 장이 옆에서 따라 들어온다. */
-	private fun updateChapterDrag(deltaX: Float) {
-		val width = recyclerView.width.toFloat()
-		if (width <= 0f) return
-
-		recyclerView.translationX = deltaX
-
-		val isNext = deltaX < 0
-		val activePreview = if (isNext) previewNextRecyclerView else previewPrevRecyclerView
-		val otherPreview = if (isNext) previewPrevRecyclerView else previewNextRecyclerView
-		val hasPreview = if (isNext) pendingNextChapter != null else pendingPrevChapter != null
-
-		otherPreview.visibility = View.INVISIBLE
-		if (!hasPreview) {
-			activePreview.visibility = View.INVISIBLE
-			return
-		}
-		if (activePreview.visibility != View.VISIBLE) {
-			// 처음 보이는 순간에만 하드웨어 레이어를 켠다(소프트웨어로 매 프레임 다시 그리면 버벅여서
-			// "지지직"거리는 느낌이 난다 — GPU 레이어로 이동/합성만 하도록 바꿔서 부드럽게 만든다).
-			recyclerView.setLayerType(View.LAYER_TYPE_HARDWARE, null)
-			activePreview.setLayerType(View.LAYER_TYPE_HARDWARE, null)
-		}
-		activePreview.visibility = View.VISIBLE
-		activePreview.translationX = deltaX + (if (isNext) width else -width)
-	}
-
-	/** 손을 뗐을 때: 충분히 많이 끌었으면 미리 만들어둔 장을 그대로 승격시키고, 아니면 제자리로 돌아온다. */
-	private fun finishChapterDrag(deltaX: Float) {
-		val width = recyclerView.width.toFloat()
-		if (width <= 0f) {
-			resetChapterDrag()
-			return
-		}
-
-		val isNext = deltaX < 0
-		val activePreview = if (isNext) previewNextRecyclerView else previewPrevRecyclerView
-		val target = if (isNext) pendingNextChapter else pendingPrevChapter
-		val threshold = width * 0.28f
-
-		if (kotlin.math.abs(deltaX) > threshold && target != null) {
-			recyclerView.animate()
-				.translationX(if (isNext) -width else width)
-				.setDuration(200)
-				.withEndAction {
-					promoteChapter(target)
-					resetChapterDrag()
-				}
-				.start()
-			activePreview.animate().translationX(0f).setDuration(200).start()
-		} else {
-			recyclerView.animate().translationX(0f).setDuration(200)
-				.withEndAction { resetChapterDrag() }
-				.start()
-			activePreview.animate()
-				.translationX(if (isNext) width else -width)
-				.setDuration(200)
-				.withEndAction { activePreview.visibility = View.INVISIBLE }
-				.start()
-		}
-	}
-
-	private fun resetChapterDrag() {
-		recyclerView.translationX = 0f
-		previewNextRecyclerView.visibility = View.INVISIBLE
-		previewPrevRecyclerView.visibility = View.INVISIBLE
-		// 하드웨어 레이어는 애니메이션 끝난 뒤엔 꺼둔다(계속 켜두면 오히려 메모리를 더 쓴다).
-		recyclerView.setLayerType(View.LAYER_TYPE_NONE, null)
-		previewNextRecyclerView.setLayerType(View.LAYER_TYPE_NONE, null)
-		previewPrevRecyclerView.setLayerType(View.LAYER_TYPE_NONE, null)
-	}
-
-	/** 설정에서 "스와이프로 장 이동"을 켰을 때, 좌우로 드래그하면 손가락을 따라 실시간으로 넘어간다
-	 * (인스타 스토리처럼 다음/이전 장이 옆에서 미리 보이면서 따라 들어옴). 절 선택이나 텍스트 드래그
-	 * 선택 같은 평소 동작을 방해하지 않도록, 뚜렷한 가로 드래그로 판단될 때만 가로챈다. */
-	private fun attachChapterSwipeGesture() {
-		val touchSlop = android.view.ViewConfiguration.get(requireContext()).scaledTouchSlop
-
-		recyclerView.addOnItemTouchListener(object : RecyclerView.OnItemTouchListener {
-			override fun onInterceptTouchEvent(
-				rv: RecyclerView,
-				e: android.view.MotionEvent
-			): Boolean {
-				if (!AppSettings.isChapterSwipeEnabled(requireContext())) return false
-
-				when (e.actionMasked) {
-					android.view.MotionEvent.ACTION_DOWN -> {
-						swipeStartX = e.x
-						swipeStartY = e.y
-						isDraggingChapter = false
-					}
-
-					android.view.MotionEvent.ACTION_MOVE -> {
-						val deltaX = e.x - swipeStartX
-						val deltaY = e.y - swipeStartY
-						if (!isDraggingChapter &&
-							kotlin.math.abs(deltaX) > touchSlop * 2 &&
-							kotlin.math.abs(deltaX) > kotlin.math.abs(deltaY) * 2
-						) {
-							isDraggingChapter = true
-						}
-						if (isDraggingChapter) return true
-					}
-				}
-				return false
+			val wasRead = db.readingProgressDao().get(bookId, chapter) != null
+			if (wasRead) {
+				db.readingProgressDao().delete(bookId, chapter)
+			} else {
+				db.readingProgressDao().upsert(ReadingProgress(bookId = bookId, chapter = chapter))
 			}
+			val nowRead = !wasRead
 
-			override fun onTouchEvent(rv: RecyclerView, e: android.view.MotionEvent) {
-				if (!isDraggingChapter) return
-				when (e.actionMasked) {
-					android.view.MotionEvent.ACTION_MOVE -> updateChapterDrag(e.x - swipeStartX)
-					android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL -> {
-						finishChapterDrag(e.x - swipeStartX)
-						isDraggingChapter = false
-					}
-				}
+			val shouldShow =
+				isReadingPlanEnabled && AppSettings.isReadingCheckBottomButtonMode(requireContext())
+			pageFooters[bookId to chapter]?.update(shouldShow, nowRead)
+
+			if (bookId == currentBookId && chapter == currentChapter) {
+				isChapterRead = nowRead
+				notifyTopBarChanged()
 			}
-
-			override fun onRequestDisallowInterceptTouchEvent(disallowIntercept: Boolean) {}
-		})
+		}
 	}
 
 	override fun onPrevChapterClicked() {
-		lifecycleScope.launch {
-			val db = BibleDatabase.getInstance(requireContext().applicationContext)
-			when {
-				currentChapter > 1 -> loadChapter(currentBookId, currentChapter - 1)
-				currentBookId > 1 -> {
-					val prevBook = currentBookId - 1
-					val maxChapter = db.bibleDao().getMaxChapter(primaryTranslation.code, prevBook)
-					loadChapter(prevBook, maxChapter)
-				}
-
-				else -> Toast.makeText(requireContext(), "첫 장입니다", Toast.LENGTH_SHORT).show()
-			}
+		val position = viewPager.currentItem
+		if (position > 0) {
+			viewPager.currentItem = position - 1
+		} else {
+			Toast.makeText(requireContext(), "첫 장입니다", Toast.LENGTH_SHORT).show()
 		}
 	}
 
 	override fun onNextChapterClicked() {
-		lifecycleScope.launch {
-			val db = BibleDatabase.getInstance(requireContext().applicationContext)
-			val maxChapter = db.bibleDao().getMaxChapter(primaryTranslation.code, currentBookId)
-			when {
-				currentChapter < maxChapter -> loadChapter(currentBookId, currentChapter + 1)
-				currentBookId < 66 -> loadChapter(currentBookId + 1, 1)
-				else -> Toast.makeText(requireContext(), "마지막 장입니다", Toast.LENGTH_SHORT).show()
-			}
+		val position = viewPager.currentItem
+		if (position < pageAdapter.itemCount - 1) {
+			viewPager.currentItem = position + 1
+		} else {
+			Toast.makeText(requireContext(), "마지막 장입니다", Toast.LENGTH_SHORT).show()
 		}
 	}
 
@@ -727,10 +612,6 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		scrollSpeed = AppSettings.getScrollSpeed(requireContext())
 		updateReadingCheckBottomButton()
 
-		if (AppSettings.isChapterSwipeEnabled(requireContext()) && pendingNextChapter == null && pendingPrevChapter == null) {
-			prewarmAdjacentChapters()
-		}
-
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(requireContext().applicationContext)
 			hasSermonForChapter =
@@ -748,90 +629,34 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		loadChapter(bookId, chapter, scrollToVerse)
 	}
 
+	/** 지정한 (책, 장)으로 이동한다. 이미 그 장을 보고 있으면 그냥 그 자리에서 절로만 스크롤하고,
+	 * 다른 장이면 ViewPager2로 그 페이지까지 이동한다(애니메이션 없이 바로 점프). */
 	private fun loadChapter(bookId: Int, chapter: Int, scrollToVerse: Int? = null) {
-		currentBookId = bookId
-		currentChapter = chapter
-		clearSelection()
-		AppSettings.setLastRead(requireContext(), bookId, chapter)
+		if (!::viewPager.isInitialized) return
 
-		lifecycleScope.launch {
-			val db = BibleDatabase.getInstance(requireContext().applicationContext)
-			db.recentChapterViewDao().upsert(
-				com.chan.bnote.data.mypage.RecentChapterView(bookId = bookId, chapter = chapter)
-			)
-			val verses = db.bibleDao().getVerses(primaryTranslation.code, bookId, chapter)
-			val secondaryMap = secondaryTranslation?.let { sec ->
-				db.bibleDao().getVerses(sec.code, bookId, chapter)
-					.associate {
-						it.verse to com.chan.bnote.data.bible.SecondaryVerseText(
-							it.text,
-							it.text2
-						)
-					}
+		if (!BibleChapterIndex.isReady) {
+			lifecycleScope.launch {
+				val db = BibleDatabase.getInstance(requireContext().applicationContext)
+				BibleChapterIndex.ensureLoaded(db, primaryTranslation.code)
+				loadChapter(bookId, chapter, scrollToVerse)
 			}
-			currentVerses = verses
-			currentSecondaryMap = secondaryMap
-
-			val bookmarkMap = db.bookmarkDao().getBookmarksForChapter(bookId, chapter)
-				.associateBy { it.verse }.toMutableMap()
-			isChapterRead = db.readingProgressDao().get(bookId, chapter) != null
-			updateReadingCheckBottomButton()
-			hasSermonForChapter =
-				db.sermonDao().getByBookChapter(bookId, chapter).isNotEmpty()
-
-			val highlights = db.partialHighlightDao()
-				.getForChapter(primaryTranslation.code, bookId, chapter)
-				.groupBy { it.verse }
-			currentHighlights = highlights
-
-			val verseMemos =
-				db.verseMemoDao().getForChapter(bookId, chapter).associateBy { it.verse }
-			val wordMemos = db.wordMemoDao().getForChapter(primaryTranslation.code, bookId, chapter)
-				.groupBy { it.verse }
-			currentVerseMemos = verseMemos
-			currentWordMemos = wordMemos
-
-			notifyTopBarChanged()
-
-			adapter = VerseAdapter(
-				verses = verses,
-				secondaryTextByVerse = secondaryMap,
-				bookmarks = bookmarkMap,
-				fontSize = currentFontSize,
-				selectedVerses = selectedVerses,
-				highlightsByVerse = currentHighlights,
-				verseMemos = currentVerseMemos,
-				wordMemosByVerse = currentWordMemos,
-				onVerseTap = { verseNum -> toggleVerseSelection(verseNum) },
-				onVerseMemoView = { verseNum, memo -> showVerseMemoDialog(verseNum, memo) },
-				onHighlightRequested = { verseNum, start, end, segment ->
-					pendingHighlightRange = HighlightSelection(verseNum, start, end, segment)
-					pendingHighlightVerses = null
-					showHighlightColorToolbar()
-				},
-				onWordMemoCreate = { verseNum, start, end, segment ->
-					showWordMemoEditDialog(
-						verseNum,
-						start,
-						end,
-						segment,
-						null
-					)
-				},
-				onWordMemoView = { verseNum, memo -> showWordMemoViewDialog(verseNum, memo) }
-			)
-			recyclerView.adapter =
-				androidx.recyclerview.widget.ConcatAdapter(adapter, readingFooterAdapter)
-			if (AppSettings.isChapterSwipeEnabled(requireContext())) {
-				recyclerView.post { prewarmAdjacentChapters() }
-			}
-
-			scrollToVerse?.let { verseNum ->
-				val index = verses.indexOfFirst { it.verse == verseNum }
-				if (index >= 0) recyclerView.scrollToPosition(index)
-			}
+			return
 		}
+
+		if (bookId == currentBookId && chapter == currentChapter) {
+			scrollToVerse?.let { verseNum ->
+				val index = currentVerses.indexOfFirst { it.verse == verseNum }
+				if (index >= 0 && ::recyclerView.isInitialized) recyclerView.scrollToPosition(index)
+			}
+			return
+		}
+
+		pendingScrollBookId = bookId
+		pendingScrollChapter = chapter
+		pendingScrollVerse = scrollToVerse
+		viewPager.setCurrentItem(BibleChapterIndex.positionOf(bookId, chapter), false)
 	}
+
 
 	private fun toggleField(verseNum: Int, current: BibleBookmark?, isHighlightToggle: Boolean) {
 		lifecycleScope.launch {
@@ -910,13 +735,12 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 	}
 
 	/** 설정에서 "하단 버튼으로 표시"를 켰을 때만 스크롤 맨 끝 여백에 이 버튼을 보여주고, 읽음 여부에
-	 * 따라 문구를 바꾼다. 다시 누르면 읽음 표시를 취소할 수 있다(onReadingPlanCheckClicked가 토글이라
-	 * 그대로 재사용). */
+	 * 따라 문구를 바꾼다. 다시 누르면 읽음 표시를 취소할 수 있다(onReadingCheckToggledForPage가
+	 * 토글이라 그대로 재사용). */
 	private fun updateReadingCheckBottomButton() {
-		if (!::readingFooterAdapter.isInitialized) return
 		val shouldShow = isReadingPlanEnabled &&
 				AppSettings.isReadingCheckBottomButtonMode(requireContext())
-		readingFooterAdapter.update(shouldShow, isChapterRead)
+		pageFooters[currentBookId to currentChapter]?.update(shouldShow, isChapterRead)
 	}
 
 	private fun toggleVerseSelection(verseNum: Int) {
