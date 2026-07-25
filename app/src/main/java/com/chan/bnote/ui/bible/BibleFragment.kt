@@ -216,6 +216,7 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		viewPager = view.findViewById(R.id.view_pager_bible)
 		pageAdapter = BiblePageAdapter(this)
 		viewPager.offscreenPageLimit = 1
+		viewPager.isUserInputEnabled = AppSettings.isChapterSwipeEnabled(requireContext())
 		viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
 			override fun onPageSelected(position: Int) {
 				super.onPageSelected(position)
@@ -611,6 +612,9 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		}
 		scrollSpeed = AppSettings.getScrollSpeed(requireContext())
 		updateReadingCheckBottomButton()
+		if (::viewPager.isInitialized) {
+			viewPager.isUserInputEnabled = AppSettings.isChapterSwipeEnabled(requireContext())
+		}
 
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(requireContext().applicationContext)
