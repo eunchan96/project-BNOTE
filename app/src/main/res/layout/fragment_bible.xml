@@ -12,12 +12,20 @@
         android:scrollbarStyle="outsideOverlay"
         android:fadeScrollbars="true" />
 
-    <!-- 스와이프로 장 넘길 때, 다음/이전 장이 옆에서 따라 들어오는 미리보기(인터랙션 없는 단순 표시용). -->
+    <!-- 스와이프로 장 넘길 때, 다음/이전 장이 옆에서 따라 들어오는 미리보기(인터랙션 없는 단순 표시용).
+         드래그가 시작되기 전에 미리 데이터를 채워서 레이아웃까지 다 잡아두고, invisible 상태로
+         대기하다가 드래그할 때 visible만 켜서(레이아웃을 새로 안 잡아도 되니 버벅임이 없다) 보여준다. -->
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recycler_verses_preview"
+        android:id="@+id/recycler_verses_preview_next"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:visibility="gone" />
+        android:visibility="invisible" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recycler_verses_preview_prev"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="invisible" />
 
     <include layout="@layout/include_selection_toolbar" />
 
