@@ -876,29 +876,46 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 	private fun onScrapButtonClicked() {
 		if (selectedVerses.isEmpty()) return
 		val sortedSelected = selectedVerses.sorted()
-		val startVerse = sortedSelected.first()
-		val endVerse = sortedSelected.last()
-		val combinedText = currentVerses
-			.filter { it.verse in selectedVerses }
-			.sortedBy { it.verse }
-			.joinToString("\n") { it.text }
+
+		// 떨어진 절끼리는 하나로 뭉뚱그리지 않고, 연속된 절끼리만 묶어서 각각 따로 스크랩한다.
+		val verseGroups = mutableListOf<List<Int>>()
+		var currentGroup = mutableListOf(sortedSelected.first())
+		for (v in sortedSelected.drop(1)) {
+			if (v == currentGroup.last() + 1) {
+				currentGroup.add(v)
+			} else {
+				verseGroups.add(currentGroup)
+				currentGroup = mutableListOf(v)
+			}
+		}
+		verseGroups.add(currentGroup)
 
 		val picker = ScrapGroupPickerBottomSheet()
 		picker.onGroupSelected = { group ->
 			lifecycleScope.launch {
 				val db = BibleDatabase.getInstance(requireContext().applicationContext)
-				db.scrapDao().insertScrap(
-					Scrap(
-						groupId = group.id,
-						bookId = currentBookId,
-						chapter = currentChapter,
-						startVerse = startVerse,
-						endVerse = endVerse,
-						verseText = combinedText
+				for (verseGroup in verseGroups) {
+					val combinedText = currentVerses
+						.filter { it.verse in verseGroup }
+						.sortedBy { it.verse }
+						.joinToString("\n") { it.text }
+					db.scrapDao().insertScrap(
+						Scrap(
+							groupId = group.id,
+							bookId = currentBookId,
+							chapter = currentChapter,
+							startVerse = verseGroup.first(),
+							endVerse = verseGroup.last(),
+							verseText = combinedText
+						)
 					)
-				)
-				Toast.makeText(requireContext(), "'${group.name}'에 스크랩했어요", Toast.LENGTH_SHORT)
-					.show()
+				}
+				val message = if (verseGroups.size > 1) {
+					"'${group.name}'에 ${verseGroups.size}개로 나눠서 스크랩했어요"
+				} else {
+					"'${group.name}'에 스크랩했어요"
+				}
+				Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
 				clearSelection()
 			}
 		}
