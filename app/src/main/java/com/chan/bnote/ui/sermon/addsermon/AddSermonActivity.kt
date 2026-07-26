@@ -171,6 +171,27 @@ class AddSermonActivity : AppCompatActivity() {
 		editTitle = findViewById(R.id.edit_title)
 		editMemo = findViewById(R.id.edit_memo)
 		com.chan.bnote.ui.common.TextAutoReplace.attachArrowReplacement(editMemo)
+		// 블루투스/물리 키보드를 연결했을 때, 드래그로 선택한 뒤 Ctrl+B/Ctrl+U로도 굵게/밑줄을 바로
+		// 적용할 수 있게 한다(툴바 버튼 누르는 것과 동일하게 동작).
+		editMemo.setOnKeyListener { _, keyCode, event ->
+			if (event.action == android.view.KeyEvent.ACTION_DOWN && event.isCtrlPressed) {
+				when (keyCode) {
+					android.view.KeyEvent.KEYCODE_B -> {
+						applyFormatting(bold = true)
+						true
+					}
+
+					android.view.KeyEvent.KEYCODE_U -> {
+						applyFormatting(bold = false)
+						true
+					}
+
+					else -> false
+				}
+			} else {
+				false
+			}
+		}
 		editLink = findViewById(R.id.edit_sermon_link)
 		btnDate = findViewById(R.id.btn_pick_date)
 		btnPickPreacher = findViewById(R.id.btn_pick_preacher)
