@@ -95,8 +95,9 @@ class ReadingPlanActivity : AppCompatActivity() {
 		val daysInYear = today.getActualMaximum(java.util.Calendar.DAY_OF_YEAR)
 		val daysLeft = (daysInYear - dayOfYear + 1).coerceAtLeast(1) // 오늘 포함
 
-		val dailyPace = kotlin.math.ceil(remaining.toDouble() / daysLeft).toInt()
-		paceText.text = "올해 남은 날짜 ${daysLeft}일 · 남은 ${remaining}장을 다 읽으려면 하루 ${dailyPace}장씩"
+		val dailyPace = remaining.toDouble() / daysLeft
+		val dailyPaceText = String.format(java.util.Locale.KOREA, "%.1f", dailyPace)
+		paceText.text = "올해 남은 날짜 ${daysLeft}일 · 다 읽으려면 하루 ${dailyPaceText}장씩"
 	}
 
 	private fun renderBookGrid(
