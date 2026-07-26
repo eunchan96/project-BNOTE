@@ -18,12 +18,17 @@ import com.chan.bnote.R
 
 class BibleMenuDialogFragment(
 	private val isReadingPlanEnabled: Boolean,
-	private val isAutoScrollEnabled: Boolean
+	private val isAutoScrollEnabled: Boolean,
+	private val isDndEnabled: Boolean
 ) : DialogFragment() {
 
 	var onAppendixItemSelected: ((String) -> Unit)? = null
 	var onReadingPlanToggled: ((Boolean) -> Unit)? = null
 	var onAutoScrollToggled: ((Boolean) -> Unit)? = null
+
+	// true를 반환하면(권한이 있어서 실제로 적용됐으면) 스위치를 그 상태로 유지하고, false면 원래대로
+	// 되돌린다(예: 방해금지 권한이 없어서 설정 화면으로 보내고 토글은 취소해야 할 때).
+	var onDndToggleRequested: ((Boolean) -> Boolean)? = null
 	var onScrapClicked: (() -> Unit)? = null
 	var onHymnClicked: (() -> Unit)? = null
 	var onHighlightClicked: (() -> Unit)? = null
@@ -131,6 +136,10 @@ class BibleMenuDialogFragment(
 				dismiss()
 			}
 		}
+		view.findViewById<Switch>(R.id.switch_dnd).apply {
+			isChecked = isDndEnabled
+			setDndCheckedListener(this)
+		}
 
 		view.findViewById<View>(R.id.row_reading_plan_toggle).setOnClickListener {
 			val switch = view.findViewById<Switch>(R.id.switch_reading_plan)
@@ -139,6 +148,25 @@ class BibleMenuDialogFragment(
 		view.findViewById<View>(R.id.row_auto_scroll_toggle).setOnClickListener {
 			val switch = view.findViewById<Switch>(R.id.switch_auto_scroll)
 			switch.isChecked = !switch.isChecked
+		}
+		view.findViewById<View>(R.id.row_dnd_toggle).setOnClickListener {
+			val switch = view.findViewById<Switch>(R.id.switch_dnd)
+			switch.isChecked = !switch.isChecked
+		}
+	}
+
+	/** 방해금지 권한이 없으면(설정 화면으로 보냈으면) 스위치를 원래 상태로 되돌리고, 있으면 그대로 두고
+	 * 메뉴를 닫는다. */
+	private fun setDndCheckedListener(switch: Switch) {
+		switch.setOnCheckedChangeListener { _, checked ->
+			val applied = onDndToggleRequested?.invoke(checked) ?: false
+			if (applied) {
+				dismiss()
+			} else {
+				switch.setOnCheckedChangeListener(null)
+				switch.isChecked = !checked
+				setDndCheckedListener(switch)
+			}
 		}
 	}
 

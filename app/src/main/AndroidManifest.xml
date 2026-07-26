@@ -5,6 +5,10 @@
     <!-- 찬송 화면의 유튜브 재생/썸네일 로딩에 필요 -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- 성경 탭 메뉴의 "방해금지 모드 활성화" 토글용. 이것만으로 실제 방해금지를 켤 순 없고,
+         NotificationManager.isNotificationPolicyAccessGranted()가 true여야(사용자가 설정
+         화면에서 직접 허용해야) 실제로 켤 수 있다. -->
+    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
     <!-- 설교 사진 첨부(카메라 촬영)에 필요 -->
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-feature

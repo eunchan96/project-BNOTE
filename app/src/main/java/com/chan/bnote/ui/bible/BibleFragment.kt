@@ -351,7 +351,8 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 	override fun onMenuClicked() {
 		val dialog = BibleMenuDialogFragment(
 			isReadingPlanEnabled = isReadingPlanEnabled,
-			isAutoScrollEnabled = isAutoScrollEnabled
+			isAutoScrollEnabled = isAutoScrollEnabled,
+			isDndEnabled = isDndCurrentlyOn()
 		)
 		dialog.onScrapClicked = {
 			scrapLauncher.launch(
@@ -411,10 +412,49 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 			}
 			notifyTopBarChanged()
 		}
+		dialog.onDndToggleRequested = { checked -> requestDndToggle(checked) }
 		dialog.onBibleKnowledgeClicked = {
 			startActivity(Intent(requireContext(), BibleKnowledgeHubActivity::class.java))
 		}
 		dialog.show(parentFragmentManager, "bible_menu")
+	}
+
+	/** 방해금지 권한이 있고, 실제로 지금 방해금지 모드가 켜져 있는지. */
+	private fun isDndCurrentlyOn(): Boolean {
+		val nm = requireContext().getSystemService(android.content.Context.NOTIFICATION_SERVICE)
+				as android.app.NotificationManager
+		if (!nm.isNotificationPolicyAccessGranted) return false
+		return nm.currentInterruptionFilter != android.app.NotificationManager.INTERRUPTION_FILTER_ALL
+	}
+
+	/** 방해금지 모드를 켜거나 끈다. 권한이 없으면 설정 화면으로 보내고 false를 반환한다(스위치는 다시
+	 * 원래대로 되돌아간다 — 실제로 권한을 받고 나서 다시 켜야 한다). */
+	private fun requestDndToggle(turnOn: Boolean): Boolean {
+		val context = requireContext()
+		val nm = context.getSystemService(android.content.Context.NOTIFICATION_SERVICE)
+				as android.app.NotificationManager
+
+		if (!nm.isNotificationPolicyAccessGranted) {
+			Toast.makeText(
+				context,
+				"방해금지 모드를 켜려면 '방해금지 권한'을 허용해야 해요. 설정 화면에서 BNOTE를 찾아 허용해주세요.",
+				Toast.LENGTH_LONG
+			).show()
+			try {
+				startActivity(
+					android.content.Intent(android.provider.Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS)
+				)
+			} catch (e: Exception) {
+				// 일부 기기/OS 버전에서 이 설정 화면 자체가 없을 수 있음 — 조용히 무시.
+			}
+			return false
+		}
+
+		nm.setInterruptionFilter(
+			if (turnOn) android.app.NotificationManager.INTERRUPTION_FILTER_PRIORITY
+			else android.app.NotificationManager.INTERRUPTION_FILTER_ALL
+		)
+		return true
 	}
 
 	/** ViewPager2가 새 페이지에 자리잡았을 때(스와이프든, setCurrentItem 호출이든) 불린다.
