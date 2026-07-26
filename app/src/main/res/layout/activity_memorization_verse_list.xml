@@ -55,11 +55,23 @@
                 android:focusable="true" />
 
             <TextView
+                android:id="@+id/btn_add_group"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="12dp"
+                android:text="추가"
+                android:textSize="14sp"
+                android:textColor="@color/white"
+                android:visibility="gone"
+                android:clickable="true"
+                android:focusable="true" />
+
+            <TextView
                 android:id="@+id/btn_manage_groups"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:padding="12dp"
-                android:text="그룹 관리"
+                android:text="관리"
                 android:textSize="14sp"
                 android:textColor="@color/white"
                 android:clickable="true"

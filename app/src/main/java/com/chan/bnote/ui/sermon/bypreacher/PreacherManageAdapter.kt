@@ -41,8 +41,8 @@ class PreacherManageAdapter(
 		holder.name.text = row.preacher.name
 		holder.count.text = "${row.count}개"
 
-		holder.editBtn.visibility = if (isEditMode) View.VISIBLE else View.GONE
-		holder.deleteBtn.visibility = if (isEditMode) View.VISIBLE else View.GONE
+		holder.editBtn.visibility = if (isEditMode) View.VISIBLE else View.INVISIBLE
+		holder.deleteBtn.visibility = if (isEditMode) View.VISIBLE else View.INVISIBLE
 		holder.editBtn.setOnClickListener { onEdit(row.preacher) }
 		holder.deleteBtn.setOnClickListener { onDelete(row.preacher) }
 

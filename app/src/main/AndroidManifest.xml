@@ -36,9 +36,6 @@
             android:name=".ui.bible.scrap.ScrapActivity"
             android:exported="false" />
         <activity
-            android:name=".ui.bible.scrap.ScrapGroupManageActivity"
-            android:exported="false" />
-        <activity
             android:name=".ui.appendix.AppendixTextActivity"
             android:exported="false" />
         <activity
@@ -83,9 +80,6 @@
             android:exported="false" />
         <activity
             android:name=".ui.mypage.memorization.MemorizationVerseListActivity"
-            android:exported="false" />
-        <activity
-            android:name=".ui.mypage.memorization.MemorizationGroupManageActivity"
             android:exported="false" />
         <activity
             android:name=".ui.mypage.settings.AppInfoActivity"

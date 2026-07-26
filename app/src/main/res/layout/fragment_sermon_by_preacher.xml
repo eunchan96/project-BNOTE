@@ -27,6 +27,16 @@
                 android:textColor="@color/text_primary" />
 
             <TextView
+                android:id="@+id/btn_preacher_manage_toggle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="관리"
+                android:textColor="@color/brown_primary"
+                android:padding="8dp"
+                android:clickable="true"
+                android:focusable="true" />
+
+            <TextView
                 android:id="@+id/btn_add_preacher_in_manage"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -34,16 +44,6 @@
                 android:textColor="@color/brown_primary"
                 android:padding="8dp"
                 android:visibility="gone"
-                android:clickable="true"
-                android:focusable="true" />
-
-            <TextView
-                android:id="@+id/btn_preacher_manage_toggle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="관리"
-                android:textColor="@color/brown_primary"
-                android:padding="8dp"
                 android:clickable="true"
                 android:focusable="true" />
 
