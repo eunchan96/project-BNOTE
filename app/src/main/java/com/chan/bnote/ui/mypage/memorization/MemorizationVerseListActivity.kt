@@ -18,7 +18,7 @@ import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.mypage.memorization.MemorizationGroup
 import com.chan.bnote.data.mypage.memorization.MemorizationVerse
 import com.chan.bnote.data.sermon.SermonBibleRef
-import com.chan.bnote.ui.sermon.addsermon.BibleRangePickerBottomSheet
+import com.chan.bnote.ui.bible.picker.BibleRangePickerBottomSheet
 import kotlinx.coroutines.launch
 
 class MemorizationVerseListActivity : AppCompatActivity() {

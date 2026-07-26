@@ -1,4 +1,4 @@
-package com.chan.bnote.ui.sermon.addsermon
+package com.chan.bnote.ui.bible.picker
 
 import android.os.Bundle
 import android.view.Gravity
@@ -16,8 +16,6 @@ import com.chan.bnote.data.bible.BibleBookGroups
 import com.chan.bnote.data.bible.BibleBooks
 import com.chan.bnote.data.sermon.SermonBibleRef
 import com.chan.bnote.ui.DraggableBottomSheet
-import com.chan.bnote.ui.bible.picker.PickerTab
-import com.chan.bnote.ui.bible.picker.renderPickerTabs
 import com.chan.bnote.ui.common.GridNumberAdapter
 import com.google.android.material.checkbox.MaterialCheckBox
 import kotlinx.coroutines.launch
@@ -108,6 +106,7 @@ class BibleRangePickerBottomSheet : DraggableBottomSheet() {
 		}
 
 		checkboxMulti.isChecked = isMultiMode
+		checkboxCrossChapter.isChecked = crossChapter
 		checkboxMulti.setOnCheckedChangeListener { _, checked ->
 			if (!checked && isMultiMode && !crossChapter && startVerse != -1 && !isSelectingEnd) {
 				// 시작 절만 눌러놓은 채로("몇 절부터"만 정해진 상태) 체크를 풀면, 그 절 하나로 확정한다.
@@ -289,7 +288,11 @@ class BibleRangePickerBottomSheet : DraggableBottomSheet() {
 			if (isCrossChapterEndSelection) chapters =
 				chapters.filter { it >= startChapter } // 끝 장은 시작 장 이상만
 
-			recyclerView.adapter = GridNumberAdapter(chapters) { position ->
+			recyclerView.adapter = GridNumberAdapter(
+				chapters,
+				(if (isCrossChapterEndSelection) endChapter else startChapter)
+					.let { if (it != -1) setOf(it) else emptySet() }
+			) { position ->
 				if (isCrossChapterEndSelection) {
 					endChapter = chapters[position]
 				} else {

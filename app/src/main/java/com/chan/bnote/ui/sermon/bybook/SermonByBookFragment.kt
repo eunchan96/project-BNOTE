@@ -70,6 +70,7 @@ class SermonByBookFragment : Fragment(), SermonSortableFragment {
 
 		bookTitleText.setOnClickListener {
 			val picker = BookOnlyPickerBottomSheet()
+			picker.selectedBookId = currentBookId
 			picker.onBookSelected = { bookId ->
 				currentBookId = bookId
 				selectedChapter = 1

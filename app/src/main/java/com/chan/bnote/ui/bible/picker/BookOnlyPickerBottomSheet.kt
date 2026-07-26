@@ -17,6 +17,9 @@ class BookOnlyPickerBottomSheet : BottomSheetDialogFragment() {
 
 	var onBookSelected: ((Int) -> Unit)? = null
 
+	// 지금 이 화면에서 이미 고른 책이 있으면 미리 선택된 상태로 보여준다.
+	var selectedBookId: Int = -1
+
 	override fun onCreateView(
 		inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
 	): View {
@@ -36,14 +39,23 @@ class BookOnlyPickerBottomSheet : BottomSheetDialogFragment() {
 				).apply { bottomMargin = dp(4) }
 			}
 			for (bookId in group) {
+				val isSelected = bookId == selectedBookId
 				val button = TextView(requireContext()).apply {
 					text = BibleBooks.nameOf(bookId)
 					gravity = Gravity.CENTER
 					textSize = 13f
 					maxLines = 2
 					setPadding(dp(4), dp(14), dp(4), dp(14))
-					background =
-						ContextCompat.getDrawable(requireContext(), R.drawable.bg_book_button)
+					background = ContextCompat.getDrawable(
+						requireContext(),
+						if (isSelected) R.drawable.bg_book_button_selected else R.drawable.bg_book_button
+					)
+					setTextColor(
+						ContextCompat.getColor(
+							requireContext(),
+							if (isSelected) R.color.white else R.color.text_primary
+						)
+					)
 					isClickable = true
 					isFocusable = true
 					layoutParams =
