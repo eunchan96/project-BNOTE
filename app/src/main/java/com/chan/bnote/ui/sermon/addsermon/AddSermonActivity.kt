@@ -149,6 +149,7 @@ class AddSermonActivity : AppCompatActivity() {
 
 		val editTitle = findViewById<EditText>(R.id.edit_title)
 		editMemo = findViewById(R.id.edit_memo)
+		com.chan.bnote.ui.common.TextAutoReplace.attachArrowReplacement(editMemo)
 		val editLink = findViewById<EditText>(R.id.edit_sermon_link)
 		btnDate = findViewById(R.id.btn_pick_date)
 		btnPickPreacher = findViewById(R.id.btn_pick_preacher)

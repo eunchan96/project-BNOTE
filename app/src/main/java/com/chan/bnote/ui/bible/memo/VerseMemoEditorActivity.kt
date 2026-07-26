@@ -112,6 +112,7 @@ class VerseMemoEditorActivity : AppCompatActivity() {
 
 		val editText = boxView.findViewById<EditText>(R.id.edit_box_text)
 		editText.setText(existing?.text ?: "")
+		com.chan.bnote.ui.common.TextAutoReplace.attachArrowReplacement(editText)
 		com.chan.bnote.ui.common.LinkifyHelper.applySmartLinks(editText)
 		editText.setOnFocusChangeListener { _, hasFocus ->
 			if (!hasFocus) com.chan.bnote.ui.common.LinkifyHelper.applySmartLinks(editText)
