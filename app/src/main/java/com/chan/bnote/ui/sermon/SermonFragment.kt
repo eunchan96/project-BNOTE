@@ -21,6 +21,7 @@ class SermonFragment : Fragment(), TopBarActionHandler {
 	private lateinit var subtabByBook: TextView
 	private lateinit var subtabByPreacher: TextView
 	private var activeSubFragment: Fragment? = null
+	private var activeTabName: String? = null
 
 	override fun onCreateView(
 		inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -35,22 +36,36 @@ class SermonFragment : Fragment(), TopBarActionHandler {
 		subtabByBook = view.findViewById(R.id.subtab_by_book)
 		subtabByPreacher = view.findViewById(R.id.subtab_by_preacher)
 
-		subtabCalendar.setOnClickListener { switchSubTab(CalendarSermonFragment(), subtabCalendar) }
-		subtabByBook.setOnClickListener { switchSubTab(SermonByBookFragment(), subtabByBook) }
+		subtabCalendar.setOnClickListener {
+			switchSubTab(
+				CalendarSermonFragment(),
+				subtabCalendar,
+				"캘린더"
+			)
+		}
+		subtabByBook.setOnClickListener {
+			switchSubTab(
+				SermonByBookFragment(),
+				subtabByBook,
+				"성경별"
+			)
+		}
 		subtabByPreacher.setOnClickListener {
 			switchSubTab(
 				SermonByPreacherFragment(),
-				subtabByPreacher
+				subtabByPreacher,
+				"설교자별"
 			)
 		}
 
 		if (savedInstanceState == null) {
-			switchSubTab(CalendarSermonFragment(), subtabCalendar)
+			switchSubTab(CalendarSermonFragment(), subtabCalendar, "캘린더")
 		}
 	}
 
-	private fun switchSubTab(fragment: Fragment, selected: TextView) {
+	private fun switchSubTab(fragment: Fragment, selected: TextView, tabName: String) {
 		activeSubFragment = fragment
+		activeTabName = tabName
 		childFragmentManager.beginTransaction()
 			.replace(R.id.sermon_sub_container, fragment)
 			.commit()
@@ -75,6 +90,7 @@ class SermonFragment : Fragment(), TopBarActionHandler {
 	override fun onMenuClicked() {
 		val dialog = SermonMenuDialogFragment()
 		dialog.sortTarget = activeSubFragment as? SermonSortableFragment
+		dialog.sortTabName = activeTabName
 		dialog.onCategoryManageClicked = {
 			startActivity(Intent(requireContext(), CategoryManageActivity::class.java))
 		}

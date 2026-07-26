@@ -23,6 +23,9 @@ class SermonMenuDialogFragment : DialogFragment() {
 	 * 채워준다. null이면(정렬을 지원 안 하는 화면이면) 정렬 섹션 자체를 숨긴다. */
 	var sortTarget: SermonSortableFragment? = null
 
+	/** "캘린더", "성경별", "설교자별"처럼 지금 어느 탭의 정렬인지 구분해서 보여주기 위한 이름. */
+	var sortTabName: String? = null
+
 	override fun onStart() {
 		super.onStart()
 
@@ -64,28 +67,40 @@ class SermonMenuDialogFragment : DialogFragment() {
 
 	private fun buildSortSection(view: View) {
 		val target = sortTarget
-		val label = view.findViewById<TextView>(R.id.text_sort_section_label)
-		val container = view.findViewById<LinearLayout>(R.id.container_sort_options)
+		val toggle = view.findViewById<TextView>(R.id.menu_sort_toggle)
 		val divider = view.findViewById<View>(R.id.divider_sort_options)
+		val optionsContainer = view.findViewById<LinearLayout>(R.id.container_sort_options)
+		val sectionLabel = view.findViewById<TextView>(R.id.text_sort_section_label)
+		val rowsContainer = view.findViewById<LinearLayout>(R.id.container_sort_rows)
 
 		if (target == null) {
-			label.visibility = View.GONE
-			container.visibility = View.GONE
+			toggle.visibility = View.GONE
 			divider.visibility = View.GONE
+			optionsContainer.visibility = View.GONE
 			return
 		}
 
-		label.visibility = View.VISIBLE
-		container.visibility = View.VISIBLE
+		toggle.visibility = View.VISIBLE
 		divider.visibility = View.VISIBLE
-		container.removeAllViews()
+		// "부록"처럼 평소엔 접혀 있다가 눌러야 펼쳐진다.
+		toggle.text = "설교 정렬  ▾"
+		optionsContainer.visibility = View.GONE
+
+		toggle.setOnClickListener {
+			val expanding = optionsContainer.visibility != View.VISIBLE
+			optionsContainer.visibility = if (expanding) View.VISIBLE else View.GONE
+			toggle.text = if (expanding) "설교 정렬  ▴" else "설교 정렬  ▾"
+		}
+
+		sectionLabel.text = if (sortTabName != null) "${sortTabName} 정렬" else "정렬 기준"
 
 		val currentMode = target.getCurrentSortMode()
+		rowsContainer.removeAllViews()
 		for ((code, name) in target.getSortOptions()) {
 			val row = TextView(requireContext()).apply {
 				text = if (code == currentMode) "✓ $name" else name
 				textSize = 15f
-				setPadding(dp(16), dp(12), dp(16), dp(12))
+				setPadding(dp(16), dp(10), dp(16), dp(10))
 				setTextColor(
 					ContextCompat.getColor(
 						requireContext(),
@@ -102,7 +117,7 @@ class SermonMenuDialogFragment : DialogFragment() {
 					dismiss()
 				}
 			}
-			container.addView(row)
+			rowsContainer.addView(row)
 		}
 	}
 

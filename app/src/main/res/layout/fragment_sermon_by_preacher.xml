@@ -55,6 +55,7 @@
                 android:textSize="13sp"
                 android:textColor="@color/brown_primary"
                 android:padding="8dp"
+                android:visibility="gone"
                 android:clickable="true"
                 android:focusable="true" />
         </LinearLayout>

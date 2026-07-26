@@ -111,6 +111,7 @@ class SermonByPreacherFragment : Fragment(), SermonSortableFragment {
 		(preacherRecycler.adapter as? PreacherManageAdapter)?.setEditMode(isPreacherManageMode)
 		view?.findViewById<TextView>(R.id.btn_add_preacher_in_manage)?.visibility =
 			if (isPreacherManageMode) View.VISIBLE else View.GONE
+		btnPreacherSort.visibility = if (isPreacherManageMode) View.VISIBLE else View.GONE
 	}
 
 	private fun showAddPreacherDialog() {
