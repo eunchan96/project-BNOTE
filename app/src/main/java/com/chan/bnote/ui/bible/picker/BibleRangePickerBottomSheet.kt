@@ -3,6 +3,7 @@ package com.chan.bnote.ui.bible.picker
 import android.os.Bundle
 import android.view.Gravity
 import android.view.View
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
@@ -47,7 +48,7 @@ class BibleRangePickerBottomSheet : DraggableBottomSheet() {
 	private lateinit var checkboxCrossChapter: MaterialCheckBox
 	private lateinit var textSelectedStart: TextView
 	private lateinit var tabBarContainer: LinearLayout
-	private lateinit var btnDelete: TextView
+	private lateinit var btnDelete: ImageView
 
 	// "여러 구절 선택하기" 체크 여부 — 기본으로 켜둔다.
 	private var isMultiMode = true

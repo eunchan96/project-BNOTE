@@ -92,14 +92,14 @@ class ScrapActivity : AppCompatActivity() {
 		groupDetailContainer.visibility = View.VISIBLE
 		selectedGroup = group
 		isEditMode = false
-		editModeToggle.text = "수정"
+		editModeToggle.text = "관리"
 		detailGroupNameText.text = group.name
 		loadGroupVerses(group)
 	}
 
 	private fun toggleEditMode() {
 		isEditMode = !isEditMode
-		editModeToggle.text = if (isEditMode) "완료" else "수정"
+		editModeToggle.text = if (isEditMode) "완료" else "관리"
 		(verseRecycler.adapter as? ScrapVerseAdapter)?.setEditMode(isEditMode)
 	}
 

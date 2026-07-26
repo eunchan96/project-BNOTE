@@ -3,6 +3,7 @@ package com.chan.bnote.ui.bible.scrap
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.chan.bnote.R
@@ -16,8 +17,8 @@ class ScrapGroupManageAdapter(
 
 	class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
 		val name: TextView = view.findViewById(R.id.text_group_name)
-		val editBtn: TextView = view.findViewById(R.id.btn_edit_group)
-		val deleteBtn: TextView = view.findViewById(R.id.btn_delete_group)
+		val editBtn: ImageView = view.findViewById(R.id.btn_edit_group)
+		val deleteBtn: ImageView = view.findViewById(R.id.btn_delete_group)
 	}
 
 	override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {

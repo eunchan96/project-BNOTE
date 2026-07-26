@@ -57,7 +57,7 @@ class BookmarkListActivity : AppCompatActivity() {
 		btnToggleEdit = findViewById(R.id.btn_toggle_edit)
 		btnToggleEdit.setOnClickListener {
 			isEditMode = !isEditMode
-			btnToggleEdit.text = if (isEditMode) "완료" else "수정"
+			btnToggleEdit.text = if (isEditMode) "완료" else "관리"
 			renderList()
 		}
 
