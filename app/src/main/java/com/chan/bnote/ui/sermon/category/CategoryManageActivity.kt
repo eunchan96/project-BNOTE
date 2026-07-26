@@ -1,11 +1,7 @@
 package com.chan.bnote.ui.sermon.category
 
-import android.graphics.Color
-import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.ImageView
@@ -16,23 +12,25 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.chan.bnote.R
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.sermon.sermoncategory.SermonCategory
 import com.chan.bnote.ui.common.ColorPickerBottomSheet
+import com.chan.bnote.ui.common.DragReorderHelper
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 
 /**
  * 설교 카테고리 관리 + 카테고리별 보기를 합친 화면.
  * 평소엔 카테고리를 눌러서 그 카테고리의 설교 목록 화면(CategorySermonListActivity)으로 이동하고,
- * "관리"를 누르면 각 항목에 수정/삭제 아이콘이 나타나서 관리할 수 있다.
+ * "관리"를 누르면 각 항목에 수정/삭제 아이콘과 순서를 바꿀 수 있는 ≡ 손잡이가 나타난다.
  */
 class CategoryManageActivity : AppCompatActivity() {
 
-	private data class CategoryRow(val category: SermonCategory?, val count: Int)
+	data class CategoryRow(val category: SermonCategory?, val count: Int)
 
 	private lateinit var recyclerView: RecyclerView
 	private lateinit var btnManage: TextView
@@ -105,57 +103,48 @@ class CategoryManageActivity : AppCompatActivity() {
 			}
 			rows.add(CategoryRow(null, allSermons.count { it.categoryId == null }))
 
-			recyclerView.adapter = object : RecyclerView.Adapter<CategoryViewHolder>() {
-				override fun onCreateViewHolder(
-					parent: ViewGroup,
-					viewType: Int
-				): CategoryViewHolder {
-					val v = LayoutInflater.from(parent.context)
-						.inflate(R.layout.item_category_manage_row, parent, false)
-					return CategoryViewHolder(v)
-				}
-
-				override fun onBindViewHolder(holder: CategoryViewHolder, position: Int) {
-					val row = rows[position]
-					val drawable = GradientDrawable()
-					drawable.shape = GradientDrawable.OVAL
-					val colorHex = row.category?.colorHex ?: String.format(
-						"#%06X",
-						0xFFFFFF and ContextCompat.getColor(
+			val adapter = CategoryManageAdapter(
+				initialRows = rows,
+				isEditMode = isManageMode,
+				onClick = { category ->
+					startActivity(
+						CategorySermonListActivity.createIntent(
 							this@CategoryManageActivity,
-							R.color.category_none
+							category?.id,
+							category?.name ?: "미분류"
 						)
 					)
-					drawable.setColor(Color.parseColor(colorHex))
-					holder.dot.background = drawable
-					holder.name.text = row.category?.name ?: "미분류"
-
-					// 관리 중일 땐 수정/삭제 아이콘이 그 자리를 대신하니 개수는 굳이 안 보여줘도 된다.
-					holder.count.visibility = if (isManageMode) View.GONE else View.VISIBLE
-					holder.count.text = "${row.count}개"
-
-					// 미분류는 실제 카테고리가 아니라서 수정/삭제 대상이 아니다.
-					val canManage = isManageMode && row.category != null
-					holder.editBtn.visibility = if (canManage) View.VISIBLE else View.GONE
-					holder.deleteBtn.visibility = if (canManage) View.VISIBLE else View.GONE
-
-					holder.itemView.setOnClickListener {
-						if (isManageMode) return@setOnClickListener
-						startActivity(
-							CategorySermonListActivity.createIntent(
-								this@CategoryManageActivity,
-								row.category?.id,
-								row.category?.name ?: "미분류"
-							)
-						)
-					}
-					holder.editBtn.setOnClickListener { row.category?.let { showEditDialog(it) } }
-					holder.deleteBtn.setOnClickListener {
-						row.category?.let { confirmDelete(it, row.count) }
-					}
+				},
+				onEdit = { category -> showEditDialog(category) },
+				onDelete = { category ->
+					confirmDelete(
+						category,
+						rows.first { it.category?.id == category.id }.count
+					)
 				}
+			)
+			recyclerView.adapter = adapter
 
-				override fun getItemCount() = rows.size
+			if (isManageMode) {
+				// 드래그 중엔 목록을 다시 안 불러오고 어댑터 안에서만 옮기다가, 손을 뗀 순간에만 저장한다.
+				val dragHelper = ItemTouchHelper(
+					DragReorderHelper(
+						onMove = { from, to -> adapter.moveItem(from, to) },
+						onDragFinished = {
+							lifecycleScope.launch {
+								val db2 = BibleDatabase.getInstance(applicationContext)
+								adapter.currentCategoryOrder().forEachIndexed { index, category ->
+									if (category.sortOrder != index) {
+										db2.sermonCategoryDao()
+											.update(category.copy(sortOrder = index))
+									}
+								}
+								categories = db2.sermonCategoryDao().getAll()
+							}
+						}
+					)
+				)
+				dragHelper.attachToRecyclerView(recyclerView)
 			}
 		}
 	}
@@ -253,11 +242,4 @@ class CategoryManageActivity : AppCompatActivity() {
 
 	private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
 
-	class CategoryViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-		val dot: View = view.findViewById(R.id.color_dot)
-		val name: TextView = view.findViewById(R.id.text_category_name)
-		val count: TextView = view.findViewById(R.id.text_category_count)
-		val editBtn: ImageView = view.findViewById(R.id.btn_edit_category)
-		val deleteBtn: ImageView = view.findViewById(R.id.btn_delete_category)
-	}
 }

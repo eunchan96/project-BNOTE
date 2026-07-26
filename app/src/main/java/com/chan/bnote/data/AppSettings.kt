@@ -14,7 +14,11 @@ object AppSettings {
 
 	private const val KEY_PREACHER_SORT_MODE = "preacher_sort_mode" // "NAME" or "CUSTOM"
 	private const val KEY_PREACHER_CUSTOM_ORDER = "preacher_custom_order" // 쉼표 구분 문자열
-	private const val KEY_SERMON_SORT_MODE = "sermon_sort_mode" // "DATE" or "BIBLE"
+	private const val KEY_SERMON_SORT_MODE = "sermon_sort_mode" // "DATE" or "BIBLE" (설교자 탭)
+	private const val KEY_CALENDAR_SORT_MODE =
+		"sermon_calendar_sort_mode" // "BIBLE"|"CATEGORY"|"ADDED"
+	private const val KEY_BY_BOOK_SORT_MODE =
+		"sermon_by_book_sort_mode" // "BIBLE"|"DATE"|"CATEGORY"|"ADDED"
 	private const val KEY_BIBLE_SEARCH_HISTORY = "bible_search_history" // 구분자로 이어붙인 문자열, 최신순
 	private const val SEARCH_HISTORY_DELIMITER = "\u001E"
 	private const val MAX_SEARCH_HISTORY = 20
@@ -163,6 +167,26 @@ object AppSettings {
 	fun setSermonSortMode(context: Context, mode: String) {
 		context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
 			.edit().putString(KEY_SERMON_SORT_MODE, mode).apply()
+	}
+
+	fun getCalendarSortMode(context: Context): String {
+		return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.getString(KEY_CALENDAR_SORT_MODE, "ADDED") ?: "ADDED"
+	}
+
+	fun setCalendarSortMode(context: Context, mode: String) {
+		context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.edit().putString(KEY_CALENDAR_SORT_MODE, mode).apply()
+	}
+
+	fun getByBookSortMode(context: Context): String {
+		return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.getString(KEY_BY_BOOK_SORT_MODE, "ADDED") ?: "ADDED"
+	}
+
+	fun setByBookSortMode(context: Context, mode: String) {
+		context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.edit().putString(KEY_BY_BOOK_SORT_MODE, mode).apply()
 	}
 
 	fun getScrollSpeed(context: Context): Int {

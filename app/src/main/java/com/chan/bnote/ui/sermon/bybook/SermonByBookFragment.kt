@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.chan.bnote.R
+import com.chan.bnote.data.AppSettings
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.bible.BibleBooks
 import com.chan.bnote.data.sermon.ChapterMarker
@@ -49,6 +50,8 @@ class SermonByBookFragment : Fragment() {
 
 	private var currentBookId = 1
 	private var selectedChapter = 1
+	private lateinit var btnSort: TextView
+	private var sortMode = "ADDED"
 
 	override fun onCreateView(
 		inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -62,6 +65,11 @@ class SermonByBookFragment : Fragment() {
 		bookTitleText = view.findViewById(R.id.text_current_book)
 		chapterGridRecycler = view.findViewById(R.id.recycler_chapter_grid)
 		chapterGridRecycler.layoutManager = GridLayoutManager(requireContext(), 7)
+
+		btnSort = view.findViewById(R.id.btn_by_book_sort)
+		sortMode = AppSettings.getByBookSortMode(requireContext())
+		updateSortButtonLabel()
+		btnSort.setOnClickListener { showSortMenu(it) }
 
 		bookTitleText.setOnClickListener {
 			val picker = BookOnlyPickerBottomSheet()
@@ -134,6 +142,36 @@ class SermonByBookFragment : Fragment() {
 		return result
 	}
 
+	private fun showSortMenu(anchor: View) {
+		val popup = android.widget.PopupMenu(requireContext(), anchor)
+		popup.menu.add(0, 0, 0, "성경순(시작절)")
+		popup.menu.add(0, 1, 1, "날짜순")
+		popup.menu.add(0, 2, 2, "카테고리순")
+		popup.menu.add(0, 3, 3, "추가순")
+		popup.setOnMenuItemClickListener { item ->
+			sortMode = when (item.itemId) {
+				0 -> "BIBLE"
+				1 -> "DATE"
+				2 -> "CATEGORY"
+				else -> "ADDED"
+			}
+			AppSettings.setByBookSortMode(requireContext(), sortMode)
+			updateSortButtonLabel()
+			loadSermonsForSelectedChapter()
+			true
+		}
+		popup.show()
+	}
+
+	private fun updateSortButtonLabel() {
+		btnSort.text = when (sortMode) {
+			"BIBLE" -> "성경순(시작절) ▾"
+			"DATE" -> "날짜순 ▾"
+			"CATEGORY" -> "카테고리순 ▾"
+			else -> "추가순 ▾"
+		}
+	}
+
 	private fun loadSermonsForSelectedChapter() {
 		val label = view?.findViewById<TextView>(R.id.text_selected_chapter_label)
 		label?.text = "${BibleBooks.nameOf(currentBookId)} ${selectedChapter}${
@@ -143,7 +181,31 @@ class SermonByBookFragment : Fragment() {
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(requireContext().applicationContext)
 			val sermons = db.sermonDao().getByBookChapter(currentBookId, selectedChapter)
-			renderList(sermons)
+			val sorted = when (sortMode) {
+				"BIBLE" -> {
+					val firstRefs =
+						com.chan.bnote.ui.sermon.SermonSortUtils.loadFirstRefs(db, sermons)
+					sermons.sortedWith(
+						com.chan.bnote.ui.sermon.SermonSortUtils.byBibleOrder(
+							firstRefs
+						)
+					)
+				}
+
+				"DATE" -> sermons.sortedWith(com.chan.bnote.ui.sermon.SermonSortUtils.byDateDesc())
+				"CATEGORY" -> {
+					val categoryOrder =
+						com.chan.bnote.ui.sermon.SermonSortUtils.loadCategoryOrderMap(db)
+					sermons.sortedWith(
+						com.chan.bnote.ui.sermon.SermonSortUtils.byCategoryOrder(
+							categoryOrder
+						)
+					)
+				}
+
+				else -> sermons.sortedWith(com.chan.bnote.ui.sermon.SermonSortUtils.byAddedOrder())
+			}
+			renderList(sorted)
 		}
 	}
 

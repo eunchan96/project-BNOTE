@@ -11,6 +11,16 @@
     android:clickable="true"
     android:focusable="true">
 
+    <TextView
+        android:id="@+id/text_drag_handle"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:gravity="center"
+        android:text="&#9776;"
+        android:textSize="18sp"
+        android:textColor="@color/text_hint"
+        android:visibility="gone" />
+
     <View
         android:id="@+id/color_dot"
         android:layout_width="16dp"

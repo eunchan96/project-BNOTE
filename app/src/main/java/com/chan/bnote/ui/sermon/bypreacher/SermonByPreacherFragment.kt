@@ -294,21 +294,28 @@ class SermonByPreacherFragment : Fragment() {
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(requireContext().applicationContext)
 			val sermons = db.sermonDao().getByPreacherId(preacher.id)
+			val categoryOrder = com.chan.bnote.ui.sermon.SermonSortUtils.loadCategoryOrderMap(db)
 
 			val rowsWithRef = sermons.map { sermon ->
 				val firstRef = db.sermonBibleRefDao().getFirstRef(sermon.id)
 				sermon to firstRef
 			}
 
+			// 2차 정렬은 항상 카테고리순으로: 1차 기준(날짜/성경순)이 같으면 카테고리 순서로 갈린다.
 			val sortedPairs = if (sermonSortMode == "DATE") {
-				rowsWithRef.sortedByDescending { it.first.sermonDate }
+				rowsWithRef.sortedWith(
+					compareByDescending<Pair<com.chan.bnote.data.sermon.Sermon, com.chan.bnote.data.sermon.SermonBibleRef?>> { it.first.sermonDate }
+						.thenBy { categoryOrder[it.first.categoryId] ?: Int.MAX_VALUE }
+				)
 			} else {
 				rowsWithRef.sortedWith(
 					compareBy(
 						{ it.second?.startBookId ?: Int.MAX_VALUE },
 						{ it.second?.startChapter ?: Int.MAX_VALUE },
-						{ it.second?.startVerse ?: Int.MAX_VALUE }
-					))
+						{ it.second?.startVerse ?: Int.MAX_VALUE },
+						{ categoryOrder[it.first.categoryId] ?: Int.MAX_VALUE }
+					)
+				)
 			}
 
 			val rowData = SermonRowBuilder.build(db, sortedPairs.map { it.first })
