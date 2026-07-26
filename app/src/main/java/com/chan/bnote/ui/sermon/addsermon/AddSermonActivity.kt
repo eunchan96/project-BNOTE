@@ -74,6 +74,17 @@ class AddSermonActivity : AppCompatActivity() {
 	private var selectedPreacherId: Long? = null
 	private val bibleRefs = mutableListOf<SermonBibleRef>()
 	private val photoPaths = mutableListOf<String>()
+	private var isEditMode = false
+
+	// 수정 모드에서 뒤로가기 눌렀을 때 "진짜로 뭔가 바뀌었는지" 비교하기 위한 원본 값들.
+	private var originalTitle = ""
+	private var originalMemo = ""
+	private var originalLink = ""
+	private var originalDateMillis = 0L
+	private var originalCategoryId: Long? = null
+	private var originalPreacherId: Long? = null
+	private var originalRefsSignature = ""
+	private var originalPhotoPaths: List<String> = emptyList()
 	private var pendingCaptureFile: File? = null
 
 	private lateinit var flexboxRefs: com.google.android.flexbox.FlexboxLayout
@@ -140,7 +151,7 @@ class AddSermonActivity : AppCompatActivity() {
 		}
 
 		val sermonId = intent.getLongExtra(EXTRA_SERMON_ID, -1L)
-		val isEditMode = sermonId != -1L
+		isEditMode = sermonId != -1L
 
 		if (intent.hasExtra(EXTRA_INITIAL_DATE_MILLIS)) {
 			selectedDateMillis = intent.getLongExtra(EXTRA_INITIAL_DATE_MILLIS, selectedDateMillis)
@@ -240,6 +251,16 @@ class AddSermonActivity : AppCompatActivity() {
 					photoPaths.addAll(
 						db.sermonPhotoDao().getBySermon(sermon.id).map { it.filePath })
 					renderPhotoThumbnails()
+
+					// 뒤로가기 시 "진짜로 뭔가 바뀌었는지" 비교하기 위한 원본 스냅샷.
+					originalTitle = sermon.title
+					originalMemo = sermon.memo
+					originalLink = sermon.link ?: ""
+					originalDateMillis = sermon.sermonDate
+					originalCategoryId = sermon.categoryId
+					originalPreacherId = sermon.preacherId
+					originalRefsSignature = refsSignature(bibleRefs)
+					originalPhotoPaths = photoPaths.toList()
 				}
 			}
 
@@ -477,14 +498,30 @@ class AddSermonActivity : AppCompatActivity() {
 
 	private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
 
+	private fun refsSignature(refs: List<SermonBibleRef>): String =
+		refs.joinToString("|") {
+			"${it.startBookId}-${it.startChapter}-${it.startVerse}-${it.endBookId}-${it.endChapter}-${it.endVerse}"
+		}
+
 	private fun hasUnsavedContent(): Boolean {
-		return editTitle.text.toString().isNotBlank() ||
-				editMemo.text.toString().isNotBlank() ||
-				editLink.text.toString().isNotBlank() ||
-				bibleRefs.isNotEmpty() ||
-				photoPaths.isNotEmpty() ||
-				selectedCategoryId != existingSermon?.categoryId ||
-				selectedPreacherId != existingSermon?.preacherId
+		if (!isEditMode) {
+			return editTitle.text.toString().isNotBlank() ||
+					editMemo.text.toString().isNotBlank() ||
+					editLink.text.toString().isNotBlank() ||
+					bibleRefs.isNotEmpty() ||
+					photoPaths.isNotEmpty() ||
+					selectedCategoryId != null ||
+					selectedPreacherId != null
+		}
+		// 수정 모드에서는 원본과 실제로 달라진 게 있을 때만 "저장 안 된 변경사항"으로 본다.
+		return editTitle.text.toString().trim() != originalTitle ||
+				RichTextUtils.toStorageString(editMemo.text) != originalMemo ||
+				editLink.text.toString().trim() != originalLink ||
+				selectedDateMillis != originalDateMillis ||
+				selectedCategoryId != originalCategoryId ||
+				selectedPreacherId != originalPreacherId ||
+				refsSignature(bibleRefs) != originalRefsSignature ||
+				photoPaths != originalPhotoPaths
 	}
 
 	private fun handleBackPress() {
