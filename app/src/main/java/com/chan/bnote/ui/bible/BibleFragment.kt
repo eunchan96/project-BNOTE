@@ -531,7 +531,16 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 			onWordMemoCreate = { verseNum, start, end, segment ->
 				showWordMemoEditDialog(verseNum, start, end, segment, null)
 			},
-			onWordMemoView = { verseNum, memo -> showWordMemoViewDialog(verseNum, memo) }
+			onWordMemoView = { verseNum, memo -> showWordMemoViewDialog(verseNum, memo) },
+			onGestureHoldStart = {
+				if (::viewPager.isInitialized) viewPager.isUserInputEnabled = false
+			},
+			onGestureHoldEnd = {
+				if (::viewPager.isInitialized) {
+					viewPager.isUserInputEnabled =
+						AppSettings.isChapterSwipeEnabled(requireContext())
+				}
+			}
 		)
 
 		return BiblePageData(

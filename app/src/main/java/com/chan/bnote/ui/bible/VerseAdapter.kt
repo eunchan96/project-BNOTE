@@ -37,7 +37,13 @@ class VerseAdapter(
 	private val onVerseMemoView: (verse: Int, memo: VerseMemo) -> Unit,
 	private val onHighlightRequested: (verse: Int, start: Int, end: Int, segment: Int) -> Unit,
 	private val onWordMemoCreate: (verse: Int, start: Int, end: Int, segment: Int) -> Unit,
-	private val onWordMemoView: (verse: Int, memo: WordMemo) -> Unit
+	private val onWordMemoView: (verse: Int, memo: WordMemo) -> Unit,
+	// ViewPager2 안에 있다 보니, 손가락을 가만히 대고 있는(롱프레스) 도중에 아주 살짝만 흔들려도
+	// ViewPager2가 "장 넘기기 스와이프"로 착각해서 가로채 버리는 문제가 있었다. 그래서 롱프레스가
+	// 될 것 같은 순간(딱히 안 움직이고 일정 시간 지남)엔 ViewPager2의 스와이프를 잠깐 꺼달라고
+	// 요청하기 위한 콜백. null이면(성경 읽기 화면이 아니면) 그냥 안 쓰인다.
+	private val onGestureHoldStart: (() -> Unit)? = null,
+	private val onGestureHoldEnd: (() -> Unit)? = null
 ) : RecyclerView.Adapter<VerseAdapter.ViewHolder>() {
 
 	companion object {
@@ -337,21 +343,60 @@ class VerseAdapter(
 		var downTime = 0L
 		var downX = 0f
 		var downY = 0f
+		val holdHandler = android.os.Handler(android.os.Looper.getMainLooper())
+		var holdRunnable: Runnable? = null
+		var holdStarted = false
+
 		textView.setOnTouchListener { _, event ->
 			when (event.actionMasked) {
 				android.view.MotionEvent.ACTION_DOWN -> {
 					downTime = System.currentTimeMillis()
 					downX = event.x
 					downY = event.y
+					holdStarted = false
+					// 150ms 동안 손가락이 거의 안 움직이면, 롱프레스로 이어질 가능성이 크다고 보고
+					// 그 사이에 ViewPager2가 스와이프로 가로채지 못하게 미리 막아둔다.
+					holdRunnable = Runnable {
+						holdStarted = true
+						onGestureHoldStart?.invoke()
+					}
+					holdHandler.postDelayed(holdRunnable!!, 150)
+				}
+
+				android.view.MotionEvent.ACTION_MOVE -> {
+					val touchSlop = android.view.ViewConfiguration.get(context).scaledTouchSlop
+					val dx = kotlin.math.abs(event.x - downX)
+					val dy = kotlin.math.abs(event.y - downY)
+					if (dx > touchSlop || dy > touchSlop) {
+						// 실제로 움직이기 시작했으면(스크롤/스와이프 의도) 롱프레스 예약을 취소한다.
+						holdRunnable?.let { holdHandler.removeCallbacks(it) }
+						if (holdStarted) {
+							holdStarted = false
+							onGestureHoldEnd?.invoke()
+						}
+					}
 				}
 
 				android.view.MotionEvent.ACTION_UP -> {
+					holdRunnable?.let { holdHandler.removeCallbacks(it) }
+					if (holdStarted) {
+						holdStarted = false
+						onGestureHoldEnd?.invoke()
+					}
 					val elapsed = System.currentTimeMillis() - downTime
 					val dx = kotlin.math.abs(event.x - downX)
 					val dy = kotlin.math.abs(event.y - downY)
 					val touchSlop = android.view.ViewConfiguration.get(context).scaledTouchSlop
 					if (elapsed < 200 && dx < touchSlop && dy < touchSlop) {
 						onVerseTap(verseItem.verse)
+					}
+				}
+
+				android.view.MotionEvent.ACTION_CANCEL -> {
+					holdRunnable?.let { holdHandler.removeCallbacks(it) }
+					if (holdStarted) {
+						holdStarted = false
+						onGestureHoldEnd?.invoke()
 					}
 				}
 			}
@@ -416,21 +461,57 @@ class VerseAdapter(
 		var downTime = 0L
 		var downX = 0f
 		var downY = 0f
+		val holdHandler = android.os.Handler(android.os.Looper.getMainLooper())
+		var holdRunnable: Runnable? = null
+		var holdStarted = false
+
 		textView.setOnTouchListener { _, event ->
 			when (event.actionMasked) {
 				android.view.MotionEvent.ACTION_DOWN -> {
 					downTime = System.currentTimeMillis()
 					downX = event.x
 					downY = event.y
+					holdStarted = false
+					holdRunnable = Runnable {
+						holdStarted = true
+						onGestureHoldStart?.invoke()
+					}
+					holdHandler.postDelayed(holdRunnable!!, 150)
+				}
+
+				android.view.MotionEvent.ACTION_MOVE -> {
+					val touchSlop = android.view.ViewConfiguration.get(context).scaledTouchSlop
+					val dx = kotlin.math.abs(event.x - downX)
+					val dy = kotlin.math.abs(event.y - downY)
+					if (dx > touchSlop || dy > touchSlop) {
+						holdRunnable?.let { holdHandler.removeCallbacks(it) }
+						if (holdStarted) {
+							holdStarted = false
+							onGestureHoldEnd?.invoke()
+						}
+					}
 				}
 
 				android.view.MotionEvent.ACTION_UP -> {
+					holdRunnable?.let { holdHandler.removeCallbacks(it) }
+					if (holdStarted) {
+						holdStarted = false
+						onGestureHoldEnd?.invoke()
+					}
 					val elapsed = System.currentTimeMillis() - downTime
 					val dx = kotlin.math.abs(event.x - downX)
 					val dy = kotlin.math.abs(event.y - downY)
 					val touchSlop = android.view.ViewConfiguration.get(context).scaledTouchSlop
 					if (elapsed < 200 && dx < touchSlop && dy < touchSlop) {
 						onVerseTap(verseItem.verse)
+					}
+				}
+
+				android.view.MotionEvent.ACTION_CANCEL -> {
+					holdRunnable?.let { holdHandler.removeCallbacks(it) }
+					if (holdStarted) {
+						holdStarted = false
+						onGestureHoldEnd?.invoke()
 					}
 				}
 			}
