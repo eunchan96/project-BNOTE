@@ -64,6 +64,7 @@
                 android:layout_height="wrap_content"
                 android:textSize="16sp"
                 android:textColor="@color/text_primary"
+                android:textColorHighlight="@color/verse_text_selection_highlight"
                 android:textIsSelectable="true" />
 
             <TextView
@@ -122,6 +123,7 @@
                 android:layout_height="wrap_content"
                 android:textSize="16sp"
                 android:textColor="@color/text_primary"
+                android:textColorHighlight="@color/verse_text_selection_highlight"
                 android:textIsSelectable="true" />
 
             <TextView

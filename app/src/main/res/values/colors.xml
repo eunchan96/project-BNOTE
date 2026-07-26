@@ -4,6 +4,11 @@
     <color name="white">#FFFFFFFF</color>
 
     <color name="brown_primary">#795548</color>
+    <!-- 절 본문에서 텍스트를 드래그/롱프레스로 선택할 때 쓰는 색. 원래 기본값(테마 강조색, 꽤 진함)은
+         그 밑에 이미 하이라이트해둔 배경색을 거의 다 덮어버려서, 하이라이트한 부분을 선택하는 동안엔
+         하이라이트가 안 보이는 것처럼 느껴졌다. 그래서 아주 옅은(알파 낮은) 색으로 바꿔서, 선택 중에도
+         밑에 깔린 하이라이트 색이 비쳐 보이게 한다. -->
+    <color name="verse_text_selection_highlight">#40795548</color>
     <color name="brown_primary_dark">#5D4037</color>
     <color name="brown_light">#A1887F</color>
 
