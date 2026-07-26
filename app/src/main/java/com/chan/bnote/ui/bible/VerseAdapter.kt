@@ -346,6 +346,8 @@ class VerseAdapter(
 		val holdHandler = android.os.Handler(android.os.Looper.getMainLooper())
 		var holdRunnable: Runnable? = null
 		var holdStarted = false
+		var longPressRunnable: Runnable? = null
+		var longPressTriggered = false
 
 		textView.setOnTouchListener { _, event ->
 			when (event.actionMasked) {
@@ -354,6 +356,7 @@ class VerseAdapter(
 					downX = event.x
 					downY = event.y
 					holdStarted = false
+					longPressTriggered = false
 					// 150ms 동안 손가락이 거의 안 움직이면, 롱프레스로 이어질 가능성이 크다고 보고
 					// 그 사이에 ViewPager2가 스와이프로 가로채지 못하게 미리 막아둔다.
 					holdRunnable = Runnable {
@@ -361,6 +364,17 @@ class VerseAdapter(
 						onGestureHoldStart?.invoke()
 					}
 					holdHandler.postDelayed(holdRunnable!!, 150)
+
+					// 안드로이드가 알아서 인식하는 롱프레스(텍스트 선택 시작)가 RecyclerView/ViewPager2
+					// 근처에서는 가끔 씹히는 경우가 있어서, 우리가 직접 타이머를 돌려서 확실하게
+					// performLongClick을 호출해준다 — 그 사이에 움직이거나 손을 떼면 취소된다.
+					val longPressTimeout =
+						android.view.ViewConfiguration.getLongPressTimeout().toLong()
+					longPressRunnable = Runnable {
+						longPressTriggered = true
+						textView.performLongClick(downX, downY)
+					}
+					holdHandler.postDelayed(longPressRunnable!!, longPressTimeout)
 				}
 
 				android.view.MotionEvent.ACTION_MOVE -> {
@@ -370,6 +384,7 @@ class VerseAdapter(
 					if (dx > touchSlop || dy > touchSlop) {
 						// 실제로 움직이기 시작했으면(스크롤/스와이프 의도) 롱프레스 예약을 취소한다.
 						holdRunnable?.let { holdHandler.removeCallbacks(it) }
+						longPressRunnable?.let { holdHandler.removeCallbacks(it) }
 						if (holdStarted) {
 							holdStarted = false
 							onGestureHoldEnd?.invoke()
@@ -379,6 +394,7 @@ class VerseAdapter(
 
 				android.view.MotionEvent.ACTION_UP -> {
 					holdRunnable?.let { holdHandler.removeCallbacks(it) }
+					longPressRunnable?.let { holdHandler.removeCallbacks(it) }
 					if (holdStarted) {
 						holdStarted = false
 						onGestureHoldEnd?.invoke()
@@ -387,13 +403,14 @@ class VerseAdapter(
 					val dx = kotlin.math.abs(event.x - downX)
 					val dy = kotlin.math.abs(event.y - downY)
 					val touchSlop = android.view.ViewConfiguration.get(context).scaledTouchSlop
-					if (elapsed < 200 && dx < touchSlop && dy < touchSlop) {
+					if (!longPressTriggered && elapsed < 200 && dx < touchSlop && dy < touchSlop) {
 						onVerseTap(verseItem.verse)
 					}
 				}
 
 				android.view.MotionEvent.ACTION_CANCEL -> {
 					holdRunnable?.let { holdHandler.removeCallbacks(it) }
+					longPressRunnable?.let { holdHandler.removeCallbacks(it) }
 					if (holdStarted) {
 						holdStarted = false
 						onGestureHoldEnd?.invoke()
@@ -464,6 +481,8 @@ class VerseAdapter(
 		val holdHandler = android.os.Handler(android.os.Looper.getMainLooper())
 		var holdRunnable: Runnable? = null
 		var holdStarted = false
+		var longPressRunnable: Runnable? = null
+		var longPressTriggered = false
 
 		textView.setOnTouchListener { _, event ->
 			when (event.actionMasked) {
@@ -472,11 +491,20 @@ class VerseAdapter(
 					downX = event.x
 					downY = event.y
 					holdStarted = false
+					longPressTriggered = false
 					holdRunnable = Runnable {
 						holdStarted = true
 						onGestureHoldStart?.invoke()
 					}
 					holdHandler.postDelayed(holdRunnable!!, 150)
+
+					val longPressTimeout =
+						android.view.ViewConfiguration.getLongPressTimeout().toLong()
+					longPressRunnable = Runnable {
+						longPressTriggered = true
+						textView.performLongClick(downX, downY)
+					}
+					holdHandler.postDelayed(longPressRunnable!!, longPressTimeout)
 				}
 
 				android.view.MotionEvent.ACTION_MOVE -> {
@@ -485,6 +513,7 @@ class VerseAdapter(
 					val dy = kotlin.math.abs(event.y - downY)
 					if (dx > touchSlop || dy > touchSlop) {
 						holdRunnable?.let { holdHandler.removeCallbacks(it) }
+						longPressRunnable?.let { holdHandler.removeCallbacks(it) }
 						if (holdStarted) {
 							holdStarted = false
 							onGestureHoldEnd?.invoke()
@@ -494,6 +523,7 @@ class VerseAdapter(
 
 				android.view.MotionEvent.ACTION_UP -> {
 					holdRunnable?.let { holdHandler.removeCallbacks(it) }
+					longPressRunnable?.let { holdHandler.removeCallbacks(it) }
 					if (holdStarted) {
 						holdStarted = false
 						onGestureHoldEnd?.invoke()
@@ -502,13 +532,14 @@ class VerseAdapter(
 					val dx = kotlin.math.abs(event.x - downX)
 					val dy = kotlin.math.abs(event.y - downY)
 					val touchSlop = android.view.ViewConfiguration.get(context).scaledTouchSlop
-					if (elapsed < 200 && dx < touchSlop && dy < touchSlop) {
+					if (!longPressTriggered && elapsed < 200 && dx < touchSlop && dy < touchSlop) {
 						onVerseTap(verseItem.verse)
 					}
 				}
 
 				android.view.MotionEvent.ACTION_CANCEL -> {
 					holdRunnable?.let { holdHandler.removeCallbacks(it) }
+					longPressRunnable?.let { holdHandler.removeCallbacks(it) }
 					if (holdStarted) {
 						holdStarted = false
 						onGestureHoldEnd?.invoke()
@@ -588,8 +619,15 @@ class VerseAdapter(
 	}
 
 	fun updateSelection(newSelection: Set<Int>) {
+		// notifyDataSetChanged()로 화면에 보이는 절 전부를 다시 그리면, 방금 탭한 절의 TextView까지
+		// 매번 통째로 다시 바인딩돼서(터치 리스너 재설정 등) 롱프레스 인식이 불안정해지는 원인이 됐다.
+		// 그래서 실제로 선택 상태가 바뀐 절만 딱 집어서 갱신한다.
+		val changed = (selectedVerses - newSelection) + (newSelection - selectedVerses)
 		selectedVerses = newSelection
-		notifyDataSetChanged()
+		for (verseNum in changed) {
+			val index = verses.indexOfFirst { it.verse == verseNum }
+			if (index >= 0) notifyItemChanged(index)
+		}
 	}
 
 	fun updateHighlights(newHighlights: Map<Int, List<PartialHighlight>>) {
