@@ -160,6 +160,12 @@
             android:name=".ui.sermon.category.CategoryManageActivity"
             android:exported="false" />
         <activity
+            android:name=".ui.application.ApplicationActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.application.category.ApplicationCategoryManageActivity"
+            android:exported="false" />
+        <activity
             android:name=".ui.sermon.detail.SermonDetailActivity"
             android:exported="false" />
         <activity

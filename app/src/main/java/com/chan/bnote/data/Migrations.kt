@@ -56,5 +56,59 @@ val MIGRATIONS: Array<Migration> = arrayOf(
 				""".trimIndent()
 			)
 		}
+	},
+	object : Migration(27, 28) {
+		override fun migrate(db: SupportSQLiteDatabase) {
+			// 적용(묵상하기/기도하기/순종하기) 탭 관련 테이블들.
+			db.execSQL(
+				"""
+				CREATE TABLE IF NOT EXISTS application_categories (
+					id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+					name TEXT NOT NULL,
+					colorHex TEXT NOT NULL,
+					isDefault INTEGER NOT NULL DEFAULT 0,
+					sortOrder INTEGER NOT NULL DEFAULT 0
+				)
+				""".trimIndent()
+			)
+			db.execSQL(
+				"""
+				CREATE TABLE IF NOT EXISTS applications (
+					id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+					title TEXT NOT NULL,
+					categoryId INTEGER,
+					applicationDate INTEGER NOT NULL,
+					meditationMemo TEXT NOT NULL DEFAULT '',
+					prayerMemo TEXT NOT NULL DEFAULT '',
+					obedienceMemo TEXT NOT NULL DEFAULT '',
+					createdAt INTEGER NOT NULL
+				)
+				""".trimIndent()
+			)
+			db.execSQL(
+				"""
+				CREATE TABLE IF NOT EXISTS application_bible_refs (
+					id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+					applicationId INTEGER NOT NULL,
+					startBookId INTEGER NOT NULL,
+					startChapter INTEGER NOT NULL,
+					startVerse INTEGER NOT NULL,
+					endBookId INTEGER NOT NULL,
+					endChapter INTEGER NOT NULL,
+					endVerse INTEGER NOT NULL,
+					isChapterOnly INTEGER NOT NULL DEFAULT 0
+				)
+				""".trimIndent()
+			)
+			db.execSQL(
+				"""
+				CREATE TABLE IF NOT EXISTS application_sermon_links (
+					id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+					applicationId INTEGER NOT NULL,
+					sermonId INTEGER NOT NULL
+				)
+				""".trimIndent()
+			)
+		}
 	}
 )

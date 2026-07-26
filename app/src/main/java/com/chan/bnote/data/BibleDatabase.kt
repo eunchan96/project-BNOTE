@@ -4,6 +4,15 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import com.chan.bnote.data.application.Application
+import com.chan.bnote.data.application.ApplicationBibleRef
+import com.chan.bnote.data.application.ApplicationBibleRefDao
+import com.chan.bnote.data.application.ApplicationCategory
+import com.chan.bnote.data.application.ApplicationCategoryDao
+import com.chan.bnote.data.application.ApplicationDao
+import com.chan.bnote.data.application.ApplicationSermonLink
+import com.chan.bnote.data.application.ApplicationSermonLinkDao
+import com.chan.bnote.data.application.DefaultApplicationCategories
 import com.chan.bnote.data.bible.BibleDao
 import com.chan.bnote.data.bible.BibleVerse
 import com.chan.bnote.data.bible.bookmark.BibleBookmark
@@ -63,9 +72,11 @@ import kotlinx.coroutines.launch
 		PartialHighlight::class, VerseMemo::class, WordMemo::class,
 		Preacher::class, HymnCategory::class, Hymn::class, UserProfile::class,
 		PrayerRequest::class, VerseMemorizationProgress::class, MemorizationVerse::class,
-		MemorizationGroup::class, RecentChapterView::class, CopyFormatPreset::class
+		MemorizationGroup::class, RecentChapterView::class, CopyFormatPreset::class,
+		Application::class, ApplicationCategory::class, ApplicationBibleRef::class,
+		ApplicationSermonLink::class
 	],
-	version = 27, // 26 -> 27 (copy_format_presets 테이블 추가 - 사용자 정의 복사 형식 저장)
+	version = 28, // 27 -> 28 (적용 탭 - applications/application_categories/application_bible_refs/application_sermon_links 테이블 추가)
 	exportSchema = false
 )
 abstract class BibleDatabase : RoomDatabase() {
@@ -90,6 +101,10 @@ abstract class BibleDatabase : RoomDatabase() {
 	abstract fun memorizationVerseDao(): MemorizationVerseDao
 	abstract fun recentChapterViewDao(): RecentChapterViewDao
 	abstract fun copyFormatPresetDao(): CopyFormatPresetDao
+	abstract fun applicationDao(): ApplicationDao
+	abstract fun applicationCategoryDao(): ApplicationCategoryDao
+	abstract fun applicationBibleRefDao(): ApplicationBibleRefDao
+	abstract fun applicationSermonLinkDao(): ApplicationSermonLinkDao
 
 	companion object {
 		@Volatile
@@ -117,6 +132,10 @@ abstract class BibleDatabase : RoomDatabase() {
 					if (instance.memorizationVerseDao().countGroups() == 0) {
 						instance.memorizationVerseDao()
 							.insertGroup(MemorizationGroup(name = "기본", sortOrder = 0))
+					}
+					if (instance.applicationCategoryDao().count() == 0) {
+						instance.applicationCategoryDao()
+							.insertAll(DefaultApplicationCategories.list)
 					}
 					HymnSeeder.seedIfNeeded(context.applicationContext, instance.hymnDao())
 				}
