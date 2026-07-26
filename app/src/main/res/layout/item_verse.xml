@@ -58,13 +58,12 @@
             android:layout_weight="1"
             android:orientation="vertical">
 
-            <TextView
+            <com.chan.bnote.ui.common.SelectionAwareTextView
                 android:id="@+id/text_verse_content"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textSize="16sp"
                 android:textColor="@color/text_primary"
-                android:textColorHighlight="@color/verse_text_selection_highlight"
                 android:textIsSelectable="true" />
 
             <TextView
@@ -117,13 +116,12 @@
             android:layout_weight="1"
             android:orientation="vertical">
 
-            <TextView
+            <com.chan.bnote.ui.common.SelectionAwareTextView
                 android:id="@+id/text_verse_content2"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textSize="16sp"
                 android:textColor="@color/text_primary"
-                android:textColorHighlight="@color/verse_text_selection_highlight"
                 android:textIsSelectable="true" />
 
             <TextView
