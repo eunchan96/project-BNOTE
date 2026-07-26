@@ -22,12 +22,13 @@ import com.chan.bnote.data.sermon.preacher.Preacher
 import com.chan.bnote.ui.common.DragReorderHelper
 import com.chan.bnote.ui.sermon.SermonRowAdapter
 import com.chan.bnote.ui.sermon.SermonRowBuilder
+import com.chan.bnote.ui.sermon.SermonSortableFragment
 import com.chan.bnote.ui.sermon.addsermon.AddSermonActivity
 import com.chan.bnote.ui.sermon.detail.SermonDetailActivity
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 
-class SermonByPreacherFragment : Fragment() {
+class SermonByPreacherFragment : Fragment(), SermonSortableFragment {
 
 	private lateinit var preacherListContainer: View
 	private lateinit var sermonListContainer: View
@@ -51,7 +52,6 @@ class SermonByPreacherFragment : Fragment() {
 			selectedPreacher?.let { loadSermonsForPreacher(it) }
 		}
 	}
-	private lateinit var btnSermonSort: TextView
 	private lateinit var selectedPreacherText: TextView
 
 	private var preachers: MutableList<Preacher> = mutableListOf()
@@ -75,7 +75,6 @@ class SermonByPreacherFragment : Fragment() {
 		preacherRecycler = view.findViewById(R.id.recycler_preachers)
 		sermonRecycler = view.findViewById(R.id.recycler_preacher_sermons)
 		btnPreacherSort = view.findViewById(R.id.btn_preacher_sort)
-		btnSermonSort = view.findViewById(R.id.btn_sermon_sort)
 		selectedPreacherText = view.findViewById(R.id.text_selected_preacher)
 
 		preacherRecycler.layoutManager = LinearLayoutManager(requireContext())
@@ -86,7 +85,6 @@ class SermonByPreacherFragment : Fragment() {
 		updateSortButtonLabels()
 
 		btnPreacherSort.setOnClickListener { showPreacherSortMenu(it) }
-		btnSermonSort.setOnClickListener { showSermonSortMenu(it) }
 
 		view.findViewById<TextView>(R.id.btn_preacher_manage_toggle).setOnClickListener {
 			togglePreacherManageMode(it as TextView)
@@ -207,23 +205,21 @@ class SermonByPreacherFragment : Fragment() {
 		popup.show()
 	}
 
-	private fun showSermonSortMenu(anchor: View) {
-		val popup = PopupMenu(requireContext(), anchor)
-		popup.menu.add(0, 0, 0, "날짜순")
-		popup.menu.add(0, 1, 1, "성경순")
-		popup.setOnMenuItemClickListener { item ->
-			sermonSortMode = if (item.itemId == 0) "DATE" else "BIBLE"
-			AppSettings.setSermonSortMode(requireContext(), sermonSortMode)
-			updateSortButtonLabels()
-			selectedPreacher?.let { loadSermonsForPreacher(it) }
-			true
-		}
-		popup.show()
+	override fun getSortOptions() = listOf(
+		"DATE" to "날짜순",
+		"BIBLE" to "성경순"
+	)
+
+	override fun getCurrentSortMode() = sermonSortMode
+
+	override fun setSortMode(mode: String) {
+		sermonSortMode = mode
+		AppSettings.setSermonSortMode(requireContext(), mode)
+		selectedPreacher?.let { loadSermonsForPreacher(it) }
 	}
 
 	private fun updateSortButtonLabels() {
 		btnPreacherSort.text = if (preacherSortMode == "NAME") "이름순 ▾" else "직접 설정 ▾"
-		btnSermonSort.text = if (sermonSortMode == "DATE") "날짜순 ▾" else "성경순 ▾"
 	}
 
 	private fun showPreacherListStep() {

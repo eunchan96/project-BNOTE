@@ -20,6 +20,7 @@ class SermonFragment : Fragment(), TopBarActionHandler {
 	private lateinit var subtabCalendar: TextView
 	private lateinit var subtabByBook: TextView
 	private lateinit var subtabByPreacher: TextView
+	private var activeSubFragment: Fragment? = null
 
 	override fun onCreateView(
 		inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -49,6 +50,7 @@ class SermonFragment : Fragment(), TopBarActionHandler {
 	}
 
 	private fun switchSubTab(fragment: Fragment, selected: TextView) {
+		activeSubFragment = fragment
 		childFragmentManager.beginTransaction()
 			.replace(R.id.sermon_sub_container, fragment)
 			.commit()
@@ -72,6 +74,7 @@ class SermonFragment : Fragment(), TopBarActionHandler {
 
 	override fun onMenuClicked() {
 		val dialog = SermonMenuDialogFragment()
+		dialog.sortTarget = activeSubFragment as? SermonSortableFragment
 		dialog.onCategoryManageClicked = {
 			startActivity(Intent(requireContext(), CategoryManageActivity::class.java))
 		}

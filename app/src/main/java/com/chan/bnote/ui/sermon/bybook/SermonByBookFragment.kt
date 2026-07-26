@@ -21,11 +21,12 @@ import com.chan.bnote.data.sermon.Sermon
 import com.chan.bnote.ui.bible.picker.BookOnlyPickerBottomSheet
 import com.chan.bnote.ui.sermon.SermonRowAdapter
 import com.chan.bnote.ui.sermon.SermonRowBuilder
+import com.chan.bnote.ui.sermon.SermonSortableFragment
 import com.chan.bnote.ui.sermon.addsermon.AddSermonActivity
 import com.chan.bnote.ui.sermon.detail.SermonDetailActivity
 import kotlinx.coroutines.launch
 
-class SermonByBookFragment : Fragment() {
+class SermonByBookFragment : Fragment(), SermonSortableFragment {
 
 	private lateinit var bookTitleText: TextView
 	private lateinit var chapterGridRecycler: RecyclerView
@@ -50,7 +51,6 @@ class SermonByBookFragment : Fragment() {
 
 	private var currentBookId = 1
 	private var selectedChapter = 1
-	private lateinit var btnSort: TextView
 	private var sortMode = "ADDED"
 
 	override fun onCreateView(
@@ -66,10 +66,7 @@ class SermonByBookFragment : Fragment() {
 		chapterGridRecycler = view.findViewById(R.id.recycler_chapter_grid)
 		chapterGridRecycler.layoutManager = GridLayoutManager(requireContext(), 7)
 
-		btnSort = view.findViewById(R.id.btn_by_book_sort)
 		sortMode = AppSettings.getByBookSortMode(requireContext())
-		updateSortButtonLabel()
-		btnSort.setOnClickListener { showSortMenu(it) }
 
 		bookTitleText.setOnClickListener {
 			val picker = BookOnlyPickerBottomSheet()
@@ -142,34 +139,19 @@ class SermonByBookFragment : Fragment() {
 		return result
 	}
 
-	private fun showSortMenu(anchor: View) {
-		val popup = android.widget.PopupMenu(requireContext(), anchor)
-		popup.menu.add(0, 0, 0, "성경순(시작절)")
-		popup.menu.add(0, 1, 1, "날짜순")
-		popup.menu.add(0, 2, 2, "카테고리순")
-		popup.menu.add(0, 3, 3, "추가순")
-		popup.setOnMenuItemClickListener { item ->
-			sortMode = when (item.itemId) {
-				0 -> "BIBLE"
-				1 -> "DATE"
-				2 -> "CATEGORY"
-				else -> "ADDED"
-			}
-			AppSettings.setByBookSortMode(requireContext(), sortMode)
-			updateSortButtonLabel()
-			loadSermonsForSelectedChapter()
-			true
-		}
-		popup.show()
-	}
+	override fun getSortOptions() = listOf(
+		"BIBLE" to "성경순(시작절)",
+		"DATE" to "날짜순",
+		"CATEGORY" to "카테고리순",
+		"ADDED" to "추가순"
+	)
 
-	private fun updateSortButtonLabel() {
-		btnSort.text = when (sortMode) {
-			"BIBLE" -> "성경순(시작절) ▾"
-			"DATE" -> "날짜순 ▾"
-			"CATEGORY" -> "카테고리순 ▾"
-			else -> "추가순 ▾"
-		}
+	override fun getCurrentSortMode() = sortMode
+
+	override fun setSortMode(mode: String) {
+		sortMode = mode
+		AppSettings.setByBookSortMode(requireContext(), mode)
+		loadSermonsForSelectedChapter()
 	}
 
 	private fun loadSermonsForSelectedChapter() {

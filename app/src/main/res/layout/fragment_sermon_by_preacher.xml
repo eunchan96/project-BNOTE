@@ -102,16 +102,6 @@
                 android:textStyle="bold"
                 android:textColor="@color/text_primary" />
 
-            <TextView
-                android:id="@+id/btn_sermon_sort"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="날짜순 ▾"
-                android:textSize="13sp"
-                android:textColor="@color/brown_primary"
-                android:padding="8dp"
-                android:clickable="true"
-                android:focusable="true" />
         </LinearLayout>
 
         <View

@@ -19,16 +19,16 @@ import com.chan.bnote.data.DateUtils
 import com.chan.bnote.data.sermon.Sermon
 import com.chan.bnote.ui.sermon.SermonRowAdapter
 import com.chan.bnote.ui.sermon.SermonRowBuilder
+import com.chan.bnote.ui.sermon.SermonSortableFragment
 import com.chan.bnote.ui.sermon.addsermon.AddSermonActivity
 import com.chan.bnote.ui.sermon.detail.SermonDetailActivity
 import kotlinx.coroutines.launch
 import java.util.Calendar
 
-class CalendarSermonFragment : Fragment() {
+class CalendarSermonFragment : Fragment(), SermonSortableFragment {
 
 	private lateinit var monthYearText: TextView
 	private lateinit var gridRecycler: RecyclerView
-	private lateinit var btnSort: TextView
 	private var sortMode = "ADDED"
 
 	private val addSermonLauncher = registerForActivityResult(
@@ -73,10 +73,7 @@ class CalendarSermonFragment : Fragment() {
 		gridRecycler = view.findViewById(R.id.recycler_calendar_grid)
 		gridRecycler.layoutManager = GridLayoutManager(requireContext(), 7)
 
-		btnSort = view.findViewById(R.id.btn_calendar_sort)
 		sortMode = AppSettings.getCalendarSortMode(requireContext())
-		updateSortButtonLabel()
-		btnSort.setOnClickListener { showSortMenu(it) }
 
 		monthYearText.setOnClickListener {
 			val picker = MonthYearPickerBottomSheet(currentYear, currentMonth0)
@@ -217,31 +214,18 @@ class CalendarSermonFragment : Fragment() {
 		return cells
 	}
 
-	private fun showSortMenu(anchor: View) {
-		val popup = android.widget.PopupMenu(requireContext(), anchor)
-		popup.menu.add(0, 0, 0, "성경순")
-		popup.menu.add(0, 1, 1, "카테고리순")
-		popup.menu.add(0, 2, 2, "추가순")
-		popup.setOnMenuItemClickListener { item ->
-			sortMode = when (item.itemId) {
-				0 -> "BIBLE"
-				1 -> "CATEGORY"
-				else -> "ADDED"
-			}
-			AppSettings.setCalendarSortMode(requireContext(), sortMode)
-			updateSortButtonLabel()
-			loadSermonsForSelectedDate()
-			true
-		}
-		popup.show()
-	}
+	override fun getSortOptions() = listOf(
+		"BIBLE" to "성경순",
+		"CATEGORY" to "카테고리순",
+		"ADDED" to "추가순"
+	)
 
-	private fun updateSortButtonLabel() {
-		btnSort.text = when (sortMode) {
-			"BIBLE" -> "성경순 ▾"
-			"CATEGORY" -> "카테고리순 ▾"
-			else -> "추가순 ▾"
-		}
+	override fun getCurrentSortMode() = sortMode
+
+	override fun setSortMode(mode: String) {
+		sortMode = mode
+		AppSettings.setCalendarSortMode(requireContext(), mode)
+		loadSermonsForSelectedDate()
 	}
 
 	private fun loadSermonsForSelectedDate() {
