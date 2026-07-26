@@ -37,6 +37,7 @@ import com.chan.bnote.data.sermon.SermonBibleRef
 import com.chan.bnote.data.sermon.sermonphoto.SermonPhoto
 import com.chan.bnote.data.sermon.sermonphoto.SermonPhotoStorage
 import com.chan.bnote.ui.bible.picker.BibleRangePickerBottomSheet
+import com.chan.bnote.ui.sermon.detail.SermonDetailActivity
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 import java.io.File
@@ -83,6 +84,8 @@ class AddSermonActivity : AppCompatActivity() {
 	private lateinit var scrollPhotos: View
 	private lateinit var photoContainer: LinearLayout
 	private lateinit var editMemo: EditText
+	private lateinit var editTitle: EditText
+	private lateinit var editLink: EditText
 
 	private val pickPhotosLauncher = registerForActivityResult(
 		ActivityResultContracts.PickMultipleVisualMedia(MAX_PHOTOS)
@@ -145,12 +148,19 @@ class AddSermonActivity : AppCompatActivity() {
 
 		findViewById<TextView>(R.id.text_top_bar_title).text =
 			if (isEditMode) "설교 기록 수정" else "설교 기록 추가"
-		findViewById<ImageView>(R.id.btn_top_bar_back).setOnClickListener { finish() }
+		findViewById<ImageView>(R.id.btn_top_bar_back).setOnClickListener { handleBackPress() }
+		onBackPressedDispatcher.addCallback(
+			this,
+			object : androidx.activity.OnBackPressedCallback(true) {
+				override fun handleOnBackPressed() {
+					handleBackPress()
+				}
+			})
 
-		val editTitle = findViewById<EditText>(R.id.edit_title)
+		editTitle = findViewById(R.id.edit_title)
 		editMemo = findViewById(R.id.edit_memo)
 		com.chan.bnote.ui.common.TextAutoReplace.attachArrowReplacement(editMemo)
-		val editLink = findViewById<EditText>(R.id.edit_sermon_link)
+		editLink = findViewById(R.id.edit_sermon_link)
 		btnDate = findViewById(R.id.btn_pick_date)
 		btnPickPreacher = findViewById(R.id.btn_pick_preacher)
 		btnPickCategory = findViewById(R.id.btn_pick_category)
@@ -467,6 +477,34 @@ class AddSermonActivity : AppCompatActivity() {
 
 	private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
 
+	private fun hasUnsavedContent(): Boolean {
+		return editTitle.text.toString().isNotBlank() ||
+				editMemo.text.toString().isNotBlank() ||
+				editLink.text.toString().isNotBlank() ||
+				bibleRefs.isNotEmpty() ||
+				photoPaths.isNotEmpty() ||
+				selectedCategoryId != existingSermon?.categoryId ||
+				selectedPreacherId != existingSermon?.preacherId
+	}
+
+	private fun handleBackPress() {
+		if (!hasUnsavedContent()) {
+			finish()
+			return
+		}
+		com.chan.bnote.ui.common.UnsavedChangesDialog.show(
+			context = this,
+			onSaveAndExit = {
+				save(
+					editTitle.text.toString().trim(),
+					editMemo.text,
+					editLink.text.toString().trim()
+				)
+			},
+			onDiscard = { finish() }
+		)
+	}
+
 	private fun save(title: String, memo: CharSequence, link: String) {
 		if (title.isEmpty()) {
 			Toast.makeText(this, "제목을 입력해주세요", Toast.LENGTH_SHORT).show()
@@ -517,6 +555,7 @@ class AddSermonActivity : AppCompatActivity() {
 			}
 
 			setResult(Activity.RESULT_OK)
+			SermonDetailActivity.start(this@AddSermonActivity, sermonId)
 			finish()
 		}
 	}

@@ -103,7 +103,7 @@ class WordMemoEditorActivity : AppCompatActivity() {
 		endOffset = intent.getIntExtra(EXTRA_END_OFFSET, 0)
 		segment = intent.getIntExtra(EXTRA_SEGMENT, 0)
 
-		findViewById<ImageView>(R.id.btn_top_bar_back).setOnClickListener { finishWithResult() }
+		findViewById<ImageView>(R.id.btn_top_bar_back).setOnClickListener { handleBackPress() }
 
 		container = findViewById(R.id.container_memo_boxes)
 
@@ -111,9 +111,38 @@ class WordMemoEditorActivity : AppCompatActivity() {
 			addBox(existing = null)
 		}
 
-		onBackPressedDispatcher.addCallback(this) { finishWithResult() }
+		onBackPressedDispatcher.addCallback(this) { handleBackPress() }
 
 		loadExisting()
+	}
+
+	private fun hasUnsavedText(): Boolean {
+		return boxes.any { box ->
+			val current = box.editText.text.toString().trim()
+			current != (box.existing?.text ?: "")
+		}
+	}
+
+	private fun handleBackPress() {
+		if (!hasUnsavedText()) {
+			finishWithResult()
+			return
+		}
+		com.chan.bnote.ui.common.UnsavedChangesDialog.show(
+			context = this,
+			onSaveAndExit = {
+				lifecycleScope.launch {
+					boxes.forEach { box ->
+						val current = box.editText.text.toString().trim()
+						if (current.isNotEmpty() && current != (box.existing?.text ?: "")) {
+							saveBoxSuspend(box)
+						}
+					}
+					finishWithResult()
+				}
+			},
+			onDiscard = { finishWithResult() }
+		)
 	}
 
 	private fun finishWithResult() {
@@ -200,29 +229,7 @@ class WordMemoEditorActivity : AppCompatActivity() {
 
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(applicationContext)
-			val existing = box.existing
-			if (existing != null) {
-				if (existing.text != text) {
-					val updated = existing.copy(text = text, updatedAt = System.currentTimeMillis())
-					db.wordMemoDao().update(updated)
-					box.existing = updated
-				}
-			} else {
-				val newId = db.wordMemoDao().insert(
-					WordMemo(
-						translation = translation,
-						bookId = bookId,
-						chapter = chapter,
-						verse = verse,
-						startOffset = startOffset,
-						endOffset = endOffset,
-						segment = segment,
-						text = text
-					)
-				)
-				box.existing = db.wordMemoDao().getById(newId)
-			}
-			anyChangeMade = true
+			persistBox(box, text, db)
 
 			if (box.checkbox.isChecked) {
 				box.checkbox.isChecked = false
@@ -231,6 +238,39 @@ class WordMemoEditorActivity : AppCompatActivity() {
 				Toast.makeText(this@WordMemoEditorActivity, "저장됐어요", Toast.LENGTH_SHORT).show()
 			}
 		}
+	}
+
+	private suspend fun saveBoxSuspend(box: MemoBox) {
+		val text = box.editText.text.toString().trim()
+		if (text.isEmpty()) return
+		val db = BibleDatabase.getInstance(applicationContext)
+		persistBox(box, text, db)
+	}
+
+	private suspend fun persistBox(box: MemoBox, text: String, db: BibleDatabase) {
+		val existing = box.existing
+		if (existing != null) {
+			if (existing.text != text) {
+				val updated = existing.copy(text = text, updatedAt = System.currentTimeMillis())
+				db.wordMemoDao().update(updated)
+				box.existing = updated
+			}
+		} else {
+			val newId = db.wordMemoDao().insert(
+				WordMemo(
+					translation = translation,
+					bookId = bookId,
+					chapter = chapter,
+					verse = verse,
+					startOffset = startOffset,
+					endOffset = endOffset,
+					segment = segment,
+					text = text
+				)
+			)
+			box.existing = db.wordMemoDao().getById(newId)
+		}
+		anyChangeMade = true
 	}
 
 	private suspend fun propagateToOtherVerses(db: BibleDatabase, text: String) {

@@ -75,13 +75,42 @@ class VerseMemoEditorActivity : AppCompatActivity() {
 		findViewById<TextView>(R.id.text_top_bar_title).text =
 			"${BibleBooks.nameOf(bookId)} ${chapter}${unit} ${verse}절 메모"
 
-		findViewById<ImageView>(R.id.btn_top_bar_back).setOnClickListener { finishWithResult() }
+		findViewById<ImageView>(R.id.btn_top_bar_back).setOnClickListener { handleBackPress() }
 		container = findViewById(R.id.container_memo_boxes)
 		findViewById<TextView>(R.id.btn_add_memo_box).setOnClickListener { addBox(existing = null) }
 
-		onBackPressedDispatcher.addCallback(this) { finishWithResult() }
+		onBackPressedDispatcher.addCallback(this) { handleBackPress() }
 
 		loadExisting()
+	}
+
+	private fun hasUnsavedText(): Boolean {
+		return boxes.any { box ->
+			val current = box.editText.text.toString().trim()
+			current != (box.existing?.text ?: "")
+		}
+	}
+
+	private fun handleBackPress() {
+		if (!hasUnsavedText()) {
+			finishWithResult()
+			return
+		}
+		com.chan.bnote.ui.common.UnsavedChangesDialog.show(
+			context = this,
+			onSaveAndExit = {
+				lifecycleScope.launch {
+					boxes.forEach { box ->
+						val current = box.editText.text.toString().trim()
+						if (current.isNotEmpty() && current != (box.existing?.text ?: "")) {
+							saveBoxSuspend(box)
+						}
+					}
+					finishWithResult()
+				}
+			},
+			onDiscard = { finishWithResult() }
+		)
 	}
 
 	private fun finishWithResult() {
@@ -157,28 +186,38 @@ class VerseMemoEditorActivity : AppCompatActivity() {
 		}
 
 		lifecycleScope.launch {
-			val db = BibleDatabase.getInstance(applicationContext)
-			val existing = box.existing
-			if (existing != null) {
-				if (existing.text != text) {
-					val updated = existing.copy(text = text, updatedAt = System.currentTimeMillis())
-					db.verseMemoDao().update(updated)
-					box.existing = updated
-				}
-			} else {
-				val newId = db.verseMemoDao().insert(
-					VerseMemo(bookId = bookId, chapter = chapter, verse = verse, text = text)
-				)
-				box.existing = VerseMemo(
-					id = newId,
-					bookId = bookId,
-					chapter = chapter,
-					verse = verse,
-					text = text
-				)
-			}
-			anyChangeMade = true
+			persistBox(box, text)
 			Toast.makeText(this@VerseMemoEditorActivity, "저장됐어요", Toast.LENGTH_SHORT).show()
 		}
+	}
+
+	private suspend fun saveBoxSuspend(box: MemoBox) {
+		val text = box.editText.text.toString().trim()
+		if (text.isEmpty()) return
+		persistBox(box, text)
+	}
+
+	private suspend fun persistBox(box: MemoBox, text: String) {
+		val db = BibleDatabase.getInstance(applicationContext)
+		val existing = box.existing
+		if (existing != null) {
+			if (existing.text != text) {
+				val updated = existing.copy(text = text, updatedAt = System.currentTimeMillis())
+				db.verseMemoDao().update(updated)
+				box.existing = updated
+			}
+		} else {
+			val newId = db.verseMemoDao().insert(
+				VerseMemo(bookId = bookId, chapter = chapter, verse = verse, text = text)
+			)
+			box.existing = VerseMemo(
+				id = newId,
+				bookId = bookId,
+				chapter = chapter,
+				verse = verse,
+				text = text
+			)
+		}
+		anyChangeMade = true
 	}
 }
