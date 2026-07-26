@@ -50,7 +50,7 @@ class PrayerRequestActivity : AppCompatActivity() {
 		btnManage.setOnClickListener {
 			isManageMode = !isManageMode
 			btnManage.text = if (isManageMode) "완료" else "관리"
-			btnAdd.visibility = if (isManageMode) View.GONE else View.VISIBLE
+			btnAdd.visibility = if (isManageMode) View.VISIBLE else View.GONE
 			loadItems()
 		}
 

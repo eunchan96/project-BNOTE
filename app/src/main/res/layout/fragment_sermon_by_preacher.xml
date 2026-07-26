@@ -27,12 +27,14 @@
                 android:textColor="@color/text_primary" />
 
             <TextView
-                android:id="@+id/btn_preacher_manage_toggle"
+                android:id="@+id/btn_preacher_sort"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="관리"
+                android:text="이름순 ▾"
+                android:textSize="13sp"
                 android:textColor="@color/brown_primary"
                 android:padding="8dp"
+                android:visibility="gone"
                 android:clickable="true"
                 android:focusable="true" />
 
@@ -48,14 +50,12 @@
                 android:focusable="true" />
 
             <TextView
-                android:id="@+id/btn_preacher_sort"
+                android:id="@+id/btn_preacher_manage_toggle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="이름순 ▾"
-                android:textSize="13sp"
+                android:text="관리"
                 android:textColor="@color/brown_primary"
                 android:padding="8dp"
-                android:visibility="gone"
                 android:clickable="true"
                 android:focusable="true" />
         </LinearLayout>
