@@ -204,7 +204,6 @@ class AddGratitudeActivity : AppCompatActivity() {
 			}
 
 			setResult(RESULT_OK)
-			GratitudeDetailActivity.start(this@AddGratitudeActivity, noteId)
 			finish()
 		}
 	}

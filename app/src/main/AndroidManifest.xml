@@ -92,9 +92,6 @@
             android:name=".ui.mypage.gratitude.AddGratitudeActivity"
             android:exported="false" />
         <activity
-            android:name=".ui.mypage.gratitude.GratitudeDetailActivity"
-            android:exported="false" />
-        <activity
             android:name=".ui.mypage.settings.AppInfoActivity"
             android:exported="false" />
         <activity

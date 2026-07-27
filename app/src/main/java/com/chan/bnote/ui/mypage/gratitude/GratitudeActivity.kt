@@ -38,7 +38,7 @@ class GratitudeActivity : AppCompatActivity() {
 		}
 	}
 
-	private val detailLauncher = registerForActivityResult(
+	private val editLauncher = registerForActivityResult(
 		ActivityResultContracts.StartActivityForResult()
 	) { result ->
 		if (result.resultCode == Activity.RESULT_OK) {
@@ -237,8 +237,8 @@ class GratitudeActivity : AppCompatActivity() {
 			val db = BibleDatabase.getInstance(applicationContext)
 			val rows = GratitudeRowBuilder.build(db, notes)
 			recyclerView.adapter = GratitudeRowAdapter(rows) { note ->
-				detailLauncher.launch(
-					GratitudeDetailActivity.createIntent(
+				editLauncher.launch(
+					AddGratitudeActivity.editIntent(
 						this@GratitudeActivity,
 						note.id
 					)

@@ -164,6 +164,16 @@ class ApplicationDetailActivity : AppCompatActivity() {
 				application.prayerMemo.ifBlank { "기도 내용이 없어요" }
 			findViewById<TextView>(R.id.text_detail_obedience).text =
 				application.obedienceMemo.ifBlank { "순종 내용이 없어요" }
+
+			findViewById<TextView>(R.id.btn_write_gratitude).setOnClickListener {
+				startActivity(
+					com.chan.bnote.ui.mypage.gratitude.AddGratitudeActivity
+						.createIntent(
+							this@ApplicationDetailActivity,
+							initialDateMillis = application.applicationDate
+						)
+				)
+			}
 		}
 	}
 

@@ -8,7 +8,7 @@ object GratitudeRowBuilder {
 		return notes.map { note ->
 			val entries = db.gratitudeEntryDao().getByNote(note.id)
 				.filter { it.text.isNotBlank() }
-			val preview = entries.joinToString(" · ") { it.text }
+			val preview = entries.joinToString("\n") { "✓ ${it.text}" }
 			GratitudeRowData(note = note, previewText = preview)
 		}
 	}

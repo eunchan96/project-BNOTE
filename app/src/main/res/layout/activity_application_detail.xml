@@ -160,6 +160,19 @@
                 android:textColor="@color/text_primary"
                 android:background="@drawable/bg_book_button" />
 
+            <TextView
+                android:id="@+id/btn_write_gratitude"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="14dp"
+                android:text="감사노트도 작성하기"
+                android:textSize="15sp"
+                android:gravity="center"
+                android:textColor="@color/white"
+                android:background="@color/brown_primary"
+                android:clickable="true"
+                android:focusable="true" />
+
         </LinearLayout>
     </ScrollView>
 </LinearLayout>
