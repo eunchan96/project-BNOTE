@@ -110,5 +110,29 @@ val MIGRATIONS: Array<Migration> = arrayOf(
 				""".trimIndent()
 			)
 		}
+	},
+	object : Migration(28, 29) {
+		override fun migrate(db: SupportSQLiteDatabase) {
+			// 감사노트: 날짜별로 하나의 노트, 그 안에 "✓ ____" 줄들이 여러 개.
+			db.execSQL(
+				"""
+				CREATE TABLE IF NOT EXISTS gratitude_notes (
+					id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+					date INTEGER NOT NULL,
+					createdAt INTEGER NOT NULL
+				)
+				""".trimIndent()
+			)
+			db.execSQL(
+				"""
+				CREATE TABLE IF NOT EXISTS gratitude_entries (
+					id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+					noteId INTEGER NOT NULL,
+					text TEXT NOT NULL,
+					sortOrder INTEGER NOT NULL DEFAULT 0
+				)
+				""".trimIndent()
+			)
+		}
 	}
 )

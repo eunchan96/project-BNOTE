@@ -34,6 +34,10 @@ import com.chan.bnote.data.mypage.CopyFormatPreset
 import com.chan.bnote.data.mypage.CopyFormatPresetDao
 import com.chan.bnote.data.mypage.RecentChapterView
 import com.chan.bnote.data.mypage.RecentChapterViewDao
+import com.chan.bnote.data.mypage.gratitude.GratitudeEntry
+import com.chan.bnote.data.mypage.gratitude.GratitudeEntryDao
+import com.chan.bnote.data.mypage.gratitude.GratitudeNote
+import com.chan.bnote.data.mypage.gratitude.GratitudeNoteDao
 import com.chan.bnote.data.mypage.memorization.MemorizationGroup
 import com.chan.bnote.data.mypage.memorization.MemorizationVerse
 import com.chan.bnote.data.mypage.memorization.MemorizationVerseDao
@@ -74,9 +78,9 @@ import kotlinx.coroutines.launch
 		PrayerRequest::class, VerseMemorizationProgress::class, MemorizationVerse::class,
 		MemorizationGroup::class, RecentChapterView::class, CopyFormatPreset::class,
 		Application::class, ApplicationCategory::class, ApplicationBibleRef::class,
-		ApplicationSermonLink::class
+		ApplicationSermonLink::class, GratitudeNote::class, GratitudeEntry::class
 	],
-	version = 28, // 27 -> 28 (적용 탭 - applications/application_categories/application_bible_refs/application_sermon_links 테이블 추가)
+	version = 29, // 28 -> 29 (감사노트 - gratitude_notes/gratitude_entries 테이블 추가)
 	exportSchema = false
 )
 abstract class BibleDatabase : RoomDatabase() {
@@ -105,6 +109,8 @@ abstract class BibleDatabase : RoomDatabase() {
 	abstract fun applicationCategoryDao(): ApplicationCategoryDao
 	abstract fun applicationBibleRefDao(): ApplicationBibleRefDao
 	abstract fun applicationSermonLinkDao(): ApplicationSermonLinkDao
+	abstract fun gratitudeNoteDao(): GratitudeNoteDao
+	abstract fun gratitudeEntryDao(): GratitudeEntryDao
 
 	companion object {
 		@Volatile
