@@ -76,16 +76,19 @@ class ApplicationCategoryManageActivity : AppCompatActivity() {
 	}
 
 	private fun renderCategoryList() {
+		var dragHelper: ItemTouchHelper? = null
+
 		val adapter = ApplicationCategoryManageAdapter(
 			initialCategories = categories,
 			isEditMode = isManageMode,
 			onEdit = { category -> showEditDialog(category) },
-			onDelete = { category -> confirmDelete(category) }
+			onDelete = { category -> confirmDelete(category) },
+			onStartDrag = { holder -> dragHelper?.startDrag(holder) }
 		)
 		recyclerView.adapter = adapter
 
 		if (isManageMode) {
-			val dragHelper = ItemTouchHelper(
+			dragHelper = ItemTouchHelper(
 				DragReorderHelper(
 					onMove = { from, to -> adapter.moveItem(from, to) },
 					onDragFinished = {
@@ -102,7 +105,7 @@ class ApplicationCategoryManageActivity : AppCompatActivity() {
 					}
 				)
 			)
-			dragHelper.attachToRecyclerView(recyclerView)
+			dragHelper?.attachToRecyclerView(recyclerView)
 		}
 	}
 

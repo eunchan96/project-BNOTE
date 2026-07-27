@@ -11,6 +11,7 @@ import com.chan.bnote.data.application.Application
 
 data class ApplicationRowData(
 	val application: Application,
+	val displayTitle: String,
 	val colorHex: String?,
 	val rightTopLabel: String,
 	// 추가한 본문이 있으면 그걸, 없고 연결한 설교가 있으면 그 설교 제목들을 보여준다.
@@ -38,7 +39,7 @@ class ApplicationRowAdapter(
 
 	override fun onBindViewHolder(holder: ViewHolder, position: Int) {
 		val row = rows[position]
-		holder.title.text = row.application.title
+		holder.title.text = row.displayTitle
 		holder.rightTop.text = row.rightTopLabel
 		holder.rightBottom.text = row.rightBottomLabel
 		holder.colorBar.setBackgroundColor(

@@ -1,8 +1,10 @@
 package com.chan.bnote.ui.sermon.category
 
+import android.annotation.SuppressLint
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
@@ -17,7 +19,8 @@ class CategoryManageAdapter(
 	private var isEditMode: Boolean,
 	private val onClick: (SermonCategory?) -> Unit,
 	private val onEdit: (SermonCategory) -> Unit,
-	private val onDelete: (SermonCategory) -> Unit
+	private val onDelete: (SermonCategory) -> Unit,
+	private val onStartDrag: (RecyclerView.ViewHolder) -> Unit = {}
 ) : RecyclerView.Adapter<CategoryManageAdapter.ViewHolder>() {
 
 	private val rows = initialRows.toMutableList()
@@ -37,19 +40,17 @@ class CategoryManageAdapter(
 		return ViewHolder(v)
 	}
 
+	@SuppressLint("ClickableViewAccessibility")
 	override fun onBindViewHolder(holder: ViewHolder, position: Int) {
 		val row = rows[position]
 		val context = holder.itemView.context
 
-		val drawable = GradientDrawable()
-		drawable.shape = GradientDrawable.OVAL
 		val colorHex = row.category?.colorHex ?: String.format(
 			"#%06X", 0xFFFFFF and ContextCompat.getColor(context, R.color.category_none)
 		)
-		drawable.setColor(Color.parseColor(colorHex))
-		holder.dot.background = drawable
-		holder.name.text = row.category?.name ?: "미분류"
+		val parsedColor = Color.parseColor(colorHex)
 
+		holder.name.text = row.category?.name ?: "미분류"
 		holder.count.visibility = if (isEditMode) View.GONE else View.VISIBLE
 		holder.count.text = "${row.count}개"
 
@@ -59,12 +60,34 @@ class CategoryManageAdapter(
 		holder.deleteBtn.visibility = if (canManage) View.VISIBLE else View.GONE
 		holder.dragHandle.visibility = if (canManage) View.VISIBLE else View.GONE
 
+		// 평소엔 동그라미로 색을 보여주고, 관리 모드일 땐 동그라미 대신 ≡ 손잡이 자체를 그 색으로
+		// 칠한다 — 동그라미까지 같이 있으면 이름이 옆으로 밀려서 답답해 보였다.
+		if (canManage) {
+			holder.dot.visibility = View.GONE
+			holder.dragHandle.setTextColor(parsedColor)
+		} else {
+			holder.dragHandle.setTextColor(ContextCompat.getColor(context, R.color.text_hint))
+			holder.dot.visibility = View.VISIBLE
+			val drawable = GradientDrawable()
+			drawable.shape = GradientDrawable.OVAL
+			drawable.setColor(parsedColor)
+			holder.dot.background = drawable
+		}
+
 		holder.itemView.setOnClickListener {
 			if (isEditMode) return@setOnClickListener
 			onClick(row.category)
 		}
 		holder.editBtn.setOnClickListener { row.category?.let(onEdit) }
 		holder.deleteBtn.setOnClickListener { row.category?.let(onDelete) }
+
+		// ≡ 손잡이를 누르는 순간 바로 드래그가 시작되게 한다(길게 누를 필요 없이).
+		holder.dragHandle.setOnTouchListener { _, event ->
+			if (event.actionMasked == MotionEvent.ACTION_DOWN && canManage) {
+				onStartDrag(holder)
+			}
+			false
+		}
 	}
 
 	override fun getItemCount() = rows.size

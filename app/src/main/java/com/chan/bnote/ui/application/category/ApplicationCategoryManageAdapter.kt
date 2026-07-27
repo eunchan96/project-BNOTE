@@ -1,12 +1,15 @@
 package com.chan.bnote.ui.application.category
 
+import android.annotation.SuppressLint
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.chan.bnote.R
 import com.chan.bnote.data.application.ApplicationCategory
@@ -15,7 +18,8 @@ class ApplicationCategoryManageAdapter(
 	initialCategories: List<ApplicationCategory>,
 	private var isEditMode: Boolean,
 	private val onEdit: (ApplicationCategory) -> Unit,
-	private val onDelete: (ApplicationCategory) -> Unit
+	private val onDelete: (ApplicationCategory) -> Unit,
+	private val onStartDrag: (RecyclerView.ViewHolder) -> Unit = {}
 ) : RecyclerView.Adapter<ApplicationCategoryManageAdapter.ViewHolder>() {
 
 	private val categories = initialCategories.toMutableList()
@@ -35,19 +39,17 @@ class ApplicationCategoryManageAdapter(
 		return ViewHolder(v)
 	}
 
+	@SuppressLint("ClickableViewAccessibility")
 	override fun onBindViewHolder(holder: ViewHolder, position: Int) {
 		val category = categories[position]
+		val context = holder.itemView.context
 
-		val drawable = GradientDrawable()
-		drawable.shape = GradientDrawable.OVAL
-		drawable.setColor(
-			try {
-				Color.parseColor(category.colorHex)
-			} catch (e: Exception) {
-				Color.GRAY
-			}
-		)
-		holder.dot.background = drawable
+		val parsedColor = try {
+			Color.parseColor(category.colorHex)
+		} catch (e: Exception) {
+			Color.GRAY
+		}
+
 		holder.name.text = category.name
 		holder.count.visibility = View.GONE
 
@@ -55,8 +57,29 @@ class ApplicationCategoryManageAdapter(
 		holder.deleteBtn.visibility = if (isEditMode) View.VISIBLE else View.GONE
 		holder.dragHandle.visibility = if (isEditMode) View.VISIBLE else View.GONE
 
+		// 평소엔 동그라미로 색을 보여주고, 관리 모드일 땐 동그라미 대신 ≡ 손잡이 자체를 그 색으로
+		// 칠한다 — 동그라미까지 같이 있으면 이름이 옆으로 밀려서 답답해 보였다.
+		if (isEditMode) {
+			holder.dot.visibility = View.GONE
+			holder.dragHandle.setTextColor(parsedColor)
+		} else {
+			holder.dragHandle.setTextColor(ContextCompat.getColor(context, R.color.text_hint))
+			holder.dot.visibility = View.VISIBLE
+			val drawable = GradientDrawable()
+			drawable.shape = GradientDrawable.OVAL
+			drawable.setColor(parsedColor)
+			holder.dot.background = drawable
+		}
+
 		holder.editBtn.setOnClickListener { onEdit(category) }
 		holder.deleteBtn.setOnClickListener { onDelete(category) }
+
+		holder.dragHandle.setOnTouchListener { _, event ->
+			if (event.actionMasked == MotionEvent.ACTION_DOWN && isEditMode) {
+				onStartDrag(holder)
+			}
+			false
+		}
 	}
 
 	override fun getItemCount() = categories.size

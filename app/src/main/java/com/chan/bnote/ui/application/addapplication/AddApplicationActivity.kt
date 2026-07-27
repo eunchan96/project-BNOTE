@@ -10,7 +10,6 @@ import android.widget.EditText
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
-import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -30,7 +29,6 @@ import com.chan.bnote.data.bible.BibleBooks
 import com.chan.bnote.data.sermon.Sermon
 import com.chan.bnote.ui.application.ApplicationDetailActivity
 import com.chan.bnote.ui.common.UnsavedChangesDialog
-import com.google.android.material.datepicker.MaterialDatePicker
 import kotlinx.coroutines.launch
 
 class AddApplicationActivity : AppCompatActivity() {
@@ -213,14 +211,19 @@ class AddApplicationActivity : AppCompatActivity() {
 	}
 
 	private fun showDatePicker() {
-		val picker = MaterialDatePicker.Builder.datePicker()
-			.setSelection(selectedDateMillis)
-			.build()
-		picker.addOnPositiveButtonClickListener { millis ->
-			selectedDateMillis = DateUtils.normalizeToDayStart(millis)
-			updateDateText()
-		}
-		picker.show(supportFragmentManager, "date_picker")
+		val cal = java.util.Calendar.getInstance().apply { timeInMillis = selectedDateMillis }
+		android.app.DatePickerDialog(
+			this,
+			{ _, year, month, day ->
+				val picked = java.util.Calendar.getInstance()
+				picked.set(year, month, day, 0, 0, 0)
+				selectedDateMillis = DateUtils.normalizeToDayStart(picked.timeInMillis)
+				updateDateText()
+			},
+			cal.get(java.util.Calendar.YEAR),
+			cal.get(java.util.Calendar.MONTH),
+			cal.get(java.util.Calendar.DAY_OF_MONTH)
+		).show()
 	}
 
 	// ---- 본문(성경 구절) ----
@@ -344,7 +347,7 @@ class AddApplicationActivity : AppCompatActivity() {
 			val parts = (ref.startChapter..ref.endChapter).map { chapter ->
 				val verses = db.bibleDao().getVerses(translation, ref.startBookId, chapter)
 				"${BibleBooks.nameOf(ref.startBookId)} ${chapter}${unit}\n" +
-						verses.joinToString(" ") { "${it.verse}. ${it.text}" }
+						verses.joinToString("\n") { "${it.verse}. ${it.text}" }
 			}
 			return parts.joinToString("\n\n")
 		}
@@ -354,9 +357,11 @@ class AddApplicationActivity : AppCompatActivity() {
 				val afterStart = chapter > ref.startChapter || v.verse >= ref.startVerse
 				val beforeEnd = chapter < ref.endChapter || v.verse <= ref.endVerse
 				afterStart && beforeEnd
-			}.joinToString(" ") { "${it.verse}. ${it.text}" }
+			}.joinToString("\n") { "${it.verse}. ${it.text}" }
 		}
-		return "${ref.toDisplayLabel()}\n" + parts.joinToString(" ")
+		return "${BibleBooks.nameOf(ref.startBookId)} ${ref.startChapter}${unit}\n" + parts.joinToString(
+			"\n"
+		)
 	}
 
 	// ---- 묵상하기: 설교 추가(칩) ----
@@ -455,10 +460,6 @@ class AddApplicationActivity : AppCompatActivity() {
 
 	private fun save() {
 		val title = editTitle.text.toString().trim()
-		if (title.isEmpty()) {
-			Toast.makeText(this, "제목을 입력해주세요", Toast.LENGTH_SHORT).show()
-			return
-		}
 
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(applicationContext)

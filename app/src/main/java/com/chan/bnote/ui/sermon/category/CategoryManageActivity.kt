@@ -103,6 +103,8 @@ class CategoryManageActivity : AppCompatActivity() {
 			}
 			rows.add(CategoryRow(null, allSermons.count { it.categoryId == null }))
 
+			var dragHelper: ItemTouchHelper? = null
+
 			val adapter = CategoryManageAdapter(
 				initialRows = rows,
 				isEditMode = isManageMode,
@@ -121,13 +123,14 @@ class CategoryManageActivity : AppCompatActivity() {
 						category,
 						rows.first { it.category?.id == category.id }.count
 					)
-				}
+				},
+				onStartDrag = { holder -> dragHelper?.startDrag(holder) }
 			)
 			recyclerView.adapter = adapter
 
 			if (isManageMode) {
 				// 드래그 중엔 목록을 다시 안 불러오고 어댑터 안에서만 옮기다가, 손을 뗀 순간에만 저장한다.
-				val dragHelper = ItemTouchHelper(
+				dragHelper = ItemTouchHelper(
 					DragReorderHelper(
 						onMove = { from, to -> adapter.moveItem(from, to) },
 						onDragFinished = {
@@ -144,7 +147,7 @@ class CategoryManageActivity : AppCompatActivity() {
 						}
 					)
 				)
-				dragHelper.attachToRecyclerView(recyclerView)
+				dragHelper?.attachToRecyclerView(recyclerView)
 			}
 		}
 	}

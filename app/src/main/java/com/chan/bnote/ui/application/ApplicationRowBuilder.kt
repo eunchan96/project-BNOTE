@@ -19,7 +19,11 @@ object ApplicationRowBuilder {
 				category?.name ?: "미분류"
 			}
 
-			// 추가한 본문이 있으면 그걸, 없으면 연결한 설교 제목들을 보여준다.
+			// 제목을 안 적었으면 "OO월 OO일 적용"으로 대신 보여준다.
+			val displayTitle =
+				app.title.ifBlank { "${DateUtils.formatDateShort(app.applicationDate)} 적용" }
+
+			// 추가한 본문이 있으면 그걸, 없으면 연결한 설교 제목들을 보여준다(둘 다 없으면 빈 채로 둔다).
 			val bottomLabel = if (refs.isNotEmpty()) {
 				refs.joinToString(", ") { it.toDisplayLabel() }
 			} else {
@@ -30,6 +34,7 @@ object ApplicationRowBuilder {
 
 			ApplicationRowData(
 				application = app,
+				displayTitle = displayTitle,
 				colorHex = category?.colorHex,
 				rightTopLabel = rightTopLabel,
 				rightBottomLabel = bottomLabel

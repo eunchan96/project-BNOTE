@@ -91,7 +91,13 @@ class ApplicationDetailActivity : AppCompatActivity() {
 			findViewById<TextView>(R.id.text_detail_date_category).text =
 				if (category != null) "$dateLabel [${category.name}]" else dateLabel
 
-			findViewById<TextView>(R.id.text_detail_title).text = "제목 : ${application.title}"
+			val titleView = findViewById<TextView>(R.id.text_detail_title)
+			if (application.title.isBlank()) {
+				titleView.visibility = View.GONE
+			} else {
+				titleView.visibility = View.VISIBLE
+				titleView.text = "제목 : ${application.title}"
+			}
 
 			val refs = db.applicationBibleRefDao().getByApplication(application.id)
 			val refsText = findViewById<TextView>(R.id.text_detail_refs)

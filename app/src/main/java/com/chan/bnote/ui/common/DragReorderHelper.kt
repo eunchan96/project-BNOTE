@@ -9,6 +9,10 @@ class DragReorderHelper(
 ) : ItemTouchHelper.SimpleCallback(
 	ItemTouchHelper.UP or ItemTouchHelper.DOWN, 0
 ) {
+	// 롱프레스로는 아무 데서나 드래그가 시작되지 않게 막고, ≡ 손잡이를 터치한 순간 바로
+	// startDrag()를 직접 호출해서 드래그가 시작되게 한다(아래 dragHandle 참고).
+	override fun isLongPressDragEnabled(): Boolean = false
+
 	override fun onMove(
 		recyclerView: RecyclerView,
 		viewHolder: RecyclerView.ViewHolder,

@@ -101,7 +101,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:layout_marginTop="8dp"
+                    android:layout_marginTop="18dp"
                     android:gravity="center_vertical">
 
                     <TextView
@@ -132,7 +132,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:layout_marginTop="8dp"
+                    android:layout_marginTop="18dp"
                     android:gravity="center_vertical">
 
                     <TextView
@@ -160,6 +160,7 @@
                 android:orientation="horizontal"
                 android:layout_marginStart="16dp"
                 android:layout_marginEnd="16dp"
+                android:layout_marginTop="8dp"
                 android:gravity="center_vertical">
 
                 <TextView
@@ -218,7 +219,7 @@
                 android:layout_marginEnd="16dp"
                 android:layout_marginTop="6dp"
                 android:layout_marginBottom="12dp"
-                android:minHeight="160dp"
+                android:minHeight="140dp"
                 android:gravity="top"
                 android:hint="말씀 통독이나 설교 등에서 받은 은혜를 자유롭게 적어보세요."
                 android:textSize="15sp"
@@ -244,7 +245,7 @@
                 android:layout_marginEnd="16dp"
                 android:layout_marginTop="6dp"
                 android:layout_marginBottom="12dp"
-                android:minHeight="120dp"
+                android:minHeight="140dp"
                 android:gravity="top"
                 android:hint="찬양/감사/회개/간구로 하나님께 균형 있는 기도를 드려보세요."
                 android:textSize="15sp"
@@ -270,7 +271,7 @@
                 android:layout_marginEnd="16dp"
                 android:layout_marginTop="6dp"
                 android:layout_marginBottom="16dp"
-                android:minHeight="120dp"
+                android:minHeight="140dp"
                 android:gravity="top"
                 android:hint="4P (Personal, Practical, Possible, Period) 적용을 해보세요!&#10;실천할 수 있는 작은 순종을 구체적으로 적어보세요."
                 android:textSize="15sp"
