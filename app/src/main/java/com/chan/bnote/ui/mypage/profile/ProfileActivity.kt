@@ -64,7 +64,7 @@ class ProfileActivity : AppCompatActivity() {
 		findViewById<TextView>(R.id.text_top_bar_title).text = "내 정보"
 		findViewById<ImageView>(R.id.btn_top_bar_back).setOnClickListener { finish() }
 
-		findViewById<TextView>(R.id.btn_edit_profile).setOnClickListener {
+		findViewById<View>(R.id.btn_edit_profile).setOnClickListener {
 			startActivity(Intent(this, ProfileEditActivity::class.java))
 		}
 		findViewById<ImageView>(R.id.img_profile_photo).loadProfilePhoto(null)
@@ -144,6 +144,8 @@ class ProfileActivity : AppCompatActivity() {
 			val sermonCount = db.sermonDao().count()
 			val memorizationCount = db.memorizationVerseDao().count()
 			val prayerRequestCount = db.prayerRequestDao().count()
+			val applicationCount = db.applicationDao().getAll().size
+			val gratitudeCount = db.gratitudeNoteDao().getAll().size
 
 			renderReadingStatus(totalRead, totalChapters, percent, currentStreak, longestStreak)
 			renderStatGrid(
@@ -173,6 +175,22 @@ class ProfileActivity : AppCompatActivity() {
 							Intent(
 								this@ProfileActivity,
 								SermonSearchActivity::class.java
+							)
+						)
+					},
+					StatItem("적용", "${applicationCount}개") {
+						startActivity(
+							Intent(
+								this@ProfileActivity,
+								com.chan.bnote.ui.application.category.ApplicationCategoryManageActivity::class.java
+							)
+						)
+					},
+					StatItem("감사노트", "${gratitudeCount}개") {
+						startActivity(
+							Intent(
+								this@ProfileActivity,
+								com.chan.bnote.ui.mypage.gratitude.GratitudeActivity::class.java
 							)
 						)
 					},
