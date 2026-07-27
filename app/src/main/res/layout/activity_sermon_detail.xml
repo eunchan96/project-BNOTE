@@ -136,6 +136,20 @@
                 android:clickable="true"
                 android:focusable="true" />
 
+            <TextView
+                android:id="@+id/btn_go_to_application"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:padding="14dp"
+                android:text="적용하러 가기"
+                android:textSize="15sp"
+                android:gravity="center"
+                android:textColor="@color/white"
+                android:background="@color/brown_primary"
+                android:clickable="true"
+                android:focusable="true" />
+
             <View
                 android:layout_width="match_parent"
                 android:layout_height="32dp" />

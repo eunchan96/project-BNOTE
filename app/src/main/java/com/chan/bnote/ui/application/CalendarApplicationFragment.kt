@@ -17,7 +17,6 @@ import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.DateUtils
 import com.chan.bnote.data.application.Application
 import com.chan.bnote.ui.application.addapplication.AddApplicationActivity
-import com.chan.bnote.ui.application.detail.ApplicationDetailActivity
 import com.chan.bnote.ui.sermon.bycalendar.CalendarDayCell
 import com.chan.bnote.ui.sermon.bycalendar.CalendarGridAdapter
 import com.chan.bnote.ui.sermon.bycalendar.MonthYearPickerBottomSheet

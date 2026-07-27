@@ -17,9 +17,9 @@ import androidx.recyclerview.widget.RecyclerView
 import com.chan.bnote.R
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.application.ApplicationCategory
+import com.chan.bnote.ui.application.ApplicationDetailActivity
 import com.chan.bnote.ui.application.ApplicationRowAdapter
 import com.chan.bnote.ui.application.ApplicationRowBuilder
-import com.chan.bnote.ui.application.detail.ApplicationDetailActivity
 import kotlinx.coroutines.launch
 
 /** "적용" 화면의 카테고리 서브탭. 카테고리 목록을 먼저 보여주고, 누르면 그 카테고리의 적용 목록으로. */

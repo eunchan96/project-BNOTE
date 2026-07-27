@@ -64,6 +64,12 @@ class SermonDetailActivity : AppCompatActivity() {
 		}
 	}
 
+	override fun onResume() {
+		super.onResume()
+		// 적용하러 가기/적용 보러 가기 눌렀다가 돌아왔을 수도 있으니, 그 상태를 다시 확인한다.
+		if (::sermon.isInitialized) loadSermon()
+	}
+
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 		enableEdgeToEdge()
@@ -297,6 +303,26 @@ class SermonDetailActivity : AppCompatActivity() {
 				plainLinkView.setOnClickListener {
 					startActivity(Intent(Intent.ACTION_VIEW, android.net.Uri.parse(link)))
 				}
+			}
+		}
+
+		// 이 설교에 이미 연결된 적용이 있으면 "적용 보러 가기", 없으면 "적용하러 가기".
+		val existingApplication = db.applicationDao().getFirstBySermonId(sermon.id)
+		val btnApplication = findViewById<TextView>(R.id.btn_go_to_application)
+		if (existingApplication != null) {
+			btnApplication.text = "적용 보러 가기"
+			btnApplication.setOnClickListener {
+				com.chan.bnote.ui.application.ApplicationDetailActivity.start(
+					this@SermonDetailActivity, existingApplication.id
+				)
+			}
+		} else {
+			btnApplication.text = "적용하러 가기"
+			btnApplication.setOnClickListener {
+				startActivity(
+					com.chan.bnote.ui.application.addapplication.AddApplicationActivity
+						.createIntentForSermon(this@SermonDetailActivity, sermon.id)
+				)
 			}
 		}
 	}

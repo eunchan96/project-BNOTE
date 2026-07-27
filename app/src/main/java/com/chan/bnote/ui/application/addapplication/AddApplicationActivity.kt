@@ -28,7 +28,7 @@ import com.chan.bnote.data.application.ApplicationCategory
 import com.chan.bnote.data.application.ApplicationSermonLink
 import com.chan.bnote.data.bible.BibleBooks
 import com.chan.bnote.data.sermon.Sermon
-import com.chan.bnote.ui.application.detail.ApplicationDetailActivity
+import com.chan.bnote.ui.application.ApplicationDetailActivity
 import com.chan.bnote.ui.common.UnsavedChangesDialog
 import com.google.android.material.datepicker.MaterialDatePicker
 import kotlinx.coroutines.launch

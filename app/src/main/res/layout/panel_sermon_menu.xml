@@ -80,5 +80,21 @@
                 android:orientation="vertical" />
         </LinearLayout>
 
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/divider_light" />
+
+        <TextView
+            android:id="@+id/menu_application"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="16dp"
+            android:text="적용하기"
+            android:textSize="16sp"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true" />
+
     </LinearLayout>
 </FrameLayout>

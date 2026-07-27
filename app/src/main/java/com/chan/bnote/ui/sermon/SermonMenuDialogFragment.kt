@@ -18,6 +18,7 @@ import com.chan.bnote.R
 class SermonMenuDialogFragment : DialogFragment() {
 
 	var onCategoryManageClicked: (() -> Unit)? = null
+	var onApplicationClicked: (() -> Unit)? = null
 
 	/** 지금 보이는 서브탭(캘린더/성경별/설교자별)이 SermonSortableFragment라면 SermonFragment가
 	 * 채워준다. null이면(정렬을 지원 안 하는 화면이면) 정렬 섹션 자체를 숨긴다. */
@@ -56,6 +57,11 @@ class SermonMenuDialogFragment : DialogFragment() {
 		}
 
 		buildSortSection(view)
+
+		view.findViewById<TextView>(R.id.menu_application).setOnClickListener {
+			onApplicationClicked?.invoke()
+			dismiss()
+		}
 
 		view.findViewById<TextView>(R.id.menu_category_manage).setOnClickListener {
 			onCategoryManageClicked?.invoke()
