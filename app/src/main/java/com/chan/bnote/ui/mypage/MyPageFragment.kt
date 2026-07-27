@@ -67,6 +67,14 @@ class MyPageFragment : Fragment(), TopBarActionHandler {
 		view.findViewById<TextView>(R.id.menu_memorization).setOnClickListener {
 			startActivity(Intent(requireContext(), MemorizationVerseListActivity::class.java))
 		}
+		view.findViewById<TextView>(R.id.menu_gratitude).setOnClickListener {
+			startActivity(
+				Intent(
+					requireContext(),
+					com.chan.bnote.ui.mypage.gratitude.GratitudeActivity::class.java
+				)
+			)
+		}
 	}
 
 	override fun onResume() {

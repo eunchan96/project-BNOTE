@@ -4,12 +4,16 @@ import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
+import androidx.room.Update
 
 @Dao
 interface GratitudeNoteDao {
 
 	@Insert
 	suspend fun insert(note: GratitudeNote): Long
+
+	@Update
+	suspend fun update(note: GratitudeNote)
 
 	@Delete
 	suspend fun delete(note: GratitudeNote)

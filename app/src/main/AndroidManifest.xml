@@ -86,6 +86,15 @@
             android:name=".ui.mypage.memorization.MemorizationVerseListActivity"
             android:exported="false" />
         <activity
+            android:name=".ui.mypage.gratitude.GratitudeActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.mypage.gratitude.AddGratitudeActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.mypage.gratitude.GratitudeDetailActivity"
+            android:exported="false" />
+        <activity
             android:name=".ui.mypage.settings.AppInfoActivity"
             android:exported="false" />
         <activity
