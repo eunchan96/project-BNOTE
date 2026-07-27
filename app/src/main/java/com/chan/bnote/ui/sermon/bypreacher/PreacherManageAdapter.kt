@@ -53,6 +53,17 @@ class PreacherManageAdapter(
 		holder.editBtn.setOnClickListener { onEdit(row.preacher) }
 		holder.deleteBtn.setOnClickListener { onDelete(row.preacher) }
 
+		// 관리 모드가 아닐 땐 ≡ 손잡이가 아예 없어지니, 이름이 화면 맨 왼쪽에 바짝 붙지 않도록
+		// 그때만 이름 쪽에 왼쪽 여백을 따로 준다(관리 모드일 땐 손잡이 자체의 여백으로 충분하다).
+		val context = holder.itemView.context
+		val nameParams = holder.name.layoutParams as ViewGroup.MarginLayoutParams
+		nameParams.marginStart = if (isEditMode) 0 else dp(context, 16)
+		holder.name.layoutParams = nameParams
+
+		val handleParams = holder.dragHandle.layoutParams as ViewGroup.MarginLayoutParams
+		handleParams.marginStart = dp(context, 8)
+		holder.dragHandle.layoutParams = handleParams
+
 		holder.itemView.setOnClickListener {
 			if (!isEditMode) onClick(row.preacher)
 		}
@@ -82,4 +93,7 @@ class PreacherManageAdapter(
 	}
 
 	fun currentOrderIds(): List<Long> = rows.map { it.preacher.id }
+
+	private fun dp(context: android.content.Context, value: Int): Int =
+		(value * context.resources.displayMetrics.density).toInt()
 }

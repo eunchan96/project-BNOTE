@@ -22,6 +22,7 @@ object SortButtonHelper {
 		val container = LinearLayout(context).apply {
 			orientation = LinearLayout.VERTICAL
 			background = ContextCompat.getDrawable(context, R.drawable.bg_popup_sort_menu)
+			minimumWidth = dp(context, 110)
 		}
 
 		val popupWindow = PopupWindow(
@@ -40,7 +41,7 @@ object SortButtonHelper {
 				text = label
 				textSize = 14f
 				gravity = Gravity.START
-				setPadding(dp(context, 12), dp(context, 12), dp(context, 12), dp(context, 12))
+				setPadding(dp(context, 16), dp(context, 12), dp(context, 16), dp(context, 12))
 				setTextColor(
 					ContextCompat.getColor(
 						context,
@@ -60,7 +61,27 @@ object SortButtonHelper {
 			container.addView(row)
 		}
 
-		popupWindow.showAsDropDown(anchor, 0, 0, Gravity.END)
+		// showAsDropDown(gravity=END)는 기대한 대로 동작하지 않아서, 화면 좌표를 직접 계산해
+		// 앵커 오른쪽 끝보다 살짝 왼쪽에 딱 맞춰 띄운다.
+		container.measure(
+			android.view.View.MeasureSpec.makeMeasureSpec(
+				0,
+				android.view.View.MeasureSpec.UNSPECIFIED
+			),
+			android.view.View.MeasureSpec.makeMeasureSpec(
+				0,
+				android.view.View.MeasureSpec.UNSPECIFIED
+			)
+		)
+		val popupWidth = container.measuredWidth
+
+		val anchorLocation = IntArray(2)
+		anchor.getLocationOnScreen(anchorLocation)
+
+		val x = anchorLocation[0] + anchor.width - popupWidth - dp(context, 8)
+		val y = anchorLocation[1] + anchor.height
+
+		popupWindow.showAtLocation(anchor, Gravity.NO_GRAVITY, x, y)
 	}
 
 	private fun updateLabel(button: TextView, target: SermonSortableFragment) {
