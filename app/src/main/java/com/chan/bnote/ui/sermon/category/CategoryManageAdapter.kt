@@ -54,15 +54,15 @@ class CategoryManageAdapter(
 		holder.count.visibility = if (isEditMode) View.GONE else View.VISIBLE
 		holder.count.text = "${row.count}개"
 
-		// 미분류는 실제 카테고리가 아니라서 수정/삭제/순서 이동 대상이 아니다.
+		// 미분류는 실제 카테고리가 아니라서 수정/삭제 대상은 아니지만, 순서는 같이 옮길 수 있다.
 		val canManage = isEditMode && row.category != null
 		holder.editBtn.visibility = if (canManage) View.VISIBLE else View.GONE
 		holder.deleteBtn.visibility = if (canManage) View.VISIBLE else View.GONE
-		holder.dragHandle.visibility = if (canManage) View.VISIBLE else View.GONE
+		holder.dragHandle.visibility = if (isEditMode) View.VISIBLE else View.GONE
 
 		// 평소엔 동그라미로 색을 보여주고, 관리 모드일 땐 동그라미 대신 ≡ 손잡이 자체를 그 색으로
 		// 칠한다 — 동그라미까지 같이 있으면 이름이 옆으로 밀려서 답답해 보였다.
-		if (canManage) {
+		if (isEditMode) {
 			holder.dot.visibility = View.GONE
 			holder.dragHandle.setTextColor(parsedColor)
 		} else {
@@ -83,7 +83,7 @@ class CategoryManageAdapter(
 
 		// ≡ 손잡이를 누르는 순간 바로 드래그가 시작되게 한다(길게 누를 필요 없이).
 		holder.dragHandle.setOnTouchListener { _, event ->
-			if (event.actionMasked == MotionEvent.ACTION_DOWN && canManage) {
+			if (event.actionMasked == MotionEvent.ACTION_DOWN && isEditMode) {
 				onStartDrag(holder)
 			}
 			false
@@ -97,17 +97,18 @@ class CategoryManageAdapter(
 		notifyDataSetChanged()
 	}
 
-	/** 미분류(마지막 줄)는 순서 이동 대상이 아니라, 실제 카테고리끼리만 움직일 수 있게 막는다. */
-	fun canMove(position: Int): Boolean = rows.getOrNull(position)?.category != null
-
 	fun moveItem(from: Int, to: Int) {
-		if (!canMove(from) || !canMove(to)) return
 		val item = rows.removeAt(from)
 		rows.add(to, item)
 		notifyItemMoved(from, to)
 	}
 
-	/** 드래그가 끝난 뒤, 지금 순서 그대로 각 카테고리에 매길 sortOrder 값을 돌려준다(미분류 제외). */
+	/** 드래그가 끝난 뒤, 지금 순서 그대로 각 카테고리에 매길 sortOrder 값을 돌려준다(미분류 제외 —
+	 * 미분류는 실제 카테고리 테이블 행이 아니라서 별도로 위치만 기억해둔다). */
 	fun currentCategoryOrder(): List<SermonCategory> =
 		rows.mapNotNull { it.category }
+
+	/** 지금 순서에서 미분류가 몇 번째에 있는지(0부터). 미분류 위치도 기억해뒀다가 다음에 열 때 그대로
+	 * 보여주기 위한 것. */
+	fun currentUncategorizedPosition(): Int = rows.indexOfFirst { it.category == null }
 }

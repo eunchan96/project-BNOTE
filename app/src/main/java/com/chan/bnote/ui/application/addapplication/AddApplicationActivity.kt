@@ -207,7 +207,14 @@ class AddApplicationActivity : AppCompatActivity() {
 	}
 
 	private fun updateDateText() {
-		btnPickDate.text = DateUtils.formatDate(selectedDateMillis)
+		val label = DateUtils.formatDate(selectedDateMillis)
+		val spannable = android.text.SpannableString(label)
+		spannable.setSpan(
+			android.text.style.UnderlineSpan(),
+			0, label.length,
+			android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+		)
+		btnPickDate.text = spannable
 	}
 
 	private fun showDatePicker() {

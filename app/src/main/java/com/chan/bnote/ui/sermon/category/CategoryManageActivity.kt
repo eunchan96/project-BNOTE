@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.chan.bnote.R
+import com.chan.bnote.data.AppSettings
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.sermon.sermoncategory.SermonCategory
 import com.chan.bnote.ui.common.ColorPickerBottomSheet
@@ -101,7 +102,11 @@ class CategoryManageActivity : AppCompatActivity() {
 			for (category in categories) {
 				rows.add(CategoryRow(category, allSermons.count { it.categoryId == category.id }))
 			}
-			rows.add(CategoryRow(null, allSermons.count { it.categoryId == null }))
+			val uncategorizedRow = CategoryRow(null, allSermons.count { it.categoryId == null })
+			val savedPosition =
+				AppSettings.getSermonUncategorizedPosition(this@CategoryManageActivity)
+			val insertAt = savedPosition.coerceIn(0, rows.size)
+			rows.add(insertAt, uncategorizedRow)
 
 			var dragHelper: ItemTouchHelper? = null
 
@@ -142,6 +147,10 @@ class CategoryManageActivity : AppCompatActivity() {
 											.update(category.copy(sortOrder = index))
 									}
 								}
+								AppSettings.setSermonUncategorizedPosition(
+									this@CategoryManageActivity,
+									adapter.currentUncategorizedPosition()
+								)
 								categories = db2.sermonCategoryDao().getAll()
 							}
 						}

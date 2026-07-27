@@ -43,6 +43,7 @@ object AppSettings {
 	private const val KEY_READING_REMINDER_ENABLED = "reading_reminder_enabled"
 	private const val KEY_READING_REMINDER_HOUR = "reading_reminder_hour"
 	private const val KEY_READING_REMINDER_MINUTE = "reading_reminder_minute"
+	private const val KEY_SERMON_UNCATEGORIZED_POSITION = "sermon_uncategorized_position"
 
 	fun getPrimaryTranslation(context: Context): String {
 		return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
@@ -337,5 +338,16 @@ object AppSettings {
 			.putInt(KEY_READING_REMINDER_HOUR, hour)
 			.putInt(KEY_READING_REMINDER_MINUTE, minute)
 			.apply()
+	}
+
+	/** 설교 카테고리 관리에서 "미분류" 줄을 순서 목록의 몇 번째에 뒀는지(0부터). 기본은 맨 끝. */
+	fun getSermonUncategorizedPosition(context: Context): Int {
+		return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.getInt(KEY_SERMON_UNCATEGORIZED_POSITION, Int.MAX_VALUE)
+	}
+
+	fun setSermonUncategorizedPosition(context: Context, position: Int) {
+		context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.edit().putInt(KEY_SERMON_UNCATEGORIZED_POSITION, position).apply()
 	}
 }

@@ -5,33 +5,42 @@
     android:layout_height="wrap_content"
     android:orientation="horizontal"
     android:gravity="center_vertical"
-    android:paddingStart="16dp"
-    android:paddingEnd="4dp"
+    android:paddingStart="12dp"
+    android:paddingEnd="12dp"
     android:background="?attr/selectableItemBackground"
     android:clickable="true"
     android:focusable="true">
 
-    <TextView
-        android:id="@+id/text_drag_handle"
+    <!-- 동그라미(평소)와 ≡ 손잡이(관리 모드)가 같은 자리를 차지해서, 관리 모드를 켜고 꺼도
+         이름이 옆으로 밀리지 않는다. -->
+    <FrameLayout
         android:layout_width="36dp"
         android:layout_height="36dp"
-        android:gravity="center"
-        android:text="&#9776;"
-        android:textSize="22sp"
-        android:textColor="@color/text_hint"
-        android:visibility="gone" />
+        android:layout_marginEnd="10dp">
 
-    <View
-        android:id="@+id/color_dot"
-        android:layout_width="16dp"
-        android:layout_height="16dp"
-        android:layout_marginEnd="12dp" />
+        <View
+            android:id="@+id/color_dot"
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:layout_gravity="center" />
+
+        <TextView
+            android:id="@+id/text_drag_handle"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:text="&#9776;"
+            android:textSize="22sp"
+            android:textColor="@color/text_hint"
+            android:visibility="gone" />
+    </FrameLayout>
 
     <TextView
         android:id="@+id/text_category_name"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
+        android:paddingStart="4dp"
         android:padding="16dp"
         android:textSize="16sp"
         android:textColor="@color/text_primary" />

@@ -78,6 +78,7 @@
                     <TextView
                         android:layout_width="44dp"
                         android:layout_height="wrap_content"
+                        android:layout_marginEnd="10dp"
                         android:text="제목"
                         android:textSize="15sp"
                         android:textColor="@color/text_secondary" />
@@ -101,12 +102,13 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:layout_marginTop="18dp"
+                    android:layout_marginTop="8dp"
                     android:gravity="center_vertical">
 
                     <TextView
                         android:layout_width="44dp"
                         android:layout_height="wrap_content"
+                        android:layout_marginEnd="10dp"
                         android:text="카테고리"
                         android:textSize="13sp"
                         android:textColor="@color/text_secondary" />
@@ -132,12 +134,13 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:layout_marginTop="18dp"
+                    android:layout_marginTop="8dp"
                     android:gravity="center_vertical">
 
                     <TextView
                         android:layout_width="44dp"
                         android:layout_height="wrap_content"
+                        android:layout_marginEnd="10dp"
                         android:text="본문"
                         android:textSize="15sp"
                         android:textColor="@color/text_secondary" />
