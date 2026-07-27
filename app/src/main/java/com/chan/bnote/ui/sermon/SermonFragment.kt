@@ -19,10 +19,8 @@ class SermonFragment : Fragment(), TopBarActionHandler {
 	private lateinit var subtabByBook: TextView
 	private lateinit var subtabApplication: TextView
 	private lateinit var viewPager: ViewPager2
-	private var activeTabName: String? = null
 
 	private val subtabs get() = listOf(subtabCalendar, subtabByBook, subtabApplication)
-	private val tabNames = listOf("캘린더", "성경별", "적용하기")
 
 	override fun onCreateView(
 		inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -55,7 +53,6 @@ class SermonFragment : Fragment(), TopBarActionHandler {
 	}
 
 	private fun updateSelectedTab(position: Int) {
-		activeTabName = tabNames.getOrNull(position)
 		subtabs.forEachIndexed { index, tab ->
 			tab.setTextColor(
 				resources.getColor(
@@ -66,11 +63,6 @@ class SermonFragment : Fragment(), TopBarActionHandler {
 		}
 	}
 
-	/** 지금 보이는 서브탭 프래그먼트(정렬 메뉴 대상 확인용). */
-	private fun currentSubFragment(): Fragment? {
-		return (viewPager.adapter as? SermonSubPagerAdapter)?.fragmentAt(viewPager.currentItem)
-	}
-
 	override fun getTopBarConfig() = TopBarConfig(
 		title = "설교 · 적용",
 		showMenu = true,
@@ -79,8 +71,6 @@ class SermonFragment : Fragment(), TopBarActionHandler {
 
 	override fun onMenuClicked() {
 		val dialog = SermonMenuDialogFragment()
-		dialog.sortTarget = currentSubFragment() as? SermonSortableFragment
-		dialog.sortTabName = activeTabName
 		dialog.onCategoryManageClicked = {
 			startActivity(Intent(requireContext(), CategoryManageActivity::class.java))
 		}

@@ -47,51 +47,6 @@
             android:focusable="true" />
 
         <View
-            android:id="@+id/divider_sort_options"
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="@color/divider_light"
-            android:visibility="gone" />
-
-        <!-- "부록"과 같은 방식: 누르면 펼쳐지고, 다시 누르면 접힌다. -->
-        <TextView
-            android:id="@+id/menu_sort_toggle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:padding="16dp"
-            android:text="설교 정렬  ▾"
-            android:textSize="16sp"
-            android:background="?attr/selectableItemBackground"
-            android:visibility="gone"
-            android:clickable="true"
-            android:focusable="true" />
-
-        <LinearLayout
-            android:id="@+id/container_sort_options"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:visibility="gone">
-
-            <TextView
-                android:id="@+id/text_sort_section_label"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:paddingStart="16dp"
-                android:paddingEnd="16dp"
-                android:paddingTop="4dp"
-                android:paddingBottom="4dp"
-                android:textSize="13sp"
-                android:textColor="@color/text_hint" />
-
-            <LinearLayout
-                android:id="@+id/container_sort_rows"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical" />
-        </LinearLayout>
-
-        <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
             android:background="@color/divider_light" />

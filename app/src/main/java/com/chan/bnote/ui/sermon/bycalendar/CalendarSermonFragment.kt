@@ -20,6 +20,7 @@ import com.chan.bnote.data.sermon.Sermon
 import com.chan.bnote.ui.sermon.SermonRowAdapter
 import com.chan.bnote.ui.sermon.SermonRowBuilder
 import com.chan.bnote.ui.sermon.SermonSortableFragment
+import com.chan.bnote.ui.sermon.SortButtonHelper
 import com.chan.bnote.ui.sermon.addsermon.AddSermonActivity
 import com.chan.bnote.ui.sermon.detail.SermonDetailActivity
 import kotlinx.coroutines.launch
@@ -99,6 +100,8 @@ class CalendarSermonFragment : Fragment(), SermonSortableFragment {
 			}
 			loadCalendarGrid()
 		}
+
+		SortButtonHelper.setup(view.findViewById(R.id.btn_calendar_sort), this)
 
 		view.findViewById<TextView>(R.id.fab_add_sermon).setOnClickListener {
 			addSermonLauncher.launch(

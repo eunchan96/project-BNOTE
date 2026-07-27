@@ -22,6 +22,7 @@ import com.chan.bnote.ui.bible.picker.BookOnlyPickerBottomSheet
 import com.chan.bnote.ui.sermon.SermonRowAdapter
 import com.chan.bnote.ui.sermon.SermonRowBuilder
 import com.chan.bnote.ui.sermon.SermonSortableFragment
+import com.chan.bnote.ui.sermon.SortButtonHelper
 import com.chan.bnote.ui.sermon.addsermon.AddSermonActivity
 import com.chan.bnote.ui.sermon.detail.SermonDetailActivity
 import kotlinx.coroutines.launch
@@ -93,6 +94,8 @@ class SermonByBookFragment : Fragment(), SermonSortableFragment {
 				loadChapterGrid()
 			}
 		}
+
+		SortButtonHelper.setup(view.findViewById(R.id.btn_by_book_sort), this)
 
 		view.findViewById<TextView>(R.id.fab_add_sermon_by_book).setOnClickListener {
 			addSermonLauncher.launch(AddSermonActivity.createIntent(requireContext()))
