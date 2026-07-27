@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.chan.bnote.R
+import com.chan.bnote.data.AppSettings
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.application.ApplicationCategory
 import com.chan.bnote.ui.common.ColorPickerBottomSheet
@@ -23,7 +24,11 @@ import com.chan.bnote.ui.common.DragReorderHelper
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 
-/** 적용 카테고리 추가/수정/삭제/순서 변경. 설교 카테고리 관리와 같은 방식(관리 모드 토글 + ≡ 손잡이). */
+/**
+ * 적용 카테고리 관리 + 카테고리별 보기를 합친 화면(설교 카테고리 관리와 같은 방식).
+ * 평소엔 카테고리를 눌러서 그 카테고리의 적용 목록(CategoryApplicationListActivity)으로 이동하고,
+ * "관리"를 누르면 각 항목에 수정/삭제 아이콘과 순서를 바꿀 수 있는 ≡ 손잡이가 나타난다.
+ */
 class ApplicationCategoryManageActivity : AppCompatActivity() {
 
 	private lateinit var recyclerView: RecyclerView
@@ -71,41 +76,81 @@ class ApplicationCategoryManageActivity : AppCompatActivity() {
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(applicationContext)
 			categories = db.applicationCategoryDao().getAll()
+			btnManage.visibility = View.VISIBLE
+			btnAdd.visibility = if (isManageMode) View.VISIBLE else View.GONE
 			renderCategoryList()
 		}
 	}
 
 	private fun renderCategoryList() {
-		var dragHelper: ItemTouchHelper? = null
+		lifecycleScope.launch {
+			val db = BibleDatabase.getInstance(applicationContext)
+			val allApplications = db.applicationDao().getAll()
 
-		val adapter = ApplicationCategoryManageAdapter(
-			initialCategories = categories,
-			isEditMode = isManageMode,
-			onEdit = { category -> showEditDialog(category) },
-			onDelete = { category -> confirmDelete(category) },
-			onStartDrag = { holder -> dragHelper?.startDrag(holder) }
-		)
-		recyclerView.adapter = adapter
-
-		if (isManageMode) {
-			dragHelper = ItemTouchHelper(
-				DragReorderHelper(
-					onMove = { from, to -> adapter.moveItem(from, to) },
-					onDragFinished = {
-						lifecycleScope.launch {
-							val db = BibleDatabase.getInstance(applicationContext)
-							adapter.currentOrder().forEachIndexed { index, category ->
-								if (category.sortOrder != index) {
-									db.applicationCategoryDao()
-										.update(category.copy(sortOrder = index))
-								}
-							}
-							categories = db.applicationCategoryDao().getAll()
-						}
-					}
+			val rows = mutableListOf<ApplicationCategoryRow>()
+			for (category in categories) {
+				rows.add(
+					ApplicationCategoryRow(
+						category,
+						allApplications.count { it.categoryId == category.id })
 				)
+			}
+			val uncategorizedRow =
+				ApplicationCategoryRow(null, allApplications.count { it.categoryId == null })
+			val savedPosition =
+				AppSettings.getApplicationUncategorizedPosition(this@ApplicationCategoryManageActivity)
+			val insertAt = savedPosition.coerceIn(0, rows.size)
+			rows.add(insertAt, uncategorizedRow)
+
+			var dragHelper: ItemTouchHelper? = null
+
+			val adapter = ApplicationCategoryManageAdapter(
+				initialRows = rows,
+				isEditMode = isManageMode,
+				onClick = { category ->
+					startActivity(
+						CategoryApplicationListActivity.createIntent(
+							this@ApplicationCategoryManageActivity,
+							category?.id,
+							category?.name ?: "미분류"
+						)
+					)
+				},
+				onEdit = { category -> showEditDialog(category) },
+				onDelete = { category ->
+					confirmDelete(
+						category,
+						rows.first { it.category?.id == category.id }.count
+					)
+				},
+				onStartDrag = { holder -> dragHelper?.startDrag(holder) }
 			)
-			dragHelper?.attachToRecyclerView(recyclerView)
+			recyclerView.adapter = adapter
+
+			if (isManageMode) {
+				dragHelper = ItemTouchHelper(
+					DragReorderHelper(
+						onMove = { from, to -> adapter.moveItem(from, to) },
+						onDragFinished = {
+							lifecycleScope.launch {
+								val db2 = BibleDatabase.getInstance(applicationContext)
+								adapter.currentCategoryOrder().forEachIndexed { index, category ->
+									if (category.sortOrder != index) {
+										db2.applicationCategoryDao()
+											.update(category.copy(sortOrder = index))
+									}
+								}
+								AppSettings.setApplicationUncategorizedPosition(
+									this@ApplicationCategoryManageActivity,
+									adapter.currentUncategorizedPosition()
+								)
+								categories = db2.applicationCategoryDao().getAll()
+							}
+						}
+					)
+				)
+				dragHelper?.attachToRecyclerView(recyclerView)
+			}
 		}
 	}
 
@@ -185,30 +230,24 @@ class ApplicationCategoryManageActivity : AppCompatActivity() {
 		}
 	}
 
-	private fun confirmDelete(category: ApplicationCategory) {
-		lifecycleScope.launch {
-			val db = BibleDatabase.getInstance(applicationContext)
-			val count = db.applicationDao().getByCategory(category.id).size
-			val message = if (count > 0) {
-				"이 카테고리를 쓰는 적용 ${count}개가 모두 미분류로 바뀌어요. 삭제할까요?"
-			} else {
-				"'${category.name}'을(를) 삭제할까요?"
-			}
-			MaterialAlertDialogBuilder(
-				this@ApplicationCategoryManageActivity,
-				R.style.ThemeOverlay_BNOTE_Dialog
-			)
-				.setTitle("카테고리 삭제")
-				.setMessage(message)
-				.setPositiveButton("삭제") { _, _ ->
-					lifecycleScope.launch {
-						db.applicationCategoryDao().delete(category)
-						loadCategories()
-					}
-				}
-				.setNegativeButton("취소", null)
-				.show()
+	private fun confirmDelete(category: ApplicationCategory, applicationCount: Int) {
+		val message = if (applicationCount > 0) {
+			"이 카테고리를 쓰는 적용 ${applicationCount}개가 모두 미분류로 바뀌어요. 삭제할까요?"
+		} else {
+			"'${category.name}'을(를) 삭제할까요?"
 		}
+		MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_BNOTE_Dialog)
+			.setTitle("카테고리 삭제")
+			.setMessage(message)
+			.setPositiveButton("삭제") { _, _ ->
+				lifecycleScope.launch {
+					val db = BibleDatabase.getInstance(applicationContext)
+					db.applicationCategoryDao().delete(category)
+					loadCategories()
+				}
+			}
+			.setNegativeButton("취소", null)
+			.show()
 	}
 
 	private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()

@@ -1,4 +1,4 @@
-package com.chan.bnote.ui.application
+package com.chan.bnote.ui.application.bycalendar
 
 import android.app.Activity
 import android.os.Bundle
@@ -16,6 +16,9 @@ import com.chan.bnote.R
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.DateUtils
 import com.chan.bnote.data.application.Application
+import com.chan.bnote.ui.application.ApplicationDetailActivity
+import com.chan.bnote.ui.application.ApplicationRowAdapter
+import com.chan.bnote.ui.application.ApplicationRowBuilder
 import com.chan.bnote.ui.application.addapplication.AddApplicationActivity
 import com.chan.bnote.ui.sermon.bycalendar.CalendarDayCell
 import com.chan.bnote.ui.sermon.bycalendar.CalendarGridAdapter
@@ -29,6 +32,15 @@ class CalendarApplicationFragment : Fragment() {
 	private lateinit var gridRecycler: RecyclerView
 
 	private val addLauncher = registerForActivityResult(
+		ActivityResultContracts.StartActivityForResult()
+	) { result ->
+		if (result.resultCode == Activity.RESULT_OK) {
+			loadCalendarGrid()
+			loadApplicationsForSelectedDate()
+		}
+	}
+
+	private val addSermonLauncher = registerForActivityResult(
 		ActivityResultContracts.StartActivityForResult()
 	) { result ->
 		if (result.resultCode == Activity.RESULT_OK) {
@@ -95,12 +107,23 @@ class CalendarApplicationFragment : Fragment() {
 			loadCalendarGrid()
 		}
 
-		view.findViewById<TextView>(R.id.fab_add_application).setOnClickListener {
-			addLauncher.launch(
-				AddApplicationActivity.createIntent(
-					requireContext(),
-					initialDateMillis = selectedDate
-				)
+		view.findViewById<TextView>(R.id.fab_add_application).setOnClickListener { anchor ->
+			com.chan.bnote.ui.sermon.AddTypePickerPopup.show(
+				anchor = anchor,
+				onSermonSelected = {
+					addSermonLauncher.launch(
+						com.chan.bnote.ui.sermon.addsermon.AddSermonActivity
+							.createIntent(requireContext(), initialDateMillis = selectedDate)
+					)
+				},
+				onApplicationSelected = {
+					addLauncher.launch(
+						AddApplicationActivity.createIntent(
+							requireContext(),
+							initialDateMillis = selectedDate
+						)
+					)
+				}
 			)
 		}
 

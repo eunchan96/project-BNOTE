@@ -14,15 +14,18 @@ import androidx.recyclerview.widget.RecyclerView
 import com.chan.bnote.R
 import com.chan.bnote.data.application.ApplicationCategory
 
+data class ApplicationCategoryRow(val category: ApplicationCategory?, val count: Int)
+
 class ApplicationCategoryManageAdapter(
-	initialCategories: List<ApplicationCategory>,
+	initialRows: List<ApplicationCategoryRow>,
 	private var isEditMode: Boolean,
+	private val onClick: (ApplicationCategory?) -> Unit,
 	private val onEdit: (ApplicationCategory) -> Unit,
 	private val onDelete: (ApplicationCategory) -> Unit,
 	private val onStartDrag: (RecyclerView.ViewHolder) -> Unit = {}
 ) : RecyclerView.Adapter<ApplicationCategoryManageAdapter.ViewHolder>() {
 
-	private val categories = initialCategories.toMutableList()
+	private val rows = initialRows.toMutableList()
 
 	class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
 		val dragHandle: TextView = view.findViewById(R.id.text_drag_handle)
@@ -41,20 +44,22 @@ class ApplicationCategoryManageAdapter(
 
 	@SuppressLint("ClickableViewAccessibility")
 	override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-		val category = categories[position]
+		val row = rows[position]
 		val context = holder.itemView.context
 
-		val parsedColor = try {
-			Color.parseColor(category.colorHex)
-		} catch (e: Exception) {
-			Color.GRAY
-		}
+		val colorHex = row.category?.colorHex ?: String.format(
+			"#%06X", 0xFFFFFF and ContextCompat.getColor(context, R.color.category_none)
+		)
+		val parsedColor = Color.parseColor(colorHex)
 
-		holder.name.text = category.name
-		holder.count.visibility = View.GONE
+		holder.name.text = row.category?.name ?: "미분류"
+		holder.count.visibility = if (isEditMode) View.GONE else View.VISIBLE
+		holder.count.text = "${row.count}개"
 
-		holder.editBtn.visibility = if (isEditMode) View.VISIBLE else View.GONE
-		holder.deleteBtn.visibility = if (isEditMode) View.VISIBLE else View.GONE
+		// 미분류는 실제 카테고리가 아니라서 수정/삭제 대상은 아니지만, 순서는 같이 옮길 수 있다.
+		val canManage = isEditMode && row.category != null
+		holder.editBtn.visibility = if (canManage) View.VISIBLE else View.GONE
+		holder.deleteBtn.visibility = if (canManage) View.VISIBLE else View.GONE
 		holder.dragHandle.visibility = if (isEditMode) View.VISIBLE else View.GONE
 
 		// 평소엔 동그라미로 색을 보여주고, 관리 모드일 땐 동그라미 대신 ≡ 손잡이 자체를 그 색으로
@@ -71,8 +76,12 @@ class ApplicationCategoryManageAdapter(
 			holder.dot.background = drawable
 		}
 
-		holder.editBtn.setOnClickListener { onEdit(category) }
-		holder.deleteBtn.setOnClickListener { onDelete(category) }
+		holder.itemView.setOnClickListener {
+			if (isEditMode) return@setOnClickListener
+			onClick(row.category)
+		}
+		holder.editBtn.setOnClickListener { row.category?.let(onEdit) }
+		holder.deleteBtn.setOnClickListener { row.category?.let(onDelete) }
 
 		holder.dragHandle.setOnTouchListener { _, event ->
 			if (event.actionMasked == MotionEvent.ACTION_DOWN && isEditMode) {
@@ -82,7 +91,7 @@ class ApplicationCategoryManageAdapter(
 		}
 	}
 
-	override fun getItemCount() = categories.size
+	override fun getItemCount() = rows.size
 
 	fun setEditMode(editMode: Boolean) {
 		isEditMode = editMode
@@ -90,10 +99,12 @@ class ApplicationCategoryManageAdapter(
 	}
 
 	fun moveItem(from: Int, to: Int) {
-		val item = categories.removeAt(from)
-		categories.add(to, item)
+		val item = rows.removeAt(from)
+		rows.add(to, item)
 		notifyItemMoved(from, to)
 	}
 
-	fun currentOrder(): List<ApplicationCategory> = categories.toList()
+	fun currentCategoryOrder(): List<ApplicationCategory> = rows.mapNotNull { it.category }
+
+	fun currentUncategorizedPosition(): Int = rows.indexOfFirst { it.category == null }
 }

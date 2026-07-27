@@ -10,16 +10,16 @@ import androidx.fragment.app.Fragment
 import com.chan.bnote.R
 import com.chan.bnote.ui.TopBarActionHandler
 import com.chan.bnote.ui.TopBarConfig
+import com.chan.bnote.ui.application.bycalendar.CalendarApplicationFragment
 import com.chan.bnote.ui.sermon.bybook.SermonByBookFragment
 import com.chan.bnote.ui.sermon.bycalendar.CalendarSermonFragment
-import com.chan.bnote.ui.sermon.bypreacher.SermonByPreacherFragment
 import com.chan.bnote.ui.sermon.category.CategoryManageActivity
 
 class SermonFragment : Fragment(), TopBarActionHandler {
 
 	private lateinit var subtabCalendar: TextView
 	private lateinit var subtabByBook: TextView
-	private lateinit var subtabByPreacher: TextView
+	private lateinit var subtabApplication: TextView
 	private var activeSubFragment: Fragment? = null
 	private var activeTabName: String? = null
 
@@ -34,7 +34,8 @@ class SermonFragment : Fragment(), TopBarActionHandler {
 
 		subtabCalendar = view.findViewById(R.id.subtab_calendar)
 		subtabByBook = view.findViewById(R.id.subtab_by_book)
-		subtabByPreacher = view.findViewById(R.id.subtab_by_preacher)
+		subtabApplication = view.findViewById(R.id.subtab_by_preacher)
+		subtabApplication.text = "적용"
 
 		subtabCalendar.setOnClickListener {
 			switchSubTab(
@@ -50,12 +51,8 @@ class SermonFragment : Fragment(), TopBarActionHandler {
 				"성경별"
 			)
 		}
-		subtabByPreacher.setOnClickListener {
-			switchSubTab(
-				SermonByPreacherFragment(),
-				subtabByPreacher,
-				"설교자별"
-			)
+		subtabApplication.setOnClickListener {
+			switchSubTab(CalendarApplicationFragment(), subtabApplication, "적용")
 		}
 
 		if (savedInstanceState == null) {
@@ -70,7 +67,7 @@ class SermonFragment : Fragment(), TopBarActionHandler {
 			.replace(R.id.sermon_sub_container, fragment)
 			.commit()
 
-		listOf(subtabCalendar, subtabByBook, subtabByPreacher).forEach {
+		listOf(subtabCalendar, subtabByBook, subtabApplication).forEach {
 			val isSelected = it == selected
 			it.setTextColor(
 				resources.getColor(
@@ -82,20 +79,10 @@ class SermonFragment : Fragment(), TopBarActionHandler {
 	}
 
 	override fun getTopBarConfig() = TopBarConfig(
-		title = "설교",
+		title = "설교·적용",
 		showMenu = true,
-		showSearch = true,
-		showApplicationButton = true
+		showSearch = true
 	)
-
-	override fun onApplicationButtonClicked() {
-		startActivity(
-			Intent(
-				requireContext(),
-				com.chan.bnote.ui.application.ApplicationActivity::class.java
-			)
-		)
-	}
 
 	override fun onMenuClicked() {
 		val dialog = SermonMenuDialogFragment()
@@ -103,6 +90,22 @@ class SermonFragment : Fragment(), TopBarActionHandler {
 		dialog.sortTabName = activeTabName
 		dialog.onCategoryManageClicked = {
 			startActivity(Intent(requireContext(), CategoryManageActivity::class.java))
+		}
+		dialog.onPreacherManageClicked = {
+			startActivity(
+				Intent(
+					requireContext(),
+					com.chan.bnote.ui.sermon.bypreacher.PreacherManageActivity::class.java
+				)
+			)
+		}
+		dialog.onApplicationCategoryManageClicked = {
+			startActivity(
+				Intent(
+					requireContext(),
+					com.chan.bnote.ui.application.category.ApplicationCategoryManageActivity::class.java
+				)
+			)
 		}
 		dialog.show(parentFragmentManager, "sermon_menu")
 	}

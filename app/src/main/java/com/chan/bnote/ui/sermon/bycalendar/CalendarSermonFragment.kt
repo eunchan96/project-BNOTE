@@ -17,6 +17,7 @@ import com.chan.bnote.data.AppSettings
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.DateUtils
 import com.chan.bnote.data.sermon.Sermon
+import com.chan.bnote.ui.sermon.AddTypePickerPopup
 import com.chan.bnote.ui.sermon.SermonRowAdapter
 import com.chan.bnote.ui.sermon.SermonRowBuilder
 import com.chan.bnote.ui.sermon.SermonSortableFragment
@@ -32,6 +33,15 @@ class CalendarSermonFragment : Fragment(), SermonSortableFragment {
 	private var sortMode = "ADDED"
 
 	private val addSermonLauncher = registerForActivityResult(
+		ActivityResultContracts.StartActivityForResult()
+	) { result ->
+		if (result.resultCode == Activity.RESULT_OK) {
+			loadCalendarGrid()
+			loadSermonsForSelectedDate()
+		}
+	}
+
+	private val addApplicationLauncher = registerForActivityResult(
 		ActivityResultContracts.StartActivityForResult()
 	) { result ->
 		if (result.resultCode == Activity.RESULT_OK) {
@@ -100,12 +110,23 @@ class CalendarSermonFragment : Fragment(), SermonSortableFragment {
 			loadCalendarGrid()
 		}
 
-		view.findViewById<TextView>(R.id.fab_add_sermon).setOnClickListener {
-			addSermonLauncher.launch(
-				AddSermonActivity.createIntent(
-					requireContext(),
-					initialDateMillis = selectedDate
-				)
+		view.findViewById<TextView>(R.id.fab_add_sermon).setOnClickListener { anchor ->
+			AddTypePickerPopup.show(
+				anchor = anchor,
+				onSermonSelected = {
+					addSermonLauncher.launch(
+						AddSermonActivity.createIntent(
+							requireContext(),
+							initialDateMillis = selectedDate
+						)
+					)
+				},
+				onApplicationSelected = {
+					addApplicationLauncher.launch(
+						com.chan.bnote.ui.application.addapplication.AddApplicationActivity
+							.createIntent(requireContext(), initialDateMillis = selectedDate)
+					)
+				}
 			)
 		}
 

@@ -1,6 +1,8 @@
 package com.chan.bnote.ui.sermon.bypreacher
 
+import android.annotation.SuppressLint
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
@@ -16,7 +18,8 @@ class PreacherManageAdapter(
 	private var isEditMode: Boolean,
 	private val onClick: (Preacher) -> Unit,
 	private val onEdit: (Preacher) -> Unit,
-	private val onDelete: (Preacher) -> Unit
+	private val onDelete: (Preacher) -> Unit,
+	private val onStartDrag: (RecyclerView.ViewHolder) -> Unit = {}
 ) : RecyclerView.Adapter<PreacherManageAdapter.ViewHolder>() {
 
 	// 드래그로 순서를 바꿀 때 어댑터를 통째로 새로 만들지 않고 이 리스트만 직접 움직인다
@@ -24,6 +27,7 @@ class PreacherManageAdapter(
 	private val rows = initialRows.toMutableList()
 
 	class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+		val dragHandle: TextView = view.findViewById(R.id.text_drag_handle)
 		val name: TextView = view.findViewById(R.id.text_preacher_name)
 		val count: TextView = view.findViewById(R.id.text_preacher_count)
 		val editBtn: ImageView = view.findViewById(R.id.btn_edit_preacher)
@@ -36,18 +40,29 @@ class PreacherManageAdapter(
 		return ViewHolder(view)
 	}
 
+	@SuppressLint("ClickableViewAccessibility")
 	override fun onBindViewHolder(holder: ViewHolder, position: Int) {
 		val row = rows[position]
 		holder.name.text = row.preacher.name
+		holder.count.visibility = if (isEditMode) View.GONE else View.VISIBLE
 		holder.count.text = "${row.count}개"
 
 		holder.editBtn.visibility = if (isEditMode) View.VISIBLE else View.GONE
 		holder.deleteBtn.visibility = if (isEditMode) View.VISIBLE else View.GONE
+		holder.dragHandle.visibility = if (isEditMode) View.VISIBLE else View.GONE
 		holder.editBtn.setOnClickListener { onEdit(row.preacher) }
 		holder.deleteBtn.setOnClickListener { onDelete(row.preacher) }
 
 		holder.itemView.setOnClickListener {
 			if (!isEditMode) onClick(row.preacher)
+		}
+
+		// ≡ 손잡이를 터치하는 순간 바로 드래그가 시작되게 한다(길게 누를 필요 없이).
+		holder.dragHandle.setOnTouchListener { _, event ->
+			if (event.actionMasked == MotionEvent.ACTION_DOWN && isEditMode) {
+				onStartDrag(holder)
+			}
+			false
 		}
 	}
 

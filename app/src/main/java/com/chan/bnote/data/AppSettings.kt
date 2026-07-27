@@ -44,6 +44,7 @@ object AppSettings {
 	private const val KEY_READING_REMINDER_HOUR = "reading_reminder_hour"
 	private const val KEY_READING_REMINDER_MINUTE = "reading_reminder_minute"
 	private const val KEY_SERMON_UNCATEGORIZED_POSITION = "sermon_uncategorized_position"
+	private const val KEY_APPLICATION_UNCATEGORIZED_POSITION = "application_uncategorized_position"
 
 	fun getPrimaryTranslation(context: Context): String {
 		return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
@@ -349,5 +350,16 @@ object AppSettings {
 	fun setSermonUncategorizedPosition(context: Context, position: Int) {
 		context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
 			.edit().putInt(KEY_SERMON_UNCATEGORIZED_POSITION, position).apply()
+	}
+
+	/** 적용 카테고리 관리에서 "미분류" 줄 위치(0부터). 기본은 맨 끝. */
+	fun getApplicationUncategorizedPosition(context: Context): Int {
+		return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.getInt(KEY_APPLICATION_UNCATEGORIZED_POSITION, Int.MAX_VALUE)
+	}
+
+	fun setApplicationUncategorizedPosition(context: Context, position: Int) {
+		context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.edit().putInt(KEY_APPLICATION_UNCATEGORIZED_POSITION, position).apply()
 	}
 }
