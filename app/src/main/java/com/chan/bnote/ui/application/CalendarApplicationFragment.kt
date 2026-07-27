@@ -40,15 +40,6 @@ class CalendarApplicationFragment : Fragment() {
 		}
 	}
 
-	private val addSermonLauncher = registerForActivityResult(
-		ActivityResultContracts.StartActivityForResult()
-	) { result ->
-		if (result.resultCode == Activity.RESULT_OK) {
-			loadCalendarGrid()
-			loadApplicationsForSelectedDate()
-		}
-	}
-
 	private val detailLauncher = registerForActivityResult(
 		ActivityResultContracts.StartActivityForResult()
 	) { result ->
@@ -107,23 +98,12 @@ class CalendarApplicationFragment : Fragment() {
 			loadCalendarGrid()
 		}
 
-		view.findViewById<TextView>(R.id.fab_add_application).setOnClickListener { anchor ->
-			com.chan.bnote.ui.sermon.AddTypePickerPopup.show(
-				anchor = anchor,
-				onSermonSelected = {
-					addSermonLauncher.launch(
-						com.chan.bnote.ui.sermon.addsermon.AddSermonActivity
-							.createIntent(requireContext(), initialDateMillis = selectedDate)
-					)
-				},
-				onApplicationSelected = {
-					addLauncher.launch(
-						AddApplicationActivity.createIntent(
-							requireContext(),
-							initialDateMillis = selectedDate
-						)
-					)
-				}
+		view.findViewById<TextView>(R.id.fab_add_application).setOnClickListener {
+			addLauncher.launch(
+				AddApplicationActivity.createIntent(
+					requireContext(),
+					initialDateMillis = selectedDate
+				)
 			)
 		}
 

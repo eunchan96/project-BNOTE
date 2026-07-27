@@ -55,8 +55,8 @@
         android:layout_height="1dp"
         android:background="@color/divider_light" />
 
-    <FrameLayout
-        android:id="@+id/sermon_sub_container"
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/sermon_view_pager"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1" />
