@@ -26,7 +26,7 @@ data class ApplicationBibleRef(
 			return if (startChapter == endChapter) {
 				"$bookName ${startChapter}${unit}"
 			} else {
-				"$bookName ${startChapter}${unit}~${endChapter}${unit}"
+				"$bookName ${startChapter}~${endChapter}${unit}"
 			}
 		}
 		return if (startChapter == endChapter) {

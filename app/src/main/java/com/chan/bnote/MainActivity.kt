@@ -38,6 +38,7 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 	private lateinit var btnMenu: ImageView
 	private lateinit var btnPrevChapter: ImageView
 	private lateinit var btnNextChapter: ImageView
+	private lateinit var btnGoToApplication: ImageView
 
 	private lateinit var navBible: ImageView
 	private lateinit var navSermon: ImageView
@@ -149,6 +150,7 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 	private fun bindBottomNavViews() {
 		btnPrevChapter = findViewById(R.id.btn_prev_chapter)
 		btnNextChapter = findViewById(R.id.btn_next_chapter)
+		btnGoToApplication = findViewById(R.id.btn_go_to_application)
 		navSermon = findViewById(R.id.nav_sermon)
 		navBible = findViewById(R.id.nav_bible)
 		navMyPage = findViewById(R.id.nav_mypage)
@@ -168,6 +170,7 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 	private fun setupBottomNavActions() {
 		btnPrevChapter.setOnClickListener { currentHandler()?.onPrevChapterClicked() }
 		btnNextChapter.setOnClickListener { currentHandler()?.onNextChapterClicked() }
+		btnGoToApplication.setOnClickListener { currentHandler()?.onApplicationButtonClicked() }
 
 		navBible.setOnClickListener { switchToBible() }
 		navSermon.setOnClickListener { switchToSermon() }
@@ -234,6 +237,7 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 		btnMenu.setImageResource(config.menuIconRes)
 		btnPrevChapter.visibility = visible(config.showChapterNav)
 		btnNextChapter.visibility = visible(config.showChapterNav)
+		btnGoToApplication.visibility = visible(config.showApplicationButton)
 
 		iconReadingPlanCheck.visibility = visible(config.showReadingPlanCheck)
 		iconReadingPlanCheck.alpha = if (config.isChapterRead) 1f else 0.4f

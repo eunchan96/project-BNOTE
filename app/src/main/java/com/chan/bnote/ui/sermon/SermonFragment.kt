@@ -84,8 +84,18 @@ class SermonFragment : Fragment(), TopBarActionHandler {
 	override fun getTopBarConfig() = TopBarConfig(
 		title = "설교",
 		showMenu = true,
-		showSearch = true
+		showSearch = true,
+		showApplicationButton = true
 	)
+
+	override fun onApplicationButtonClicked() {
+		startActivity(
+			Intent(
+				requireContext(),
+				com.chan.bnote.ui.application.ApplicationActivity::class.java
+			)
+		)
+	}
 
 	override fun onMenuClicked() {
 		val dialog = SermonMenuDialogFragment()
@@ -93,14 +103,6 @@ class SermonFragment : Fragment(), TopBarActionHandler {
 		dialog.sortTabName = activeTabName
 		dialog.onCategoryManageClicked = {
 			startActivity(Intent(requireContext(), CategoryManageActivity::class.java))
-		}
-		dialog.onApplicationClicked = {
-			startActivity(
-				Intent(
-					requireContext(),
-					com.chan.bnote.ui.application.ApplicationActivity::class.java
-				)
-			)
 		}
 		dialog.show(parentFragmentManager, "sermon_menu")
 	}

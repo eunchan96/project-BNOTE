@@ -180,6 +180,20 @@
             android:clickable="true"
             android:focusable="true" />
 
+        <ImageView
+            android:id="@+id/btn_go_to_application"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:padding="8dp"
+            android:layout_marginStart="8dp"
+            android:src="@drawable/ic_edit"
+            android:visibility="gone"
+            android:contentDescription="적용하기"
+            app:tint="@color/bottom_nav_selected"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:focusable="true" />
+
         <View
             android:layout_width="0dp"
             android:layout_height="0dp"

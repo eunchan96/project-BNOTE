@@ -91,37 +91,68 @@ class ApplicationDetailActivity : AppCompatActivity() {
 			findViewById<TextView>(R.id.text_detail_date_category).text =
 				if (category != null) "$dateLabel [${category.name}]" else dateLabel
 
-			val titleView = findViewById<TextView>(R.id.text_detail_title)
-			if (application.title.isBlank()) {
-				titleView.visibility = View.GONE
-			} else {
-				titleView.visibility = View.VISIBLE
-				titleView.text = "제목 : ${application.title}"
+			val refs = db.applicationBibleRefDao().getByApplication(application.id)
+			val infoView = findViewById<TextView>(R.id.text_application_info)
+			val infoBuilder = android.text.SpannableStringBuilder()
+			var hasContent = false
+
+			if (application.title.isNotBlank()) {
+				infoBuilder.append("제목 : ${application.title}")
+				hasContent = true
 			}
 
-			val refs = db.applicationBibleRefDao().getByApplication(application.id)
-			val refsText = findViewById<TextView>(R.id.text_detail_refs)
 			if (refs.isNotEmpty()) {
-				refsText.visibility = View.VISIBLE
-				refsText.text = "본문 : " + refs.joinToString(", ") { it.toDisplayLabel() }
-				refsText.setOnClickListener {
-					val first = refs.first()
-					val mainIntent =
-						Intent(this@ApplicationDetailActivity, MainActivity::class.java).apply {
-							putExtra(MainActivity.EXTRA_NAVIGATE_BOOK_ID, first.startBookId)
-							putExtra(MainActivity.EXTRA_NAVIGATE_CHAPTER, first.startChapter)
-							if (!first.isChapterOnly) putExtra(
-								MainActivity.EXTRA_NAVIGATE_VERSE,
-								first.startVerse
-							)
-							flags =
-								Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-						}
-					startActivity(mainIntent)
+				if (hasContent) infoBuilder.append("\n")
+				infoBuilder.append("본문 : ")
+
+				val refClickRanges =
+					mutableListOf<Triple<Int, Int, com.chan.bnote.data.application.ApplicationBibleRef>>()
+				for ((index, ref) in refs.withIndex()) {
+					val start = infoBuilder.length
+					infoBuilder.append(ref.toDisplayLabel())
+					val end = infoBuilder.length
+					refClickRanges.add(Triple(start, end, ref))
+					if (index != refs.lastIndex) infoBuilder.append(", ")
 				}
-			} else {
-				refsText.visibility = View.GONE
+
+				for ((start, end, ref) in refClickRanges) {
+					infoBuilder.setSpan(
+						object : android.text.style.ClickableSpan() {
+							override fun onClick(widget: View) {
+								val mainIntent = Intent(
+									this@ApplicationDetailActivity,
+									MainActivity::class.java
+								).apply {
+									putExtra(MainActivity.EXTRA_NAVIGATE_BOOK_ID, ref.startBookId)
+									putExtra(MainActivity.EXTRA_NAVIGATE_CHAPTER, ref.startChapter)
+									if (!ref.isChapterOnly) putExtra(
+										MainActivity.EXTRA_NAVIGATE_VERSE,
+										ref.startVerse
+									)
+									flags =
+										Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+								}
+								startActivity(mainIntent)
+							}
+
+							override fun updateDrawState(ds: android.text.TextPaint) {
+								super.updateDrawState(ds)
+								ds.color = ContextCompat.getColor(
+									this@ApplicationDetailActivity,
+									R.color.brown_primary
+								)
+								ds.isUnderlineText = true
+							}
+						},
+						start, end, android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+					)
+				}
+				hasContent = true
 			}
+
+			infoView.visibility = if (hasContent) View.VISIBLE else View.GONE
+			infoView.text = infoBuilder
+			infoView.movementMethod = android.text.method.LinkMovementMethod.getInstance()
 
 			val links = db.applicationSermonLinkDao().getByApplication(application.id)
 			val sermons = links.mapNotNull { db.sermonDao().getById(it.sermonId) }
