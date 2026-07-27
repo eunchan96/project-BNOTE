@@ -6,6 +6,7 @@ import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
@@ -24,7 +25,7 @@ class ScrapVerseAdapter(
 	class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
 		val ref: TextView = view.findViewById(R.id.text_scrap_ref)
 		val text: TextView = view.findViewById(R.id.text_scrap_text)
-		val deleteBtn: TextView = view.findViewById(R.id.btn_delete_scrap)
+		val deleteBtn: ImageView = view.findViewById(R.id.btn_delete_scrap)
 	}
 
 	override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {

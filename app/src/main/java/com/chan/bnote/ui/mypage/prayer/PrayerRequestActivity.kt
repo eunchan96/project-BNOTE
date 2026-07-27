@@ -44,11 +44,13 @@ class PrayerRequestActivity : AppCompatActivity() {
 		recyclerView.layoutManager = LinearLayoutManager(this)
 
 		btnManage = findViewById(R.id.btn_manage_prayer)
+		val btnAdd = findViewById<TextView>(R.id.btn_add_prayer)
 		findViewById<ImageView>(R.id.btn_back).setOnClickListener { finish() }
-		findViewById<TextView>(R.id.btn_add_prayer).setOnClickListener { showAddDialog() }
+		btnAdd.setOnClickListener { showAddDialog() }
 		btnManage.setOnClickListener {
 			isManageMode = !isManageMode
 			btnManage.text = if (isManageMode) "완료" else "관리"
+			btnAdd.visibility = if (isManageMode) View.VISIBLE else View.GONE
 			loadItems()
 		}
 

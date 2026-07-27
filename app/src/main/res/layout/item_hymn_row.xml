@@ -13,6 +13,7 @@
         android:id="@+id/text_hymn_number"
         android:layout_width="40dp"
         android:layout_height="wrap_content"
+        android:gravity="center"
         android:textSize="15sp"
         android:textStyle="bold"
         android:textColor="@color/brown_primary" />

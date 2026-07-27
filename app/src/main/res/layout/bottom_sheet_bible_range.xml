@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -27,6 +28,19 @@
             android:text="책 선택"
             android:textSize="18sp"
             android:textStyle="bold" />
+
+        <ImageView
+            android:id="@+id/btn_delete_ref"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:padding="8dp"
+            android:src="@drawable/ic_delete"
+            app:tint="@color/icon_action_tint"
+            android:contentDescription="삭제"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:visibility="gone"
+            android:clickable="true"
+            android:focusable="true" />
     </LinearLayout>
 
     <FrameLayout
@@ -36,13 +50,30 @@
         android:paddingEnd="16dp"
         android:paddingBottom="4dp">
 
-        <com.google.android.material.checkbox.MaterialCheckBox
-            android:id="@+id/checkbox_multi_select"
+        <LinearLayout
+            android:id="@+id/row_multi_checkboxes"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="여러 구절 선택하기"
-            android:textSize="14sp"
-            android:textColor="@color/text_secondary" />
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <com.google.android.material.checkbox.MaterialCheckBox
+                android:id="@+id/checkbox_multi_select"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="여러 구절 선택하기"
+                android:textSize="14sp"
+                android:textColor="@color/text_secondary" />
+
+            <com.google.android.material.checkbox.MaterialCheckBox
+                android:id="@+id/checkbox_cross_chapter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:text="다음 장까지 선택하기"
+                android:textSize="14sp"
+                android:textColor="@color/text_secondary" />
+        </LinearLayout>
 
         <TextView
             android:id="@+id/text_selected_start"

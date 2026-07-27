@@ -24,6 +24,7 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 	companion object {
 		const val EXTRA_NAVIGATE_BOOK_ID = "extra_navigate_book_id"
 		const val EXTRA_NAVIGATE_CHAPTER = "extra_navigate_chapter"
+		const val EXTRA_NAVIGATE_VERSE = "extra_navigate_verse"
 
 		private const val TAG_BIBLE = "tab_bible"
 		private const val TAG_SERMON = "tab_sermon"
@@ -37,6 +38,7 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 	private lateinit var btnMenu: ImageView
 	private lateinit var btnPrevChapter: ImageView
 	private lateinit var btnNextChapter: ImageView
+	private lateinit var btnGoToApplication: ImageView
 
 	private lateinit var navBible: ImageView
 	private lateinit var navSermon: ImageView
@@ -91,13 +93,20 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 				else -> switchToBible()
 			}
 		} else {
-			// 완전히 새로 앱을 시작할 때는 마지막에 보던 탭이 무엇이었든 항상 성경 탭으로 시작한다.
-			// (성경 탭 자체는 BibleFragment가 마지막으로 읽던 책/장을 스스로 복원한다.)
-			switchToBible()
-		}
-
-		if (savedInstanceState == null) {
-			handleNavigationIntent(intent)
+			val navBookId = intent.getIntExtra(EXTRA_NAVIGATE_BOOK_ID, -1)
+			val navChapter = intent.getIntExtra(EXTRA_NAVIGATE_CHAPTER, -1)
+			if (navBookId != -1 && navChapter != -1) {
+				val navVerse = intent.getIntExtra(EXTRA_NAVIGATE_VERSE, -1).takeIf { it != -1 }
+				// 알림을 눌러서 완전히 새로 켜진 경우: switchToBible()로 먼저 성경 탭을 만들고 나서
+				// 바로 이어서 navigateToBibleChapter()를 부르면, 앞의 트랜잭션이 아직 반영되기 전이라
+				// isAdded가 false로 나와서 성경 프래그먼트가 중복으로 만들어지며 튕기는 문제가 있었다.
+				// 그래서 이 경우엔 switchToBible()을 건너뛰고 바로 이동한다(그 안에서 알아서 만든다).
+				navigateToBibleChapter(navBookId, navChapter, navVerse)
+			} else {
+				// 완전히 새로 앱을 시작할 때는 마지막에 보던 탭이 무엇이었든 항상 성경 탭으로 시작한다.
+				// (성경 탭 자체는 BibleFragment가 마지막으로 읽던 책/장을 스스로 복원한다.)
+				switchToBible()
+			}
 		}
 	}
 
@@ -107,12 +116,23 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 		handleNavigationIntent(intent)
 	}
 
+	override fun onResume() {
+		super.onResume()
+		// 설정 화면에서 "화면 켜짐 유지"를 바꾸고 돌아왔을 수도 있으니 다시 확인해서 반영한다.
+		if (AppSettings.isKeepScreenOn(this)) {
+			window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+		} else {
+			window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+		}
+	}
+
 	private fun handleNavigationIntent(intent: android.content.Intent) {
 		if (!intent.hasExtra(EXTRA_NAVIGATE_BOOK_ID)) return
 		val bookId = intent.getIntExtra(EXTRA_NAVIGATE_BOOK_ID, -1)
 		val chapter = intent.getIntExtra(EXTRA_NAVIGATE_CHAPTER, -1)
 		if (bookId != -1 && chapter != -1) {
-			navigateToBibleChapter(bookId, chapter)
+			val verse = intent.getIntExtra(EXTRA_NAVIGATE_VERSE, -1).takeIf { it != -1 }
+			navigateToBibleChapter(bookId, chapter, verse)
 		}
 	}
 
@@ -130,6 +150,7 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 	private fun bindBottomNavViews() {
 		btnPrevChapter = findViewById(R.id.btn_prev_chapter)
 		btnNextChapter = findViewById(R.id.btn_next_chapter)
+		btnGoToApplication = findViewById(R.id.btn_go_to_application)
 		navSermon = findViewById(R.id.nav_sermon)
 		navBible = findViewById(R.id.nav_bible)
 		navMyPage = findViewById(R.id.nav_mypage)
@@ -149,6 +170,7 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 	private fun setupBottomNavActions() {
 		btnPrevChapter.setOnClickListener { currentHandler()?.onPrevChapterClicked() }
 		btnNextChapter.setOnClickListener { currentHandler()?.onNextChapterClicked() }
+		btnGoToApplication.setOnClickListener { currentHandler()?.onApplicationButtonClicked() }
 
 		navBible.setOnClickListener { switchToBible() }
 		navSermon.setOnClickListener { switchToSermon() }
@@ -215,6 +237,7 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 		btnMenu.setImageResource(config.menuIconRes)
 		btnPrevChapter.visibility = visible(config.showChapterNav)
 		btnNextChapter.visibility = visible(config.showChapterNav)
+		btnGoToApplication.visibility = visible(config.showApplicationButton)
 
 		iconReadingPlanCheck.visibility = visible(config.showReadingPlanCheck)
 		iconReadingPlanCheck.alpha = if (config.isChapterRead) 1f else 0.4f
@@ -228,13 +251,13 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 	private fun visible(show: Boolean) =
 		if (show) android.view.View.VISIBLE else android.view.View.GONE
 
-	override fun navigateToBibleChapter(bookId: Int, chapter: Int) {
+	override fun navigateToBibleChapter(bookId: Int, chapter: Int, verse: Int?) {
 		val existing = bibleFragment
 		if (existing != null && existing.isAdded) {
 			switchTo(existing, TAG_BIBLE, navBible)
-			existing.navigateTo(bookId, chapter)
+			existing.navigateTo(bookId, chapter, verse)
 		} else {
-			val fragment = BibleFragment.newInstance(bookId, chapter)
+			val fragment = BibleFragment.newInstance(bookId, chapter, verse)
 			bibleFragment = fragment
 			switchTo(fragment, TAG_BIBLE, navBible)
 		}

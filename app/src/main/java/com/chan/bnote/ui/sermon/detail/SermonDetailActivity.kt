@@ -3,7 +3,6 @@ package com.chan.bnote.ui.sermon.detail
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Bundle
 import android.text.Spannable
@@ -63,6 +62,12 @@ class SermonDetailActivity : AppCompatActivity() {
 			changed = true
 			loadSermon()
 		}
+	}
+
+	override fun onResume() {
+		super.onResume()
+		// 적용하러 가기/적용 보러 가기 눌렀다가 돌아왔을 수도 있으니, 그 상태를 다시 확인한다.
+		if (::sermon.isInitialized) loadSermon()
 	}
 
 	override fun onCreate(savedInstanceState: Bundle?) {
@@ -132,53 +137,77 @@ class SermonDetailActivity : AppCompatActivity() {
 	private suspend fun render(db: com.chan.bnote.data.BibleDatabase) {
 		findViewById<TextView>(R.id.text_top_bar_title).text = sermon.title
 
-		val flexbox =
-			findViewById<com.google.android.flexbox.FlexboxLayout>(R.id.flexbox_detail_refs)
 		val memoView = findViewById<TextView>(R.id.text_sermon_memo)
 
-		// 날짜 · 카테고리(색상 텍스트) · 설교자
 		val preacherName =
 			sermon.preacherId?.let { db.preacherDao().getById(it)?.name } ?: "설교자 미지정"
 		val category = sermon.categoryId?.let { db.sermonCategoryDao().getById(it) }
 		val dateLabel = DateUtils.formatDate(sermon.sermonDate)
 
-		val metaView = findViewById<TextView>(R.id.text_sermon_meta)
-		if (category != null) {
-			val prefix = "$dateLabel · "
-			val categoryPart = category.name
-			val suffix = " · $preacherName"
-			val builder = SpannableStringBuilder()
-			builder.append(prefix)
-			val categoryStart = builder.length
-			builder.append(categoryPart)
-			builder.setSpan(
-				ForegroundColorSpan(Color.parseColor(category.colorHex)),
-				categoryStart, builder.length,
-				Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-			)
-			builder.append(suffix)
-			metaView.text = builder
+		// 상단바: 제목 대신 "2026년 7월 24일 [주일 낮예배]" 형태로
+		findViewById<TextView>(R.id.text_top_bar_title).text = if (category != null) {
+			"$dateLabel [${category.name}]"
 		} else {
-			metaView.text = "$dateLabel · $preacherName"
+			dateLabel
 		}
 
-		// 성경 구절 칩 (탭하면 해당 성경 위치로 이동)
-		flexbox.removeAllViews()
 		val refs = db.sermonBibleRefDao().getBySermon(sermon.id)
-		for (ref in refs) {
-			val chip = LayoutInflater.from(this)
-				.inflate(R.layout.item_bible_ref_chip_compact, flexbox, false)
-			chip.findViewById<TextView>(R.id.text_chip_label).text = ref.toDisplayLabel()
-			chip.setOnClickListener {
-				val intent = Intent(this, MainActivity::class.java).apply {
-					putExtra(MainActivity.EXTRA_NAVIGATE_BOOK_ID, ref.startBookId)
-					putExtra(MainActivity.EXTRA_NAVIGATE_CHAPTER, ref.startChapter)
-					flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-				}
-				startActivity(intent)
+
+		// 본문 정보: "제목 : ~ / 본문 : ~(밑줄, 누르면 이동) / 설교 : ~"
+		val infoView = findViewById<TextView>(R.id.text_sermon_info)
+		val infoBuilder = SpannableStringBuilder()
+		infoBuilder.append("제목 : ${sermon.title}\n")
+		infoBuilder.append("본문 : ")
+
+		val refClickRanges =
+			mutableListOf<Triple<Int, Int, com.chan.bnote.data.sermon.SermonBibleRef>>()
+		if (refs.isEmpty()) {
+			infoBuilder.append("없음")
+		} else {
+			for ((index, ref) in refs.withIndex()) {
+				val start = infoBuilder.length
+				infoBuilder.append(ref.toDisplayLabel())
+				val end = infoBuilder.length
+				refClickRanges.add(Triple(start, end, ref))
+				infoBuilder.setSpan(
+					android.text.style.UnderlineSpan(),
+					start,
+					end,
+					Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+				)
+				if (index != refs.lastIndex) infoBuilder.append(", ")
 			}
-			flexbox.addView(chip)
 		}
+		infoBuilder.append("\n설교 : $preacherName")
+
+		for ((start, end, ref) in refClickRanges) {
+			infoBuilder.setSpan(
+				object : android.text.style.ClickableSpan() {
+					override fun onClick(widget: View) {
+						val intent =
+							Intent(this@SermonDetailActivity, MainActivity::class.java).apply {
+								putExtra(MainActivity.EXTRA_NAVIGATE_BOOK_ID, ref.startBookId)
+								putExtra(MainActivity.EXTRA_NAVIGATE_CHAPTER, ref.startChapter)
+								putExtra(MainActivity.EXTRA_NAVIGATE_VERSE, ref.startVerse)
+								flags =
+									Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+							}
+						startActivity(intent)
+					}
+
+					override fun updateDrawState(ds: android.text.TextPaint) {
+						super.updateDrawState(ds)
+						ds.color = androidx.core.content.ContextCompat.getColor(
+							this@SermonDetailActivity, R.color.brown_primary
+						)
+						ds.isUnderlineText = true
+					}
+				},
+				start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+			)
+		}
+		infoView.text = infoBuilder
+		infoView.movementMethod = android.text.method.LinkMovementMethod.getInstance()
 
 		// 메모 (굵게/밑줄 서식 복원 + 인용 구절 강조 + 롱프레스 말풍선)
 		if (sermon.memo.isBlank()) {
@@ -229,6 +258,7 @@ class SermonDetailActivity : AppCompatActivity() {
 			}
 			memoView.text = spannable
 			CitationBubbleHelper.attachTouchHandling(memoView, { citations }, lifecycleScope)
+			com.chan.bnote.ui.common.LinkifyHelper.applySmartLinks(memoView)
 		}
 
 		// 첨부 사진
@@ -244,5 +274,70 @@ class SermonDetailActivity : AppCompatActivity() {
 			thumb.setOnClickListener { PhotoViewerActivity.start(this, photo.filePath) }
 			photoContainer.addView(thumb)
 		}
+
+		// 링크 (유튜브면 바로 임베드, 아니면 눌러서 브라우저로 열기)
+		val webView = findViewById<android.webkit.WebView>(R.id.webview_sermon_link)
+		val plainLinkView = findViewById<TextView>(R.id.text_sermon_link_plain)
+		val link = sermon.link
+		if (link.isNullOrBlank()) {
+			webView.visibility = View.GONE
+			plainLinkView.visibility = View.GONE
+		} else {
+			val videoId = extractYoutubeId(link)
+			if (videoId != null) {
+				webView.visibility = View.VISIBLE
+				plainLinkView.visibility = View.GONE
+				webView.settings.javaScriptEnabled = true
+				val embedOrigin = "https://bnote.app"
+				val html = """
+					<html><body style="margin:0;padding:0;">
+					<iframe width="100%" height="100%"
+						src="https://www.youtube.com/embed/$videoId?playsinline=1&origin=$embedOrigin"
+						frameborder="0" allowfullscreen></iframe>
+					</body></html>
+				""".trimIndent()
+				webView.loadDataWithBaseURL(embedOrigin, html, "text/html", "utf-8", null)
+			} else {
+				webView.visibility = View.GONE
+				plainLinkView.visibility = View.VISIBLE
+				plainLinkView.setOnClickListener {
+					startActivity(Intent(Intent.ACTION_VIEW, android.net.Uri.parse(link)))
+				}
+			}
+		}
+
+		// 이 설교에 이미 연결된 적용이 있으면 "적용 보러 가기", 없으면 "적용하러 가기".
+		val existingApplication = db.applicationDao().getFirstBySermonId(sermon.id)
+		val btnApplication = findViewById<TextView>(R.id.btn_go_to_application)
+		if (existingApplication != null) {
+			btnApplication.text = "적용 보러 가기"
+			btnApplication.setOnClickListener {
+				com.chan.bnote.ui.application.ApplicationDetailActivity.start(
+					this@SermonDetailActivity, existingApplication.id
+				)
+			}
+		} else {
+			btnApplication.text = "적용하러 가기"
+			btnApplication.setOnClickListener {
+				startActivity(
+					com.chan.bnote.ui.application.addapplication.AddApplicationActivity
+						.createIntentForSermon(this@SermonDetailActivity, sermon.id)
+				)
+			}
+		}
+	}
+
+	/** youtube.com/watch?v=ID, youtu.be/ID, youtube.com/live/ID, youtube.com/shorts/ID 형식 모두 지원. */
+	private fun extractYoutubeId(url: String): String? {
+		val watchRegex = Regex("[?&]v=([a-zA-Z0-9_-]{6,})")
+		watchRegex.find(url)?.let { return it.groupValues[1] }
+
+		val shortRegex = Regex("youtu\\.be/([a-zA-Z0-9_-]{6,})")
+		shortRegex.find(url)?.let { return it.groupValues[1] }
+
+		val liveOrShortsRegex = Regex("youtube\\.com/(?:live|shorts)/([a-zA-Z0-9_-]{6,})")
+		liveOrShortsRegex.find(url)?.let { return it.groupValues[1] }
+
+		return null
 	}
 }

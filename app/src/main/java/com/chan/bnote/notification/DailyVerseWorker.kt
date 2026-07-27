@@ -11,18 +11,30 @@ class DailyVerseWorker(context: Context, params: WorkerParameters) :
 
 	override suspend fun doWork(): Result {
 		val db = BibleDatabase.getInstance(applicationContext)
-		val verse = db.bibleDao().getRandomVerse("NKRV") ?: return Result.success()
+		val ref = CuratedVerses.load(applicationContext).random()
+		val chapterVerses = db.bibleDao().getVerses("NKRV", ref.bookId, ref.chapter)
+		val rangeVerses = chapterVerses.filter { it.verse in ref.startVerse..ref.endVerse }
+		if (rangeVerses.isEmpty()) return Result.success()
 
-		val unit = BibleBooks.chapterUnit(verse.bookId)
-		val label = "${BibleBooks.nameOf(verse.bookId)} ${verse.chapter}${unit} ${verse.verse}절"
+		val verse = rangeVerses.first()
+		val verseText = rangeVerses.joinToString("\n") { it.text }
+
+		val unit = BibleBooks.chapterUnit(ref.bookId)
+		val verseLabel = if (ref.startVerse == ref.endVerse) {
+			"${ref.startVerse}절"
+		} else {
+			"${ref.startVerse}~${ref.endVerse}절"
+		}
+		val label = "${BibleBooks.nameOf(ref.bookId)} ${ref.chapter}${unit} $verseLabel"
 
 		NotificationHelper.show(
 			context = applicationContext,
 			notiId = NotificationHelper.NOTI_ID_DAILY_VERSE,
 			title = "오늘의 말씀 · $label",
-			content = verse.text,
+			content = verseText,
 			bookId = verse.bookId,
-			chapter = verse.chapter
+			chapter = verse.chapter,
+			verse = verse.verse
 		)
 		return Result.success()
 	}

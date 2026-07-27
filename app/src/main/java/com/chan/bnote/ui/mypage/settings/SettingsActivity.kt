@@ -9,7 +9,6 @@ import android.os.Bundle
 import android.view.View
 import android.view.WindowManager
 import android.widget.ImageView
-import android.widget.PopupMenu
 import android.widget.Switch
 import android.widget.TextView
 import android.widget.Toast
@@ -174,6 +173,27 @@ class SettingsActivity : AppCompatActivity() {
 			switchKeepScreenOn.isChecked = !switchKeepScreenOn.isChecked
 		}
 
+		val switchChapterSwipe = findViewById<Switch>(R.id.switch_chapter_swipe).apply {
+			isChecked = AppSettings.isChapterSwipeEnabled(this@SettingsActivity)
+			setOnCheckedChangeListener { _, checked ->
+				AppSettings.setChapterSwipeEnabled(this@SettingsActivity, checked)
+			}
+		}
+		findViewById<View>(R.id.row_chapter_swipe_toggle).setOnClickListener {
+			switchChapterSwipe.isChecked = !switchChapterSwipe.isChecked
+		}
+
+		val switchReadingCheckPosition =
+			findViewById<Switch>(R.id.switch_reading_check_position).apply {
+				isChecked = AppSettings.isReadingCheckBottomButtonMode(this@SettingsActivity)
+				setOnCheckedChangeListener { _, checked ->
+					AppSettings.setReadingCheckBottomButtonMode(this@SettingsActivity, checked)
+				}
+			}
+		findViewById<View>(R.id.row_reading_check_position_toggle).setOnClickListener {
+			switchReadingCheckPosition.isChecked = !switchReadingCheckPosition.isChecked
+		}
+
 		val switchCopySecondary = findViewById<Switch>(R.id.switch_copy_secondary).apply {
 			isChecked = AppSettings.isCopyIncludeSecondary(this@SettingsActivity)
 			setOnCheckedChangeListener { _, checked ->
@@ -184,24 +204,9 @@ class SettingsActivity : AppCompatActivity() {
 			switchCopySecondary.isChecked = !switchCopySecondary.isChecked
 		}
 
-		val btnReferenceStyle = findViewById<TextView>(R.id.btn_copy_reference_style)
-		updateReferenceStyleLabel(btnReferenceStyle)
-		btnReferenceStyle.setOnClickListener {
-			val popup = PopupMenu(this, btnReferenceStyle)
-			popup.menu.add(0, 0, 0, "표기 안 함")
-			popup.menu.add(0, 1, 1, "짧게 (창 1:1)")
-			popup.menu.add(0, 2, 2, "길게 (창세기 1장 1절)")
-			popup.setOnMenuItemClickListener { item ->
-				val style = when (item.itemId) {
-					1 -> "SHORT"
-					2 -> "LONG"
-					else -> "NONE"
-				}
-				AppSettings.setCopyReferenceStyle(this, style)
-				updateReferenceStyleLabel(btnReferenceStyle)
-				true
-			}
-			popup.show()
+		findViewById<TextView>(R.id.btn_copy_reference_style).setOnClickListener {
+			com.chan.bnote.ui.bible.CopyFormatPickerBottomSheet()
+				.show(supportFragmentManager, "copy_format_picker")
 		}
 
 		findViewById<TextView>(R.id.btn_export_data).setOnClickListener {
@@ -334,12 +339,12 @@ class SettingsActivity : AppCompatActivity() {
 
 	private fun updateDailyVerseTimeLabel() {
 		val (h, m) = AppSettings.getDailyVerseNotiTime(this)
-		btnDailyVerseTime.text = formatTime(h, m)
+		btnDailyVerseTime.text = "${formatTime(h, m)} ▾"
 	}
 
 	private fun updateReadingReminderTimeLabel() {
 		val (h, m) = AppSettings.getReadingReminderTime(this)
-		btnReadingReminderTime.text = formatTime(h, m)
+		btnReadingReminderTime.text = "${formatTime(h, m)} ▾"
 	}
 
 	private fun formatTime(hour: Int, minute: Int): String {
@@ -357,14 +362,6 @@ class SettingsActivity : AppCompatActivity() {
 			window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 		} else {
 			window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-		}
-	}
-
-	private fun updateReferenceStyleLabel(button: TextView) {
-		button.text = when (AppSettings.getCopyReferenceStyle(this)) {
-			"SHORT" -> "짧게 (창 1:1) ▾"
-			"LONG" -> "길게 (창세기 1장 1절) ▾"
-			else -> "표기 안 함 ▾"
 		}
 	}
 }

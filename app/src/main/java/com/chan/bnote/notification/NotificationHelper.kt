@@ -31,14 +31,15 @@ object NotificationHelper {
 		manager.createNotificationChannel(channel)
 	}
 
-	/** [bookId]/[chapter]가 있으면 탭했을 때 해당 장으로, 없으면 그냥 앱을 연다. */
+	/** [bookId]/[chapter]가 있으면 탭했을 때 해당 장으로(가능하면 [verse] 절까지), 없으면 그냥 앱을 연다. */
 	fun show(
 		context: Context,
 		notiId: Int,
 		title: String,
 		content: String,
 		bookId: Int? = null,
-		chapter: Int? = null
+		chapter: Int? = null,
+		verse: Int? = null
 	) {
 		ensureChannel(context)
 
@@ -47,6 +48,7 @@ object NotificationHelper {
 			if (bookId != null && chapter != null) {
 				putExtra(MainActivity.EXTRA_NAVIGATE_BOOK_ID, bookId)
 				putExtra(MainActivity.EXTRA_NAVIGATE_CHAPTER, chapter)
+				if (verse != null) putExtra(MainActivity.EXTRA_NAVIGATE_VERSE, verse)
 			}
 		}
 		val pendingIntent = PendingIntent.getActivity(

@@ -1,9 +1,7 @@
 package com.chan.bnote.ui.bible
 
+import android.content.Context
 import android.content.Intent
-import android.graphics.Color
-import android.graphics.Typeface
-import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.text.TextUtils
 import android.view.Gravity
@@ -17,18 +15,18 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
-import com.chan.bnote.MainActivity
 import com.chan.bnote.R
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.bible.BibleBooks
-import com.chan.bnote.data.bible.BibleVerse
-import com.chan.bnote.data.bible.partialhighlight.PartialHighlight
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
+/** 하이라이트를 책별로 모아서 보여준다. 책을 누르면 그 책의 하이라이트만 보이는 화면으로 넘어간다. */
 class HighlightListActivity : AppCompatActivity() {
 
 	private lateinit var container: LinearLayout
 	private lateinit var emptyText: TextView
+	private var loadJob: Job? = null
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
@@ -46,71 +44,47 @@ class HighlightListActivity : AppCompatActivity() {
 
 		container = findViewById(R.id.container_list)
 		emptyText = findViewById(R.id.text_empty)
-
-		loadHighlights()
+		emptyText.text = "아직 하이라이트한 구절이 없어요."
+		// onResume이 onCreate 직후에도 항상 한 번 불리므로, 목록은 거기서만 불러온다.
 	}
 
-	private fun loadHighlights() {
-		lifecycleScope.launch {
+	override fun onResume() {
+		super.onResume()
+		loadBooks() // 처음 열릴 때도, 상세에서 하이라이트를 지우고 돌아왔을 때도 여기서 다시 확인한다.
+	}
+
+	private fun loadBooks() {
+		loadJob?.cancel()
+		loadJob = lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(applicationContext)
 			val highlights = db.partialHighlightDao().getAll()
 
 			if (highlights.isEmpty()) {
 				emptyText.visibility = View.VISIBLE
+				container.removeAllViews()
 				return@launch
 			}
 			emptyText.visibility = View.GONE
 
-			// 이미 bookId/chapter/verse 순으로 정렬돼서 오므로, 순서대로 묶으면 책별 그룹이 자연스럽게 만들어진다.
-			val verseTextCache = mutableMapOf<Pair<Int, Int>, List<BibleVerse>>()
+			// bookId 순으로 이미 정렬돼서 오므로, 순서대로 세면서 묶으면 책별 개수가 자연스럽게 나온다.
+			// segment 0/1로 나뉜 하이라이트(절이 소제목으로 둘로 쪼개지는 예외 구절)는 같은 절이니까
+			// 실제 "절 개수"를 셀 땐 (장,절) 기준 고유 개수로 세야 한다(row 개수 그대로 세면 2개로 뻥튀기됨).
+			val countsByBook = highlights
+				.groupBy { it.bookId }
+				.mapValues { (_, list) -> list.map { it.chapter to it.verse }.distinct().size }
+
 			container.removeAllViews()
-
-			var currentBookId = -1
-			for (highlight in highlights) {
-				if (highlight.bookId != currentBookId) {
-					currentBookId = highlight.bookId
-					addHeader(BibleBooks.nameOf(currentBookId))
-				}
-
-				val verses = verseTextCache.getOrPut(highlight.bookId to highlight.chapter) {
-					db.bibleDao()
-						.getVerses(highlight.translation, highlight.bookId, highlight.chapter)
-				}
-				val fullText = verses.find { it.verse == highlight.verse }?.text ?: ""
-				val preview = if (
-					highlight.startOffset in 0..fullText.length &&
-					highlight.endOffset in highlight.startOffset..fullText.length
-				) {
-					fullText.substring(highlight.startOffset, highlight.endOffset)
-				} else {
-					fullText
-				}
-
-				addRow(
-					label = "${highlight.chapter}:${highlight.verse}  $preview",
-					colorHex = highlight.colorHex,
-					highlight = highlight
-				)
+			for ((bookId, count) in countsByBook) {
+				addBookRow(bookId, count)
 			}
 		}
 	}
 
-	private fun addHeader(bookName: String) {
-		val header = TextView(this).apply {
-			text = bookName
-			textSize = 13f
-			setTypeface(typeface, Typeface.BOLD)
-			setTextColor(ContextCompat.getColor(this@HighlightListActivity, R.color.brown_primary))
-			setPadding(dp(16), dp(16), dp(16), dp(6))
-		}
-		container.addView(header)
-	}
-
-	private fun addRow(label: String, colorHex: String, highlight: PartialHighlight) {
+	private fun addBookRow(bookId: Int, count: Int) {
 		val row = LinearLayout(this).apply {
 			orientation = LinearLayout.HORIZONTAL
 			gravity = Gravity.CENTER_VERTICAL
-			setPadding(dp(16), dp(10), dp(16), dp(10))
+			setPadding(dp(16), dp(14), dp(16), dp(14))
 			background = ContextCompat.getDrawable(
 				this@HighlightListActivity, android.R.drawable.list_selector_background
 			)
@@ -118,38 +92,32 @@ class HighlightListActivity : AppCompatActivity() {
 			isFocusable = true
 		}
 
-		val swatch = View(this).apply {
-			layoutParams = LinearLayout.LayoutParams(dp(12), dp(12))
-			background = GradientDrawable().apply {
-				shape = GradientDrawable.OVAL
-				setColor(Color.parseColor(colorHex))
-			}
-		}
-
-		val text = TextView(this).apply {
-			text = label
-			textSize = 14f
+		val name = TextView(this).apply {
+			text = BibleBooks.nameOf(bookId)
+			textSize = 16f
 			setTextColor(ContextCompat.getColor(this@HighlightListActivity, R.color.text_primary))
-			maxLines = 2
 			ellipsize = TextUtils.TruncateAt.END
 			layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
-				.apply { marginStart = dp(10) }
 		}
 
-		row.addView(swatch)
-		row.addView(text)
-		row.setOnClickListener { navigateToBible(highlight.bookId, highlight.chapter) }
+		val countText = TextView(this).apply {
+			text = "${count}개"
+			textSize = 14f
+			setTextColor(ContextCompat.getColor(this@HighlightListActivity, R.color.text_hint))
+		}
+
+		row.addView(name)
+		row.addView(countText)
+		row.setOnClickListener {
+			startActivity(HighlightBookDetailActivity.createIntent(this, bookId))
+		}
 		container.addView(row)
 	}
 
-	private fun navigateToBible(bookId: Int, chapter: Int) {
-		val intent = Intent(this, MainActivity::class.java).apply {
-			putExtra(MainActivity.EXTRA_NAVIGATE_BOOK_ID, bookId)
-			putExtra(MainActivity.EXTRA_NAVIGATE_CHAPTER, chapter)
-			flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-		}
-		startActivity(intent)
-	}
-
 	private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
+
+	companion object {
+		fun createIntent(context: Context): Intent =
+			Intent(context, HighlightListActivity::class.java)
+	}
 }

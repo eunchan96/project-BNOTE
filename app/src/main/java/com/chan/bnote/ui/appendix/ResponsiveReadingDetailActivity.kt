@@ -53,9 +53,14 @@ class ResponsiveReadingDetailActivity : AppCompatActivity() {
 		reading.lines.forEach { line ->
 			val isBold = line.speaker == ReadingSpeaker.CONGREGATION ||
 					line.speaker == ReadingSpeaker.UNISON
+			val displayText = if (line.speaker == ReadingSpeaker.UNISON) {
+				"(다같이) ${line.text}"
+			} else {
+				line.text
+			}
 
 			val lineView = TextView(this).apply {
-				text = line.text
+				text = displayText
 				textSize = 16f
 				setTextColor(
 					ContextCompat.getColor(

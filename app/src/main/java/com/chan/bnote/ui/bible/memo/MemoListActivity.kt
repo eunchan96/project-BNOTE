@@ -152,7 +152,13 @@ class MemoListActivity : AppCompatActivity() {
 					addRow(
 						label = buildStyledLabel("${memo.chapter}:${memo.verse}", memo.text),
 						onClickEdit = { openVerseMemoEditor(memo) },
-						onClickGoToVerse = { navigateToBible(memo.bookId, memo.chapter) }
+						onClickGoToVerse = {
+							navigateToBible(
+								memo.bookId,
+								memo.chapter,
+								memo.verse
+							)
+						}
 					)
 				}
 			}
@@ -174,7 +180,13 @@ class MemoListActivity : AppCompatActivity() {
 					val row = addRow(
 						label = buildStyledLabel("${memo.chapter}:${memo.verse}", memo.text),
 						onClickEdit = { openWordMemoEditor(memo, db) },
-						onClickGoToVerse = { navigateToBible(memo.bookId, memo.chapter) }
+						onClickGoToVerse = {
+							navigateToBible(
+								memo.bookId,
+								memo.chapter,
+								memo.verse
+							)
+						}
 					)
 					lifecycleScope.launch {
 						val word = fetchWordMemoWord(db, memo)
@@ -215,7 +227,8 @@ class MemoListActivity : AppCompatActivity() {
 				chapter = memo.chapter,
 				verse = memo.verse,
 				startOffset = memo.startOffset,
-				endOffset = memo.endOffset
+				endOffset = memo.endOffset,
+				segment = memo.segment
 			)
 		)
 	}
@@ -318,10 +331,11 @@ class MemoListActivity : AppCompatActivity() {
 		return contentView
 	}
 
-	private fun navigateToBible(bookId: Int, chapter: Int) {
+	private fun navigateToBible(bookId: Int, chapter: Int, verse: Int) {
 		val intent = Intent(this, MainActivity::class.java).apply {
 			putExtra(MainActivity.EXTRA_NAVIGATE_BOOK_ID, bookId)
 			putExtra(MainActivity.EXTRA_NAVIGATE_CHAPTER, chapter)
+			putExtra(MainActivity.EXTRA_NAVIGATE_VERSE, verse)
 			flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
 		}
 		startActivity(intent)

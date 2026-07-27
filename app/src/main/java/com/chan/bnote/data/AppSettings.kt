@@ -14,7 +14,11 @@ object AppSettings {
 
 	private const val KEY_PREACHER_SORT_MODE = "preacher_sort_mode" // "NAME" or "CUSTOM"
 	private const val KEY_PREACHER_CUSTOM_ORDER = "preacher_custom_order" // 쉼표 구분 문자열
-	private const val KEY_SERMON_SORT_MODE = "sermon_sort_mode" // "DATE" or "BIBLE"
+	private const val KEY_SERMON_SORT_MODE = "sermon_sort_mode" // "DATE" or "BIBLE" (설교자 탭)
+	private const val KEY_CALENDAR_SORT_MODE =
+		"sermon_calendar_sort_mode" // "BIBLE"|"CATEGORY"|"ADDED"
+	private const val KEY_BY_BOOK_SORT_MODE =
+		"sermon_by_book_sort_mode" // "BIBLE"|"DATE"|"CATEGORY"|"ADDED"
 	private const val KEY_BIBLE_SEARCH_HISTORY = "bible_search_history" // 구분자로 이어붙인 문자열, 최신순
 	private const val SEARCH_HISTORY_DELIMITER = "\u001E"
 	private const val MAX_SEARCH_HISTORY = 20
@@ -25,8 +29,10 @@ object AppSettings {
 
 	private const val KEY_SCROLL_SPEED = "scroll_speed" // 1(느림)~5(빠름)
 	private const val KEY_KEEP_SCREEN_ON = "keep_screen_on"
+	private const val KEY_CHAPTER_SWIPE_ENABLED = "chapter_swipe_enabled"
+	private const val KEY_READING_CHECK_BOTTOM_BUTTON = "reading_check_bottom_button"
 	private const val KEY_COPY_INCLUDE_SECONDARY = "copy_include_secondary"
-	private const val KEY_COPY_REFERENCE_STYLE = "copy_reference_style" // NONE | SHORT | LONG
+	private const val KEY_ACTIVE_COPY_FORMAT = "active_copy_format_json"
 	private const val KEY_LAST_READ_BOOK_ID = "last_read_book_id"
 	private const val KEY_LAST_READ_CHAPTER = "last_read_chapter"
 	private const val KEY_LAST_TAB = "last_tab"
@@ -37,6 +43,8 @@ object AppSettings {
 	private const val KEY_READING_REMINDER_ENABLED = "reading_reminder_enabled"
 	private const val KEY_READING_REMINDER_HOUR = "reading_reminder_hour"
 	private const val KEY_READING_REMINDER_MINUTE = "reading_reminder_minute"
+	private const val KEY_SERMON_UNCATEGORIZED_POSITION = "sermon_uncategorized_position"
+	private const val KEY_APPLICATION_UNCATEGORIZED_POSITION = "application_uncategorized_position"
 
 	fun getPrimaryTranslation(context: Context): String {
 		return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
@@ -163,6 +171,26 @@ object AppSettings {
 			.edit().putString(KEY_SERMON_SORT_MODE, mode).apply()
 	}
 
+	fun getCalendarSortMode(context: Context): String {
+		return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.getString(KEY_CALENDAR_SORT_MODE, "ADDED") ?: "ADDED"
+	}
+
+	fun setCalendarSortMode(context: Context, mode: String) {
+		context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.edit().putString(KEY_CALENDAR_SORT_MODE, mode).apply()
+	}
+
+	fun getByBookSortMode(context: Context): String {
+		return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.getString(KEY_BY_BOOK_SORT_MODE, "ADDED") ?: "ADDED"
+	}
+
+	fun setByBookSortMode(context: Context, mode: String) {
+		context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.edit().putString(KEY_BY_BOOK_SORT_MODE, mode).apply()
+	}
+
 	fun getScrollSpeed(context: Context): Int {
 		return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
 			.getInt(KEY_SCROLL_SPEED, 3)
@@ -183,6 +211,27 @@ object AppSettings {
 			.edit().putBoolean(KEY_KEEP_SCREEN_ON, enabled).apply()
 	}
 
+	fun isChapterSwipeEnabled(context: Context): Boolean {
+		return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.getBoolean(KEY_CHAPTER_SWIPE_ENABLED, false)
+	}
+
+	fun setChapterSwipeEnabled(context: Context, enabled: Boolean) {
+		context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.edit().putBoolean(KEY_CHAPTER_SWIPE_ENABLED, enabled).apply()
+	}
+
+	/** 기본은 상단바 체크 아이콘, 켜면 성경 탭 하단 버튼으로 표시한다. */
+	fun isReadingCheckBottomButtonMode(context: Context): Boolean {
+		return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.getBoolean(KEY_READING_CHECK_BOTTOM_BUTTON, false)
+	}
+
+	fun setReadingCheckBottomButtonMode(context: Context, enabled: Boolean) {
+		context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.edit().putBoolean(KEY_READING_CHECK_BOTTOM_BUTTON, enabled).apply()
+	}
+
 	fun isCopyIncludeSecondary(context: Context): Boolean {
 		return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
 			.getBoolean(KEY_COPY_INCLUDE_SECONDARY, false)
@@ -193,14 +242,17 @@ object AppSettings {
 			.edit().putBoolean(KEY_COPY_INCLUDE_SECONDARY, enabled).apply()
 	}
 
-	fun getCopyReferenceStyle(context: Context): String {
-		return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
-			.getString(KEY_COPY_REFERENCE_STYLE, "NONE") ?: "NONE"
+	/** 지금 복사할 때 실제로 쓰는 형식. 저장된 프리셋 중 하나일 수도, 임시로 만져본 값일 수도 있다. */
+	fun getActiveCopyFormat(context: Context): com.chan.bnote.data.mypage.CopyFormatConfig {
+		val raw = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.getString(KEY_ACTIVE_COPY_FORMAT, null)
+			?: return com.chan.bnote.data.mypage.CopyFormatConfig()
+		return com.chan.bnote.data.mypage.CopyFormatConfig.fromJson(raw)
 	}
 
-	fun setCopyReferenceStyle(context: Context, style: String) {
+	fun setActiveCopyFormat(context: Context, config: com.chan.bnote.data.mypage.CopyFormatConfig) {
 		context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
-			.edit().putString(KEY_COPY_REFERENCE_STYLE, style).apply()
+			.edit().putString(KEY_ACTIVE_COPY_FORMAT, config.toJson()).apply()
 	}
 
 	/** 마지막으로 읽던 위치 - 앱을 완전히 껐다 켜도 이 위치로 열리게 하기 위함. */
@@ -287,5 +339,27 @@ object AppSettings {
 			.putInt(KEY_READING_REMINDER_HOUR, hour)
 			.putInt(KEY_READING_REMINDER_MINUTE, minute)
 			.apply()
+	}
+
+	/** 설교 카테고리 관리에서 "미분류" 줄을 순서 목록의 몇 번째에 뒀는지(0부터). 기본은 맨 끝. */
+	fun getSermonUncategorizedPosition(context: Context): Int {
+		return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.getInt(KEY_SERMON_UNCATEGORIZED_POSITION, Int.MAX_VALUE)
+	}
+
+	fun setSermonUncategorizedPosition(context: Context, position: Int) {
+		context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.edit().putInt(KEY_SERMON_UNCATEGORIZED_POSITION, position).apply()
+	}
+
+	/** 적용 카테고리 관리에서 "미분류" 줄 위치(0부터). 기본은 맨 끝. */
+	fun getApplicationUncategorizedPosition(context: Context): Int {
+		return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.getInt(KEY_APPLICATION_UNCATEGORIZED_POSITION, Int.MAX_VALUE)
+	}
+
+	fun setApplicationUncategorizedPosition(context: Context, position: Int) {
+		context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.edit().putInt(KEY_APPLICATION_UNCATEGORIZED_POSITION, position).apply()
 	}
 }

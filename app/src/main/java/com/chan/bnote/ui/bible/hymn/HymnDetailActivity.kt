@@ -233,6 +233,9 @@ class HymnDetailActivity : AppCompatActivity() {
 		val shortRegex = Regex("youtu\\.be/([a-zA-Z0-9_-]{6,})")
 		shortRegex.find(url)?.let { return it.groupValues[1] }
 
+		val liveOrShortsRegex = Regex("youtube\\.com/(?:live|shorts)/([a-zA-Z0-9_-]{6,})")
+		liveOrShortsRegex.find(url)?.let { return it.groupValues[1] }
+
 		return null
 	}
 }

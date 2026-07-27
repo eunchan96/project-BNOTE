@@ -75,8 +75,29 @@ class ReadingPlanActivity : AppCompatActivity() {
 			overallText.text = "전체 $totalRead / $totalChapters 장 읽음 (${percentText}%)"
 			progressBar.progress = percentValue.toInt()
 
+			renderPaceGuide(totalChapters, totalRead)
 			renderBookGrid(maxChapterByBook, readByBook)
 		}
+	}
+
+	/** 올해 남은 날짜와, 그 안에 완독하려면 하루 몇 장씩 읽어야 하는지 보여준다. */
+	private fun renderPaceGuide(totalChapters: Int, totalRead: Int) {
+		val paceText = findViewById<TextView>(R.id.text_pace_guide)
+		val remaining = totalChapters - totalRead
+
+		if (remaining <= 0) {
+			paceText.text = "축하해요, 전체 성경을 다 읽으셨어요!"
+			return
+		}
+
+		val today = java.util.Calendar.getInstance()
+		val dayOfYear = today.get(java.util.Calendar.DAY_OF_YEAR)
+		val daysInYear = today.getActualMaximum(java.util.Calendar.DAY_OF_YEAR)
+		val daysLeft = (daysInYear - dayOfYear + 1).coerceAtLeast(1) // 오늘 포함
+
+		val dailyPace = remaining.toDouble() / daysLeft
+		val dailyPaceText = String.format(java.util.Locale.KOREA, "%.1f", dailyPace)
+		paceText.text = "올해 남은 날짜 ${daysLeft}일 · 다 읽으려면 하루 ${dailyPaceText}장씩"
 	}
 
 	private fun renderBookGrid(

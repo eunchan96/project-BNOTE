@@ -21,8 +21,8 @@ import com.chan.bnote.data.mypage.memorization.MemorizationVerse
 import com.chan.bnote.data.mypage.verseofyear.VerseOfYear
 import com.chan.bnote.data.mypage.verseofyear.VerseOfYearRef
 import com.chan.bnote.data.sermon.SermonBibleRef
+import com.chan.bnote.ui.bible.picker.BibleRangePickerBottomSheet
 import com.chan.bnote.ui.mypage.memorization.MemorizationVerseListActivity
-import com.chan.bnote.ui.sermon.addsermon.BibleRangePickerBottomSheet
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 import java.util.Calendar

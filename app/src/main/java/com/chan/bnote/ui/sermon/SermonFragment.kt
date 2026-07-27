@@ -7,18 +7,20 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.fragment.app.Fragment
+import androidx.viewpager2.widget.ViewPager2
 import com.chan.bnote.R
 import com.chan.bnote.ui.TopBarActionHandler
 import com.chan.bnote.ui.TopBarConfig
-import com.chan.bnote.ui.sermon.bybook.SermonByBookFragment
-import com.chan.bnote.ui.sermon.bycalendar.CalendarSermonFragment
-import com.chan.bnote.ui.sermon.bypreacher.SermonByPreacherFragment
+import com.chan.bnote.ui.sermon.category.CategoryManageActivity
 
 class SermonFragment : Fragment(), TopBarActionHandler {
 
 	private lateinit var subtabCalendar: TextView
 	private lateinit var subtabByBook: TextView
-	private lateinit var subtabByPreacher: TextView
+	private lateinit var subtabApplication: TextView
+	private lateinit var viewPager: ViewPager2
+
+	private val subtabs get() = listOf(subtabCalendar, subtabByBook, subtabApplication)
 
 	override fun onCreateView(
 		inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -31,32 +33,30 @@ class SermonFragment : Fragment(), TopBarActionHandler {
 
 		subtabCalendar = view.findViewById(R.id.subtab_calendar)
 		subtabByBook = view.findViewById(R.id.subtab_by_book)
-		subtabByPreacher = view.findViewById(R.id.subtab_by_preacher)
+		subtabApplication = view.findViewById(R.id.subtab_by_preacher)
+		subtabApplication.text = "적용하기"
 
-		subtabCalendar.setOnClickListener { switchSubTab(CalendarSermonFragment(), subtabCalendar) }
-		subtabByBook.setOnClickListener { switchSubTab(SermonByBookFragment(), subtabByBook) }
-		subtabByPreacher.setOnClickListener {
-			switchSubTab(
-				SermonByPreacherFragment(),
-				subtabByPreacher
-			)
-		}
+		viewPager = view.findViewById(R.id.sermon_view_pager)
+		viewPager.adapter = SermonSubPagerAdapter(this)
 
-		if (savedInstanceState == null) {
-			switchSubTab(CalendarSermonFragment(), subtabCalendar)
-		}
+		subtabCalendar.setOnClickListener { viewPager.setCurrentItem(0, true) }
+		subtabByBook.setOnClickListener { viewPager.setCurrentItem(1, true) }
+		subtabApplication.setOnClickListener { viewPager.setCurrentItem(2, true) }
+
+		viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
+			override fun onPageSelected(position: Int) {
+				updateSelectedTab(position)
+			}
+		})
+
+		updateSelectedTab(0)
 	}
 
-	private fun switchSubTab(fragment: Fragment, selected: TextView) {
-		childFragmentManager.beginTransaction()
-			.replace(R.id.sermon_sub_container, fragment)
-			.commit()
-
-		listOf(subtabCalendar, subtabByBook, subtabByPreacher).forEach {
-			val isSelected = it == selected
-			it.setTextColor(
+	private fun updateSelectedTab(position: Int) {
+		subtabs.forEachIndexed { index, tab ->
+			tab.setTextColor(
 				resources.getColor(
-					if (isSelected) R.color.brown_primary else R.color.bottom_nav_unselected,
+					if (index == position) R.color.brown_primary else R.color.bottom_nav_unselected,
 					null
 				)
 			)
@@ -64,7 +64,7 @@ class SermonFragment : Fragment(), TopBarActionHandler {
 	}
 
 	override fun getTopBarConfig() = TopBarConfig(
-		title = "설교",
+		title = "설교 · 적용",
 		showMenu = true,
 		showSearch = true
 	)
@@ -73,6 +73,22 @@ class SermonFragment : Fragment(), TopBarActionHandler {
 		val dialog = SermonMenuDialogFragment()
 		dialog.onCategoryManageClicked = {
 			startActivity(Intent(requireContext(), CategoryManageActivity::class.java))
+		}
+		dialog.onPreacherManageClicked = {
+			startActivity(
+				Intent(
+					requireContext(),
+					com.chan.bnote.ui.sermon.bypreacher.PreacherManageActivity::class.java
+				)
+			)
+		}
+		dialog.onApplicationCategoryManageClicked = {
+			startActivity(
+				Intent(
+					requireContext(),
+					com.chan.bnote.ui.application.category.ApplicationCategoryManageActivity::class.java
+				)
+			)
 		}
 		dialog.show(parentFragmentManager, "sermon_menu")
 	}

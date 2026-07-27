@@ -13,20 +13,24 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.chan.bnote.R
+import com.chan.bnote.data.AppSettings
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.DateUtils
 import com.chan.bnote.data.sermon.Sermon
 import com.chan.bnote.ui.sermon.SermonRowAdapter
 import com.chan.bnote.ui.sermon.SermonRowBuilder
+import com.chan.bnote.ui.sermon.SermonSortableFragment
+import com.chan.bnote.ui.sermon.SortButtonHelper
 import com.chan.bnote.ui.sermon.addsermon.AddSermonActivity
 import com.chan.bnote.ui.sermon.detail.SermonDetailActivity
 import kotlinx.coroutines.launch
 import java.util.Calendar
 
-class CalendarSermonFragment : Fragment() {
+class CalendarSermonFragment : Fragment(), SermonSortableFragment {
 
 	private lateinit var monthYearText: TextView
 	private lateinit var gridRecycler: RecyclerView
+	private var sortMode = "ADDED"
 
 	private val addSermonLauncher = registerForActivityResult(
 		ActivityResultContracts.StartActivityForResult()
@@ -70,6 +74,8 @@ class CalendarSermonFragment : Fragment() {
 		gridRecycler = view.findViewById(R.id.recycler_calendar_grid)
 		gridRecycler.layoutManager = GridLayoutManager(requireContext(), 7)
 
+		sortMode = AppSettings.getCalendarSortMode(requireContext())
+
 		monthYearText.setOnClickListener {
 			val picker = MonthYearPickerBottomSheet(currentYear, currentMonth0)
 			picker.onSelected = { year, month0 ->
@@ -95,12 +101,11 @@ class CalendarSermonFragment : Fragment() {
 			loadCalendarGrid()
 		}
 
+		SortButtonHelper.setup(view.findViewById(R.id.btn_calendar_sort), this)
+
 		view.findViewById<TextView>(R.id.fab_add_sermon).setOnClickListener {
 			addSermonLauncher.launch(
-				AddSermonActivity.createIntent(
-					requireContext(),
-					initialDateMillis = selectedDate
-				)
+				AddSermonActivity.createIntent(requireContext(), initialDateMillis = selectedDate)
 			)
 		}
 
@@ -117,8 +122,13 @@ class CalendarSermonFragment : Fragment() {
 			val endMillis = DateUtils.getMonthEndMillisExclusive(currentYear, currentMonth0)
 			val markers = db.sermonDao().getSermonMarkersInRange(startMillis, endMillis)
 
+			val fallbackColorHex = String.format(
+				"#%06X", 0xFFFFFF and androidx.core.content.ContextCompat.getColor(
+					requireContext(), R.color.category_none
+				)
+			)
 			val colorsByDate = markers.groupBy { it.sermonDate }
-				.mapValues { entry -> entry.value.mapNotNull { it.colorHex } }
+				.mapValues { entry -> entry.value.map { it.colorHex ?: fallbackColorHex } }
 
 			val cells = buildMonthCells(currentYear, currentMonth0, colorsByDate)
 			gridRecycler.adapter = CalendarGridAdapter(cells, selectedDate) { cell ->
@@ -204,11 +214,48 @@ class CalendarSermonFragment : Fragment() {
 		return cells
 	}
 
+	override fun getSortOptions() = listOf(
+		"BIBLE" to "성경순",
+		"CATEGORY" to "카테고리순",
+		"ADDED" to "추가순"
+	)
+
+	override fun getCurrentSortMode() = sortMode
+
+	override fun setSortMode(mode: String) {
+		sortMode = mode
+		AppSettings.setCalendarSortMode(requireContext(), mode)
+		loadSermonsForSelectedDate()
+	}
+
 	private fun loadSermonsForSelectedDate() {
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(requireContext().applicationContext)
 			val sermons = db.sermonDao().getByDate(selectedDate)
-			renderList(sermons)
+			val sorted = when (sortMode) {
+				"BIBLE" -> {
+					val firstRefs =
+						com.chan.bnote.ui.sermon.SermonSortUtils.loadFirstRefs(db, sermons)
+					sermons.sortedWith(
+						com.chan.bnote.ui.sermon.SermonSortUtils.byBibleOrder(
+							firstRefs
+						)
+					)
+				}
+
+				"CATEGORY" -> {
+					val categoryOrder =
+						com.chan.bnote.ui.sermon.SermonSortUtils.loadCategoryOrderMap(db)
+					sermons.sortedWith(
+						com.chan.bnote.ui.sermon.SermonSortUtils.byCategoryOrder(
+							categoryOrder
+						)
+					)
+				}
+
+				else -> sermons.sortedWith(com.chan.bnote.ui.sermon.SermonSortUtils.byAddedOrder())
+			}
+			renderList(sorted)
 		}
 	}
 

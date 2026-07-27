@@ -5,6 +5,10 @@
     <!-- 찬송 화면의 유튜브 재생/썸네일 로딩에 필요 -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- 성경 탭 메뉴의 "방해금지 모드 활성화" 토글용. 이것만으로 실제 방해금지를 켤 순 없고,
+         NotificationManager.isNotificationPolicyAccessGranted()가 true여야(사용자가 설정
+         화면에서 직접 허용해야) 실제로 켤 수 있다. -->
+    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
     <!-- 설교 사진 첨부(카메라 촬영)에 필요 -->
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-feature
@@ -36,9 +40,6 @@
             android:name=".ui.bible.scrap.ScrapActivity"
             android:exported="false" />
         <activity
-            android:name=".ui.bible.scrap.ScrapGroupManageActivity"
-            android:exported="false" />
-        <activity
             android:name=".ui.appendix.AppendixTextActivity"
             android:exported="false" />
         <activity
@@ -54,10 +55,6 @@
             android:name=".ui.sermon.addsermon.AddSermonActivity"
             android:windowSoftInputMode="adjustResize"
             android:exported="false" />
-        <activity
-            android:name=".ui.bible.memo.MemoEditorActivity"
-            android:exported="false"
-            android:windowSoftInputMode="adjustResize" />
         <activity
             android:name=".ui.bible.memo.WordMemoEditorActivity"
             android:exported="false"
@@ -89,7 +86,10 @@
             android:name=".ui.mypage.memorization.MemorizationVerseListActivity"
             android:exported="false" />
         <activity
-            android:name=".ui.mypage.memorization.MemorizationGroupManageActivity"
+            android:name=".ui.mypage.gratitude.GratitudeActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.mypage.gratitude.AddGratitudeActivity"
             android:exported="false" />
         <activity
             android:name=".ui.mypage.settings.AppInfoActivity"
@@ -102,6 +102,12 @@
             android:exported="false" />
         <activity
             android:name=".ui.mypage.settings.OpenSourceLicensesActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.mypage.settings.VersionHistoryActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.mypage.settings.SeedReconciliationActivity"
             android:exported="false" />
         <activity
             android:name=".ui.mypage.memorization.MemorizationVerseDetailActivity"
@@ -157,7 +163,25 @@
             android:windowSoftInputMode="adjustResize"
             android:exported="false" />
         <activity
-            android:name=".ui.sermon.CategoryManageActivity"
+            android:name=".ui.sermon.category.CategoryManageActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.sermon.bypreacher.PreacherManageActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.sermon.bypreacher.PreacherSermonListActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.application.category.ApplicationCategoryManageActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.application.category.CategoryApplicationListActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.application.addapplication.AddApplicationActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.application.ApplicationDetailActivity"
             android:exported="false" />
         <activity
             android:name=".ui.sermon.detail.SermonDetailActivity"
@@ -170,6 +194,9 @@
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
         <activity
+            android:name=".ui.sermon.category.CategorySermonListActivity"
+            android:exported="false" />
+        <activity
             android:name=".ui.bible.BibleSearchActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
@@ -178,6 +205,9 @@
             android:exported="false" />
         <activity
             android:name=".ui.bible.HighlightListActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.bible.HighlightBookDetailActivity"
             android:exported="false" />
         <activity
             android:name=".ui.bible.memo.MemoListActivity"

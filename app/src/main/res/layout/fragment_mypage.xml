@@ -181,6 +181,22 @@
                 android:layout_height="1dp"
                 android:background="@color/divider_light" />
 
+            <TextView
+                android:id="@+id/menu_gratitude"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="18dp"
+                android:text="감사노트"
+                android:textSize="16sp"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@color/divider_light" />
+
         </LinearLayout>
     </ScrollView>
 

@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.chan.bnote.R
+import com.chan.bnote.data.AppSettings
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.bible.BibleBooks
 import com.chan.bnote.data.sermon.ChapterMarker
@@ -20,11 +21,13 @@ import com.chan.bnote.data.sermon.Sermon
 import com.chan.bnote.ui.bible.picker.BookOnlyPickerBottomSheet
 import com.chan.bnote.ui.sermon.SermonRowAdapter
 import com.chan.bnote.ui.sermon.SermonRowBuilder
+import com.chan.bnote.ui.sermon.SermonSortableFragment
+import com.chan.bnote.ui.sermon.SortButtonHelper
 import com.chan.bnote.ui.sermon.addsermon.AddSermonActivity
 import com.chan.bnote.ui.sermon.detail.SermonDetailActivity
 import kotlinx.coroutines.launch
 
-class SermonByBookFragment : Fragment() {
+class SermonByBookFragment : Fragment(), SermonSortableFragment {
 
 	private lateinit var bookTitleText: TextView
 	private lateinit var chapterGridRecycler: RecyclerView
@@ -49,6 +52,7 @@ class SermonByBookFragment : Fragment() {
 
 	private var currentBookId = 1
 	private var selectedChapter = 1
+	private var sortMode = "ADDED"
 
 	override fun onCreateView(
 		inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -63,8 +67,11 @@ class SermonByBookFragment : Fragment() {
 		chapterGridRecycler = view.findViewById(R.id.recycler_chapter_grid)
 		chapterGridRecycler.layoutManager = GridLayoutManager(requireContext(), 7)
 
+		sortMode = AppSettings.getByBookSortMode(requireContext())
+
 		bookTitleText.setOnClickListener {
 			val picker = BookOnlyPickerBottomSheet()
+			picker.selectedBookId = currentBookId
 			picker.onBookSelected = { bookId ->
 				currentBookId = bookId
 				selectedChapter = 1
@@ -87,6 +94,8 @@ class SermonByBookFragment : Fragment() {
 				loadChapterGrid()
 			}
 		}
+
+		SortButtonHelper.setup(view.findViewById(R.id.btn_by_book_sort), this)
 
 		view.findViewById<TextView>(R.id.fab_add_sermon_by_book).setOnClickListener {
 			addSermonLauncher.launch(AddSermonActivity.createIntent(requireContext()))
@@ -119,14 +128,34 @@ class SermonByBookFragment : Fragment() {
 
 	// 구간(예: 1~3장)에 걸친 마커를 장 단위로 펼쳐서, 걸쳐있는 모든 장에 같은 색이 표시되게 함
 	private fun buildColorsByChapter(markers: List<ChapterMarker>): Map<Int, List<String>> {
+		val fallbackColorHex = String.format(
+			"#%06X", 0xFFFFFF and androidx.core.content.ContextCompat.getColor(
+				requireContext(), R.color.category_none
+			)
+		)
 		val result = mutableMapOf<Int, MutableList<String>>()
 		for (marker in markers) {
-			val color = marker.colorHex ?: continue
+			val color = marker.colorHex ?: fallbackColorHex
 			for (chapter in marker.startChapter..marker.endChapter) {
 				result.getOrPut(chapter) { mutableListOf() }.add(color)
 			}
 		}
 		return result
+	}
+
+	override fun getSortOptions() = listOf(
+		"BIBLE" to "성경순(시작절)",
+		"DATE" to "날짜순",
+		"CATEGORY" to "카테고리순",
+		"ADDED" to "추가순"
+	)
+
+	override fun getCurrentSortMode() = sortMode
+
+	override fun setSortMode(mode: String) {
+		sortMode = mode
+		AppSettings.setByBookSortMode(requireContext(), mode)
+		loadSermonsForSelectedChapter()
 	}
 
 	private fun loadSermonsForSelectedChapter() {
@@ -138,7 +167,31 @@ class SermonByBookFragment : Fragment() {
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(requireContext().applicationContext)
 			val sermons = db.sermonDao().getByBookChapter(currentBookId, selectedChapter)
-			renderList(sermons)
+			val sorted = when (sortMode) {
+				"BIBLE" -> {
+					val firstRefs =
+						com.chan.bnote.ui.sermon.SermonSortUtils.loadFirstRefs(db, sermons)
+					sermons.sortedWith(
+						com.chan.bnote.ui.sermon.SermonSortUtils.byBibleOrder(
+							firstRefs
+						)
+					)
+				}
+
+				"DATE" -> sermons.sortedWith(com.chan.bnote.ui.sermon.SermonSortUtils.byDateDesc())
+				"CATEGORY" -> {
+					val categoryOrder =
+						com.chan.bnote.ui.sermon.SermonSortUtils.loadCategoryOrderMap(db)
+					sermons.sortedWith(
+						com.chan.bnote.ui.sermon.SermonSortUtils.byCategoryOrder(
+							categoryOrder
+						)
+					)
+				}
+
+				else -> sermons.sortedWith(com.chan.bnote.ui.sermon.SermonSortUtils.byAddedOrder())
+			}
+			renderList(sorted)
 		}
 	}
 

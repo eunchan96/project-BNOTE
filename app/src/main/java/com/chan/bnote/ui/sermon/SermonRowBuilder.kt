@@ -11,7 +11,7 @@ object SermonRowBuilder {
 		useDateLabel: Boolean = true
 	): List<SermonRowData> {
 		return sermons.map { sermon ->
-			val firstRef = db.sermonBibleRefDao().getFirstRef(sermon.id)
+			val refs = db.sermonBibleRefDao().getBySermon(sermon.id)
 			val category = sermon.categoryId?.let { db.sermonCategoryDao().getById(it) }
 			val rightTopLabel = if (useDateLabel) {
 				DateUtils.formatDateShort(sermon.sermonDate)
@@ -22,7 +22,7 @@ object SermonRowBuilder {
 				sermon = sermon,
 				colorHex = category?.colorHex,
 				dateLabel = rightTopLabel,
-				bibleRefLabel = firstRef?.toShortLabel() ?: ""
+				bibleRefLabel = refs.joinToString(", ") { it.toShortLabel() }
 			)
 		}
 	}

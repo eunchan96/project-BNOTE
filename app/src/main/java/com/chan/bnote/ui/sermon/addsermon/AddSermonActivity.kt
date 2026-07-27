@@ -36,6 +36,8 @@ import com.chan.bnote.data.sermon.Sermon
 import com.chan.bnote.data.sermon.SermonBibleRef
 import com.chan.bnote.data.sermon.sermonphoto.SermonPhoto
 import com.chan.bnote.data.sermon.sermonphoto.SermonPhotoStorage
+import com.chan.bnote.ui.bible.picker.BibleRangePickerBottomSheet
+import com.chan.bnote.ui.sermon.detail.SermonDetailActivity
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 import java.io.File
@@ -72,6 +74,17 @@ class AddSermonActivity : AppCompatActivity() {
 	private var selectedPreacherId: Long? = null
 	private val bibleRefs = mutableListOf<SermonBibleRef>()
 	private val photoPaths = mutableListOf<String>()
+	private var isEditMode = false
+
+	// 수정 모드에서 뒤로가기 눌렀을 때 "진짜로 뭔가 바뀌었는지" 비교하기 위한 원본 값들.
+	private var originalTitle = ""
+	private var originalMemo = ""
+	private var originalLink = ""
+	private var originalDateMillis = 0L
+	private var originalCategoryId: Long? = null
+	private var originalPreacherId: Long? = null
+	private var originalRefsSignature = ""
+	private var originalPhotoPaths: List<String> = emptyList()
 	private var pendingCaptureFile: File? = null
 
 	private lateinit var flexboxRefs: com.google.android.flexbox.FlexboxLayout
@@ -82,6 +95,8 @@ class AddSermonActivity : AppCompatActivity() {
 	private lateinit var scrollPhotos: View
 	private lateinit var photoContainer: LinearLayout
 	private lateinit var editMemo: EditText
+	private lateinit var editTitle: EditText
+	private lateinit var editLink: EditText
 
 	private val pickPhotosLauncher = registerForActivityResult(
 		ActivityResultContracts.PickMultipleVisualMedia(MAX_PHOTOS)
@@ -136,7 +151,7 @@ class AddSermonActivity : AppCompatActivity() {
 		}
 
 		val sermonId = intent.getLongExtra(EXTRA_SERMON_ID, -1L)
-		val isEditMode = sermonId != -1L
+		isEditMode = sermonId != -1L
 
 		if (intent.hasExtra(EXTRA_INITIAL_DATE_MILLIS)) {
 			selectedDateMillis = intent.getLongExtra(EXTRA_INITIAL_DATE_MILLIS, selectedDateMillis)
@@ -144,10 +159,40 @@ class AddSermonActivity : AppCompatActivity() {
 
 		findViewById<TextView>(R.id.text_top_bar_title).text =
 			if (isEditMode) "설교 기록 수정" else "설교 기록 추가"
-		findViewById<ImageView>(R.id.btn_top_bar_back).setOnClickListener { finish() }
+		findViewById<ImageView>(R.id.btn_top_bar_back).setOnClickListener { handleBackPress() }
+		onBackPressedDispatcher.addCallback(
+			this,
+			object : androidx.activity.OnBackPressedCallback(true) {
+				override fun handleOnBackPressed() {
+					handleBackPress()
+				}
+			})
 
-		val editTitle = findViewById<EditText>(R.id.edit_title)
+		editTitle = findViewById(R.id.edit_title)
 		editMemo = findViewById(R.id.edit_memo)
+		com.chan.bnote.ui.common.TextAutoReplace.attachArrowReplacement(editMemo)
+		// 블루투스/물리 키보드를 연결했을 때, 드래그로 선택한 뒤 Ctrl+B/Ctrl+U로도 굵게/밑줄을 바로
+		// 적용할 수 있게 한다(툴바 버튼 누르는 것과 동일하게 동작).
+		editMemo.setOnKeyListener { _, keyCode, event ->
+			if (event.action == android.view.KeyEvent.ACTION_DOWN && event.isCtrlPressed) {
+				when (keyCode) {
+					android.view.KeyEvent.KEYCODE_B -> {
+						applyFormatting(bold = true)
+						true
+					}
+
+					android.view.KeyEvent.KEYCODE_U -> {
+						applyFormatting(bold = false)
+						true
+					}
+
+					else -> false
+				}
+			} else {
+				false
+			}
+		}
+		editLink = findViewById(R.id.edit_sermon_link)
 		btnDate = findViewById(R.id.btn_pick_date)
 		btnPickPreacher = findViewById(R.id.btn_pick_preacher)
 		btnPickCategory = findViewById(R.id.btn_pick_category)
@@ -203,7 +248,7 @@ class AddSermonActivity : AppCompatActivity() {
 		btnAddPhoto.setOnClickListener { showPhotoSourceMenu(it) }
 
 		findViewById<TextView>(R.id.btn_save_sermon).setOnClickListener {
-			save(editTitle.text.toString().trim(), editMemo.text)
+			save(editTitle.text.toString().trim(), editMemo.text, editLink.text.toString().trim())
 		}
 
 		lifecycleScope.launch {
@@ -215,6 +260,7 @@ class AddSermonActivity : AppCompatActivity() {
 				if (sermon != null) {
 					editTitle.setText(sermon.title)
 					editMemo.setText(RichTextUtils.toEditable(sermon.memo))
+					editLink.setText(sermon.link ?: "")
 					selectedDateMillis = sermon.sermonDate
 					selectedCategoryId = sermon.categoryId
 					selectedPreacherId = sermon.preacherId
@@ -226,6 +272,16 @@ class AddSermonActivity : AppCompatActivity() {
 					photoPaths.addAll(
 						db.sermonPhotoDao().getBySermon(sermon.id).map { it.filePath })
 					renderPhotoThumbnails()
+
+					// 뒤로가기 시 "진짜로 뭔가 바뀌었는지" 비교하기 위한 원본 스냅샷.
+					originalTitle = sermon.title
+					originalMemo = sermon.memo
+					originalLink = sermon.link ?: ""
+					originalDateMillis = sermon.sermonDate
+					originalCategoryId = sermon.categoryId
+					originalPreacherId = sermon.preacherId
+					originalRefsSignature = refsSignature(bibleRefs)
+					originalPhotoPaths = photoPaths.toList()
 				}
 			}
 
@@ -299,19 +355,22 @@ class AddSermonActivity : AppCompatActivity() {
 		flexboxRefs.removeAllViews()
 
 		if (bibleRefs.isEmpty()) {
-			flexboxRefs.addView(buildRefBox("본문 선택", fullWidth = true) { openBibleRangePicker() })
+			flexboxRefs.addView(buildRefBox("본문 선택", fullWidth = true) {
+				openBibleRangePicker(
+					existing = null
+				)
+			})
 			return
 		}
 
 		for (ref in bibleRefs) {
 			flexboxRefs.addView(
 				buildRefBox(ref.toDisplayLabel(), fullWidth = false) {
-					bibleRefs.remove(ref)
-					renderBibleRefBoxes()
+					openBibleRangePicker(existing = ref)
 				}
 			)
 		}
-		val addButton = buildAddSquareButton { openBibleRangePicker() }
+		val addButton = buildAddSquareButton { openBibleRangePicker(existing = null) }
 		flexboxRefs.addView(addButton)
 
 		// 본문 박스들이 실제로 배치된 뒤, 그 높이에 맞춰 "+" 버튼을 정확히 정사각형으로 맞춘다.
@@ -328,10 +387,20 @@ class AddSermonActivity : AppCompatActivity() {
 		}
 	}
 
-	private fun openBibleRangePicker() {
+	private fun openBibleRangePicker(existing: SermonBibleRef?) {
 		val rangePicker = BibleRangePickerBottomSheet()
+		rangePicker.existingRef = existing
 		rangePicker.onRangeSelected = { ref ->
-			bibleRefs.add(ref)
+			if (existing != null) {
+				val index = bibleRefs.indexOf(existing)
+				if (index != -1) bibleRefs[index] = ref else bibleRefs.add(ref)
+			} else {
+				bibleRefs.add(ref)
+			}
+			renderBibleRefBoxes()
+		}
+		rangePicker.onDeleteRequested = {
+			bibleRefs.remove(existing)
 			renderBibleRefBoxes()
 		}
 		rangePicker.show(supportFragmentManager, "bible_range_picker")
@@ -450,7 +519,51 @@ class AddSermonActivity : AppCompatActivity() {
 
 	private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
 
-	private fun save(title: String, memo: CharSequence) {
+	private fun refsSignature(refs: List<SermonBibleRef>): String =
+		refs.joinToString("|") {
+			"${it.startBookId}-${it.startChapter}-${it.startVerse}-${it.endBookId}-${it.endChapter}-${it.endVerse}"
+		}
+
+	private fun hasUnsavedContent(): Boolean {
+		if (!isEditMode) {
+			return editTitle.text.toString().isNotBlank() ||
+					editMemo.text.toString().isNotBlank() ||
+					editLink.text.toString().isNotBlank() ||
+					bibleRefs.isNotEmpty() ||
+					photoPaths.isNotEmpty() ||
+					selectedCategoryId != null ||
+					selectedPreacherId != null
+		}
+		// 수정 모드에서는 원본과 실제로 달라진 게 있을 때만 "저장 안 된 변경사항"으로 본다.
+		return editTitle.text.toString().trim() != originalTitle ||
+				RichTextUtils.toStorageString(editMemo.text) != originalMemo ||
+				editLink.text.toString().trim() != originalLink ||
+				selectedDateMillis != originalDateMillis ||
+				selectedCategoryId != originalCategoryId ||
+				selectedPreacherId != originalPreacherId ||
+				refsSignature(bibleRefs) != originalRefsSignature ||
+				photoPaths != originalPhotoPaths
+	}
+
+	private fun handleBackPress() {
+		if (!hasUnsavedContent()) {
+			finish()
+			return
+		}
+		com.chan.bnote.ui.common.UnsavedChangesDialog.show(
+			context = this,
+			onSaveAndExit = {
+				save(
+					editTitle.text.toString().trim(),
+					editMemo.text,
+					editLink.text.toString().trim()
+				)
+			},
+			onDiscard = { finish() }
+		)
+	}
+
+	private fun save(title: String, memo: CharSequence, link: String) {
 		if (title.isEmpty()) {
 			Toast.makeText(this, "제목을 입력해주세요", Toast.LENGTH_SHORT).show()
 			return
@@ -461,6 +574,7 @@ class AddSermonActivity : AppCompatActivity() {
 			return
 		}
 		val memoText = RichTextUtils.toStorageString(memo)
+		val linkValue = link.trim().ifEmpty { null }
 
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(applicationContext)
@@ -471,7 +585,7 @@ class AddSermonActivity : AppCompatActivity() {
 				sermonId = db.sermonDao().insert(
 					Sermon(
 						title = title, preacherId = preacherId, sermonDate = selectedDateMillis,
-						categoryId = selectedCategoryId, memo = memoText
+						categoryId = selectedCategoryId, memo = memoText, link = linkValue
 					)
 				)
 			} else {
@@ -479,7 +593,7 @@ class AddSermonActivity : AppCompatActivity() {
 				db.sermonDao().update(
 					current.copy(
 						title = title, preacherId = preacherId, sermonDate = selectedDateMillis,
-						categoryId = selectedCategoryId, memo = memoText
+						categoryId = selectedCategoryId, memo = memoText, link = linkValue
 					)
 				)
 				db.sermonBibleRefDao().deleteBySermon(sermonId)
@@ -499,6 +613,7 @@ class AddSermonActivity : AppCompatActivity() {
 			}
 
 			setResult(Activity.RESULT_OK)
+			SermonDetailActivity.start(this@AddSermonActivity, sermonId)
 			finish()
 		}
 	}

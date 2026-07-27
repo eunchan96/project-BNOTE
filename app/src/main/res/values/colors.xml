@@ -4,6 +4,10 @@
     <color name="white">#FFFFFFFF</color>
 
     <color name="brown_primary">#795548</color>
+    <!-- 절 선택(드래그/롱프레스) 중일 때 선택 구간에 직접 씌우는 회색 배경. 안드로이드가 자체적으로
+         그리는 선택 배경은 우리가 이미 칠해둔 하이라이트 배경보다 먼저 그려지는 구조라 하이라이트에
+         가려 안 보였는데, 이건 하이라이트와 똑같이 스패너블에 직접 얹는 배경 스팬이라 그 위에 그려진다. -->
+    <color name="verse_selection_background">#B0B0B0</color>
     <color name="brown_primary_dark">#5D4037</color>
     <color name="brown_light">#A1887F</color>
 
@@ -18,6 +22,8 @@
     <color name="text_primary">#212121</color>
     <color name="text_secondary">#757575</color>
     <color name="text_hint">#9E9E9E</color>
+    <!-- 카테고리 미지정 설교의 기본 색상 (라이트 모드에서도 잘 보이도록) -->
+    <color name="category_none">#D6D6D6</color>
     <color name="input_background">#F5F5F5</color>
     <color name="highlight_yellow">#FFF9C4</color>
 

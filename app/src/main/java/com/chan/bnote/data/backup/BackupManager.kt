@@ -9,6 +9,7 @@ import com.chan.bnote.data.bible.memo.WordMemo
 import com.chan.bnote.data.bible.partialhighlight.PartialHighlight
 import com.chan.bnote.data.bible.scrap.Scrap
 import com.chan.bnote.data.bible.scrap.ScrapGroup
+import com.chan.bnote.data.mypage.CopyFormatPreset
 import com.chan.bnote.data.mypage.memorization.MemorizationGroup
 import com.chan.bnote.data.mypage.memorization.MemorizationVerse
 import com.chan.bnote.data.mypage.memorization.VerseMemorizationProgress
@@ -126,6 +127,10 @@ object BackupManager {
 			"verseOfYearRefs",
 			JSONArray(db.verseOfYearRefDao().getAllRefs().map { it.toJson() })
 		)
+		root.put(
+			"copyFormatPresets",
+			JSONArray(db.copyFormatPresetDao().getAll().map { it.toJson() })
+		)
 
 		return root
 	}
@@ -164,6 +169,7 @@ object BackupManager {
 		db.readingProgressDao().resetAll()
 		db.verseOfYearRefDao().deleteAll()
 		db.verseOfYearDao().deleteAll()
+		db.copyFormatPresetDao().deleteAll()
 
 		// 2) 백업 내용을 다시 채운다. id가 있는 참조 관계(그룹→항목, 설교자/카테고리→설교 등)는
 		//    새로 생성되는 id로 다시 매핑해줘야 한다.
@@ -246,6 +252,7 @@ object BackupManager {
 					sermonDate = obj.getLong("sermonDate"),
 					categoryId = oldCategoryId?.let { categoryIdMap[it] },
 					memo = obj.optString("memo", ""),
+					link = if (obj.has("link")) obj.getString("link") else null,
 					createdAt = obj.optLong("createdAt", System.currentTimeMillis())
 				)
 			)
@@ -355,6 +362,14 @@ object BackupManager {
 				)
 			)
 		}
+		for (i in 0 until root.optJSONArray("copyFormatPresets")?.length().orZero()) {
+			db.copyFormatPresetDao()
+				.insert(
+					copyFormatPresetFromJson(
+						root.getJSONArray("copyFormatPresets").getJSONObject(i)
+					)
+				)
+		}
 	}
 
 	private fun Int?.orZero() = this ?: 0
@@ -381,7 +396,10 @@ object BackupManager {
 		"chapter",
 		chapter
 	); put("verse", verse)
-		put("startOffset", startOffset); put("endOffset", endOffset); put("colorHex", colorHex)
+		put("startOffset", startOffset); put("endOffset", endOffset); put(
+		"segment",
+		segment
+	); put("colorHex", colorHex)
 	}
 
 	private fun highlightFromJson(o: JSONObject) = PartialHighlight(
@@ -391,6 +409,7 @@ object BackupManager {
 		verse = o.getInt("verse"),
 		startOffset = o.getInt("startOffset"),
 		endOffset = o.getInt("endOffset"),
+		segment = o.optInt("segment", 0),
 		colorHex = o.optString("colorHex", "#FFF9C4")
 	)
 
@@ -433,7 +452,10 @@ object BackupManager {
 		"chapter",
 		chapter
 	); put("verse", verse)
-		put("startOffset", startOffset); put("endOffset", endOffset); put("text", text)
+		put("startOffset", startOffset); put("endOffset", endOffset); put(
+		"segment",
+		segment
+	); put("text", text)
 		sourceLabel?.let { put("sourceLabel", it) }
 		put("updatedAt", updatedAt)
 	}
@@ -445,6 +467,7 @@ object BackupManager {
 		verse = o.getInt("verse"),
 		startOffset = o.getInt("startOffset"),
 		endOffset = o.getInt("endOffset"),
+		segment = o.optInt("segment", 0),
 		text = o.getString("text"),
 		sourceLabel = if (o.has("sourceLabel")) o.getString("sourceLabel") else null,
 		updatedAt = o.optLong("updatedAt", System.currentTimeMillis())
@@ -466,7 +489,9 @@ object BackupManager {
 		preacherId?.let { put("preacherId", it) }
 		put("sermonDate", sermonDate)
 		categoryId?.let { put("categoryId", it) }
-		put("memo", memo); put("createdAt", createdAt)
+		put("memo", memo)
+		link?.let { put("link", it) }
+		put("createdAt", createdAt)
 	}
 
 	private fun SermonBibleRef.toJson() = JSONObject().apply {
@@ -585,4 +610,15 @@ object BackupManager {
 		endVerse = o.getInt("endVerse"),
 		verseText = o.getString("verseText")
 	)
+
+	private fun CopyFormatPreset.toJson() = JSONObject().apply {
+		put("name", name); put("configJson", configJson); put("createdAt", createdAt)
+	}
+
+	private fun copyFormatPresetFromJson(o: JSONObject) =
+		com.chan.bnote.data.mypage.CopyFormatPreset(
+			name = o.getString("name"),
+			configJson = o.getString("configJson"),
+			createdAt = o.optLong("createdAt", System.currentTimeMillis())
+		)
 }

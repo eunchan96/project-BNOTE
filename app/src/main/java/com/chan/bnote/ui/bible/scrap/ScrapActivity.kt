@@ -3,11 +3,14 @@ package com.chan.bnote.ui.bible.scrap
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
+import android.widget.EditText
+import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -27,9 +30,13 @@ class ScrapActivity : AppCompatActivity() {
 	private lateinit var verseRecycler: RecyclerView
 	private lateinit var detailGroupNameText: TextView
 	private lateinit var editModeToggle: TextView
+	private lateinit var btnManageGroups: TextView
+	private lateinit var btnAddGroup: TextView
 
 	private var selectedGroup: ScrapGroup? = null
 	private var isEditMode = false
+	private var isGroupManageMode = false
+	private var groups: List<ScrapGroup> = emptyList()
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
@@ -49,15 +56,16 @@ class ScrapActivity : AppCompatActivity() {
 		verseRecycler = findViewById(R.id.recycler_group_verses)
 		detailGroupNameText = findViewById(R.id.text_detail_group_name)
 		editModeToggle = findViewById(R.id.btn_edit_mode_toggle)
+		btnManageGroups = findViewById(R.id.btn_manage_groups)
+		btnAddGroup = findViewById(R.id.btn_add_group)
 
 		groupRecycler.layoutManager = LinearLayoutManager(this)
 		verseRecycler.layoutManager = LinearLayoutManager(this)
 
 		findViewById<ImageView>(R.id.btn_back_from_list).setOnClickListener { finish() }
 		findViewById<ImageView>(R.id.btn_back_from_detail).setOnClickListener { showGroupListScreen() }
-		findViewById<TextView>(R.id.btn_manage_groups).setOnClickListener {
-			startActivity(Intent(this, ScrapGroupManageActivity::class.java))
-		}
+		btnManageGroups.setOnClickListener { toggleGroupManageMode() }
+		btnAddGroup.setOnClickListener { showAddGroupDialog() }
 		editModeToggle.setOnClickListener { toggleEditMode() }
 
 		onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
@@ -75,8 +83,6 @@ class ScrapActivity : AppCompatActivity() {
 
 	override fun onResume() {
 		super.onResume()
-		// 그룹 관리 화면에서 돌아왔을 때 그룹/개수가 바뀌었을 수 있으니 갱신
-		loadGroups()
 		selectedGroup?.let { loadGroupVerses(it) }
 	}
 
@@ -84,6 +90,9 @@ class ScrapActivity : AppCompatActivity() {
 		groupListContainer.visibility = View.VISIBLE
 		groupDetailContainer.visibility = View.GONE
 		selectedGroup = null
+		isGroupManageMode = false
+		btnManageGroups.text = "관리"
+		btnAddGroup.visibility = View.GONE
 		loadGroups()
 	}
 
@@ -92,21 +101,28 @@ class ScrapActivity : AppCompatActivity() {
 		groupDetailContainer.visibility = View.VISIBLE
 		selectedGroup = group
 		isEditMode = false
-		editModeToggle.text = "수정"
+		editModeToggle.text = "관리"
 		detailGroupNameText.text = group.name
 		loadGroupVerses(group)
 	}
 
 	private fun toggleEditMode() {
 		isEditMode = !isEditMode
-		editModeToggle.text = if (isEditMode) "완료" else "수정"
+		editModeToggle.text = if (isEditMode) "완료" else "관리"
 		(verseRecycler.adapter as? ScrapVerseAdapter)?.setEditMode(isEditMode)
+	}
+
+	private fun toggleGroupManageMode() {
+		isGroupManageMode = !isGroupManageMode
+		btnManageGroups.text = if (isGroupManageMode) "완료" else "관리"
+		btnAddGroup.visibility = if (isGroupManageMode) View.VISIBLE else View.GONE
+		(groupRecycler.adapter as? ScrapGroupRowAdapter)?.setEditMode(isGroupManageMode)
 	}
 
 	private fun loadGroups() {
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(applicationContext)
-			val groups = db.scrapDao().getAllGroups()
+			groups = db.scrapDao().getAllGroups()
 			val rows = groups.map { group ->
 				ScrapGroupRow(group, db.scrapDao().getScrapsByGroup(group.id).size)
 			}
@@ -114,10 +130,86 @@ class ScrapActivity : AppCompatActivity() {
 			findViewById<TextView>(R.id.text_group_list_empty).visibility =
 				if (groups.isEmpty()) View.VISIBLE else View.GONE
 
-			groupRecycler.adapter = ScrapGroupRowAdapter(rows) { group ->
-				showGroupDetailScreen(group)
-			}
+			groupRecycler.adapter = ScrapGroupRowAdapter(
+				rows = rows,
+				isEditMode = isGroupManageMode,
+				onClick = { group -> showGroupDetailScreen(group) },
+				onEdit = { group -> showRenameGroupDialog(group) },
+				onDelete = { group -> confirmDeleteGroup(group) }
+			)
 		}
+	}
+
+	private fun showAddGroupDialog() {
+		val editText = EditText(this).apply {
+			hint = "그룹 이름"
+			setPadding(48, 32, 48, 32)
+			textSize = 15f
+			background = ContextCompat.getDrawable(this@ScrapActivity, R.drawable.bg_book_button)
+		}
+		val container = FrameLayout(this).apply {
+			setPadding(dp(24), dp(16), dp(24), dp(0))
+			addView(editText)
+		}
+		MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_BNOTE_Dialog)
+			.setTitle("새 그룹 추가")
+			.setView(container)
+			.setPositiveButton("추가") { _, _ ->
+				val name = editText.text.toString().trim()
+				if (name.isNotEmpty()) {
+					lifecycleScope.launch {
+						val db = BibleDatabase.getInstance(applicationContext)
+						db.scrapDao().insertGroup(ScrapGroup(name = name, sortOrder = groups.size))
+						loadGroups()
+					}
+				}
+			}
+			.setNegativeButton("취소", null)
+			.show()
+	}
+
+	private fun showRenameGroupDialog(group: ScrapGroup) {
+		val editText = EditText(this).apply {
+			setText(group.name)
+			setPadding(48, 32, 48, 32)
+			textSize = 15f
+			background = ContextCompat.getDrawable(this@ScrapActivity, R.drawable.bg_book_button)
+		}
+		val container = FrameLayout(this).apply {
+			setPadding(dp(24), dp(16), dp(24), dp(0))
+			addView(editText)
+		}
+		MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_BNOTE_Dialog)
+			.setTitle("그룹 이름 수정")
+			.setView(container)
+			.setPositiveButton("저장") { _, _ ->
+				val newName = editText.text.toString().trim()
+				if (newName.isNotEmpty()) {
+					lifecycleScope.launch {
+						val db = BibleDatabase.getInstance(applicationContext)
+						db.scrapDao().updateGroup(group.copy(name = newName))
+						loadGroups()
+					}
+				}
+			}
+			.setNegativeButton("취소", null)
+			.show()
+	}
+
+	private fun confirmDeleteGroup(group: ScrapGroup) {
+		MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_BNOTE_Dialog)
+			.setTitle("그룹 삭제")
+			.setMessage("'${group.name}' 그룹과 그 안의 스크랩이 전부 삭제돼요. 계속할까요?")
+			.setPositiveButton("삭제") { _, _ ->
+				lifecycleScope.launch {
+					val db = BibleDatabase.getInstance(applicationContext)
+					db.scrapDao().deleteScrapsByGroup(group.id)
+					db.scrapDao().deleteGroup(group)
+					loadGroups()
+				}
+			}
+			.setNegativeButton("취소", null)
+			.show()
 	}
 
 	private fun loadGroupVerses(group: ScrapGroup) {
@@ -161,4 +253,6 @@ class ScrapActivity : AppCompatActivity() {
 			.setNegativeButton("취소", null)
 			.show()
 	}
+
+	private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
 }

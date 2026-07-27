@@ -175,7 +175,10 @@ class BookChapterPickerBottomSheet(
 			val db = BibleDatabase.getInstance(requireContext().applicationContext)
 			val chapters = db.bibleDao().getChapters(translation, selectedBookId)
 
-			recyclerView.adapter = GridNumberAdapter(chapters) { position ->
+			recyclerView.adapter = GridNumberAdapter(
+				chapters,
+				if (selectedChapter != -1) setOf(selectedChapter) else emptySet()
+			) { position ->
 				selectedChapter = chapters[position]
 				goToStep(Step.VERSE)
 			}

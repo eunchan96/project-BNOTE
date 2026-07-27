@@ -33,6 +33,7 @@ class WordMemoEditorActivity : AppCompatActivity() {
 		private const val EXTRA_VERSE = "extra_verse"
 		private const val EXTRA_START_OFFSET = "extra_start_offset"
 		private const val EXTRA_END_OFFSET = "extra_end_offset"
+		private const val EXTRA_SEGMENT = "extra_segment"
 
 		fun createIntent(
 			context: Context,
@@ -41,7 +42,8 @@ class WordMemoEditorActivity : AppCompatActivity() {
 			chapter: Int,
 			verse: Int,
 			startOffset: Int,
-			endOffset: Int
+			endOffset: Int,
+			segment: Int = 0
 		): Intent {
 			return Intent(context, WordMemoEditorActivity::class.java).apply {
 				putExtra(EXTRA_TRANSLATION, translation)
@@ -50,6 +52,7 @@ class WordMemoEditorActivity : AppCompatActivity() {
 				putExtra(EXTRA_VERSE, verse)
 				putExtra(EXTRA_START_OFFSET, startOffset)
 				putExtra(EXTRA_END_OFFSET, endOffset)
+				putExtra(EXTRA_SEGMENT, segment)
 			}
 		}
 	}
@@ -68,6 +71,7 @@ class WordMemoEditorActivity : AppCompatActivity() {
 	private var verse = 0
 	private var startOffset = 0
 	private var endOffset = 0
+	private var segment = 0
 	private var wordText = ""
 	private var anyChangeMade = false
 
@@ -97,8 +101,9 @@ class WordMemoEditorActivity : AppCompatActivity() {
 		verse = intent.getIntExtra(EXTRA_VERSE, 1)
 		startOffset = intent.getIntExtra(EXTRA_START_OFFSET, 0)
 		endOffset = intent.getIntExtra(EXTRA_END_OFFSET, 0)
+		segment = intent.getIntExtra(EXTRA_SEGMENT, 0)
 
-		findViewById<ImageView>(R.id.btn_top_bar_back).setOnClickListener { finishWithResult() }
+		findViewById<ImageView>(R.id.btn_top_bar_back).setOnClickListener { handleBackPress() }
 
 		container = findViewById(R.id.container_memo_boxes)
 
@@ -106,9 +111,38 @@ class WordMemoEditorActivity : AppCompatActivity() {
 			addBox(existing = null)
 		}
 
-		onBackPressedDispatcher.addCallback(this) { finishWithResult() }
+		onBackPressedDispatcher.addCallback(this) { handleBackPress() }
 
 		loadExisting()
+	}
+
+	private fun hasUnsavedText(): Boolean {
+		return boxes.any { box ->
+			val current = box.editText.text.toString().trim()
+			current != (box.existing?.text ?: "")
+		}
+	}
+
+	private fun handleBackPress() {
+		if (!hasUnsavedText()) {
+			finishWithResult()
+			return
+		}
+		com.chan.bnote.ui.common.UnsavedChangesDialog.show(
+			context = this,
+			onSaveAndExit = {
+				lifecycleScope.launch {
+					boxes.forEach { box ->
+						val current = box.editText.text.toString().trim()
+						if (current.isNotEmpty() && current != (box.existing?.text ?: "")) {
+							saveBoxSuspend(box)
+						}
+					}
+					finishWithResult()
+				}
+			},
+			onDiscard = { finishWithResult() }
+		)
 	}
 
 	private fun finishWithResult() {
@@ -119,8 +153,9 @@ class WordMemoEditorActivity : AppCompatActivity() {
 	private fun loadExisting() {
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(applicationContext)
-			val verseText = db.bibleDao().getVerses(translation, bookId, chapter)
-				.find { it.verse == verse }?.text ?: ""
+			val verseRow =
+				db.bibleDao().getVerses(translation, bookId, chapter).find { it.verse == verse }
+			val verseText = if (segment == 1) verseRow?.text2 ?: "" else verseRow?.text ?: ""
 			val safeStart = startOffset.coerceIn(0, verseText.length)
 			val safeEnd = endOffset.coerceIn(safeStart, verseText.length)
 			wordText = verseText.substring(safeStart, safeEnd)
@@ -130,7 +165,7 @@ class WordMemoEditorActivity : AppCompatActivity() {
 				"${BibleBooks.nameOf(bookId)} ${chapter}${unit} ${verse}절 [$wordText] 메모"
 
 			val existingMemos = db.wordMemoDao()
-				.getAtPosition(translation, bookId, chapter, verse, startOffset, endOffset)
+				.getAtPosition(translation, bookId, chapter, verse, startOffset, endOffset, segment)
 
 			if (existingMemos.isEmpty()) {
 				addBox(existing = null)
@@ -146,6 +181,11 @@ class WordMemoEditorActivity : AppCompatActivity() {
 
 		val editText = boxView.findViewById<EditText>(R.id.edit_box_text)
 		editText.setText(existing?.text ?: "")
+		com.chan.bnote.ui.common.TextAutoReplace.attachArrowReplacement(editText)
+		com.chan.bnote.ui.common.LinkifyHelper.applySmartLinks(editText)
+		editText.setOnFocusChangeListener { _, hasFocus ->
+			if (!hasFocus) com.chan.bnote.ui.common.LinkifyHelper.applySmartLinks(editText)
+		}
 		val checkbox = boxView.findViewById<CheckBox>(R.id.chk_box_propagate)
 
 		val box = MemoBox(existing, boxView, editText, checkbox)
@@ -189,28 +229,7 @@ class WordMemoEditorActivity : AppCompatActivity() {
 
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(applicationContext)
-			val existing = box.existing
-			if (existing != null) {
-				if (existing.text != text) {
-					val updated = existing.copy(text = text, updatedAt = System.currentTimeMillis())
-					db.wordMemoDao().update(updated)
-					box.existing = updated
-				}
-			} else {
-				val newId = db.wordMemoDao().insert(
-					WordMemo(
-						translation = translation,
-						bookId = bookId,
-						chapter = chapter,
-						verse = verse,
-						startOffset = startOffset,
-						endOffset = endOffset,
-						text = text
-					)
-				)
-				box.existing = db.wordMemoDao().getById(newId)
-			}
-			anyChangeMade = true
+			persistBox(box, text, db)
 
 			if (box.checkbox.isChecked) {
 				box.checkbox.isChecked = false
@@ -219,6 +238,39 @@ class WordMemoEditorActivity : AppCompatActivity() {
 				Toast.makeText(this@WordMemoEditorActivity, "저장됐어요", Toast.LENGTH_SHORT).show()
 			}
 		}
+	}
+
+	private suspend fun saveBoxSuspend(box: MemoBox) {
+		val text = box.editText.text.toString().trim()
+		if (text.isEmpty()) return
+		val db = BibleDatabase.getInstance(applicationContext)
+		persistBox(box, text, db)
+	}
+
+	private suspend fun persistBox(box: MemoBox, text: String, db: BibleDatabase) {
+		val existing = box.existing
+		if (existing != null) {
+			if (existing.text != text) {
+				val updated = existing.copy(text = text, updatedAt = System.currentTimeMillis())
+				db.wordMemoDao().update(updated)
+				box.existing = updated
+			}
+		} else {
+			val newId = db.wordMemoDao().insert(
+				WordMemo(
+					translation = translation,
+					bookId = bookId,
+					chapter = chapter,
+					verse = verse,
+					startOffset = startOffset,
+					endOffset = endOffset,
+					segment = segment,
+					text = text
+				)
+			)
+			box.existing = db.wordMemoDao().getById(newId)
+		}
+		anyChangeMade = true
 	}
 
 	private suspend fun propagateToOtherVerses(db: BibleDatabase, text: String) {

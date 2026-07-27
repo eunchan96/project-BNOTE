@@ -4,6 +4,15 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import com.chan.bnote.data.application.Application
+import com.chan.bnote.data.application.ApplicationBibleRef
+import com.chan.bnote.data.application.ApplicationBibleRefDao
+import com.chan.bnote.data.application.ApplicationCategory
+import com.chan.bnote.data.application.ApplicationCategoryDao
+import com.chan.bnote.data.application.ApplicationDao
+import com.chan.bnote.data.application.ApplicationSermonLink
+import com.chan.bnote.data.application.ApplicationSermonLinkDao
+import com.chan.bnote.data.application.DefaultApplicationCategories
 import com.chan.bnote.data.bible.BibleDao
 import com.chan.bnote.data.bible.BibleVerse
 import com.chan.bnote.data.bible.bookmark.BibleBookmark
@@ -21,8 +30,14 @@ import com.chan.bnote.data.bible.partialhighlight.PartialHighlightDao
 import com.chan.bnote.data.bible.scrap.Scrap
 import com.chan.bnote.data.bible.scrap.ScrapDao
 import com.chan.bnote.data.bible.scrap.ScrapGroup
+import com.chan.bnote.data.mypage.CopyFormatPreset
+import com.chan.bnote.data.mypage.CopyFormatPresetDao
 import com.chan.bnote.data.mypage.RecentChapterView
 import com.chan.bnote.data.mypage.RecentChapterViewDao
+import com.chan.bnote.data.mypage.gratitude.GratitudeEntry
+import com.chan.bnote.data.mypage.gratitude.GratitudeEntryDao
+import com.chan.bnote.data.mypage.gratitude.GratitudeNote
+import com.chan.bnote.data.mypage.gratitude.GratitudeNoteDao
 import com.chan.bnote.data.mypage.memorization.MemorizationGroup
 import com.chan.bnote.data.mypage.memorization.MemorizationVerse
 import com.chan.bnote.data.mypage.memorization.MemorizationVerseDao
@@ -61,9 +76,11 @@ import kotlinx.coroutines.launch
 		PartialHighlight::class, VerseMemo::class, WordMemo::class,
 		Preacher::class, HymnCategory::class, Hymn::class, UserProfile::class,
 		PrayerRequest::class, VerseMemorizationProgress::class, MemorizationVerse::class,
-		MemorizationGroup::class, RecentChapterView::class
+		MemorizationGroup::class, RecentChapterView::class, CopyFormatPreset::class,
+		Application::class, ApplicationCategory::class, ApplicationBibleRef::class,
+		ApplicationSermonLink::class, GratitudeNote::class, GratitudeEntry::class
 	],
-	version = 24, // 23 -> 24 (verse_memos 유니크 제약 제거 - 한 구절에 메모 여러 개 허용)
+	version = 29, // 28 -> 29 (감사노트 - gratitude_notes/gratitude_entries 테이블 추가)
 	exportSchema = false
 )
 abstract class BibleDatabase : RoomDatabase() {
@@ -87,6 +104,13 @@ abstract class BibleDatabase : RoomDatabase() {
 	abstract fun verseMemorizationProgressDao(): VerseMemorizationProgressDao
 	abstract fun memorizationVerseDao(): MemorizationVerseDao
 	abstract fun recentChapterViewDao(): RecentChapterViewDao
+	abstract fun copyFormatPresetDao(): CopyFormatPresetDao
+	abstract fun applicationDao(): ApplicationDao
+	abstract fun applicationCategoryDao(): ApplicationCategoryDao
+	abstract fun applicationBibleRefDao(): ApplicationBibleRefDao
+	abstract fun applicationSermonLinkDao(): ApplicationSermonLinkDao
+	abstract fun gratitudeNoteDao(): GratitudeNoteDao
+	abstract fun gratitudeEntryDao(): GratitudeEntryDao
 
 	companion object {
 		@Volatile
@@ -114,6 +138,10 @@ abstract class BibleDatabase : RoomDatabase() {
 					if (instance.memorizationVerseDao().countGroups() == 0) {
 						instance.memorizationVerseDao()
 							.insertGroup(MemorizationGroup(name = "기본", sortOrder = 0))
+					}
+					if (instance.applicationCategoryDao().count() == 0) {
+						instance.applicationCategoryDao()
+							.insertAll(DefaultApplicationCategories.list)
 					}
 					HymnSeeder.seedIfNeeded(context.applicationContext, instance.hymnDao())
 				}

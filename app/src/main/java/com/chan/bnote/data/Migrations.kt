@@ -25,5 +25,114 @@ val MIGRATIONS: Array<Migration> = arrayOf(
 			// 구절 메모도 단어 메모처럼 한 구절에 메모를 여러 개 넣을 수 있도록 유니크 제약을 없앤다.
 			db.execSQL("DROP INDEX IF EXISTS index_verse_memos_bookId_chapter_verse")
 		}
+	},
+	object : Migration(24, 25) {
+		override fun migrate(db: SupportSQLiteDatabase) {
+			// 설교 detail 화면에 임베드할 링크(주로 유튜브) 컬럼. 기존 설교는 전부 NULL(링크 없음)로 유지된다.
+			db.execSQL("ALTER TABLE sermons ADD COLUMN link TEXT")
+		}
+	},
+	object : Migration(25, 26) {
+		override fun migrate(db: SupportSQLiteDatabase) {
+			// 절 중간에 소제목이 오는 극소수 예외 구절(예: 창 35:22)을 위한 컬럼들.
+			db.execSQL("ALTER TABLE bible_verses ADD COLUMN title2 TEXT")
+			db.execSQL("ALTER TABLE bible_verses ADD COLUMN text2 TEXT")
+			// 기존 단어메모/부분하이라이트는 전부 앞부분(text, segment=0)을 가리키던 것들이라 기본값 0이면 안전하다.
+			db.execSQL("ALTER TABLE word_memos ADD COLUMN segment INTEGER NOT NULL DEFAULT 0")
+			db.execSQL("ALTER TABLE partial_highlights ADD COLUMN segment INTEGER NOT NULL DEFAULT 0")
+		}
+	},
+	object : Migration(26, 27) {
+		override fun migrate(db: SupportSQLiteDatabase) {
+			// 사용자가 직접 만든 복사 형식을 이름 붙여 저장해두는 테이블.
+			db.execSQL(
+				"""
+				CREATE TABLE IF NOT EXISTS copy_format_presets (
+					id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+					name TEXT NOT NULL,
+					configJson TEXT NOT NULL,
+					createdAt INTEGER NOT NULL
+				)
+				""".trimIndent()
+			)
+		}
+	},
+	object : Migration(27, 28) {
+		override fun migrate(db: SupportSQLiteDatabase) {
+			// 적용(묵상하기/기도하기/순종하기) 탭 관련 테이블들.
+			db.execSQL(
+				"""
+				CREATE TABLE IF NOT EXISTS application_categories (
+					id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+					name TEXT NOT NULL,
+					colorHex TEXT NOT NULL,
+					isDefault INTEGER NOT NULL DEFAULT 0,
+					sortOrder INTEGER NOT NULL DEFAULT 0
+				)
+				""".trimIndent()
+			)
+			db.execSQL(
+				"""
+				CREATE TABLE IF NOT EXISTS applications (
+					id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+					title TEXT NOT NULL,
+					categoryId INTEGER,
+					applicationDate INTEGER NOT NULL,
+					meditationMemo TEXT NOT NULL DEFAULT '',
+					prayerMemo TEXT NOT NULL DEFAULT '',
+					obedienceMemo TEXT NOT NULL DEFAULT '',
+					createdAt INTEGER NOT NULL
+				)
+				""".trimIndent()
+			)
+			db.execSQL(
+				"""
+				CREATE TABLE IF NOT EXISTS application_bible_refs (
+					id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+					applicationId INTEGER NOT NULL,
+					startBookId INTEGER NOT NULL,
+					startChapter INTEGER NOT NULL,
+					startVerse INTEGER NOT NULL,
+					endBookId INTEGER NOT NULL,
+					endChapter INTEGER NOT NULL,
+					endVerse INTEGER NOT NULL,
+					isChapterOnly INTEGER NOT NULL DEFAULT 0
+				)
+				""".trimIndent()
+			)
+			db.execSQL(
+				"""
+				CREATE TABLE IF NOT EXISTS application_sermon_links (
+					id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+					applicationId INTEGER NOT NULL,
+					sermonId INTEGER NOT NULL
+				)
+				""".trimIndent()
+			)
+		}
+	},
+	object : Migration(28, 29) {
+		override fun migrate(db: SupportSQLiteDatabase) {
+			// 감사노트: 날짜별로 하나의 노트, 그 안에 "✓ ____" 줄들이 여러 개.
+			db.execSQL(
+				"""
+				CREATE TABLE IF NOT EXISTS gratitude_notes (
+					id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+					date INTEGER NOT NULL,
+					createdAt INTEGER NOT NULL
+				)
+				""".trimIndent()
+			)
+			db.execSQL(
+				"""
+				CREATE TABLE IF NOT EXISTS gratitude_entries (
+					id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+					noteId INTEGER NOT NULL,
+					text TEXT NOT NULL,
+					sortOrder INTEGER NOT NULL DEFAULT 0
+				)
+				""".trimIndent()
+			)
+		}
 	}
 )

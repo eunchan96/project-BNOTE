@@ -17,8 +17,11 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.chan.bnote.R
 import com.chan.bnote.data.BibleDatabase
+import com.chan.bnote.data.DateUtils
 import com.chan.bnote.data.mypage.profile.ProfileDisplay
 import com.chan.bnote.ui.bible.BookmarkListActivity
 import com.chan.bnote.ui.bible.HighlightListActivity
@@ -27,6 +30,9 @@ import com.chan.bnote.ui.bible.scrap.ScrapActivity
 import com.chan.bnote.ui.mypage.memorization.MemorizationVerseListActivity
 import com.chan.bnote.ui.mypage.prayer.PrayerRequestActivity
 import com.chan.bnote.ui.sermon.SermonSearchActivity
+import com.chan.bnote.ui.sermon.bycalendar.CalendarDayCell
+import com.chan.bnote.ui.sermon.bycalendar.CalendarGridAdapter
+import com.chan.bnote.ui.sermon.bycalendar.MonthYearPickerBottomSheet
 import kotlinx.coroutines.launch
 import java.util.Calendar
 
@@ -34,6 +40,15 @@ import java.util.Calendar
 class ProfileActivity : AppCompatActivity() {
 
 	private data class StatItem(val label: String, val value: String, val onClick: () -> Unit)
+
+	private var calendarYear: Int
+	private var calendarMonth0: Int
+
+	init {
+		val cal = Calendar.getInstance()
+		calendarYear = cal.get(Calendar.YEAR)
+		calendarMonth0 = cal.get(Calendar.MONTH)
+	}
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
@@ -49,10 +64,37 @@ class ProfileActivity : AppCompatActivity() {
 		findViewById<TextView>(R.id.text_top_bar_title).text = "내 정보"
 		findViewById<ImageView>(R.id.btn_top_bar_back).setOnClickListener { finish() }
 
-		findViewById<TextView>(R.id.btn_edit_profile).setOnClickListener {
+		findViewById<View>(R.id.btn_edit_profile).setOnClickListener {
 			startActivity(Intent(this, ProfileEditActivity::class.java))
 		}
 		findViewById<ImageView>(R.id.img_profile_photo).loadProfilePhoto(null)
+
+		findViewById<RecyclerView>(R.id.recycler_profile_calendar_grid).layoutManager =
+			GridLayoutManager(this, 7)
+
+		findViewById<TextView>(R.id.text_profile_calendar_month).setOnClickListener {
+			val picker = MonthYearPickerBottomSheet(calendarYear, calendarMonth0)
+			picker.onSelected = { year, month0 ->
+				calendarYear = year
+				calendarMonth0 = month0
+				loadActivityCalendar()
+			}
+			picker.show(supportFragmentManager, "profile_calendar_month_picker")
+		}
+		findViewById<TextView>(R.id.btn_profile_calendar_prev).setOnClickListener {
+			calendarMonth0 -= 1
+			if (calendarMonth0 < 0) {
+				calendarMonth0 = 11; calendarYear -= 1
+			}
+			loadActivityCalendar()
+		}
+		findViewById<TextView>(R.id.btn_profile_calendar_next).setOnClickListener {
+			calendarMonth0 += 1
+			if (calendarMonth0 > 11) {
+				calendarMonth0 = 0; calendarYear += 1
+			}
+			loadActivityCalendar()
+		}
 	}
 
 	override fun onResume() {
@@ -60,6 +102,7 @@ class ProfileActivity : AppCompatActivity() {
 		// 정보 수정 화면에서 돌아왔을 때 최신 값을 반영하기 위해 매번 다시 불러온다.
 		loadProfile()
 		loadStats()
+		loadActivityCalendar()
 	}
 
 	private fun loadProfile() {
@@ -87,7 +130,7 @@ class ProfileActivity : AppCompatActivity() {
 			val totalChapters = maxChapterByBook.values.sum()
 			val readList = db.readingProgressDao().getAll()
 			val totalRead = readList.size
-			val percent = if (totalChapters > 0) (totalRead * 100 / totalChapters) else 0
+			val percent = if (totalChapters > 0) (totalRead * 100.0 / totalChapters) else 0.0
 
 			val (currentStreak, longestStreak) = calculateStreak(readList.map { it.readAt })
 
@@ -101,6 +144,8 @@ class ProfileActivity : AppCompatActivity() {
 			val sermonCount = db.sermonDao().count()
 			val memorizationCount = db.memorizationVerseDao().count()
 			val prayerRequestCount = db.prayerRequestDao().count()
+			val applicationCount = db.applicationDao().getAll().size
+			val gratitudeCount = db.gratitudeNoteDao().getAll().size
 
 			renderReadingStatus(totalRead, totalChapters, percent, currentStreak, longestStreak)
 			renderStatGrid(
@@ -133,6 +178,22 @@ class ProfileActivity : AppCompatActivity() {
 							)
 						)
 					},
+					StatItem("적용", "${applicationCount}개") {
+						startActivity(
+							Intent(
+								this@ProfileActivity,
+								com.chan.bnote.ui.application.category.ApplicationCategoryManageActivity::class.java
+							)
+						)
+					},
+					StatItem("감사노트", "${gratitudeCount}개") {
+						startActivity(
+							Intent(
+								this@ProfileActivity,
+								com.chan.bnote.ui.mypage.gratitude.GratitudeActivity::class.java
+							)
+						)
+					},
 					StatItem("암송 구절", "${memorizationCount}개") {
 						startActivity(
 							Intent(
@@ -156,11 +217,12 @@ class ProfileActivity : AppCompatActivity() {
 	}
 
 	private fun renderReadingStatus(
-		totalRead: Int, totalChapters: Int, percent: Int, currentStreak: Int, longestStreak: Int
+		totalRead: Int, totalChapters: Int, percent: Double, currentStreak: Int, longestStreak: Int
 	) {
+		val percentText = String.format(java.util.Locale.KOREA, "%.1f", percent)
 		findViewById<TextView>(R.id.text_reading_summary).text =
-			"전체 $totalRead / ${totalChapters}장 읽음 ($percent%)"
-		findViewById<ProgressBar>(R.id.progress_reading_percent).progress = percent
+			"전체 $totalRead / ${totalChapters}장 읽음 (${percentText}%)"
+		findViewById<ProgressBar>(R.id.progress_reading_percent).progress = percent.toInt()
 
 		val streakText = findViewById<TextView>(R.id.text_streak)
 		streakText.text = if (currentStreak > 0) {
@@ -308,4 +370,111 @@ class ProfileActivity : AppCompatActivity() {
 	}
 
 	private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
+
+	// ---- 활동 캘린더(설교/적용/감사/기도제목) ----
+
+	private fun loadActivityCalendar() {
+		findViewById<TextView>(R.id.text_profile_calendar_month).text =
+			"${calendarYear}년 ${calendarMonth0 + 1}월"
+
+		lifecycleScope.launch {
+			val db = BibleDatabase.getInstance(applicationContext)
+			val startMillis = DateUtils.getMonthStartMillis(calendarYear, calendarMonth0)
+			val endMillis = DateUtils.getMonthEndMillisExclusive(calendarYear, calendarMonth0)
+
+			val colorsByDate = mutableMapOf<Long, MutableList<String>>()
+
+			db.sermonDao().getSermonMarkersInRange(startMillis, endMillis).forEach { marker ->
+				colorsByDate.getOrPut(marker.sermonDate) { mutableListOf() }.add("#43A047")
+			}
+			db.applicationDao().getMarkersInRange(startMillis, endMillis).forEach { marker ->
+				colorsByDate.getOrPut(marker.applicationDate) { mutableListOf() }.add("#8E24AA")
+			}
+			db.gratitudeNoteDao().getDatesInRange(startMillis, endMillis).forEach { date ->
+				colorsByDate.getOrPut(date) { mutableListOf() }.add("#FDD835")
+			}
+			db.prayerRequestDao().getAll()
+				.map { DateUtils.normalizeToDayStart(it.createdAt) }
+				.filter { it in startMillis until endMillis }
+				.forEach { date ->
+					colorsByDate.getOrPut(date) { mutableListOf() }.add("#795548")
+				}
+
+			val cells = buildActivityMonthCells(calendarYear, calendarMonth0, colorsByDate)
+			findViewById<RecyclerView>(R.id.recycler_profile_calendar_grid).adapter =
+				CalendarGridAdapter(cells, -1L) { /* 보기 전용 — 눌러도 아무 동작 없음 */ }
+		}
+	}
+
+	private fun buildActivityMonthCells(
+		year: Int, month0: Int, colorsByDate: Map<Long, List<String>>
+	): List<CalendarDayCell> {
+		val cal = Calendar.getInstance()
+		cal.set(year, month0, 1, 0, 0, 0)
+		cal.set(Calendar.MILLISECOND, 0)
+
+		val firstDayOfWeek = cal.get(Calendar.DAY_OF_WEEK) - 1
+		val daysInMonth = cal.getActualMaximum(Calendar.DAY_OF_MONTH)
+		val today = DateUtils.normalizeToDayStart(System.currentTimeMillis())
+
+		val cells = mutableListOf<CalendarDayCell>()
+
+		if (firstDayOfWeek > 0) {
+			val prevCal = cal.clone() as Calendar
+			prevCal.add(Calendar.MONTH, -1)
+			val prevMonthDays = prevCal.getActualMaximum(Calendar.DAY_OF_MONTH)
+			for (i in firstDayOfWeek - 1 downTo 0) {
+				val dayNum = prevMonthDays - i
+				val dateCal = prevCal.clone() as Calendar
+				dateCal.set(Calendar.DAY_OF_MONTH, dayNum)
+				val millis = DateUtils.normalizeToDayStart(dateCal.timeInMillis)
+				cells.add(
+					CalendarDayCell(
+						millis,
+						dayNum,
+						false,
+						millis == today,
+						colorsByDate[millis].orEmpty()
+					)
+				)
+			}
+		}
+
+		for (day in 1..daysInMonth) {
+			val dateCal = cal.clone() as Calendar
+			dateCal.set(Calendar.DAY_OF_MONTH, day)
+			val millis = DateUtils.normalizeToDayStart(dateCal.timeInMillis)
+			cells.add(
+				CalendarDayCell(
+					millis,
+					day,
+					true,
+					millis == today,
+					colorsByDate[millis].orEmpty()
+				)
+			)
+		}
+
+		val remainder = cells.size % 7
+		if (remainder != 0) {
+			val nextCal = cal.clone() as Calendar
+			nextCal.add(Calendar.MONTH, 1)
+			for (day in 1..(7 - remainder)) {
+				val dateCal = nextCal.clone() as Calendar
+				dateCal.set(Calendar.DAY_OF_MONTH, day)
+				val millis = DateUtils.normalizeToDayStart(dateCal.timeInMillis)
+				cells.add(
+					CalendarDayCell(
+						millis,
+						day,
+						false,
+						millis == today,
+						colorsByDate[millis].orEmpty()
+					)
+				)
+			}
+		}
+
+		return cells
+	}
 }
