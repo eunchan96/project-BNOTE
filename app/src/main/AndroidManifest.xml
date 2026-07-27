@@ -166,6 +166,12 @@
             android:name=".ui.application.category.ApplicationCategoryManageActivity"
             android:exported="false" />
         <activity
+            android:name=".ui.application.addapplication.AddApplicationActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.application.ApplicationDetailActivity"
+            android:exported="false" />
+        <activity
             android:name=".ui.sermon.detail.SermonDetailActivity"
             android:exported="false" />
         <activity
