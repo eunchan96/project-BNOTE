@@ -32,7 +32,7 @@ class UnitListActivity : AppCompatActivity() {
 			insets
 		}
 
-		findViewById<TextView>(R.id.text_top_bar_title).text = "단위"
+		findViewById<TextView>(R.id.text_top_bar_title).text = "성경의 단위들"
 		findViewById<ImageView>(R.id.btn_top_bar_back).setOnClickListener { finish() }
 
 		lifecycleScope.launch {

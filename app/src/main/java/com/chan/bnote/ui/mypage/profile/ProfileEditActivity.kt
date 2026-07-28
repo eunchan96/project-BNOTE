@@ -69,9 +69,7 @@ class ProfileEditActivity : AppCompatActivity() {
 		inputPosition = findViewById(R.id.input_position)
 
 		findViewById<android.view.View>(R.id.btn_edit_photo).setOnClickListener {
-			pickPhotoLauncher.launch(
-				PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-			)
+			showPhotoOptionsDialog()
 		}
 
 		findViewById<TextView>(R.id.btn_save_profile).setOnClickListener {
@@ -96,19 +94,50 @@ class ProfileEditActivity : AppCompatActivity() {
 		}
 	}
 
+	private fun showPhotoOptionsDialog() {
+		val options = mutableListOf("갤러리에서 선택")
+		if (!existingPhotoPath.isNullOrBlank() || pendingPhotoPath?.isNotEmpty() == true) {
+			options.add("기본 이미지로 변경")
+		}
+		com.google.android.material.dialog.MaterialAlertDialogBuilder(
+			this, R.style.ThemeOverlay_BNOTE_Dialog
+		)
+			.setItems(options.toTypedArray()) { _, index ->
+				when (options[index]) {
+					"갤러리에서 선택" -> pickPhotoLauncher.launch(
+						PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+					)
+
+					"기본 이미지로 변경" -> {
+						// 빈 문자열을 "기본으로 재설정"의 표식으로 쓴다(null은 "안 바꿈"이라는 뜻이라서).
+						pendingPhotoPath = ""
+						imgPhoto.loadProfilePhoto(null)
+					}
+				}
+			}
+			.show()
+	}
+
 	private fun saveProfile() {
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(applicationContext)
 
-			// 새 사진을 골랐으면 이전 사진 파일은 지워서 내부 저장소에 계속 쌓이지 않게 한다.
+			// 새 사진을 골랐거나 기본으로 재설정했으면 이전 사진 파일은 지워서 내부 저장소에
+			// 계속 쌓이지 않게 한다.
 			if (pendingPhotoPath != null && !existingPhotoPath.isNullOrBlank()) {
 				ProfilePhotoStorage.deleteFile(existingPhotoPath!!)
+			}
+
+			val finalPhotoPath: String? = when {
+				pendingPhotoPath == "" -> null
+				pendingPhotoPath != null -> pendingPhotoPath
+				else -> existingPhotoPath
 			}
 
 			db.userProfileDao().upsert(
 				UserProfile(
 					id = 1,
-					photoPath = pendingPhotoPath ?: existingPhotoPath,
+					photoPath = finalPhotoPath,
 					name = inputName.text.toString().trim(),
 					church = inputChurch.text.toString().trim(),
 					department = inputDepartment.text.toString().trim(),
