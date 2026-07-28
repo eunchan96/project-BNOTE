@@ -79,6 +79,20 @@ class BibleSearchActivity : AppCompatActivity() {
 		historyItemsContainer = findViewById(R.id.container_search_history_items)
 		recyclerView.layoutManager = LinearLayoutManager(this)
 
+		findViewById<TextView>(R.id.btn_clear_search_history).setOnClickListener {
+			com.google.android.material.dialog.MaterialAlertDialogBuilder(
+				this, R.style.ThemeOverlay_BNOTE_Dialog
+			)
+				.setTitle("최근 검색어 전체 삭제")
+				.setMessage("최근 검색어를 전부 지울까요?")
+				.setPositiveButton("삭제") { _, _ ->
+					AppSettings.clearBibleSearchHistory(this)
+					showSearchHistory()
+				}
+				.setNegativeButton("취소", null)
+				.show()
+		}
+
 		editSearch.addTextChangedListener(object : TextWatcher {
 			override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
 			override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}

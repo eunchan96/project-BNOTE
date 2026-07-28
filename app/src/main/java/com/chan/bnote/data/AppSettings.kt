@@ -20,6 +20,7 @@ object AppSettings {
 	private const val KEY_BY_BOOK_SORT_MODE =
 		"sermon_by_book_sort_mode" // "BIBLE"|"DATE"|"CATEGORY"|"ADDED"
 	private const val KEY_BIBLE_SEARCH_HISTORY = "bible_search_history" // 구분자로 이어붙인 문자열, 최신순
+	private const val KEY_SERMON_SEARCH_HISTORY = "sermon_search_history" // 구분자로 이어붙인 문자열, 최신순
 	private const val SEARCH_HISTORY_DELIMITER = "\u001E"
 	private const val MAX_SEARCH_HISTORY = 20
 
@@ -129,35 +130,55 @@ object AppSettings {
 			.edit().putString(KEY_PREACHER_CUSTOM_ORDER, ids.joinToString(",")).apply()
 	}
 
-	// --- 성경 검색 기록 (최신순, 최대 MAX_SEARCH_HISTORY개, 중복 없음) ---
+	// --- 성경 검색 · 설교 검색 기록 (최신순, 최대 MAX_SEARCH_HISTORY개, 중복 없음) ---
 
-	fun getBibleSearchHistory(context: Context): List<String> {
+	fun getBibleSearchHistory(context: Context): List<String> =
+		getSearchHistory(context, KEY_BIBLE_SEARCH_HISTORY)
+
+	fun addBibleSearchHistory(context: Context, keyword: String) =
+		addSearchHistory(context, KEY_BIBLE_SEARCH_HISTORY, keyword)
+
+	fun removeBibleSearchHistory(context: Context, keyword: String) =
+		removeSearchHistory(context, KEY_BIBLE_SEARCH_HISTORY, keyword)
+
+	fun clearBibleSearchHistory(context: Context) =
+		saveSearchHistory(context, KEY_BIBLE_SEARCH_HISTORY, emptyList())
+
+	fun getSermonSearchHistory(context: Context): List<String> =
+		getSearchHistory(context, KEY_SERMON_SEARCH_HISTORY)
+
+	fun addSermonSearchHistory(context: Context, keyword: String) =
+		addSearchHistory(context, KEY_SERMON_SEARCH_HISTORY, keyword)
+
+	fun removeSermonSearchHistory(context: Context, keyword: String) =
+		removeSearchHistory(context, KEY_SERMON_SEARCH_HISTORY, keyword)
+
+	fun clearSermonSearchHistory(context: Context) =
+		saveSearchHistory(context, KEY_SERMON_SEARCH_HISTORY, emptyList())
+
+	private fun getSearchHistory(context: Context, key: String): List<String> {
 		val raw = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
-			.getString(KEY_BIBLE_SEARCH_HISTORY, "") ?: ""
+			.getString(key, "") ?: ""
 		return if (raw.isBlank()) emptyList() else raw.split(SEARCH_HISTORY_DELIMITER)
 			.filter { it.isNotBlank() }
 	}
 
-	fun addBibleSearchHistory(context: Context, keyword: String) {
+	private fun addSearchHistory(context: Context, key: String, keyword: String) {
 		val trimmed = keyword.trim()
 		if (trimmed.isEmpty()) return
 		val updated = mutableListOf(trimmed)
-		updated.addAll(getBibleSearchHistory(context).filter { it != trimmed })
-		saveBibleSearchHistory(context, updated.take(MAX_SEARCH_HISTORY))
+		updated.addAll(getSearchHistory(context, key).filter { it != trimmed })
+		saveSearchHistory(context, key, updated.take(MAX_SEARCH_HISTORY))
 	}
 
-	fun removeBibleSearchHistory(context: Context, keyword: String) {
-		saveBibleSearchHistory(context, getBibleSearchHistory(context).filter { it != keyword })
+	private fun removeSearchHistory(context: Context, key: String, keyword: String) {
+		saveSearchHistory(context, key, getSearchHistory(context, key).filter { it != keyword })
 	}
 
-	fun clearBibleSearchHistory(context: Context) {
-		saveBibleSearchHistory(context, emptyList())
-	}
-
-	private fun saveBibleSearchHistory(context: Context, history: List<String>) {
+	private fun saveSearchHistory(context: Context, key: String, history: List<String>) {
 		context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
 			.edit()
-			.putString(KEY_BIBLE_SEARCH_HISTORY, history.joinToString(SEARCH_HISTORY_DELIMITER))
+			.putString(key, history.joinToString(SEARCH_HISTORY_DELIMITER))
 			.apply()
 	}
 
