@@ -613,7 +613,14 @@ class AddSermonActivity : AppCompatActivity() {
 			}
 
 			setResult(Activity.RESULT_OK)
-			SermonDetailActivity.start(this@AddSermonActivity, sermonId)
+			if (current == null) {
+				// 새로 작성한 설교는 어디서 시작했든(캘린더 등) 그 설교의 상세 화면으로 바로
+				// 이동해줘야 하므로 새로 연다.
+				SermonDetailActivity.start(this@AddSermonActivity, sermonId)
+			}
+			// 수정인 경우엔 항상 설교 상세 화면(editSermonLauncher)에서 열렸으므로, 여기서 새
+			// 상세 화면을 또 띄우면 뒤로가기 시 상세 화면이 중복으로 쌓인다. RESULT_OK로 finish만
+			// 하면 원래 상세 화면이 자기 자신을 다시 불러온다(editSermonLauncher 콜백 참고).
 			finish()
 		}
 	}

@@ -120,7 +120,8 @@ private class BookmarkAdapter(
 ) : RecyclerView.Adapter<BookmarkAdapter.ViewHolder>() {
 
 	class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-		val label: TextView = view.findViewById(R.id.text_bookmark_label)
+		val ref: TextView = view.findViewById(R.id.text_bookmark_ref)
+		val text: TextView = view.findViewById(R.id.text_bookmark_text)
 		val deleteBtn: ImageView = view.findViewById(R.id.btn_delete_bookmark)
 	}
 
@@ -134,9 +135,9 @@ private class BookmarkAdapter(
 
 	override fun onBindViewHolder(holder: ViewHolder, position: Int) {
 		val row = rows[position]
-		holder.label.text =
-			"${BibleBooks.nameOf(row.bookId)} ${row.chapter}:${row.verse}  ${row.text}"
-		holder.label.textSize = fontSize.toFloat()
+		holder.ref.text = "${BibleBooks.nameOf(row.bookId)} ${row.chapter}:${row.verse}"
+		holder.text.text = row.text
+		holder.text.textSize = fontSize.toFloat()
 
 		holder.deleteBtn.visibility = if (isEditMode) View.VISIBLE else View.GONE
 		holder.itemView.setOnClickListener { if (!isEditMode) onClick(row) }

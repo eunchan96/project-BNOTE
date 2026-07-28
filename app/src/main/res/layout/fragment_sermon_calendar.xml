@@ -15,10 +15,28 @@
             android:orientation="horizontal"
             android:gravity="center_vertical">
 
-            <View
+            <FrameLayout
                 android:layout_width="0dp"
-                android:layout_height="1dp"
-                android:layout_weight="1" />
+                android:layout_height="wrap_content"
+                android:layout_weight="1">
+
+                <TextView
+                    android:id="@+id/btn_calendar_today"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="start|center_vertical"
+                    android:layout_marginStart="18dp"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp"
+                    android:paddingTop="10dp"
+                    android:paddingBottom="10dp"
+                    android:textSize="13sp"
+                    android:text="오늘"
+                    android:textColor="@color/brown_primary"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true" />
+            </FrameLayout>
 
             <TextView
                 android:id="@+id/btn_month_prev"
@@ -53,22 +71,28 @@
                 android:focusable="true"
                 android:background="?attr/selectableItemBackgroundBorderless" />
 
-            <TextView
-                android:id="@+id/btn_calendar_sort"
+            <FrameLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginStart="8dp"
-                android:paddingTop="10dp"
-                android:paddingBottom="10dp"
-                android:paddingEnd="15dp"
-                android:gravity="end|center_vertical"
-                android:textSize="13sp"
-                android:textColor="@color/brown_primary"
-                android:background="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true"
-                tools:text="카테고리순 ▾" />
+                android:layout_weight="1">
+
+                <TextView
+                    android:id="@+id/btn_calendar_sort"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="end|center_vertical"
+                    android:layout_marginEnd="15dp"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp"
+                    android:paddingTop="10dp"
+                    android:paddingBottom="10dp"
+                    android:textSize="13sp"
+                    android:textColor="@color/brown_primary"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true"
+                    tools:text="카테고리순 ▾" />
+            </FrameLayout>
         </LinearLayout>
 
         <LinearLayout

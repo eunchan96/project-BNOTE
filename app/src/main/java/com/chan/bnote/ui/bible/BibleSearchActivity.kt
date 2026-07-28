@@ -79,6 +79,20 @@ class BibleSearchActivity : AppCompatActivity() {
 		historyItemsContainer = findViewById(R.id.container_search_history_items)
 		recyclerView.layoutManager = LinearLayoutManager(this)
 
+		findViewById<TextView>(R.id.btn_clear_search_history).setOnClickListener {
+			com.google.android.material.dialog.MaterialAlertDialogBuilder(
+				this, R.style.ThemeOverlay_BNOTE_Dialog
+			)
+				.setTitle("최근 검색어 전체 삭제")
+				.setMessage("최근 검색어를 전부 지울까요?")
+				.setPositiveButton("삭제") { _, _ ->
+					AppSettings.clearBibleSearchHistory(this)
+					showSearchHistory()
+				}
+				.setNegativeButton("취소", null)
+				.show()
+		}
+
 		editSearch.addTextChangedListener(object : TextWatcher {
 			override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
 			override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
@@ -86,6 +100,14 @@ class BibleSearchActivity : AppCompatActivity() {
 				onQueryChanged(translation, s?.toString().orEmpty())
 			}
 		})
+		editSearch.setOnEditorActionListener { _, actionId, _ ->
+			if (actionId == android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH) {
+				commitSearchHistory(editSearch.text.toString())
+				true
+			} else {
+				false
+			}
+		}
 
 		showSearchHistory()
 
@@ -121,8 +143,6 @@ class BibleSearchActivity : AppCompatActivity() {
 			val trimmedKeyword = keyword.trim()
 			val results = db.bibleDao().searchVerses(translation, trimmedKeyword)
 
-			AppSettings.addBibleSearchHistory(this@BibleSearchActivity, trimmedKeyword)
-
 			if (results.isEmpty()) {
 				emptyText.text = "검색 결과가 없어요"
 				emptyText.visibility = View.VISIBLE
@@ -135,6 +155,9 @@ class BibleSearchActivity : AppCompatActivity() {
 
 			val fontSize = AppSettings.getFontSize(this@BibleSearchActivity)
 			recyclerView.adapter = SearchResultAdapter(results, fontSize) { verse ->
+				// 실제로 결과를 골라 이동했을 때만 "완료된 검색"으로 보고 기록한다 — 타이핑
+				// 중간에 잠깐 멈췄을 때마다 뜨는 라이브 검색 결과 하나하나는 기록하지 않는다.
+				commitSearchHistory(trimmedKeyword)
 				val result = Intent()
 					.putExtra(EXTRA_RESULT_BOOK_ID, verse.bookId)
 					.putExtra(EXTRA_RESULT_CHAPTER, verse.chapter)
@@ -143,6 +166,13 @@ class BibleSearchActivity : AppCompatActivity() {
 				finish()
 			}
 		}
+	}
+
+	/** 키보드의 "검색" 버튼을 눌렀거나, 검색 결과를 골랐을 때만 최근 검색어에 기록한다. */
+	private fun commitSearchHistory(keyword: String) {
+		val trimmed = keyword.trim()
+		if (trimmed.replace(" ", "").length < 2) return
+		AppSettings.addBibleSearchHistory(this, trimmed)
 	}
 
 	/** 검색 전 상태: 결과/안내 문구는 숨기고, 검색 기록이 있으면 보여준다. */

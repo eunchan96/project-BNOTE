@@ -81,7 +81,7 @@ class AddGratitudeActivity : AppCompatActivity() {
 		)
 
 		findViewById<TextView>(R.id.text_top_bar_title).text =
-			if (isEditMode) "감사노트 수정" else "감사노트 작성"
+			if (isEditMode) "감사 노트 수정" else "감사 노트 작성"
 		findViewById<ImageView>(R.id.btn_top_bar_back).setOnClickListener { handleBackPress() }
 
 		btnPickDate = findViewById(R.id.btn_pick_date)
