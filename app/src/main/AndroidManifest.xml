@@ -5,6 +5,11 @@
     <!-- 찬송 화면의 유튜브 재생/썸네일 로딩에 필요 -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- 매일 말씀 알림 · 통독 리마인더를 정확한 시각에 보내기 위한 정확 알람 권한.
+         Android 12+에서는 사용자가 설정 화면에서 직접 허용해야 한다(SettingsActivity 참고). -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <!-- 재부팅 시 정확 알람(위 알림들)을 다시 예약하기 위해 필요 -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <!-- 성경 탭 메뉴의 "방해금지 모드 활성화" 토글용. 이것만으로 실제 방해금지를 켤 순 없고,
          NotificationManager.isNotificationPolicyAccessGranted()가 true여야(사용자가 설정
          화면에서 직접 허용해야) 실제로 켤 수 있다. -->
@@ -230,6 +235,17 @@
         <activity
             android:name=".ui.sermon.addsermon.PhotoViewerActivity"
             android:exported="false" />
+
+        <receiver
+            android:name=".notification.AlarmReceiver"
+            android:exported="false" />
+        <receiver
+            android:name=".notification.BootReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
 
         <provider
             android:name="androidx.core.content.FileProvider"

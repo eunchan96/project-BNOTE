@@ -52,16 +52,10 @@ class SettingsActivity : AppCompatActivity() {
 		if (target == null) return@registerForActivityResult
 
 		if (granted) {
-			when (target) {
-				"daily_verse" -> {
-					val (h, m) = AppSettings.getDailyVerseNotiTime(this)
-					NotificationScheduler.scheduleDailyVerse(this, h, m)
-				}
-
-				"reading_reminder" -> {
-					val (h, m) = AppSettings.getReadingReminderTime(this)
-					NotificationScheduler.scheduleReadingReminder(this, h, m)
-				}
+			if (!hasExactAlarmPermission()) {
+				requestExactAlarmPermission()
+			} else {
+				scheduleFor(target)
 			}
 		} else {
 			// 권한을 거부하면 토글을 다시 꺼서 실제 상태와 화면을 일치시킨다.
@@ -306,13 +300,24 @@ class SettingsActivity : AppCompatActivity() {
 		}
 	}
 
-	/** [target]은 "daily_verse" 또는 "reading_reminder". 권한이 있으면 바로 예약하고, 없으면 요청한다. */
+	/** [target]은 "daily_verse" 또는 "reading_reminder". 필요한 권한이 다 있으면 바로 예약하고,
+	 * 없으면 순서대로(알림 권한 → 정확 알람 권한) 요청한다. */
 	private fun enableNotification(target: String) {
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !hasNotificationPermission()) {
 			pendingNotiTarget = target
 			notiPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
 			return
 		}
+		if (!hasExactAlarmPermission()) {
+			// 정확 알람 권한 설정 화면은 결과 콜백이 따로 없는 시스템 설정 화면이라, 여기서 막고
+			// 사용자가 허용하고 돌아왔을 때는 onResume()에서 다시 확인해 예약한다.
+			requestExactAlarmPermission()
+			return
+		}
+		scheduleFor(target)
+	}
+
+	private fun scheduleFor(target: String) {
 		when (target) {
 			"daily_verse" -> {
 				val (h, m) = AppSettings.getDailyVerseNotiTime(this)
@@ -331,6 +336,47 @@ class SettingsActivity : AppCompatActivity() {
 		return ContextCompat.checkSelfPermission(
 			this, Manifest.permission.POST_NOTIFICATIONS
 		) == PackageManager.PERMISSION_GRANTED
+	}
+
+	/** 정확한 시각에 알림을 보내기 위한 권한. Android 12 미만은 항상 있는 것으로 취급한다. */
+	private fun hasExactAlarmPermission(): Boolean {
+		return NotificationScheduler.canScheduleExactAlarms(this)
+	}
+
+	/** Android 12+에서 정확 알람 권한을 요청하는 시스템 설정 화면으로 이동시킨다. */
+	private fun requestExactAlarmPermission() {
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return
+		Toast.makeText(
+			this,
+			"정확한 시각에 알림을 보내려면 '정확한 알람' 권한이 필요해요. 다음 화면에서 BNOTE를 허용해주세요.",
+			Toast.LENGTH_LONG
+		).show()
+		try {
+			startActivity(
+				Intent(android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
+					data = android.net.Uri.parse("package:$packageName")
+				}
+			)
+		} catch (e: Exception) {
+			// 일부 기기/OS 버전엔 이 설정 화면 자체가 없을 수 있음 — 조용히 무시.
+		}
+	}
+
+	override fun onResume() {
+		super.onResume()
+		// 알림 권한 · 정확 알람 권한 설정 화면에 다녀왔을 수 있으니, 스위치가 켜져 있는데 아직
+		// 실제로 예약이 안 됐을 수 있는 알림은 여기서 다시 확인해 예약해준다(이미 예약돼 있어도
+		// 같은 시각으로 다시 예약하는 것뿐이라 안전하다).
+		if (::switchDailyVerseNoti.isInitialized && switchDailyVerseNoti.isChecked &&
+			hasNotificationPermission() && hasExactAlarmPermission()
+		) {
+			scheduleFor("daily_verse")
+		}
+		if (::switchReadingReminder.isInitialized && switchReadingReminder.isChecked &&
+			hasNotificationPermission() && hasExactAlarmPermission()
+		) {
+			scheduleFor("reading_reminder")
+		}
 	}
 
 	private fun showTimePicker(hour: Int, minute: Int, onSet: (Int, Int) -> Unit) {
