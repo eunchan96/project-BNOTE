@@ -90,6 +90,14 @@ class CalendarApplicationFragment : Fragment() {
 			}
 			loadCalendarGrid()
 		}
+		view.findViewById<TextView>(R.id.btn_calendar_today).setOnClickListener {
+			val cal = Calendar.getInstance()
+			currentYear = cal.get(Calendar.YEAR)
+			currentMonth0 = cal.get(Calendar.MONTH)
+			selectedDate = DateUtils.normalizeToDayStart(cal.timeInMillis)
+			loadCalendarGrid()
+			loadApplicationsForSelectedDate()
+		}
 		view.findViewById<TextView>(R.id.btn_month_next).setOnClickListener {
 			currentMonth0 += 1
 			if (currentMonth0 > 11) {

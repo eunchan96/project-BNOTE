@@ -88,6 +88,12 @@ class ProfileActivity : AppCompatActivity() {
 			}
 			loadActivityCalendar()
 		}
+		findViewById<TextView>(R.id.btn_profile_calendar_today).setOnClickListener {
+			val cal = Calendar.getInstance()
+			calendarYear = cal.get(Calendar.YEAR)
+			calendarMonth0 = cal.get(Calendar.MONTH)
+			loadActivityCalendar()
+		}
 		findViewById<TextView>(R.id.btn_profile_calendar_next).setOnClickListener {
 			calendarMonth0 += 1
 			if (calendarMonth0 > 11) {
