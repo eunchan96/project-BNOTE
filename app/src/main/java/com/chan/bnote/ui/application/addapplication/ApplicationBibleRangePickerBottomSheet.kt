@@ -163,6 +163,9 @@ class ApplicationBibleRangePickerBottomSheet : DraggableBottomSheet() {
 		checkboxMulti.visibility = if (showStartLabel) View.GONE else View.VISIBLE
 		checkboxCrossChapter.visibility =
 			if (showStartLabel || !isMultiMode || chapterOnly) View.GONE else View.VISIBLE
+		// checkbox_chapter_only도 같은 행(FrameLayout 안)에 있어서, 안 숨기면 겹쳐 보이는
+		// text_selected_start와 자리가 겹친다.
+		checkboxChapterOnly.visibility = if (showStartLabel) View.GONE else View.VISIBLE
 		textSelectedStart.visibility = if (showStartLabel) View.VISIBLE else View.GONE
 		if (showStartLabel) {
 			val unit = BibleBooks.chapterUnit(bookId)
