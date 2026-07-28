@@ -514,7 +514,14 @@ class AddApplicationActivity : AppCompatActivity() {
 			}
 
 			setResult(RESULT_OK)
-			ApplicationDetailActivity.start(this@AddApplicationActivity, applicationId)
+			if (current == null) {
+				// 새로 작성한 적용은 어디서 시작했든 그 적용의 상세 화면으로 바로 이동해줘야
+				// 하므로 새로 연다.
+				ApplicationDetailActivity.start(this@AddApplicationActivity, applicationId)
+			}
+			// 수정인 경우엔 항상 적용 상세 화면(editLauncher)에서 열렸으므로, 여기서 새 상세
+			// 화면을 또 띄우면 뒤로가기 시 상세 화면이 중복으로 쌓인다. RESULT_OK로 finish만
+			// 하면 원래 상세 화면이 자기 자신을 다시 불러온다(editLauncher 콜백 참고).
 			finish()
 		}
 	}
