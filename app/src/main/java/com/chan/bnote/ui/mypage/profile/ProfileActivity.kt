@@ -192,7 +192,7 @@ class ProfileActivity : AppCompatActivity() {
 							)
 						)
 					},
-					StatItem("감사 노트", "${gratitudeCount}개") {
+					StatItem("감사노트", "${gratitudeCount}개") {
 						startActivity(
 							Intent(
 								this@ProfileActivity,
