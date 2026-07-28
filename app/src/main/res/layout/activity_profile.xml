@@ -225,22 +225,29 @@
                     android:focusable="true"
                     android:background="?attr/selectableItemBackgroundBorderless" />
 
-                <TextView
-                    android:id="@+id/btn_profile_calendar_today"
+                <FrameLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:gravity="end|center_vertical"
-                    android:paddingStart="12dp"
-                    android:paddingEnd="23dp"
-                    android:paddingTop="10dp"
-                    android:paddingBottom="10dp"
-                    android:textSize="13sp"
-                    android:text="오늘"
-                    android:textColor="@color/brown_primary"
-                    android:background="?attr/selectableItemBackground"
-                    android:clickable="true"
-                    android:focusable="true" />
+                    android:layout_weight="1">
+
+                    <TextView
+                        android:id="@+id/btn_profile_calendar_today"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="end|center_vertical"
+                        android:layout_marginStart="12dp"
+                        android:layout_marginEnd="18dp"
+                        android:paddingStart="8dp"
+                        android:paddingEnd="8dp"
+                        android:paddingTop="10dp"
+                        android:paddingBottom="10dp"
+                        android:textSize="13sp"
+                        android:text="오늘"
+                        android:textColor="@color/brown_primary"
+                        android:background="?attr/selectableItemBackground"
+                        android:clickable="true"
+                        android:focusable="true" />
+                </FrameLayout>
             </LinearLayout>
 
             <LinearLayout
