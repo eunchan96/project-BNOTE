@@ -50,12 +50,12 @@
         android:paddingEnd="16dp"
         android:paddingBottom="4dp">
 
-        <LinearLayout
+        <com.google.android.flexbox.FlexboxLayout
             android:id="@+id/row_multi_checkboxes"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
+            app:flexWrap="wrap"
+            app:alignItems="center">
 
             <com.google.android.material.checkbox.MaterialCheckBox
                 android:id="@+id/checkbox_multi_select"
@@ -82,7 +82,7 @@
                 android:text="장만 선택"
                 android:textSize="14sp"
                 android:textColor="@color/text_secondary" />
-        </LinearLayout>
+        </com.google.android.flexbox.FlexboxLayout>
 
         <TextView
             android:id="@+id/text_selected_start"
