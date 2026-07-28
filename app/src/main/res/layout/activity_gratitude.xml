@@ -32,7 +32,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_marginStart="4dp"
-            android:text="감사노트"
+            android:text="감사 노트"
             android:textSize="18sp"
             android:textStyle="bold"
             android:textColor="@color/white" />

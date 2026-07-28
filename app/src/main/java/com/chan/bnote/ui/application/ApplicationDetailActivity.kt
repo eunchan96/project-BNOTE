@@ -80,8 +80,8 @@ class ApplicationDetailActivity : AppCompatActivity() {
 
 	override fun onResume() {
 		super.onResume()
-		// 감사노트를 작성/확인하러 갔다가(일반 startActivity라 결과 콜백이 없음) 돌아왔을 수도
-		// 있으니, "감사노트도 작성하기"/"감사노트 보러 가기" 버튼 상태를 다시 확인한다.
+		// 감사 노트를 작성/확인하러 갔다가(일반 startActivity라 결과 콜백이 없음) 돌아왔을 수도
+		// 있으니, "감사 노트도 작성하기"/"감사 노트 보러 가기" 버튼 상태를 다시 확인한다.
 		if (applicationId != -1L) loadApplication()
 	}
 
@@ -176,7 +176,7 @@ class ApplicationDetailActivity : AppCompatActivity() {
 				db.gratitudeNoteDao().getByDate(application.applicationDate).firstOrNull()
 			val btnGratitude = findViewById<TextView>(R.id.btn_write_gratitude)
 			if (existingGratitudeNote != null) {
-				btnGratitude.text = "감사노트 보러 가기"
+				btnGratitude.text = "감사 노트 보러 가기"
 				btnGratitude.setOnClickListener {
 					startActivity(
 						com.chan.bnote.ui.mypage.gratitude.AddGratitudeActivity
@@ -184,7 +184,7 @@ class ApplicationDetailActivity : AppCompatActivity() {
 					)
 				}
 			} else {
-				btnGratitude.text = "감사노트도 작성하기"
+				btnGratitude.text = "감사 노트도 작성하기"
 				btnGratitude.setOnClickListener {
 					startActivity(
 						com.chan.bnote.ui.mypage.gratitude.AddGratitudeActivity

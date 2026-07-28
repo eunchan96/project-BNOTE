@@ -159,7 +159,7 @@
             android:layout_height="wrap_content"
             android:padding="24dp"
             android:gravity="center"
-            android:text="이 날짜에 작성한 감사노트가 없어요"
+            android:text="이 날짜에 작성한 감사 노트가 없어요"
             android:textColor="@color/text_hint" />
 
         <androidx.recyclerview.widget.RecyclerView
