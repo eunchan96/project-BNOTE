@@ -44,6 +44,8 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:layout_marginBottom="4dp"
             android:orientation="horizontal"
             android:gravity="center_vertical">
 
@@ -52,8 +54,6 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginStart="16dp"
-                android:layout_marginTop="12dp"
-                android:layout_marginBottom="4dp"
                 android:text="최근 검색어"
                 android:textSize="13sp"
                 android:textStyle="bold"
@@ -63,8 +63,9 @@
                 android:id="@+id/btn_clear_sermon_search_history"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="12dp"
-                android:padding="8dp"
+                android:layout_marginEnd="8dp"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
                 android:text="전체 삭제"
                 android:textSize="13sp"
                 android:textColor="@color/text_hint"
