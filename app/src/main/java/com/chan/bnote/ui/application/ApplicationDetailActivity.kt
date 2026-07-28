@@ -78,6 +78,13 @@ class ApplicationDetailActivity : AppCompatActivity() {
 		loadApplication()
 	}
 
+	override fun onResume() {
+		super.onResume()
+		// 감사노트를 작성/확인하러 갔다가(일반 startActivity라 결과 콜백이 없음) 돌아왔을 수도
+		// 있으니, "감사노트도 작성하기"/"감사노트 보러 가기" 버튼 상태를 다시 확인한다.
+		if (applicationId != -1L) loadApplication()
+	}
+
 	private fun loadApplication() {
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(applicationContext)
@@ -165,14 +172,28 @@ class ApplicationDetailActivity : AppCompatActivity() {
 			findViewById<TextView>(R.id.text_detail_obedience).text =
 				application.obedienceMemo.ifBlank { "순종 내용이 없어요" }
 
-			findViewById<TextView>(R.id.btn_write_gratitude).setOnClickListener {
-				startActivity(
-					com.chan.bnote.ui.mypage.gratitude.AddGratitudeActivity
-						.createIntent(
-							this@ApplicationDetailActivity,
-							initialDateMillis = application.applicationDate
-						)
-				)
+			val existingGratitudeNote =
+				db.gratitudeNoteDao().getByDate(application.applicationDate).firstOrNull()
+			val btnGratitude = findViewById<TextView>(R.id.btn_write_gratitude)
+			if (existingGratitudeNote != null) {
+				btnGratitude.text = "감사노트 보러 가기"
+				btnGratitude.setOnClickListener {
+					startActivity(
+						com.chan.bnote.ui.mypage.gratitude.AddGratitudeActivity
+							.editIntent(this@ApplicationDetailActivity, existingGratitudeNote.id)
+					)
+				}
+			} else {
+				btnGratitude.text = "감사노트도 작성하기"
+				btnGratitude.setOnClickListener {
+					startActivity(
+						com.chan.bnote.ui.mypage.gratitude.AddGratitudeActivity
+							.createIntent(
+								this@ApplicationDetailActivity,
+								initialDateMillis = application.applicationDate
+							)
+					)
+				}
 			}
 		}
 	}
