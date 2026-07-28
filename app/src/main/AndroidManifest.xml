@@ -150,6 +150,12 @@
             android:name=".ui.knowledge.CultureDetailActivity"
             android:exported="false" />
         <activity
+            android:name=".ui.knowledge.UnitListActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.knowledge.UnitDetailActivity"
+            android:exported="false" />
+        <activity
             android:name=".ui.knowledge.ParableListActivity"
             android:exported="false" />
         <activity
