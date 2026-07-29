@@ -5,7 +5,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
-import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.content.ContextCompat
@@ -32,8 +31,9 @@ class CopyFormatBottomSheet : BottomSheetDialogFragment() {
 	private lateinit var groupsContainer: LinearLayout
 	private lateinit var previewText: TextView
 	private lateinit var titleView: TextView
-	private lateinit var btnSaveInPlace: TextView
-	private lateinit var btnSaveAsNew: TextView
+	private lateinit var editName: EditText
+	private lateinit var btnDeletePreset: TextView
+	private lateinit var btnSavePreset: TextView
 
 	// 미리보기용 샘플 데이터: 창세기 1:1~2
 	private val sampleVerses = listOf(
@@ -63,10 +63,11 @@ class CopyFormatBottomSheet : BottomSheetDialogFragment() {
 		super.onViewCreated(view, savedInstanceState)
 
 		titleView = view.findViewById(R.id.text_copy_format_editor_title)
+		editName = view.findViewById(R.id.edit_preset_name)
 		groupsContainer = view.findViewById(R.id.container_option_groups)
 		previewText = view.findViewById(R.id.text_copy_format_preview)
-		btnSaveInPlace = view.findViewById(R.id.btn_save_in_place)
-		btnSaveAsNew = view.findViewById(R.id.btn_save_as_new)
+		btnDeletePreset = view.findViewById(R.id.btn_delete_preset_in_editor)
+		btnSavePreset = view.findViewById(R.id.btn_save_preset)
 
 		lifecycleScope.launch {
 			val presetId = existingPresetId
@@ -77,24 +78,54 @@ class CopyFormatBottomSheet : BottomSheetDialogFragment() {
 			config = existingPreset?.toConfig() ?: AppSettings.getActiveCopyFormat(requireContext())
 
 			titleView.text = if (existingPreset != null) "형식 수정" else "형식 추가"
-			btnSaveInPlace.visibility = if (existingPreset != null) View.VISIBLE else View.GONE
-			btnSaveAsNew.text = if (existingPreset != null) "다른 이름으로 저장" else "저장"
+			editName.setText(existingPreset?.name ?: "")
+			btnDeletePreset.visibility = if (existingPreset != null) View.VISIBLE else View.GONE
 
 			buildOptionGroups()
 			updatePreview()
 		}
 
-		btnSaveInPlace.setOnClickListener {
-			val preset = existingPreset ?: return@setOnClickListener
-			lifecycleScope.launch {
-				val db = BibleDatabase.getInstance(requireContext().applicationContext)
-				db.copyFormatPresetDao().update(preset.copy(configJson = config.toJson()))
-				AppSettings.setActiveCopyFormat(requireContext(), config)
-				onSaved?.invoke()
-				dismiss()
-			}
+		btnSavePreset.setOnClickListener { savePreset() }
+		btnDeletePreset.setOnClickListener { confirmDelete() }
+	}
+
+	private fun savePreset() {
+		val name = editName.text.toString().trim()
+		if (name.isEmpty()) {
+			editName.error = "이름을 입력해주세요"
+			return
 		}
-		btnSaveAsNew.setOnClickListener { showSaveAsDialog() }
+		val preset = existingPreset
+		lifecycleScope.launch {
+			val db = BibleDatabase.getInstance(requireContext().applicationContext)
+			if (preset != null) {
+				db.copyFormatPresetDao()
+					.update(preset.copy(name = name, configJson = config.toJson()))
+			} else {
+				db.copyFormatPresetDao()
+					.insert(CopyFormatPreset(name = name, configJson = config.toJson()))
+			}
+			AppSettings.setActiveCopyFormat(requireContext(), config)
+			onSaved?.invoke()
+			dismiss()
+		}
+	}
+
+	private fun confirmDelete() {
+		val preset = existingPreset ?: return
+		MaterialAlertDialogBuilder(requireContext(), R.style.ThemeOverlay_BNOTE_Dialog)
+			.setTitle("형식 삭제")
+			.setMessage("'${preset.name}' 형식을 삭제할까요?")
+			.setPositiveButton("삭제") { _, _ ->
+				lifecycleScope.launch {
+					val db = BibleDatabase.getInstance(requireContext().applicationContext)
+					db.copyFormatPresetDao().delete(preset)
+					onSaved?.invoke()
+					dismiss()
+				}
+			}
+			.setNegativeButton("취소", null)
+			.show()
 	}
 
 	private fun buildOptionGroups() {
@@ -271,39 +302,6 @@ class CopyFormatBottomSheet : BottomSheetDialogFragment() {
 			config = config
 		)
 		previewText.text = preview
-	}
-
-	private fun showSaveAsDialog() {
-		val editText = EditText(requireContext()).apply {
-			hint = "형식 이름 (예: 카톡용, 노션용)"
-			setText(existingPreset?.let { "${it.name} 사본" } ?: "")
-			setPadding(48, 32, 48, 32)
-			textSize = 15f
-			background = ContextCompat.getDrawable(requireContext(), R.drawable.bg_book_button)
-		}
-		val container = FrameLayout(requireContext()).apply {
-			setPadding(dp(24), dp(16), dp(24), dp(0))
-			addView(editText)
-		}
-
-		MaterialAlertDialogBuilder(requireContext(), R.style.ThemeOverlay_BNOTE_Dialog)
-			.setTitle("이름 지정")
-			.setView(container)
-			.setPositiveButton("저장") { _, _ ->
-				val name = editText.text.toString().trim()
-				if (name.isEmpty()) return@setPositiveButton
-				lifecycleScope.launch {
-					val db = BibleDatabase.getInstance(requireContext().applicationContext)
-					db.copyFormatPresetDao().insert(
-						CopyFormatPreset(name = name, configJson = config.toJson())
-					)
-					AppSettings.setActiveCopyFormat(requireContext(), config)
-					onSaved?.invoke()
-					dismiss()
-				}
-			}
-			.setNegativeButton("취소", null)
-			.show()
 	}
 
 	private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()

@@ -1,66 +1,113 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    android:gravity="center_vertical"
-    android:paddingStart="16dp"
-    android:paddingEnd="4dp"
-    android:background="?attr/selectableItemBackground"
-    android:clickable="true"
-    android:focusable="true">
+    android:orientation="vertical">
 
     <LinearLayout
-        android:layout_width="0dp"
+        android:id="@+id/row_preset_header"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:orientation="vertical"
-        android:paddingTop="14dp"
-        android:paddingBottom="14dp">
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:background="?attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:paddingTop="14dp"
+            android:paddingBottom="14dp">
+
+            <TextView
+                android:id="@+id/text_preset_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:textColor="@color/text_primary" />
+
+            <TextView
+                android:id="@+id/text_preset_active_badge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="사용 중"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="@color/brown_primary"
+                android:visibility="gone" />
+        </LinearLayout>
 
         <TextView
-            android:id="@+id/text_preset_name"
+            android:id="@+id/text_preset_toggle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="16sp"
-            android:textColor="@color/text_primary" />
-
-        <TextView
-            android:id="@+id/text_preset_active_badge"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:text="사용 중"
-            android:textSize="12sp"
-            android:textStyle="bold"
-            android:textColor="@color/brown_primary"
-            android:visibility="gone" />
+            android:padding="8dp"
+            android:text="▾"
+            android:textSize="14sp"
+            android:textColor="@color/text_hint" />
     </LinearLayout>
 
-    <ImageView
-        android:id="@+id/btn_edit_preset"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:padding="8dp"
-        android:src="@drawable/ic_edit"
-        app:tint="@color/icon_action_tint"
-        android:contentDescription="수정"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:visibility="gone"
-        android:clickable="true"
-        android:focusable="true" />
+    <LinearLayout
+        android:id="@+id/container_preset_expanded"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="14dp"
+        android:visibility="gone">
 
-    <ImageView
-        android:id="@+id/btn_delete_preset"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:padding="8dp"
-        android:src="@drawable/ic_delete"
-        app:tint="@color/icon_action_tint"
-        android:contentDescription="삭제"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:visibility="gone"
-        android:clickable="true"
-        android:focusable="true" />
+        <TextView
+            android:id="@+id/text_preset_example"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="12dp"
+            android:background="@color/input_background"
+            android:textSize="13sp"
+            android:textColor="@color/text_primary" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="8dp">
+
+            <TextView
+                android:id="@+id/btn_preset_edit"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginEnd="6dp"
+                android:padding="12dp"
+                android:gravity="center"
+                android:text="수정"
+                android:textSize="14sp"
+                android:textColor="@color/brown_primary"
+                android:background="@drawable/bg_book_button"
+                android:clickable="true"
+                android:focusable="true" />
+
+            <TextView
+                android:id="@+id/btn_preset_select"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="6dp"
+                android:padding="12dp"
+                android:gravity="center"
+                android:text="선택"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="@color/white"
+                android:background="@drawable/bg_save_button"
+                android:clickable="true"
+                android:focusable="true" />
+        </LinearLayout>
+    </LinearLayout>
 </LinearLayout>
