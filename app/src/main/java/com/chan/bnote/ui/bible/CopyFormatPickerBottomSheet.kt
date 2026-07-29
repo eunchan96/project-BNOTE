@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.lifecycleScope
 import com.chan.bnote.R
 import com.chan.bnote.data.AppSettings
@@ -18,7 +19,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import kotlinx.coroutines.launch
 
 /** 저장된 복사 형식들을 보여주고, 항목을 누르면 그 아래로 예시 · 수정 · 선택이 펼쳐진다.
- * 추가/수정은 CopyFormatBottomSheet로 넘어간다. */
+ * 추가/수정은 CopyFormatEditorActivity로 넘어간다. */
 class CopyFormatPickerBottomSheet : BottomSheetDialogFragment() {
 
 	private lateinit var presetsContainer: LinearLayout
@@ -43,6 +44,12 @@ class CopyFormatPickerBottomSheet : BottomSheetDialogFragment() {
 
 	// 지금 펼쳐져 있는 프리셋 id(하나만 펼쳐둔다). 목록을 다시 그려도 유지되도록 필드로 둔다.
 	private var expandedPresetId: Long? = null
+
+	private val editorLauncher = registerForActivityResult(
+		ActivityResultContracts.StartActivityForResult()
+	) { result ->
+		if (result.resultCode == android.app.Activity.RESULT_OK) loadPresets()
+	}
 
 	override fun onCreateView(
 		inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -122,10 +129,9 @@ class CopyFormatPickerBottomSheet : BottomSheetDialogFragment() {
 	}
 
 	private fun openEditor(existingPresetId: Long?) {
-		val editor = CopyFormatBottomSheet()
-		editor.existingPresetId = existingPresetId
-		editor.onSaved = { loadPresets() }
-		editor.show(parentFragmentManager, "copy_format_editor")
+		editorLauncher.launch(
+			CopyFormatEditorActivity.createIntent(requireContext(), existingPresetId)
+		)
 	}
 
 	/** 기본으로 제공하는 형식 3개. 처음 한 번만 심고, 그 뒤로는 자유롭게 수정 · 삭제할 수 있는 그냥
