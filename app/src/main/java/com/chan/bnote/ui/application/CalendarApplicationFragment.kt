@@ -1,4 +1,4 @@
-package com.chan.bnote.ui.application.bycalendar
+package com.chan.bnote.ui.application
 
 import android.app.Activity
 import android.os.Bundle
@@ -16,9 +16,7 @@ import com.chan.bnote.R
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.DateUtils
 import com.chan.bnote.data.application.Application
-import com.chan.bnote.ui.application.ApplicationDetailActivity
-import com.chan.bnote.ui.application.ApplicationRowAdapter
-import com.chan.bnote.ui.application.ApplicationRowBuilder
+import com.chan.bnote.ui.FabAddHandler
 import com.chan.bnote.ui.application.addapplication.AddApplicationActivity
 import com.chan.bnote.ui.sermon.bycalendar.CalendarDayCell
 import com.chan.bnote.ui.sermon.bycalendar.CalendarGridAdapter
@@ -26,7 +24,7 @@ import com.chan.bnote.ui.sermon.bycalendar.MonthYearPickerBottomSheet
 import kotlinx.coroutines.launch
 import java.util.Calendar
 
-class CalendarApplicationFragment : Fragment() {
+class CalendarApplicationFragment : Fragment(), FabAddHandler {
 
 	private lateinit var monthYearText: TextView
 	private lateinit var gridRecycler: RecyclerView
@@ -106,17 +104,17 @@ class CalendarApplicationFragment : Fragment() {
 			loadCalendarGrid()
 		}
 
-		view.findViewById<TextView>(R.id.fab_add_application).setOnClickListener {
-			addLauncher.launch(
-				AddApplicationActivity.createIntent(
-					requireContext(),
-					initialDateMillis = selectedDate
-				)
-			)
-		}
-
 		loadCalendarGrid()
 		loadApplicationsForSelectedDate()
+	}
+
+	override fun onFabAddClicked() {
+		addLauncher.launch(
+			AddApplicationActivity.createIntent(
+				requireContext(),
+				initialDateMillis = selectedDate
+			)
+		)
 	}
 
 	private fun loadCalendarGrid() {

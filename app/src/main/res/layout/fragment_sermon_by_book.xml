@@ -114,19 +114,4 @@
         </FrameLayout>
 
     </LinearLayout>
-
-    <TextView
-        android:id="@+id/fab_add_sermon_by_book"
-        android:layout_width="56dp"
-        android:layout_height="56dp"
-        android:layout_gravity="bottom|end"
-        android:layout_margin="20dp"
-        android:gravity="center"
-        android:text="+"
-        android:textSize="28sp"
-        android:textColor="@color/white"
-        android:background="@drawable/bg_fab_brown"
-        android:elevation="6dp"
-        android:clickable="true"
-        android:focusable="true" />
 </FrameLayout>

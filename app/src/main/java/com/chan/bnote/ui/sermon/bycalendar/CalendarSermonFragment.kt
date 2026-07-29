@@ -17,6 +17,7 @@ import com.chan.bnote.data.AppSettings
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.DateUtils
 import com.chan.bnote.data.sermon.Sermon
+import com.chan.bnote.ui.FabAddHandler
 import com.chan.bnote.ui.sermon.SermonRowAdapter
 import com.chan.bnote.ui.sermon.SermonRowBuilder
 import com.chan.bnote.ui.sermon.SermonSortableFragment
@@ -26,7 +27,7 @@ import com.chan.bnote.ui.sermon.detail.SermonDetailActivity
 import kotlinx.coroutines.launch
 import java.util.Calendar
 
-class CalendarSermonFragment : Fragment(), SermonSortableFragment {
+class CalendarSermonFragment : Fragment(), SermonSortableFragment, FabAddHandler {
 
 	private lateinit var monthYearText: TextView
 	private lateinit var gridRecycler: RecyclerView
@@ -111,14 +112,14 @@ class CalendarSermonFragment : Fragment(), SermonSortableFragment {
 
 		SortButtonHelper.setup(view.findViewById(R.id.btn_calendar_sort), this)
 
-		view.findViewById<TextView>(R.id.fab_add_sermon).setOnClickListener {
-			addSermonLauncher.launch(
-				AddSermonActivity.createIntent(requireContext(), initialDateMillis = selectedDate)
-			)
-		}
-
 		loadCalendarGrid()
 		loadSermonsForSelectedDate()
+	}
+
+	override fun onFabAddClicked() {
+		addSermonLauncher.launch(
+			AddSermonActivity.createIntent(requireContext(), initialDateMillis = selectedDate)
+		)
 	}
 
 	private fun loadCalendarGrid() {

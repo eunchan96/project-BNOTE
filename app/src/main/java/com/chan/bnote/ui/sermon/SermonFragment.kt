@@ -9,6 +9,7 @@ import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.viewpager2.widget.ViewPager2
 import com.chan.bnote.R
+import com.chan.bnote.ui.FabAddHandler
 import com.chan.bnote.ui.TopBarActionHandler
 import com.chan.bnote.ui.TopBarConfig
 import com.chan.bnote.ui.sermon.category.CategoryManageActivity
@@ -37,7 +38,12 @@ class SermonFragment : Fragment(), TopBarActionHandler {
 		subtabApplication.text = "적용하기"
 
 		viewPager = view.findViewById(R.id.sermon_view_pager)
-		viewPager.adapter = SermonSubPagerAdapter(this)
+		val pagerAdapter = SermonSubPagerAdapter(this)
+		viewPager.adapter = pagerAdapter
+
+		view.findViewById<TextView>(R.id.fab_add_sermon_tab).setOnClickListener {
+			(pagerAdapter.fragmentAt(viewPager.currentItem) as? FabAddHandler)?.onFabAddClicked()
+		}
 
 		subtabCalendar.setOnClickListener { viewPager.setCurrentItem(0, true) }
 		subtabByBook.setOnClickListener { viewPager.setCurrentItem(1, true) }
