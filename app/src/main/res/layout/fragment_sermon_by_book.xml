@@ -83,35 +83,20 @@
             android:background="@color/divider_light" />
 
         <TextView
-            android:id="@+id/text_selected_chapter_label"
+            android:id="@+id/text_empty_by_chapter"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:padding="12dp"
-            android:textSize="14sp"
-            android:textColor="@color/text_secondary" />
+            android:padding="24dp"
+            android:gravity="center"
+            android:text="등록된 설교가 없어요"
+            android:textColor="@color/text_hint" />
 
-        <FrameLayout
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recycler_sermons_by_chapter"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="1">
-
-            <TextView
-                android:id="@+id/text_empty_by_chapter"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:padding="24dp"
-                android:gravity="center"
-                android:text="등록된 설교가 없어요"
-                android:textColor="@color/text_hint"
-                android:visibility="gone" />
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/recycler_sermons_by_chapter"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:visibility="gone" />
-        </FrameLayout>
+            android:layout_weight="1"
+            android:visibility="gone" />
 
     </LinearLayout>
 </FrameLayout>

@@ -160,11 +160,6 @@ class SermonByBookFragment : Fragment(), SermonSortableFragment, FabAddHandler {
 	}
 
 	private fun loadSermonsForSelectedChapter() {
-		val label = view?.findViewById<TextView>(R.id.text_selected_chapter_label)
-		label?.text = "${BibleBooks.nameOf(currentBookId)} ${selectedChapter}${
-			BibleBooks.chapterUnit(currentBookId)
-		}"
-
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(requireContext().applicationContext)
 			val sermons = db.sermonDao().getByBookChapter(currentBookId, selectedChapter)
