@@ -74,8 +74,7 @@
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recycler_chapter_grid"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
+            android:layout_height="317dp"
             android:padding="4dp" />
 
         <View
@@ -93,7 +92,8 @@
 
         <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="180dp">
+            android:layout_height="0dp"
+            android:layout_weight="1">
 
             <TextView
                 android:id="@+id/text_empty_by_chapter"
