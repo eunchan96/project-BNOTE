@@ -129,6 +129,9 @@ class AddApplicationActivity : AppCompatActivity() {
 		editPrayer = findViewById(R.id.edit_prayer)
 		editObedience = findViewById(R.id.edit_obedience)
 
+		findViewById<ImageView>(R.id.btn_prayer_info).setOnClickListener { showPrayerInfoDialog() }
+		findViewById<ImageView>(R.id.btn_obedience_info).setOnClickListener { showObedienceInfoDialog() }
+
 		updateDateText()
 		btnPickDate.setOnClickListener { showDatePicker() }
 
@@ -460,7 +463,6 @@ class AddApplicationActivity : AppCompatActivity() {
 		}
 		UnsavedChangesDialog.show(
 			context = this,
-			onSaveAndExit = { save() },
 			onDiscard = { finish() }
 		)
 	}
@@ -527,4 +529,46 @@ class AddApplicationActivity : AppCompatActivity() {
 	}
 
 	private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
+
+	private fun showPrayerInfoDialog() {
+		val message = """
+			기도의 중요한 네 가지 영역은 다음과 같습니다.
+
+			· 찬양(Adoration) : 하나님을 높이는 것입니다. 하나님의 사랑, 능력과 위엄, 하나님의 놀라운 선물인 예수 그리스도를 인하여 하나님을 찬양하십시오.
+			· 회개 (Confession) : 당신이 지은 죄를 하나님 앞에 시인하는 것입니다. 솔직하고 겸손하십시오. 하나님께서는 당신을 잘 알고 계시며, 여전히 사랑하고 계심을 잊지 마십시오.
+			· 감사 (Thanksgiving) : 하나님께서 당신에게 주신 모든 것에 대하여, 마음에 들지 않는 일까지도, 하나님께 감사하는 것입니다. 감사하는 삶을 통하여 당신은 하나님의 목표를 더 잘 알게 됩니다.
+			· 간구 (Supplication) : 특별한 요청입니다. 먼저 남을 위하여 기도하고, 그 다음에 당신을 위하여 기도하십시오.
+
+			이 네 단어의 영어 첫 글자를 따면 'ACTS(사도행전)'가 됩니다. 이것을 기도의 길잡이로 사용하면 균형 있는 기도의 삶을 유지하는 데 도움이 됩니다.
+		""".trimIndent()
+
+		com.google.android.material.dialog.MaterialAlertDialogBuilder(
+			this, R.style.ThemeOverlay_BNOTE_Dialog
+		)
+			.setTitle("기도하기 안내")
+			.setMessage(message)
+			.setPositiveButton("확인", null)
+			.show()
+	}
+
+	private fun showObedienceInfoDialog() {
+		val message = """
+			말씀을 삶에 적용하는 방법으로 4P를 사용할 수 있습니다.
+
+			· Personal(개인적 적용) : 말씀을 다른 사람에게 적용하기 전에 먼저 나 자신에게 적용하는 것입니다. 이 말씀이 나의 삶에 무엇을 말씀하고 있는지 돌아보십시오.
+			· Practical(실제적 적용) : 깨달은 말씀을 구체적인 행동으로 옮기는 것입니다. "잘해야겠다"는 막연한 결심보다 내가 실제로 무엇을 할 것인지 정하십시오.
+			· Possible(가능한 적용) : 내가 실제로 순종할 수 있는 작고 현실적인 것을 정하는 것입니다. 큰 결심보다는 지금 내가 할 수 있는 작은 순종부터 시작하십시오.
+			· Period(기간) : 언제 실천할 것인지 구체적인 시간이나 기간을 정하는 것입니다. "언젠가"가 아니라 오늘 또는 이번 주처럼 실천할 시점을 정하십시오.
+
+			이 네 단어의 첫 글자를 따면 4P(Personal, Practical, Possible, Period)가 됩니다. 4P를 말씀 묵상의 길잡이로 사용하면 말씀을 깨닫는 데서 그치지 않고, 내 삶에 적용하여 작고 구체적인 순종으로 실천하는 데 도움이 됩니다.
+		""".trimIndent()
+
+		com.google.android.material.dialog.MaterialAlertDialogBuilder(
+			this, R.style.ThemeOverlay_BNOTE_Dialog
+		)
+			.setTitle("순종하기 안내")
+			.setMessage(message)
+			.setPositiveButton("확인", null)
+			.show()
+	}
 }

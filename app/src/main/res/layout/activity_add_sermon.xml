@@ -120,12 +120,15 @@
                         app:alignItems="center" />
                 </LinearLayout>
 
-                <!-- 설교 (설교자 + 카테고리) -->
+                <!-- 설교 (설교자 + 카테고리)
+                     본문 구절 칩(buildRefBox)마다 bottomMargin 4dp가 이미 붙어있어서(여러 줄로
+                     넘칠 때 줄 간격용), 이 행의 marginTop을 8dp로 그대로 두면 "제목→본문"(8dp)보다
+                     "본문→설교"(4+8=12dp) 간격이 더 벌어져 보인다. 4dp로 줄여서 4+4=8dp로 맞춘다. -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:layout_marginTop="8dp"
+                    android:layout_marginTop="4dp"
                     android:gravity="center_vertical">
 
                     <TextView

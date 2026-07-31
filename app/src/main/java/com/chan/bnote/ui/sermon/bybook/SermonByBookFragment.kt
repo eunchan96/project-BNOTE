@@ -18,6 +18,7 @@ import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.bible.BibleBooks
 import com.chan.bnote.data.sermon.ChapterMarker
 import com.chan.bnote.data.sermon.Sermon
+import com.chan.bnote.ui.FabAddHandler
 import com.chan.bnote.ui.bible.picker.BookOnlyPickerBottomSheet
 import com.chan.bnote.ui.sermon.SermonRowAdapter
 import com.chan.bnote.ui.sermon.SermonRowBuilder
@@ -27,7 +28,7 @@ import com.chan.bnote.ui.sermon.addsermon.AddSermonActivity
 import com.chan.bnote.ui.sermon.detail.SermonDetailActivity
 import kotlinx.coroutines.launch
 
-class SermonByBookFragment : Fragment(), SermonSortableFragment {
+class SermonByBookFragment : Fragment(), SermonSortableFragment, FabAddHandler {
 
 	private lateinit var bookTitleText: TextView
 	private lateinit var chapterGridRecycler: RecyclerView
@@ -80,28 +81,39 @@ class SermonByBookFragment : Fragment(), SermonSortableFragment {
 			picker.show(parentFragmentManager, "book_only_picker")
 		}
 
-		view.findViewById<TextView>(R.id.btn_book_prev).setOnClickListener {
-			if (currentBookId > 1) {
-				currentBookId -= 1
-				selectedChapter = 1
-				loadChapterGrid()
-			}
-		}
-		view.findViewById<TextView>(R.id.btn_book_next).setOnClickListener {
-			if (currentBookId < 66) {
-				currentBookId += 1
-				selectedChapter = 1
-				loadChapterGrid()
-			}
-		}
+		view.findViewById<TextView>(R.id.btn_book_prev).setOnClickListener { goToPrevBook() }
+		view.findViewById<TextView>(R.id.btn_book_next).setOnClickListener { goToNextBook() }
+
+		val swipeIntercept =
+			view.findViewById<com.chan.bnote.ui.common.HorizontalSwipeInterceptLayout>(
+				R.id.swipe_intercept_chapter_grid
+			)
+		swipeIntercept.onSwipeRight = { goToPrevBook() }
+		swipeIntercept.onSwipeLeft = { goToNextBook() }
 
 		SortButtonHelper.setup(view.findViewById(R.id.btn_by_book_sort), this)
 
-		view.findViewById<TextView>(R.id.fab_add_sermon_by_book).setOnClickListener {
-			addSermonLauncher.launch(AddSermonActivity.createIntent(requireContext()))
-		}
-
 		loadChapterGrid()
+	}
+
+	private fun goToPrevBook() {
+		if (currentBookId > 1) {
+			currentBookId -= 1
+			selectedChapter = 1
+			loadChapterGrid()
+		}
+	}
+
+	private fun goToNextBook() {
+		if (currentBookId < 66) {
+			currentBookId += 1
+			selectedChapter = 1
+			loadChapterGrid()
+		}
+	}
+
+	override fun onFabAddClicked() {
+		addSermonLauncher.launch(AddSermonActivity.createIntent(requireContext()))
 	}
 
 	private fun loadChapterGrid() {
@@ -159,11 +171,6 @@ class SermonByBookFragment : Fragment(), SermonSortableFragment {
 	}
 
 	private fun loadSermonsForSelectedChapter() {
-		val label = view?.findViewById<TextView>(R.id.text_selected_chapter_label)
-		label?.text = "${BibleBooks.nameOf(currentBookId)} ${selectedChapter}${
-			BibleBooks.chapterUnit(currentBookId)
-		}"
-
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(requireContext().applicationContext)
 			val sermons = db.sermonDao().getByBookChapter(currentBookId, selectedChapter)

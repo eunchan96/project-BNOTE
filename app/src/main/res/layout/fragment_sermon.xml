@@ -55,10 +55,32 @@
         android:layout_height="1dp"
         android:background="@color/divider_light" />
 
-    <androidx.viewpager2.widget.ViewPager2
-        android:id="@+id/sermon_view_pager"
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1" />
+        android:layout_weight="1">
+
+        <androidx.viewpager2.widget.ViewPager2
+            android:id="@+id/sermon_view_pager"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <!-- 서브탭을 스와이프해도 이 버튼은 안 움직이도록, 페이저 밖(오버레이)에 하나만 둔다.
+             클릭하면 지금 보이는 서브탭 프래그먼트(FabAddHandler)에게 위임한다. -->
+        <TextView
+            android:id="@+id/fab_add_sermon_tab"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:layout_gravity="bottom|end"
+            android:layout_margin="20dp"
+            android:gravity="center"
+            android:text="+"
+            android:textSize="28sp"
+            android:textColor="@color/white"
+            android:background="@drawable/bg_fab_brown"
+            android:elevation="6dp"
+            android:clickable="true"
+            android:focusable="true" />
+    </FrameLayout>
 
 </LinearLayout>

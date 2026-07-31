@@ -1,14 +1,21 @@
 package com.chan.bnote.ui.bible
 
+import android.app.Activity
+import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import android.widget.EditText
-import android.widget.FrameLayout
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.activity.OnBackPressedCallback
+import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import com.chan.bnote.R
 import com.chan.bnote.data.AppSettings
@@ -17,23 +24,35 @@ import com.chan.bnote.data.bible.BibleVerse
 import com.chan.bnote.data.mypage.CopyFormatConfig
 import com.chan.bnote.data.mypage.CopyFormatPreset
 import com.chan.bnote.data.mypage.CopyFormatter
-import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import com.chan.bnote.ui.common.UnsavedChangesDialog
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 
 /** 복사 형식 하나를 새로 만들거나 수정하는 화면. existingPresetId가 있으면 수정 모드. */
-class CopyFormatBottomSheet : BottomSheetDialogFragment() {
+class CopyFormatEditorActivity : AppCompatActivity() {
 
-	var existingPresetId: Long? = null
-	var onSaved: (() -> Unit)? = null
+	companion object {
+		private const val EXTRA_PRESET_ID = "extra_preset_id"
 
+		fun createIntent(context: Context, existingPresetId: Long? = null): Intent {
+			return Intent(context, CopyFormatEditorActivity::class.java).apply {
+				if (existingPresetId != null) putExtra(EXTRA_PRESET_ID, existingPresetId)
+			}
+		}
+	}
+
+	private var existingPresetId: Long? = null
 	private var existingPreset: CopyFormatPreset? = null
 	private var config: CopyFormatConfig = CopyFormatConfig()
+	private var originalName: String = ""
+	private var originalConfigJson: String = ""
+
 	private lateinit var groupsContainer: LinearLayout
 	private lateinit var previewText: TextView
 	private lateinit var titleView: TextView
-	private lateinit var btnSaveInPlace: TextView
-	private lateinit var btnSaveAsNew: TextView
+	private lateinit var editName: EditText
+	private lateinit var btnDeletePreset: TextView
+	private lateinit var btnSavePreset: TextView
 
 	// 미리보기용 샘플 데이터: 창세기 1:1~2
 	private val sampleVerses = listOf(
@@ -53,48 +72,110 @@ class CopyFormatBottomSheet : BottomSheetDialogFragment() {
 		)
 	)
 
-	override fun onCreateView(
-		inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
-	): View {
-		return inflater.inflate(R.layout.bottom_sheet_copy_format_editor, container, false)
-	}
+	override fun onCreate(savedInstanceState: Bundle?) {
+		super.onCreate(savedInstanceState)
+		enableEdgeToEdge()
+		setContentView(R.layout.activity_copy_format_editor)
 
-	override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-		super.onViewCreated(view, savedInstanceState)
+		ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.copy_format_editor_root)) { v, insets ->
+			val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+			v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+			insets
+		}
 
-		titleView = view.findViewById(R.id.text_copy_format_editor_title)
-		groupsContainer = view.findViewById(R.id.container_option_groups)
-		previewText = view.findViewById(R.id.text_copy_format_preview)
-		btnSaveInPlace = view.findViewById(R.id.btn_save_in_place)
-		btnSaveAsNew = view.findViewById(R.id.btn_save_as_new)
+		existingPresetId =
+			intent.getLongExtra(EXTRA_PRESET_ID, -1L).let { if (it == -1L) null else it }
+
+		titleView = findViewById(R.id.text_copy_format_editor_title)
+		editName = findViewById(R.id.edit_preset_name)
+		groupsContainer = findViewById(R.id.container_option_groups)
+		previewText = findViewById(R.id.text_copy_format_preview)
+		btnDeletePreset = findViewById(R.id.btn_delete_preset_in_editor)
+		btnSavePreset = findViewById(R.id.btn_save_preset)
+
+		findViewById<ImageView>(R.id.btn_top_bar_back).setOnClickListener { handleBackPress() }
+		onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+			override fun handleOnBackPressed() {
+				handleBackPress()
+			}
+		})
 
 		lifecycleScope.launch {
 			val presetId = existingPresetId
 			if (presetId != null) {
-				val db = BibleDatabase.getInstance(requireContext().applicationContext)
+				val db = BibleDatabase.getInstance(applicationContext)
 				existingPreset = db.copyFormatPresetDao().getById(presetId)
 			}
-			config = existingPreset?.toConfig() ?: AppSettings.getActiveCopyFormat(requireContext())
+			config = existingPreset?.toConfig()
+				?: AppSettings.getActiveCopyFormat(this@CopyFormatEditorActivity)
 
 			titleView.text = if (existingPreset != null) "형식 수정" else "형식 추가"
-			btnSaveInPlace.visibility = if (existingPreset != null) View.VISIBLE else View.GONE
-			btnSaveAsNew.text = if (existingPreset != null) "다른 이름으로 저장" else "저장"
+			editName.setText(existingPreset?.name ?: "")
+			btnDeletePreset.visibility = if (existingPreset != null) View.VISIBLE else View.GONE
+
+			originalName = editName.text.toString()
+			originalConfigJson = config.toJson()
 
 			buildOptionGroups()
 			updatePreview()
 		}
 
-		btnSaveInPlace.setOnClickListener {
-			val preset = existingPreset ?: return@setOnClickListener
-			lifecycleScope.launch {
-				val db = BibleDatabase.getInstance(requireContext().applicationContext)
-				db.copyFormatPresetDao().update(preset.copy(configJson = config.toJson()))
-				AppSettings.setActiveCopyFormat(requireContext(), config)
-				onSaved?.invoke()
-				dismiss()
-			}
+		btnSavePreset.setOnClickListener { savePreset() }
+		btnDeletePreset.setOnClickListener { confirmDelete() }
+	}
+
+	private fun hasUnsavedChanges(): Boolean {
+		return editName.text.toString() != originalName || config.toJson() != originalConfigJson
+	}
+
+	private fun handleBackPress() {
+		if (!hasUnsavedChanges()) {
+			finish()
+			return
 		}
-		btnSaveAsNew.setOnClickListener { showSaveAsDialog() }
+		UnsavedChangesDialog.show(
+			context = this,
+			onDiscard = { finish() }
+		)
+	}
+
+	private fun savePreset() {
+		val name = editName.text.toString().trim()
+		if (name.isEmpty()) {
+			editName.error = "이름을 입력해주세요"
+			return
+		}
+		val preset = existingPreset
+		lifecycleScope.launch {
+			val db = BibleDatabase.getInstance(applicationContext)
+			if (preset != null) {
+				db.copyFormatPresetDao()
+					.update(preset.copy(name = name, configJson = config.toJson()))
+			} else {
+				db.copyFormatPresetDao()
+					.insert(CopyFormatPreset(name = name, configJson = config.toJson()))
+			}
+			AppSettings.setActiveCopyFormat(this@CopyFormatEditorActivity, config)
+			setResult(Activity.RESULT_OK)
+			finish()
+		}
+	}
+
+	private fun confirmDelete() {
+		val preset = existingPreset ?: return
+		MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_BNOTE_Dialog)
+			.setTitle("형식 삭제")
+			.setMessage("'${preset.name}' 형식을 삭제할까요?")
+			.setPositiveButton("삭제") { _, _ ->
+				lifecycleScope.launch {
+					val db = BibleDatabase.getInstance(applicationContext)
+					db.copyFormatPresetDao().delete(preset)
+					setResult(Activity.RESULT_OK)
+					finish()
+				}
+			}
+			.setNegativeButton("취소", null)
+			.show()
 	}
 
 	private fun buildOptionGroups() {
@@ -221,15 +302,20 @@ class CopyFormatBottomSheet : BottomSheetDialogFragment() {
 		label: String,
 		optionsProvider: () -> List<Pair<Pair<String, Boolean>, () -> Unit>>
 	) {
-		val labelView = TextView(requireContext()).apply {
+		val labelView = TextView(this).apply {
 			text = label
 			textSize = 13f
-			setTextColor(ContextCompat.getColor(requireContext(), R.color.text_secondary))
+			setTextColor(
+				ContextCompat.getColor(
+					this@CopyFormatEditorActivity,
+					R.color.text_secondary
+				)
+			)
 			setPadding(dp(16), dp(10), dp(16), dp(4))
 		}
 		groupsContainer.addView(labelView)
 
-		val row = LinearLayout(requireContext()).apply {
+		val row = LinearLayout(this).apply {
 			orientation = LinearLayout.HORIZONTAL
 			setPadding(dp(16), 0, dp(16), 0)
 		}
@@ -237,7 +323,7 @@ class CopyFormatBottomSheet : BottomSheetDialogFragment() {
 
 		for ((textAndSelected, onClick) in optionsProvider()) {
 			val (text, selected) = textAndSelected
-			val chip = LayoutInflater.from(requireContext())
+			val chip = LayoutInflater.from(this)
 				.inflate(R.layout.item_copy_format_chip, row, false) as TextView
 			chip.text = text
 			applyChipStyle(chip, selected)
@@ -254,7 +340,7 @@ class CopyFormatBottomSheet : BottomSheetDialogFragment() {
 		chip.setBackgroundResource(if (selected) R.drawable.bg_book_button_selected else R.drawable.bg_book_button)
 		chip.setTextColor(
 			ContextCompat.getColor(
-				requireContext(),
+				this,
 				if (selected) R.color.white else R.color.text_primary
 			)
 		)
@@ -271,39 +357,6 @@ class CopyFormatBottomSheet : BottomSheetDialogFragment() {
 			config = config
 		)
 		previewText.text = preview
-	}
-
-	private fun showSaveAsDialog() {
-		val editText = EditText(requireContext()).apply {
-			hint = "형식 이름 (예: 카톡용, 노션용)"
-			setText(existingPreset?.let { "${it.name} 사본" } ?: "")
-			setPadding(48, 32, 48, 32)
-			textSize = 15f
-			background = ContextCompat.getDrawable(requireContext(), R.drawable.bg_book_button)
-		}
-		val container = FrameLayout(requireContext()).apply {
-			setPadding(dp(24), dp(16), dp(24), dp(0))
-			addView(editText)
-		}
-
-		MaterialAlertDialogBuilder(requireContext(), R.style.ThemeOverlay_BNOTE_Dialog)
-			.setTitle("이름 지정")
-			.setView(container)
-			.setPositiveButton("저장") { _, _ ->
-				val name = editText.text.toString().trim()
-				if (name.isEmpty()) return@setPositiveButton
-				lifecycleScope.launch {
-					val db = BibleDatabase.getInstance(requireContext().applicationContext)
-					db.copyFormatPresetDao().insert(
-						CopyFormatPreset(name = name, configJson = config.toJson())
-					)
-					AppSettings.setActiveCopyFormat(requireContext(), config)
-					onSaved?.invoke()
-					dismiss()
-				}
-			}
-			.setNegativeButton("취소", null)
-			.show()
 	}
 
 	private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()

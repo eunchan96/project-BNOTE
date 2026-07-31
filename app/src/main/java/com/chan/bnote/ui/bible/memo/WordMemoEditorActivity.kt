@@ -130,17 +130,6 @@ class WordMemoEditorActivity : AppCompatActivity() {
 		}
 		com.chan.bnote.ui.common.UnsavedChangesDialog.show(
 			context = this,
-			onSaveAndExit = {
-				lifecycleScope.launch {
-					boxes.forEach { box ->
-						val current = box.editText.text.toString().trim()
-						if (current.isNotEmpty() && current != (box.existing?.text ?: "")) {
-							saveBoxSuspend(box)
-						}
-					}
-					finishWithResult()
-				}
-			},
 			onDiscard = { finishWithResult() }
 		)
 	}

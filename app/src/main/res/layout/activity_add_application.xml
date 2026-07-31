@@ -106,11 +106,12 @@
                     android:gravity="center_vertical">
 
                     <TextView
-                        android:layout_width="44dp"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginEnd="10dp"
                         android:text="카테고리"
-                        android:textSize="13sp"
+                        android:textSize="15sp"
+                        android:maxLines="1"
                         android:textColor="@color/text_secondary" />
 
                     <TextView
@@ -230,15 +231,34 @@
                 android:background="@drawable/bg_book_button" />
 
             <!-- 기도하기 -->
-            <TextView
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:orientation="horizontal"
                 android:layout_marginStart="16dp"
                 android:layout_marginEnd="16dp"
-                android:text="기도하기"
-                android:textSize="15sp"
-                android:textStyle="bold"
-                android:textColor="@color/text_primary" />
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="기도하기"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_primary" />
+
+                <ImageView
+                    android:id="@+id/btn_prayer_info"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:padding="4dp"
+                    android:src="@drawable/ic_info"
+                    android:contentDescription="기도하기 안내"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:clickable="true"
+                    android:focusable="true" />
+            </LinearLayout>
 
             <EditText
                 android:id="@+id/edit_prayer"
@@ -256,15 +276,34 @@
                 android:background="@drawable/bg_book_button" />
 
             <!-- 순종하기 -->
-            <TextView
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:orientation="horizontal"
                 android:layout_marginStart="16dp"
                 android:layout_marginEnd="16dp"
-                android:text="순종하기"
-                android:textSize="15sp"
-                android:textStyle="bold"
-                android:textColor="@color/text_primary" />
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="순종하기"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_primary" />
+
+                <ImageView
+                    android:id="@+id/btn_obedience_info"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:padding="4dp"
+                    android:src="@drawable/ic_info"
+                    android:contentDescription="순종하기 안내"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:clickable="true"
+                    android:focusable="true" />
+            </LinearLayout>
 
             <EditText
                 android:id="@+id/edit_obedience"
@@ -276,7 +315,7 @@
                 android:layout_marginBottom="16dp"
                 android:minHeight="140dp"
                 android:gravity="top"
-                android:hint="4P (Personal, Practical, Possible, Period) 적용을 해보세요!&#10;실천할 수 있는 작은 순종을 구체적으로 적어보세요."
+                android:hint="실천할 수 있는 작은 순종을 구체적으로 적어보세요."
                 android:textSize="15sp"
                 android:padding="12dp"
                 android:background="@drawable/bg_book_button" />

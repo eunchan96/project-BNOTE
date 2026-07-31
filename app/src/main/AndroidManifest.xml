@@ -201,6 +201,10 @@
             android:name=".ui.bible.ChapterSermonsActivity"
             android:exported="false" />
         <activity
+            android:name=".ui.bible.CopyFormatEditorActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
             android:name=".ui.sermon.SermonSearchActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />

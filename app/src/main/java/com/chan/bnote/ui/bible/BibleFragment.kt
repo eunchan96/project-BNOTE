@@ -689,6 +689,15 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		if (newFontSize != currentFontSize) {
 			currentFontSize = newFontSize
 			adapter.updateFontSize(currentFontSize)
+			// ViewPager2가 offscreenPageLimit만큼 앞뒤 장을 미리 로드해두는데, 그 페이지들은 설정을 바꾸기 전에 이미 만들어진 오래된 크기를 그대로 들고 있다.
+			// 게다가 RecyclerView 자체 prefetch(GapWorker)가 스크롤 방향으로 offscreenPageLimit보다 더 미리 로드해두는 경우도 있어서, 정확히 몇 칸까지 미리 로드됐는지 예측하는 대신 지금 페이지만 빼고 나머지 전체를 "다시 그려야 함"으로 표시한다.
+			// 실제로 화면에 붙어있는(이미 로드된) 페이지만 다시 로드되므로 성능 부담은 없고, 지금 페이지는 위에서 이미 가볍게 갱신했으니 화면이 튀거나 스크롤 위치가 흐트러지지 않는다.
+			if (::viewPager.isInitialized && ::pageAdapter.isInitialized) {
+				val position = viewPager.currentItem
+				if (position > 0) pageAdapter.notifyItemRangeChanged(0, position)
+				val afterCount = pageAdapter.itemCount - position - 1
+				if (afterCount > 0) pageAdapter.notifyItemRangeChanged(position + 1, afterCount)
+			}
 		}
 		scrollSpeed = AppSettings.getScrollSpeed(requireContext())
 		updateReadingCheckBottomButton()

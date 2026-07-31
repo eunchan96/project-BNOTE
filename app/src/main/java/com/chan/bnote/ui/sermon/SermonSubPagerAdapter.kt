@@ -2,7 +2,7 @@ package com.chan.bnote.ui.sermon
 
 import androidx.fragment.app.Fragment
 import androidx.viewpager2.adapter.FragmentStateAdapter
-import com.chan.bnote.ui.application.bycalendar.CalendarApplicationFragment
+import com.chan.bnote.ui.application.CalendarApplicationFragment
 import com.chan.bnote.ui.sermon.bybook.SermonByBookFragment
 import com.chan.bnote.ui.sermon.bycalendar.CalendarSermonFragment
 

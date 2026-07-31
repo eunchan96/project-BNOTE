@@ -51,6 +51,8 @@ class MemorizationPracticeActivity : AppCompatActivity() {
 	private lateinit var containerAnswerButtons: LinearLayout
 	private lateinit var containerComplete: LinearLayout
 	private lateinit var textCompleteSummary: TextView
+	private lateinit var btnRestart: TextView
+	private lateinit var btnReviewMissed: TextView
 
 	private var verses: List<MemorizationVerse> = emptyList()
 	private var currentIndex = 0
@@ -58,6 +60,10 @@ class MemorizationPracticeActivity : AppCompatActivity() {
 	private var hintLevel = 0
 	private var singleVerseId: Long = -1
 	private var groupId: Long = -1
+
+	// 이번 연습 회차에서 "다시 볼래요"를 누른 구절들 — 하나라도 있으면 완료 화면에서
+	// "다시 연습하기" 대신 "틀린 것 다시 보기"를 보여준다.
+	private var missedVerses: MutableList<MemorizationVerse> = mutableListOf()
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
@@ -82,6 +88,8 @@ class MemorizationPracticeActivity : AppCompatActivity() {
 		containerAnswerButtons = findViewById(R.id.container_answer_buttons)
 		containerComplete = findViewById(R.id.container_complete)
 		textCompleteSummary = findViewById(R.id.text_complete_summary)
+		btnRestart = findViewById(R.id.btn_restart)
+		btnReviewMissed = findViewById(R.id.btn_review_missed)
 
 		singleVerseId = intent.getLongExtra(EXTRA_SINGLE_VERSE_ID, -1)
 		groupId = intent.getLongExtra(EXTRA_GROUP_ID, -1)
@@ -91,7 +99,8 @@ class MemorizationPracticeActivity : AppCompatActivity() {
 		btnHint.setOnClickListener { showHint() }
 		findViewById<TextView>(R.id.btn_review_again).setOnClickListener { answerCard(memorized = false) }
 		findViewById<TextView>(R.id.btn_memorized).setOnClickListener { answerCard(memorized = true) }
-		findViewById<TextView>(R.id.btn_restart).setOnClickListener { startSession(verses) }
+		btnRestart.setOnClickListener { startSession(verses) }
+		btnReviewMissed.setOnClickListener { startSession(missedVerses) }
 		findViewById<TextView>(R.id.btn_quit).setOnClickListener { finish() }
 
 		loadVerses()
@@ -125,6 +134,7 @@ class MemorizationPracticeActivity : AppCompatActivity() {
 		verses = if (singleVerseId != -1L) refs else refs.shuffled()
 		currentIndex = 0
 		memorizedCount = 0
+		missedVerses = mutableListOf()
 		showCard(currentIndex)
 	}
 
@@ -171,7 +181,11 @@ class MemorizationPracticeActivity : AppCompatActivity() {
 	}
 
 	private fun answerCard(memorized: Boolean) {
-		if (memorized) memorizedCount += 1
+		if (memorized) {
+			memorizedCount += 1
+		} else {
+			missedVerses.add(verses[currentIndex])
+		}
 		recordProgress(verses[currentIndex], memorized)
 
 		currentIndex += 1
@@ -208,5 +222,15 @@ class MemorizationPracticeActivity : AppCompatActivity() {
 
 		textCompleteSummary.text =
 			"오늘 ${verses.size}개 구절을 복습했어요!\n외운 구절 ${memorizedCount}개"
+
+		// 전부 외웠으면(한 번도 "다시 볼래요"를 안 눌렀으면) 전체를 다시 연습할 수 있게 하고,
+		// 하나라도 놓쳤으면 그 구절들만 다시 볼 수 있게 한다.
+		if (missedVerses.isEmpty()) {
+			btnRestart.visibility = View.VISIBLE
+			btnReviewMissed.visibility = View.GONE
+		} else {
+			btnRestart.visibility = View.GONE
+			btnReviewMissed.visibility = View.VISIBLE
+		}
 	}
 }

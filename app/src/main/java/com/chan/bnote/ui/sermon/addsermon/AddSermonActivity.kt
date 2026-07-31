@@ -552,13 +552,6 @@ class AddSermonActivity : AppCompatActivity() {
 		}
 		com.chan.bnote.ui.common.UnsavedChangesDialog.show(
 			context = this,
-			onSaveAndExit = {
-				save(
-					editTitle.text.toString().trim(),
-					editMemo.text,
-					editLink.text.toString().trim()
-				)
-			},
 			onDiscard = { finish() }
 		)
 	}

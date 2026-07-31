@@ -99,6 +99,7 @@ class MemorizationVerseListActivity : AppCompatActivity() {
 		isGroupManageMode = false
 		btnManageGroups.text = "관리"
 		btnAddGroup.visibility = View.GONE
+		findViewById<TextView>(R.id.btn_practice).visibility = View.VISIBLE
 		loadGroups()
 	}
 
@@ -114,6 +115,8 @@ class MemorizationVerseListActivity : AppCompatActivity() {
 		isGroupManageMode = !isGroupManageMode
 		btnManageGroups.text = if (isGroupManageMode) "완료" else "관리"
 		btnAddGroup.visibility = if (isGroupManageMode) View.VISIBLE else View.GONE
+		findViewById<TextView>(R.id.btn_practice).visibility =
+			if (isGroupManageMode) View.GONE else View.VISIBLE
 		(groupRecycler.adapter as? MemorizationGroupRowAdapter)?.setEditMode(isGroupManageMode)
 	}
 

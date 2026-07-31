@@ -71,12 +71,17 @@
                 tools:text="날짜순 ▾" />
         </LinearLayout>
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recycler_chapter_grid"
+        <com.chan.bnote.ui.common.HorizontalSwipeInterceptLayout
+            android:id="@+id/swipe_intercept_chapter_grid"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:padding="4dp" />
+            android:layout_height="317dp">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recycler_chapter_grid"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:padding="4dp" />
+        </com.chan.bnote.ui.common.HorizontalSwipeInterceptLayout>
 
         <View
             android:layout_width="match_parent"
@@ -84,49 +89,20 @@
             android:background="@color/divider_light" />
 
         <TextView
-            android:id="@+id/text_selected_chapter_label"
+            android:id="@+id/text_empty_by_chapter"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:padding="12dp"
-            android:textSize="14sp"
-            android:textColor="@color/text_secondary" />
+            android:padding="24dp"
+            android:gravity="center"
+            android:text="등록된 설교가 없어요"
+            android:textColor="@color/text_hint" />
 
-        <FrameLayout
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recycler_sermons_by_chapter"
             android:layout_width="match_parent"
-            android:layout_height="180dp">
-
-            <TextView
-                android:id="@+id/text_empty_by_chapter"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:padding="24dp"
-                android:gravity="center"
-                android:text="등록된 설교가 없어요"
-                android:textColor="@color/text_hint"
-                android:visibility="gone" />
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/recycler_sermons_by_chapter"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:visibility="gone" />
-        </FrameLayout>
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:visibility="gone" />
 
     </LinearLayout>
-
-    <TextView
-        android:id="@+id/fab_add_sermon_by_book"
-        android:layout_width="56dp"
-        android:layout_height="56dp"
-        android:layout_gravity="bottom|end"
-        android:layout_margin="20dp"
-        android:gravity="center"
-        android:text="+"
-        android:textSize="28sp"
-        android:textColor="@color/white"
-        android:background="@drawable/bg_fab_brown"
-        android:elevation="6dp"
-        android:clickable="true"
-        android:focusable="true" />
 </FrameLayout>

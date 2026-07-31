@@ -1,4 +1,4 @@
-package com.chan.bnote.ui.application.bycalendar
+package com.chan.bnote.ui.application
 
 import android.app.Activity
 import android.os.Bundle
@@ -16,9 +16,7 @@ import com.chan.bnote.R
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.DateUtils
 import com.chan.bnote.data.application.Application
-import com.chan.bnote.ui.application.ApplicationDetailActivity
-import com.chan.bnote.ui.application.ApplicationRowAdapter
-import com.chan.bnote.ui.application.ApplicationRowBuilder
+import com.chan.bnote.ui.FabAddHandler
 import com.chan.bnote.ui.application.addapplication.AddApplicationActivity
 import com.chan.bnote.ui.sermon.bycalendar.CalendarDayCell
 import com.chan.bnote.ui.sermon.bycalendar.CalendarGridAdapter
@@ -26,7 +24,7 @@ import com.chan.bnote.ui.sermon.bycalendar.MonthYearPickerBottomSheet
 import kotlinx.coroutines.launch
 import java.util.Calendar
 
-class CalendarApplicationFragment : Fragment() {
+class CalendarApplicationFragment : Fragment(), FabAddHandler {
 
 	private lateinit var monthYearText: TextView
 	private lateinit var gridRecycler: RecyclerView
@@ -83,13 +81,7 @@ class CalendarApplicationFragment : Fragment() {
 			picker.show(parentFragmentManager, "month_year_picker")
 		}
 
-		view.findViewById<TextView>(R.id.btn_month_prev).setOnClickListener {
-			currentMonth0 -= 1
-			if (currentMonth0 < 0) {
-				currentMonth0 = 11; currentYear -= 1
-			}
-			loadCalendarGrid()
-		}
+		view.findViewById<TextView>(R.id.btn_month_prev).setOnClickListener { goToPrevMonth() }
 		view.findViewById<TextView>(R.id.btn_calendar_today).setOnClickListener {
 			val cal = Calendar.getInstance()
 			currentYear = cal.get(Calendar.YEAR)
@@ -98,25 +90,42 @@ class CalendarApplicationFragment : Fragment() {
 			loadCalendarGrid()
 			loadApplicationsForSelectedDate()
 		}
-		view.findViewById<TextView>(R.id.btn_month_next).setOnClickListener {
-			currentMonth0 += 1
-			if (currentMonth0 > 11) {
-				currentMonth0 = 0; currentYear += 1
-			}
-			loadCalendarGrid()
-		}
+		view.findViewById<TextView>(R.id.btn_month_next).setOnClickListener { goToNextMonth() }
 
-		view.findViewById<TextView>(R.id.fab_add_application).setOnClickListener {
-			addLauncher.launch(
-				AddApplicationActivity.createIntent(
-					requireContext(),
-					initialDateMillis = selectedDate
-				)
+		val swipeIntercept =
+			view.findViewById<com.chan.bnote.ui.common.HorizontalSwipeInterceptLayout>(
+				R.id.swipe_intercept_calendar
 			)
-		}
+		swipeIntercept.onSwipeRight = { goToPrevMonth() }
+		swipeIntercept.onSwipeLeft = { goToNextMonth() }
 
 		loadCalendarGrid()
 		loadApplicationsForSelectedDate()
+	}
+
+	private fun goToPrevMonth() {
+		currentMonth0 -= 1
+		if (currentMonth0 < 0) {
+			currentMonth0 = 11; currentYear -= 1
+		}
+		loadCalendarGrid()
+	}
+
+	private fun goToNextMonth() {
+		currentMonth0 += 1
+		if (currentMonth0 > 11) {
+			currentMonth0 = 0; currentYear += 1
+		}
+		loadCalendarGrid()
+	}
+
+	override fun onFabAddClicked() {
+		addLauncher.launch(
+			AddApplicationActivity.createIntent(
+				requireContext(),
+				initialDateMillis = selectedDate
+			)
+		)
 	}
 
 	private fun loadCalendarGrid() {
