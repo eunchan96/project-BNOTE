@@ -175,7 +175,6 @@ class AddGratitudeActivity : AppCompatActivity() {
 		}
 		UnsavedChangesDialog.show(
 			context = this,
-			onSaveAndExit = { save() },
 			onDiscard = { finish() }
 		)
 	}

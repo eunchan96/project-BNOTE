@@ -135,7 +135,6 @@ class CopyFormatEditorActivity : AppCompatActivity() {
 		}
 		UnsavedChangesDialog.show(
 			context = this,
-			onSaveAndExit = { savePreset() },
 			onDiscard = { finish() }
 		)
 	}
