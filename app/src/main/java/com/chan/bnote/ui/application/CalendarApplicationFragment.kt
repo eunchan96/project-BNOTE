@@ -81,13 +81,7 @@ class CalendarApplicationFragment : Fragment(), FabAddHandler {
 			picker.show(parentFragmentManager, "month_year_picker")
 		}
 
-		view.findViewById<TextView>(R.id.btn_month_prev).setOnClickListener {
-			currentMonth0 -= 1
-			if (currentMonth0 < 0) {
-				currentMonth0 = 11; currentYear -= 1
-			}
-			loadCalendarGrid()
-		}
+		view.findViewById<TextView>(R.id.btn_month_prev).setOnClickListener { goToPrevMonth() }
 		view.findViewById<TextView>(R.id.btn_calendar_today).setOnClickListener {
 			val cal = Calendar.getInstance()
 			currentYear = cal.get(Calendar.YEAR)
@@ -96,16 +90,33 @@ class CalendarApplicationFragment : Fragment(), FabAddHandler {
 			loadCalendarGrid()
 			loadApplicationsForSelectedDate()
 		}
-		view.findViewById<TextView>(R.id.btn_month_next).setOnClickListener {
-			currentMonth0 += 1
-			if (currentMonth0 > 11) {
-				currentMonth0 = 0; currentYear += 1
-			}
-			loadCalendarGrid()
-		}
+		view.findViewById<TextView>(R.id.btn_month_next).setOnClickListener { goToNextMonth() }
+
+		val swipeIntercept =
+			view.findViewById<com.chan.bnote.ui.common.HorizontalSwipeInterceptLayout>(
+				R.id.swipe_intercept_calendar
+			)
+		swipeIntercept.onSwipeRight = { goToPrevMonth() }
+		swipeIntercept.onSwipeLeft = { goToNextMonth() }
 
 		loadCalendarGrid()
 		loadApplicationsForSelectedDate()
+	}
+
+	private fun goToPrevMonth() {
+		currentMonth0 -= 1
+		if (currentMonth0 < 0) {
+			currentMonth0 = 11; currentYear -= 1
+		}
+		loadCalendarGrid()
+	}
+
+	private fun goToNextMonth() {
+		currentMonth0 += 1
+		if (currentMonth0 > 11) {
+			currentMonth0 = 0; currentYear += 1
+		}
+		loadCalendarGrid()
 	}
 
 	override fun onFabAddClicked() {

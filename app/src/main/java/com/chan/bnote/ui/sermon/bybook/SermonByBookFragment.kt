@@ -81,24 +81,35 @@ class SermonByBookFragment : Fragment(), SermonSortableFragment, FabAddHandler {
 			picker.show(parentFragmentManager, "book_only_picker")
 		}
 
-		view.findViewById<TextView>(R.id.btn_book_prev).setOnClickListener {
-			if (currentBookId > 1) {
-				currentBookId -= 1
-				selectedChapter = 1
-				loadChapterGrid()
-			}
-		}
-		view.findViewById<TextView>(R.id.btn_book_next).setOnClickListener {
-			if (currentBookId < 66) {
-				currentBookId += 1
-				selectedChapter = 1
-				loadChapterGrid()
-			}
-		}
+		view.findViewById<TextView>(R.id.btn_book_prev).setOnClickListener { goToPrevBook() }
+		view.findViewById<TextView>(R.id.btn_book_next).setOnClickListener { goToNextBook() }
+
+		val swipeIntercept =
+			view.findViewById<com.chan.bnote.ui.common.HorizontalSwipeInterceptLayout>(
+				R.id.swipe_intercept_chapter_grid
+			)
+		swipeIntercept.onSwipeRight = { goToPrevBook() }
+		swipeIntercept.onSwipeLeft = { goToNextBook() }
 
 		SortButtonHelper.setup(view.findViewById(R.id.btn_by_book_sort), this)
 
 		loadChapterGrid()
+	}
+
+	private fun goToPrevBook() {
+		if (currentBookId > 1) {
+			currentBookId -= 1
+			selectedChapter = 1
+			loadChapterGrid()
+		}
+	}
+
+	private fun goToNextBook() {
+		if (currentBookId < 66) {
+			currentBookId += 1
+			selectedChapter = 1
+			loadChapterGrid()
+		}
 	}
 
 	override fun onFabAddClicked() {

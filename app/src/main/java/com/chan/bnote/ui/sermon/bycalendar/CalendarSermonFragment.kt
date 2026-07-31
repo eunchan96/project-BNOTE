@@ -87,13 +87,7 @@ class CalendarSermonFragment : Fragment(), SermonSortableFragment, FabAddHandler
 			picker.show(parentFragmentManager, "month_year_picker")
 		}
 
-		view.findViewById<TextView>(R.id.btn_month_prev).setOnClickListener {
-			currentMonth0 -= 1
-			if (currentMonth0 < 0) {
-				currentMonth0 = 11; currentYear -= 1
-			}
-			loadCalendarGrid()
-		}
+		view.findViewById<TextView>(R.id.btn_month_prev).setOnClickListener { goToPrevMonth() }
 		view.findViewById<TextView>(R.id.btn_calendar_today).setOnClickListener {
 			val cal = Calendar.getInstance()
 			currentYear = cal.get(Calendar.YEAR)
@@ -102,18 +96,36 @@ class CalendarSermonFragment : Fragment(), SermonSortableFragment, FabAddHandler
 			loadCalendarGrid()
 			loadSermonsForSelectedDate()
 		}
-		view.findViewById<TextView>(R.id.btn_month_next).setOnClickListener {
-			currentMonth0 += 1
-			if (currentMonth0 > 11) {
-				currentMonth0 = 0; currentYear += 1
-			}
-			loadCalendarGrid()
-		}
+		view.findViewById<TextView>(R.id.btn_month_next).setOnClickListener { goToNextMonth() }
+
+		val swipeIntercept =
+			view.findViewById<com.chan.bnote.ui.common.HorizontalSwipeInterceptLayout>(
+				R.id.swipe_intercept_calendar
+			)
+		swipeIntercept.onSwipeRight = { goToPrevMonth() }
+		swipeIntercept.onSwipeLeft = { goToNextMonth() }
 
 		SortButtonHelper.setup(view.findViewById(R.id.btn_calendar_sort), this)
 
 		loadCalendarGrid()
 		loadSermonsForSelectedDate()
+	}
+
+	/** 오른쪽으로 스와이프(손가락이 오른쪽으로 이동)하면 달력이 넘어오는 방향과 맞춰서 이전 달로. */
+	private fun goToPrevMonth() {
+		currentMonth0 -= 1
+		if (currentMonth0 < 0) {
+			currentMonth0 = 11; currentYear -= 1
+		}
+		loadCalendarGrid()
+	}
+
+	private fun goToNextMonth() {
+		currentMonth0 += 1
+		if (currentMonth0 > 11) {
+			currentMonth0 = 0; currentYear += 1
+		}
+		loadCalendarGrid()
 	}
 
 	override fun onFabAddClicked() {
