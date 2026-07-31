@@ -30,7 +30,8 @@ class CalendarGridAdapter(
 
 	override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
 		val view =
-			LayoutInflater.from(parent.context).inflate(R.layout.item_calendar_day, parent, false)
+			LayoutInflater.from(parent.context)
+				.inflate(R.layout.item_calendar_day_large, parent, false)
 		return ViewHolder(view)
 	}
 
@@ -66,7 +67,7 @@ class CalendarGridAdapter(
 
 		holder.barsContainer.removeAllViews()
 		val density = holder.itemView.resources.displayMetrics.density
-		for (colorHex in cell.colors.take(3)) {
+		for (colorHex in cell.colors.take(4)) {
 			val bar = View(holder.itemView.context)
 			bar.layoutParams = LinearLayout.LayoutParams(
 				LinearLayout.LayoutParams.MATCH_PARENT, (3 * density).toInt()
