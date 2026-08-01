@@ -12,15 +12,13 @@ import com.chan.bnote.R
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.bible.BibleBooks
 import com.chan.bnote.data.mypage.readingplan.ReadingProgress
-import com.chan.bnote.ui.DraggableBottomSheet
+import com.chan.bnote.ui.FixedBottomSheetDialogFragment
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 
 class ReadingPlanChapterBottomSheet(
 	private val bookId: Int
-) : DraggableBottomSheet() {
-
-	override val peekHeightRatio = 0.7f
+) : FixedBottomSheetDialogFragment() {
 
 	/** 장 읽음 상태를 바꾸고 이 바텀시트가 닫힐 때 호출된다 (전체 진행률 갱신용). */
 	var onDismissed: (() -> Unit)? = null
@@ -131,7 +129,7 @@ class ReadingPlanChapterBottomSheet(
 	// 마이페이지 -> 성경읽기표 -> 책별 화면, 이렇게 시트가 2겹 열려있을 수 있어서 둘 다 닫아줌
 	private fun dismissAllAndNavigate() {
 		dismiss()
-		(parentFragmentManager.findFragmentByTag("reading_plan") as? DraggableBottomSheet)?.dismiss()
+		(parentFragmentManager.findFragmentByTag("reading_plan") as? FixedBottomSheetDialogFragment)?.dismiss()
 	}
 
 	private fun navigateToBible(chapter: Int) {

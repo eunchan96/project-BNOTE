@@ -10,13 +10,13 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.chan.bnote.R
 import com.chan.bnote.data.bible.Translation
+import com.chan.bnote.ui.FixedBottomSheetDialogFragment
 import com.chan.bnote.ui.common.SimpleListAdapter
-import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 
 class TranslationPickerBottomSheet(
 	private val currentPrimary: Translation,
 	private val currentSecondary: Translation?
-) : BottomSheetDialogFragment() {
+) : FixedBottomSheetDialogFragment() {
 
 	// primary는 항상 값 있음, secondary는 "선택 안 함"일 경우 null
 	var onTranslationsSelected: ((primary: Translation, secondary: Translation?) -> Unit)? = null

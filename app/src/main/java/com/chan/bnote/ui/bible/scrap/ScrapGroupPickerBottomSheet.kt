@@ -12,12 +12,12 @@ import androidx.recyclerview.widget.RecyclerView
 import com.chan.bnote.R
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.bible.scrap.ScrapGroup
+import com.chan.bnote.ui.FixedBottomSheetDialogFragment
 import com.chan.bnote.ui.common.SimpleListAdapter
-import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 
-class ScrapGroupPickerBottomSheet : BottomSheetDialogFragment() {
+class ScrapGroupPickerBottomSheet : FixedBottomSheetDialogFragment() {
 
 	var onGroupSelected: ((ScrapGroup) -> Unit)? = null
 

@@ -15,15 +15,15 @@ import com.chan.bnote.R
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.bible.BibleBookGroups
 import com.chan.bnote.data.bible.BibleBooks
+import com.chan.bnote.ui.FixedBottomSheetDialogFragment
 import com.chan.bnote.ui.common.GridNumberAdapter
-import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import kotlinx.coroutines.launch
 
 class BookChapterPickerBottomSheet(
 	private val translation: String,
 	// 현재 읽고 있던 책이 있으면 미리 선택된 상태로 열어준다 (없으면 -1)
 	private val initialBookId: Int = -1
-) : BottomSheetDialogFragment() {
+) : FixedBottomSheetDialogFragment() {
 
 	// bookId, chapter, verse 순서로 전달
 	var onVerseSelected: ((bookId: Int, chapter: Int, verse: Int) -> Unit)? = null

@@ -11,13 +11,13 @@ import androidx.recyclerview.widget.RecyclerView
 import com.chan.bnote.R
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.sermon.Sermon
+import com.chan.bnote.ui.FixedBottomSheetDialogFragment
 import com.chan.bnote.ui.sermon.SermonRowAdapter
 import com.chan.bnote.ui.sermon.SermonRowBuilder
-import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import kotlinx.coroutines.launch
 
 /** 적용 작성 화면의 "설교 추가" 버튼에서 열리는, 최근에 작성한 설교를 최신순으로 보여주는 목록. */
-class SermonPickerBottomSheet : BottomSheetDialogFragment() {
+class SermonPickerBottomSheet : FixedBottomSheetDialogFragment() {
 
 	var onSermonSelected: ((Sermon) -> Unit)? = null
 

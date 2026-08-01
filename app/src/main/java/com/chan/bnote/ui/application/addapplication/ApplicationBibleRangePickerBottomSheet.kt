@@ -16,7 +16,7 @@ import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.application.ApplicationBibleRef
 import com.chan.bnote.data.bible.BibleBookGroups
 import com.chan.bnote.data.bible.BibleBooks
-import com.chan.bnote.ui.DraggableBottomSheet
+import com.chan.bnote.ui.FixedBottomSheetDialogFragment
 import com.chan.bnote.ui.bible.picker.PickerTab
 import com.chan.bnote.ui.bible.picker.renderPickerTabs
 import com.chan.bnote.ui.common.GridNumberAdapter
@@ -27,9 +27,7 @@ import kotlinx.coroutines.launch
  * 적용에서 쓰는 성경 구절(범위) 선택 bottom sheet. 설교의 BibleRangePickerBottomSheet와 거의 같지만,
  * "장만 선택" 체크박스가 추가된다 — 켜면 절 없이 장 단위로만 고른다(통독 카테고리일 때 기본으로 켜둠).
  */
-class ApplicationBibleRangePickerBottomSheet : DraggableBottomSheet() {
-
-	override val peekHeightRatio = 0.75f
+class ApplicationBibleRangePickerBottomSheet : FixedBottomSheetDialogFragment() {
 
 	var onRangeSelected: ((ApplicationBibleRef) -> Unit)? = null
 	var existingRef: ApplicationBibleRef? = null

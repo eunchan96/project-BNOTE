@@ -11,9 +11,9 @@ import androidx.core.content.ContextCompat
 import com.chan.bnote.R
 import com.chan.bnote.data.bible.BibleBookGroups
 import com.chan.bnote.data.bible.BibleBooks
-import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import com.chan.bnote.ui.FixedBottomSheetDialogFragment
 
-class BookOnlyPickerBottomSheet : BottomSheetDialogFragment() {
+class BookOnlyPickerBottomSheet : FixedBottomSheetDialogFragment() {
 
 	var onBookSelected: ((Int) -> Unit)? = null
 

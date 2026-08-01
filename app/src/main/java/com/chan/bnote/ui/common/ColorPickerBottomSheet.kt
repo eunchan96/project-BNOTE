@@ -8,11 +8,11 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.chan.bnote.R
-import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import com.chan.bnote.ui.FixedBottomSheetDialogFragment
 
 class ColorPickerBottomSheet(
 	private val includeNoneOption: Boolean = false
-) : BottomSheetDialogFragment() {
+) : FixedBottomSheetDialogFragment() {
 
 	/** "없음" 선택 시 빈 문자열("")이 전달된다. */
 	var onColorSelected: ((String) -> Unit)? = null

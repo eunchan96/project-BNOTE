@@ -16,7 +16,7 @@ import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.bible.BibleBookGroups
 import com.chan.bnote.data.bible.BibleBooks
 import com.chan.bnote.data.sermon.SermonBibleRef
-import com.chan.bnote.ui.DraggableBottomSheet
+import com.chan.bnote.ui.FixedBottomSheetDialogFragment
 import com.chan.bnote.ui.common.GridNumberAdapter
 import com.google.android.material.checkbox.MaterialCheckBox
 import kotlinx.coroutines.launch
@@ -29,9 +29,7 @@ import kotlinx.coroutines.launch
  * 다음 장까지 걸쳐야 하면 그 옆의 "다음 장까지 선택하기"를 켜면, 시작 절을 고른 뒤 예전처럼
  * 끝 장 → 끝 절을 따로 골라서 정한다.
  */
-class BibleRangePickerBottomSheet : DraggableBottomSheet() {
-
-	override val peekHeightRatio = 0.75f
+class BibleRangePickerBottomSheet : FixedBottomSheetDialogFragment() {
 
 	// sermonId는 저장 시점에 채워지므로 0으로 임시 세팅
 	var onRangeSelected: ((SermonBibleRef) -> Unit)? = null

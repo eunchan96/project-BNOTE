@@ -15,12 +15,12 @@ import com.chan.bnote.data.bible.BibleVerse
 import com.chan.bnote.data.mypage.CopyFormatConfig
 import com.chan.bnote.data.mypage.CopyFormatPreset
 import com.chan.bnote.data.mypage.CopyFormatter
-import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import com.chan.bnote.ui.FixedBottomSheetDialogFragment
 import kotlinx.coroutines.launch
 
 /** 저장된 복사 형식들을 보여주고, 항목을 누르면 그 아래로 예시 · 수정 · 선택이 펼쳐진다.
  * 추가/수정은 CopyFormatEditorActivity로 넘어간다. */
-class CopyFormatPickerBottomSheet : BottomSheetDialogFragment() {
+class CopyFormatPickerBottomSheet : FixedBottomSheetDialogFragment() {
 
 	private lateinit var presetsContainer: LinearLayout
 
