@@ -130,12 +130,15 @@ class ReadingPlanActivity : AppCompatActivity() {
 				val container = LinearLayout(this).apply {
 					orientation = LinearLayout.VERTICAL
 					gravity = Gravity.CENTER
-					setPadding(dp(4), dp(12), dp(4), dp(12))
+					setPadding(dp(4), 0, dp(4), 0)
 					background = ContextCompat.getDrawable(this@ReadingPlanActivity, bgRes)
 					isClickable = true
 					isFocusable = true
+					// 이름이 길어서(예: "데살로니가전서") 두 줄로 줄바꿈되는 책이 있으면, 높이가
+					// wrap_content일 때 그 칸만 같은 줄의 다른 칸보다 커져서 줄이 들쭉날쭉해 보였다.
+					// 이름(최대 2줄) + 진행률 한 줄 기준으로 높이를 고정해두면 항상 똑같아진다.
 					layoutParams =
-						LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+						LinearLayout.LayoutParams(0, dp(70), 1f)
 							.apply { marginStart = dp(4); marginEnd = dp(4) }
 					setOnClickListener {
 						val sheet = ReadingPlanChapterBottomSheet(bookId)

@@ -29,6 +29,7 @@ import kotlinx.coroutines.launch
  */
 class ApplicationBibleRangePickerBottomSheet : FixedBottomSheetDialogFragment() {
 
+
 	var onRangeSelected: ((ApplicationBibleRef) -> Unit)? = null
 	var existingRef: ApplicationBibleRef? = null
 	var onDeleteRequested: (() -> Unit)? = null
@@ -254,7 +255,7 @@ class ApplicationBibleRangePickerBottomSheet : FixedBottomSheetDialogFragment() 
 					gravity = Gravity.CENTER
 					textSize = 13f
 					maxLines = 2
-					setPadding(dp(4), dp(14), dp(4), dp(14))
+					setPadding(dp(4), 0, dp(4), 0)
 					background = ContextCompat.getDrawable(
 						requireContext(),
 						if (isSelected) R.drawable.bg_book_button_selected else R.drawable.bg_book_button
@@ -267,8 +268,11 @@ class ApplicationBibleRangePickerBottomSheet : FixedBottomSheetDialogFragment() 
 					)
 					isClickable = true
 					isFocusable = true
+					// 이름이 길어서(예: "데살로니가전서") 두 줄로 줄바꿈되는 책이 있으면, 높이가
+					// wrap_content일 때 그 칸만 같은 줄의 다른 칸보다 커져서 줄이 들쭉날쭉해 보였다.
+					// 높이를 2줄 기준으로 고정해두면 항상 줄 전체 높이가 똑같아진다.
 					layoutParams =
-						LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+						LinearLayout.LayoutParams(0, dp(56), 1f)
 							.apply { marginStart = dp(4); marginEnd = dp(4) }
 					setOnClickListener {
 						bookId = id
