@@ -21,6 +21,14 @@ object BibleBooks {
 
 	fun nameOf(bookId: Int): String = names.getOrElse(bookId - 1) { "알 수 없음" }
 
+	/** 책 선택 그리드처럼 좁은 칸에 표시할 때 쓰는 이름. "데살로니가전서"·"데살로니가후서"는
+	 * 유독 길어서 줄이 넘치는데, 자동 줄바꿈에 맡기면 위치가 어색하게 끊길 수 있어
+	 * "데살로니가" / "전서(후서)" 사이에서 끊기도록 미리 줄바꿈을 넣어둔다. */
+	fun gridDisplayName(bookId: Int): String {
+		val name = nameOf(bookId)
+		return if (bookId == 52 || bookId == 53) name.replace("데살로니가", "데살로니가\n") else name
+	}
+
 	/** 시편(19권)은 "편", 나머지는 "장"으로 부른다. */
 	fun chapterUnit(bookId: Int): String = if (bookId == 19) "편" else "장"
 

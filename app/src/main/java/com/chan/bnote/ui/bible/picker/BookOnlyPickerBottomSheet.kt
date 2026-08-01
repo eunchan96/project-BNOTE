@@ -36,16 +36,16 @@ class BookOnlyPickerBottomSheet : FixedBottomSheetDialogFragment() {
 				orientation = LinearLayout.HORIZONTAL
 				layoutParams = LinearLayout.LayoutParams(
 					LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
-				).apply { bottomMargin = dp(4) }
+				).apply { bottomMargin = dp(8) }
 			}
 			for (bookId in group) {
 				val isSelected = bookId == selectedBookId
 				val button = TextView(requireContext()).apply {
-					text = BibleBooks.nameOf(bookId)
+					text = BibleBooks.gridDisplayName(bookId)
 					gravity = Gravity.CENTER
 					textSize = 13f
 					maxLines = 2
-					setPadding(dp(4), 0, dp(4), 0)
+					setPadding(dp(4), dp(10), dp(4), dp(10))
 					background = ContextCompat.getDrawable(
 						requireContext(),
 						if (isSelected) R.drawable.bg_book_button_selected else R.drawable.bg_book_button
@@ -58,12 +58,12 @@ class BookOnlyPickerBottomSheet : FixedBottomSheetDialogFragment() {
 					)
 					isClickable = true
 					isFocusable = true
-					// 이름이 길어서(예: "데살로니가전서") 두 줄로 줄바꿈되는 책이 있으면, 높이가
-					// wrap_content일 때 그 칸만 같은 줄의 다른 칸보다 커져서 줄이 들쭉날쭉해 보였다.
-					// 높이를 2줄 기준으로 고정해두면 한 줄짜리 이름은 가운데 정렬(gravity=center)로
-					// 보이고, 두 줄짜리 이름도 그 안에 딱 맞아서 줄 전체 높이가 항상 똑같아진다.
+					// 대부분의 책 이름은 한 줄이라 칸이 작지만, "데살로니가전서"처럼 두 줄이 되는
+					// 이름이 있는 줄(row)은 그 줄만 자연스럽게 커진다(전체 그리드가 다 같이 커지지
+					// 않도록, 높이를 특정 값으로 고정하는 대신 MATCH_PARENT로 같은 줄의 제일 큰
+					// 칸에 맞춰지게 한다).
 					layoutParams =
-						LinearLayout.LayoutParams(0, dp(56), 1f)
+						LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f)
 							.apply { marginStart = dp(4); marginEnd = dp(4) }
 					setOnClickListener {
 						onBookSelected?.invoke(bookId)
@@ -76,10 +76,11 @@ class BookOnlyPickerBottomSheet : FixedBottomSheetDialogFragment() {
 			repeat(4 - group.size) {
 				row.addView(View(requireContext()).apply {
 					layoutParams =
-						LinearLayout.LayoutParams(0, 0, 1f).apply {
-							marginStart = dp(4)
-							marginEnd = dp(4)
-						}
+						LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f)
+							.apply {
+								marginStart = dp(4)
+								marginEnd = dp(4)
+							}
 				})
 			}
 			gridContainer.addView(row)
