@@ -9,7 +9,6 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.doOnPreDraw
 import androidx.fragment.app.Fragment
 import com.chan.bnote.data.AppSettings
 import com.chan.bnote.ui.BibleNavigationHost
@@ -153,6 +152,13 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 		topBarScroll = findViewById(R.id.top_bar_scroll)
 		topBar = findViewById(R.id.top_bar)
 		topBarSpacer = findViewById(R.id.view_top_bar_spacer)
+
+		// 화면 크기가 처음 확정되거나(첫 레이아웃) 회전 등으로 바뀌었을 때만 다시 계산하면 된다.
+		// 탭이 바뀔 때(onTopBarConfigChanged)는 adjustTopBarSpacer()를 동기적으로 직접 불러서
+		// 처리하므로, 여기서는 "스크롤뷰 자체 크기"가 실제로 달라졌을 때만 반응한다.
+		topBarScroll.addOnLayoutChangeListener { _, left, _, right, _, oldLeft, _, oldRight, _ ->
+			if (right - left != oldRight - oldLeft) adjustTopBarSpacer()
+		}
 	}
 
 	private fun bindBottomNavViews() {
@@ -263,37 +269,50 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 	 * (예: "데살로니가전서") 켜진 아이콘이 많아서 다 안 들어갈 때만 스페이서 너비를 0으로 줄여서,
 	 * 버튼들이 서로 붙은 채로 가로 스크롤되게 한다.
 	 *
-	 * visibility·텍스트 변경이 실제로 레이아웃에 반영된 뒤에 너비를 재야 하므로, 다음 그리기
-	 * 직전(레이아웃이 끝난 시점)까지 기다렸다가 계산한다. */
+	 * 실제 레이아웃이 끝나길(다음 프레임) 기다리지 않고, 각 버튼의 고정 크기(layoutParams,
+	 * 아이콘들은 전부 dp 고정값)와 제목 텍스트의 실측 너비(Paint.measureText)만으로 지금 이
+	 * 함수 안에서 바로 계산한다 — 그래야 탭을 바꿀 때 이전 스페이서 크기로 잠깐 그려졌다가
+	 * 다음 프레임에 스냅되는 부자연스러움이 없다. */
 	private fun adjustTopBarSpacer() {
-		topBar.doOnPreDraw {
-			val scrollViewWidth = topBarScroll.width
-			if (scrollViewWidth <= 0) return@doOnPreDraw
+		val scrollViewWidth = topBarScroll.width
+		if (scrollViewWidth <= 0) return // 아직 첫 레이아웃 전. 크기가 확정되면 위 리스너가 다시 불러준다.
 
-			var contentWidth = topBar.paddingStart + topBar.paddingEnd
-			for (i in 0 until topBar.childCount) {
-				val child = topBar.getChildAt(i)
-				if (child === topBarSpacer) continue
-				if (child.visibility != android.view.View.GONE) {
-					// child.width엔 layout_marginStart/End가 포함되지 않으므로 따로 더해줘야
-					// 실제로 차지하는 너비가 정확히 계산된다(빠뜨리면 스페이서가 필요 이상으로
-					// 커져서 오른쪽 버튼들이 화면 끝에 딱 붙어버린다).
-					val margins = child.layoutParams as? android.view.ViewGroup.MarginLayoutParams
-					contentWidth += child.width + (margins?.marginStart ?: 0) + (margins?.marginEnd
-						?: 0)
-				}
-			}
-
-			val remaining = scrollViewWidth - contentWidth
-			val newSpacerWidth = remaining.coerceAtLeast(0)
-			val params = topBarSpacer.layoutParams
-			if (params.width != newSpacerWidth) {
-				params.width = newSpacerWidth
-				topBarSpacer.layoutParams = params
-			}
-			// 다 들어가는 경우엔 혹시 이전에 스크롤돼 있던 위치가 있어도 원위치로 되돌린다.
-			if (remaining >= 0) topBarScroll.scrollTo(0, 0)
+		var contentWidth = topBar.paddingStart + topBar.paddingEnd
+		for (i in 0 until topBar.childCount) {
+			val child = topBar.getChildAt(i)
+			if (child === topBarSpacer) continue
+			contentWidth += topBarChildWidth(child)
 		}
+
+		val remaining = scrollViewWidth - contentWidth
+		val newSpacerWidth = remaining.coerceAtLeast(0)
+		val params = topBarSpacer.layoutParams
+		if (params.width != newSpacerWidth) {
+			params.width = newSpacerWidth
+			topBarSpacer.layoutParams = params
+		}
+		// 다 들어가는 경우엔 혹시 이전에 스크롤돼 있던 위치가 있어도 원위치로 되돌린다.
+		if (remaining >= 0) topBarScroll.scrollTo(0, 0)
+	}
+
+	/** child가 GONE이면 0. 그 외엔 (margin 포함) 실제로 차지하는 너비.
+	 * 아이콘들은 전부 layout_width가 dp 고정값이라 layoutParams.width를 그대로 쓰면 되고,
+	 * 제목(text_current_location)만 wrap_content라 Paint로 지금 텍스트의 실제 너비를 잰다. */
+	private fun topBarChildWidth(child: android.view.View): Int {
+		if (child.visibility == android.view.View.GONE) return 0
+		val lp = child.layoutParams
+		val margins = lp as? android.view.ViewGroup.MarginLayoutParams
+		val marginSum = (margins?.marginStart ?: 0) + (margins?.marginEnd ?: 0)
+		val intrinsicWidth =
+			if (child is TextView && lp.width == android.view.ViewGroup.LayoutParams.WRAP_CONTENT) {
+				kotlin.math.ceil(
+					child.paint.measureText(child.text?.toString().orEmpty()).toDouble()
+				).toInt() +
+						child.paddingStart + child.paddingEnd
+			} else {
+				lp.width
+			}
+		return intrinsicWidth + marginSum
 	}
 
 	private fun visible(show: Boolean) =
