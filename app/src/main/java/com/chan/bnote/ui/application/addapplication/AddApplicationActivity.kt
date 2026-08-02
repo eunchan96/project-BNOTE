@@ -16,6 +16,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.doOnPreDraw
 import androidx.lifecycle.lifecycleScope
 import com.chan.bnote.R
 import com.chan.bnote.data.AppSettings
@@ -106,6 +107,23 @@ class AddApplicationActivity : AppCompatActivity() {
 				maxOf(systemBars.bottom, ime.bottom)
 			)
 			insets
+		}
+
+		// "카테고리" 라벨이 제일 길어서(좁은 화면일수록 더 두드러짐) 그 라벨만 폭이 넓어지는데,
+		// "제목"·"본문" 라벨은 그대로라 세 박스의 왼쪽 시작 위치가 안 맞았다. 실제로 그려진 뒤
+		// (기기별 폰트 크기 등에 따라 정확한 폭을 알 수 있는 시점에) 제일 넓은 라벨 폭에 나머지
+		// 두 라벨을 맞춰서, 아래 입력 박스들의 시작 위치가 항상 같은 줄에 맞도록 한다.
+		val labelTitle = findViewById<TextView>(R.id.text_label_title)
+		val labelCategory = findViewById<TextView>(R.id.text_label_category)
+		val labelRef = findViewById<TextView>(R.id.text_label_ref)
+		findViewById<View>(R.id.add_application_root).doOnPreDraw {
+			val maxWidth =
+				maxOf(labelTitle.width, labelCategory.width, labelRef.width)
+			for (label in listOf(labelTitle, labelCategory, labelRef)) {
+				if (label.width != maxWidth) {
+					label.layoutParams = label.layoutParams.apply { width = maxWidth }
+				}
+			}
 		}
 
 		val applicationId = intent.getLongExtra(EXTRA_APPLICATION_ID, -1L)
