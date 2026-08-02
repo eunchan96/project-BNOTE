@@ -142,13 +142,18 @@ class CalendarSermonFragment : Fragment(), SermonSortableFragment, FabAddHandler
 			val startMillis = DateUtils.getMonthStartMillis(currentYear, currentMonth0)
 			val endMillis = DateUtils.getMonthEndMillisExclusive(currentYear, currentMonth0)
 			val markers = db.sermonDao().getSermonMarkersInRange(startMillis, endMillis)
+			val sortedMarkers = com.chan.bnote.ui.sermon.SermonSortUtils.sortMarkers(
+				db, markers, sortMode,
+				markerId = { it.id },
+				markerCategoryId = { it.categoryId }
+			)
 
 			val fallbackColorHex = String.format(
 				"#%06X", 0xFFFFFF and androidx.core.content.ContextCompat.getColor(
 					requireContext(), R.color.category_none
 				)
 			)
-			val colorsByDate = markers.groupBy { it.sermonDate }
+			val colorsByDate = sortedMarkers.groupBy { it.sermonDate }
 				.mapValues { entry -> entry.value.map { it.colorHex ?: fallbackColorHex } }
 
 			val cells = buildMonthCells(currentYear, currentMonth0, colorsByDate)
@@ -246,6 +251,7 @@ class CalendarSermonFragment : Fragment(), SermonSortableFragment, FabAddHandler
 	override fun setSortMode(mode: String) {
 		sortMode = mode
 		AppSettings.setCalendarSortMode(requireContext(), mode)
+		loadCalendarGrid()
 		loadSermonsForSelectedDate()
 	}
 

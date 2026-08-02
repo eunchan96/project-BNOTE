@@ -27,7 +27,7 @@ interface ApplicationDao {
 	@Query("DELETE FROM applications")
 	suspend fun deleteAll()
 
-	@Query("SELECT * FROM applications WHERE applicationDate = :dateMillis ORDER BY createdAt DESC")
+	@Query("SELECT * FROM applications WHERE applicationDate = :dateMillis ORDER BY createdAt")
 	suspend fun getByDate(dateMillis: Long): List<Application>
 
 	@Query("SELECT * FROM applications WHERE categoryId = :categoryId ORDER BY applicationDate DESC")
