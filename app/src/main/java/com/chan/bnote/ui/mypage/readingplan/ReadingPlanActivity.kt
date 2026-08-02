@@ -130,7 +130,7 @@ class ReadingPlanActivity : AppCompatActivity() {
 				val container = LinearLayout(this).apply {
 					orientation = LinearLayout.VERTICAL
 					gravity = Gravity.CENTER
-					setPadding(dp(4), dp(8), dp(4), dp(8))
+					setPadding(dp(4), dp(12), dp(4), dp(12))
 					background = ContextCompat.getDrawable(this@ReadingPlanActivity, bgRes)
 					isClickable = true
 					isFocusable = true
