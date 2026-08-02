@@ -105,6 +105,7 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 	private var primaryTranslation: Translation = Translation.NKRV
 	private var secondaryTranslation: Translation? = null
 	private var currentFontSize: Int = 16
+	private var currentScrollbarVisible = true
 	private var scrollSpeed = 3
 
 	private var isReadingPlanEnabled = false
@@ -210,6 +211,7 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		secondaryTranslation = Translation.values().firstOrNull { it.code == savedSecondaryCode }
 
 		currentFontSize = AppSettings.getFontSize(requireContext())
+		currentScrollbarVisible = AppSettings.isBibleScrollbarVisible(requireContext())
 		isReadingPlanEnabled = AppSettings.isReadingPlanEnabled(requireContext())
 		isAutoScrollEnabled = AppSettings.isAutoScrollEnabled(requireContext())
 		scrollSpeed = AppSettings.getScrollSpeed(requireContext())
@@ -702,6 +704,22 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 				if (afterCount > 0) pageAdapter.notifyItemRangeChanged(position + 1, afterCount)
 			}
 		}
+		val newScrollbarVisible = AppSettings.isBibleScrollbarVisible(requireContext())
+		if (newScrollbarVisible != currentScrollbarVisible) {
+			currentScrollbarVisible = newScrollbarVisible
+			// 지금 보이는 페이지는 바로 적용하고, 나머지 페이지는 bind() 시점에 다시 확인해서
+			// 반영하도록 다시 그려야 함으로 표시한다(폰트 크기 변경과 동일한 방식).
+			if (::recyclerView.isInitialized) {
+				recyclerView.isVerticalScrollBarEnabled = newScrollbarVisible
+			}
+			if (::viewPager.isInitialized && ::pageAdapter.isInitialized) {
+				val position = viewPager.currentItem
+				if (position > 0) pageAdapter.notifyItemRangeChanged(0, position)
+				val afterCount = pageAdapter.itemCount - position - 1
+				if (afterCount > 0) pageAdapter.notifyItemRangeChanged(position + 1, afterCount)
+			}
+		}
+
 		scrollSpeed = AppSettings.getScrollSpeed(requireContext())
 		updateReadingCheckBottomButton()
 		if (::viewPager.isInitialized) {
