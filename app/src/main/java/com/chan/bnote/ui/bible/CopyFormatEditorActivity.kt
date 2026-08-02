@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.EditText
+import android.widget.HorizontalScrollView
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -317,15 +318,31 @@ class CopyFormatEditorActivity : AppCompatActivity() {
 
 		val row = LinearLayout(this).apply {
 			orientation = LinearLayout.HORIZONTAL
-			setPadding(dp(16), 0, dp(16), 0)
 		}
-		groupsContainer.addView(row)
+
+		// 옵션 텍스트가 길거나(예: "길게 (창세기 1장 1절)") 칩 개수가 많으면, 화면이 좁을 때
+		// LinearLayout이 남은 공간에 억지로 칩들을 다 밀어 넣으려다 칩 안의 글자가 이상한
+		// 위치에서 줄바꿈되는 문제가 있었다. 줄바꿈 대신 가로로 스크롤하도록 감싼다.
+		val scroll = HorizontalScrollView(this).apply {
+			isHorizontalScrollBarEnabled = false
+			overScrollMode = View.OVER_SCROLL_NEVER
+			setPadding(dp(16), 0, dp(16), 0)
+			clipToPadding = false
+			addView(
+				row,
+				LinearLayout.LayoutParams(
+					LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT
+				)
+			)
+		}
+		groupsContainer.addView(scroll)
 
 		for ((textAndSelected, onClick) in optionsProvider()) {
 			val (text, selected) = textAndSelected
 			val chip = LayoutInflater.from(this)
 				.inflate(R.layout.item_copy_format_chip, row, false) as TextView
 			chip.text = text
+			chip.maxLines = 1
 			applyChipStyle(chip, selected)
 			chip.setOnClickListener {
 				onClick()
