@@ -9,6 +9,7 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.doOnPreDraw
 import androidx.fragment.app.Fragment
 import com.chan.bnote.data.AppSettings
 import com.chan.bnote.ui.BibleNavigationHost
@@ -47,6 +48,10 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 	private lateinit var btnAutoScroll: ImageView
 	private lateinit var iconReadingPlanCheck: ImageView
 	private lateinit var iconSermonIndicator: ImageView
+
+	private lateinit var topBarScroll: android.widget.HorizontalScrollView
+	private lateinit var topBar: android.widget.LinearLayout
+	private lateinit var topBarSpacer: android.view.View
 
 	// 탭 전환할 때마다 새로 만들지 않고, 만들어둔 인스턴스를 계속 재사용한다
 	// (그래야 성경 읽던 위치/스크롤 등이 탭을 왔다갔다 해도 유지된다).
@@ -145,6 +150,9 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 		btnAutoScroll = findViewById(R.id.btn_auto_scroll)
 		iconReadingPlanCheck = findViewById(R.id.icon_reading_plan_check)
 		iconSermonIndicator = findViewById(R.id.icon_sermon_indicator)
+		topBarScroll = findViewById(R.id.top_bar_scroll)
+		topBar = findViewById(R.id.top_bar)
+		topBarSpacer = findViewById(R.id.view_top_bar_spacer)
 	}
 
 	private fun bindBottomNavViews() {
@@ -246,6 +254,46 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 		btnAutoScroll.setImageResource(if (config.isAutoScrolling) R.drawable.ic_pause else R.drawable.ic_play)
 
 		iconSermonIndicator.visibility = visible(config.showSermonIcon)
+
+		adjustTopBarSpacer()
+	}
+
+	/** 상단바 안 버튼들의 실제 너비 합이 화면(스크롤뷰) 너비 안에 다 들어가면, 오른쪽 스페이서가
+	 * 남는 공간을 채워서 지금까지처럼 오른쪽 끝에 버튼들이 붙어 보이게 한다. 책 이름이 길거나
+	 * (예: "데살로니가전서") 켜진 아이콘이 많아서 다 안 들어갈 때만 스페이서 너비를 0으로 줄여서,
+	 * 버튼들이 서로 붙은 채로 가로 스크롤되게 한다.
+	 *
+	 * visibility·텍스트 변경이 실제로 레이아웃에 반영된 뒤에 너비를 재야 하므로, 다음 그리기
+	 * 직전(레이아웃이 끝난 시점)까지 기다렸다가 계산한다. */
+	private fun adjustTopBarSpacer() {
+		topBar.doOnPreDraw {
+			val scrollViewWidth = topBarScroll.width
+			if (scrollViewWidth <= 0) return@doOnPreDraw
+
+			var contentWidth = topBar.paddingStart + topBar.paddingEnd
+			for (i in 0 until topBar.childCount) {
+				val child = topBar.getChildAt(i)
+				if (child === topBarSpacer) continue
+				if (child.visibility != android.view.View.GONE) {
+					// child.width엔 layout_marginStart/End가 포함되지 않으므로 따로 더해줘야
+					// 실제로 차지하는 너비가 정확히 계산된다(빠뜨리면 스페이서가 필요 이상으로
+					// 커져서 오른쪽 버튼들이 화면 끝에 딱 붙어버린다).
+					val margins = child.layoutParams as? android.view.ViewGroup.MarginLayoutParams
+					contentWidth += child.width + (margins?.marginStart ?: 0) + (margins?.marginEnd
+						?: 0)
+				}
+			}
+
+			val remaining = scrollViewWidth - contentWidth
+			val newSpacerWidth = remaining.coerceAtLeast(0)
+			val params = topBarSpacer.layoutParams
+			if (params.width != newSpacerWidth) {
+				params.width = newSpacerWidth
+				topBarSpacer.layoutParams = params
+			}
+			// 다 들어가는 경우엔 혹시 이전에 스크롤돼 있던 위치가 있어도 원위치로 되돌린다.
+			if (remaining >= 0) topBarScroll.scrollTo(0, 0)
+		}
 	}
 
 	private fun visible(show: Boolean) =

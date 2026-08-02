@@ -6,125 +6,140 @@
     android:layout_height="match_parent"
     android:background="@color/surface_background">
 
-    <!-- 상단바 -->
-    <LinearLayout
-        android:id="@+id/top_bar"
+    <!-- 상단바. 평소(다 들어갈 때)엔 오른쪽에 스페이서(view_top_bar_spacer)가 남는 공간을 채워서
+         지금까지와 똑같이 오른쪽 끝에 버튼들이 붙어 보인다. 책 이름이 길거나(예: "데살로니가전서")
+         켜진 아이콘이 많아서 화면 폭을 넘어갈 때만, MainActivity가 그 스페이서 너비를 0으로 줄여서
+         버튼들이 다 같이 붙은 채로 가로 스크롤되게 한다(고정되는 버튼 없음). 스페이서 너비 계산은
+         레이아웃이 끝난 뒤(onTopBarConfigChanged 이후) MainActivity에서 코드로 처리한다. -->
+    <HorizontalScrollView
+        android:id="@+id/top_bar_scroll"
         android:layout_width="0dp"
         android:layout_height="56dp"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
         android:background="@color/brown_primary"
-        android:paddingStart="8dp"
-        android:paddingEnd="8dp"
+        android:scrollbars="none"
+        android:overScrollMode="never"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <ImageView
-            android:id="@+id/btn_translation"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:padding="8dp"
-            android:src="@drawable/ic_book"
-            android:contentDescription="대역본 선택"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:clickable="true"
-            android:focusable="true" />
-
-        <TextView
-            android:id="@+id/text_current_location"
+        <LinearLayout
+            android:id="@+id/top_bar"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:padding="8dp"
-            android:text="창세기 1장"
-            android:textColor="@color/white"
-            android:textSize="17sp"
-            android:textStyle="bold"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:clickable="true"
-            android:focusable="true" />
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp">
 
-        <ImageView
-            android:id="@+id/icon_sermon_indicator"
-            android:layout_width="18dp"
-            android:layout_height="18dp"
-            android:layout_marginStart="6dp"
-            android:src="@drawable/ic_sermon_note"
-            android:visibility="gone"
-            android:contentDescription="이 장의 설교 보기"
-            android:clickable="true"
-            android:focusable="true"
-            android:background="?attr/selectableItemBackgroundBorderless" />
+            <ImageView
+                android:id="@+id/btn_translation"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:padding="8dp"
+                android:src="@drawable/ic_book"
+                android:contentDescription="대역본 선택"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true" />
 
-        <ImageView
-            android:id="@+id/icon_reading_plan_check"
-            android:layout_width="18dp"
-            android:layout_height="18dp"
-            android:layout_marginStart="4dp"
-            android:src="@drawable/ic_check"
-            android:visibility="gone"
-            android:contentDescription="성경읽기표 완료 체크"
-            android:clickable="true"
-            android:focusable="true"
-            android:background="?attr/selectableItemBackgroundBorderless" />
+            <TextView
+                android:id="@+id/text_current_location"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:padding="8dp"
+                android:text="창세기 1장"
+                android:textColor="@color/white"
+                android:textSize="17sp"
+                android:textStyle="bold"
+                android:maxLines="1"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true" />
 
-        <View
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:layout_weight="1" />
+            <ImageView
+                android:id="@+id/icon_sermon_indicator"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:layout_marginStart="6dp"
+                android:src="@drawable/ic_sermon_note"
+                android:visibility="gone"
+                android:contentDescription="이 장의 설교 보기"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackgroundBorderless" />
 
-        <ImageView
-            android:id="@+id/btn_auto_scroll"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:padding="8dp"
-            android:src="@drawable/ic_play"
-            android:visibility="gone"
-            android:contentDescription="자동 스크롤"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:clickable="true"
-            android:focusable="true" />
+            <ImageView
+                android:id="@+id/icon_reading_plan_check"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:layout_marginStart="4dp"
+                android:src="@drawable/ic_check"
+                android:visibility="gone"
+                android:contentDescription="성경읽기표 완료 체크"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackgroundBorderless" />
 
-        <ImageView
-            android:id="@+id/btn_search"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:padding="8dp"
-            android:src="@drawable/ic_search"
-            android:contentDescription="검색"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:clickable="true"
-            android:focusable="true" />
+            <View
+                android:id="@+id/view_top_bar_spacer"
+                android:layout_width="0dp"
+                android:layout_height="0dp" />
 
-        <ImageView
-            android:id="@+id/btn_bookmarks"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:padding="8dp"
-            android:src="@drawable/ic_bookmark"
-            android:contentDescription="북마크"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:clickable="true"
-            android:focusable="true" />
+            <ImageView
+                android:id="@+id/btn_auto_scroll"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="8dp"
+                android:padding="8dp"
+                android:src="@drawable/ic_play"
+                android:visibility="gone"
+                android:contentDescription="자동 스크롤"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true" />
 
-        <ImageView
-            android:id="@+id/btn_menu"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:padding="8dp"
-            android:src="@drawable/ic_menu"
-            android:contentDescription="메뉴"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:clickable="true"
-            android:focusable="true" />
-    </LinearLayout>
+            <ImageView
+                android:id="@+id/btn_search"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="8dp"
+                android:padding="8dp"
+                android:src="@drawable/ic_search"
+                android:contentDescription="검색"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true" />
+
+            <ImageView
+                android:id="@+id/btn_bookmarks"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:padding="8dp"
+                android:src="@drawable/ic_bookmark"
+                android:contentDescription="북마크"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true" />
+
+            <ImageView
+                android:id="@+id/btn_menu"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:padding="8dp"
+                android:src="@drawable/ic_menu"
+                android:contentDescription="메뉴"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true" />
+        </LinearLayout>
+    </HorizontalScrollView>
 
     <FrameLayout
         android:id="@+id/fragment_container"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        app:layout_constraintTop_toBottomOf="@id/top_bar"
+        app:layout_constraintTop_toBottomOf="@id/top_bar_scroll"
         app:layout_constraintBottom_toTopOf="@id/bottom_nav"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
