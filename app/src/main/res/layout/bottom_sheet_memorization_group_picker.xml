@@ -17,16 +17,16 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="카테고리 선택"
+            android:text="암송할 그룹 선택"
             android:textSize="18sp"
             android:textStyle="bold"
             android:textColor="@color/text_primary" />
 
         <TextView
-            android:id="@+id/btn_add_category_inline"
+            android:id="@+id/btn_add_group_inline"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="+ 새 카테고리"
+            android:text="+ 새 그룹"
             android:textColor="@color/brown_primary"
             android:padding="8dp"
             android:clickable="true"
@@ -39,7 +39,7 @@
         android:background="@color/divider_light" />
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recycler_categories_picker"
+        android:id="@+id/recycler_memorization_groups"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 </LinearLayout>

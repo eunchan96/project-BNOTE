@@ -1,4 +1,4 @@
-package com.chan.bnote.ui.sermon.addsermon
+package com.chan.bnote.ui.mypage.memorization
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -11,52 +11,53 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.chan.bnote.R
 import com.chan.bnote.data.BibleDatabase
-import com.chan.bnote.data.sermon.preacher.Preacher
+import com.chan.bnote.data.mypage.memorization.MemorizationGroup
 import com.chan.bnote.ui.FixedBottomSheetDialogFragment
 import com.chan.bnote.ui.common.SimpleListAdapter
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 
-class PreacherPickerBottomSheet : FixedBottomSheetDialogFragment() {
+/** 성경 탭 선택 툴바의 "암송" 버튼을 눌렀을 때, 어느 암송 그룹에 넣을지 고르는 창. */
+class MemorizationGroupPickerBottomSheet : FixedBottomSheetDialogFragment() {
 
-	var onPreacherSelected: ((Preacher) -> Unit)? = null
+	var onGroupSelected: ((MemorizationGroup) -> Unit)? = null
 
 	private lateinit var recyclerView: RecyclerView
-	private var preachers: List<Preacher> = emptyList()
+	private var groups: List<MemorizationGroup> = emptyList()
 
 	override fun onCreateView(
 		inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
 	): View {
-		return inflater.inflate(R.layout.bottom_sheet_preacher_picker, container, false)
+		return inflater.inflate(R.layout.bottom_sheet_memorization_group_picker, container, false)
 	}
 
 	override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 		super.onViewCreated(view, savedInstanceState)
 
-		recyclerView = view.findViewById(R.id.recycler_preachers_picker)
+		recyclerView = view.findViewById(R.id.recycler_memorization_groups)
 		recyclerView.layoutManager = LinearLayoutManager(requireContext())
 
-		view.findViewById<TextView>(R.id.btn_add_preacher_inline).setOnClickListener {
-			showAddDialog()
+		view.findViewById<TextView>(R.id.btn_add_group_inline).setOnClickListener {
+			showAddGroupDialog()
 		}
 
-		loadPreachers()
+		loadGroups()
 	}
 
-	private fun loadPreachers() {
+	private fun loadGroups() {
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(requireContext().applicationContext)
-			preachers = db.preacherDao().getAll()
-			recyclerView.adapter = SimpleListAdapter(preachers.map { it.name }) { position ->
-				onPreacherSelected?.invoke(preachers[position])
+			groups = db.memorizationVerseDao().getAllGroups()
+			recyclerView.adapter = SimpleListAdapter(groups.map { it.name }) { position ->
+				onGroupSelected?.invoke(groups[position])
 				dismiss()
 			}
 		}
 	}
 
-	private fun showAddDialog() {
+	private fun showAddGroupDialog() {
 		val editText = EditText(requireContext()).apply {
-			hint = "설교자 이름"
+			hint = "그룹 이름"
 			setPadding(48, 32, 48, 32)
 			textSize = 15f
 			background = androidx.core.content.ContextCompat.getDrawable(
@@ -69,17 +70,16 @@ class PreacherPickerBottomSheet : FixedBottomSheetDialogFragment() {
 			addView(editText)
 		}
 		MaterialAlertDialogBuilder(requireContext(), R.style.ThemeOverlay_BNOTE_Dialog)
-			.setTitle("새 설교자 추가")
+			.setTitle("새 그룹 추가")
 			.setView(container)
 			.setPositiveButton("추가") { _, _ ->
 				val name = editText.text.toString().trim()
 				if (name.isNotEmpty()) {
 					lifecycleScope.launch {
 						val db = BibleDatabase.getInstance(requireContext().applicationContext)
-						val newId = db.preacherDao()
-							.insert(Preacher(name = name, sortOrder = preachers.size))
-						onPreacherSelected?.invoke(Preacher(id = newId, name = name))
-						dismiss()
+						db.memorizationVerseDao()
+							.insertGroup(MemorizationGroup(name = name, sortOrder = groups.size))
+						loadGroups()
 					}
 				}
 			}

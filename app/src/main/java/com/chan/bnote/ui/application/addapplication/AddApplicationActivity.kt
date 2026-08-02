@@ -16,6 +16,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.doOnPreDraw
 import androidx.lifecycle.lifecycleScope
 import com.chan.bnote.R
 import com.chan.bnote.data.AppSettings
@@ -37,6 +38,7 @@ class AddApplicationActivity : AppCompatActivity() {
 		private const val EXTRA_APPLICATION_ID = "extra_application_id"
 		private const val EXTRA_INITIAL_DATE_MILLIS = "extra_initial_date_millis"
 		private const val EXTRA_PRELINK_SERMON_ID = "extra_prelink_sermon_id"
+		private const val ID_BOLD_MEDITATION = 1001
 
 		fun createIntent(
 			context: Context,
@@ -108,6 +110,23 @@ class AddApplicationActivity : AppCompatActivity() {
 			insets
 		}
 
+		// "카테고리" 라벨이 제일 길어서(좁은 화면일수록 더 두드러짐) 그 라벨만 폭이 넓어지는데,
+		// "제목"·"본문" 라벨은 그대로라 세 박스의 왼쪽 시작 위치가 안 맞았다. 실제로 그려진 뒤
+		// (기기별 폰트 크기 등에 따라 정확한 폭을 알 수 있는 시점에) 제일 넓은 라벨 폭에 나머지
+		// 두 라벨을 맞춰서, 아래 입력 박스들의 시작 위치가 항상 같은 줄에 맞도록 한다.
+		val labelTitle = findViewById<TextView>(R.id.text_label_title)
+		val labelCategory = findViewById<TextView>(R.id.text_label_category)
+		val labelRef = findViewById<TextView>(R.id.text_label_ref)
+		findViewById<View>(R.id.add_application_root).doOnPreDraw {
+			val maxWidth =
+				maxOf(labelTitle.width, labelCategory.width, labelRef.width)
+			for (label in listOf(labelTitle, labelCategory, labelRef)) {
+				if (label.width != maxWidth) {
+					label.layoutParams = label.layoutParams.apply { width = maxWidth }
+				}
+			}
+		}
+
 		val applicationId = intent.getLongExtra(EXTRA_APPLICATION_ID, -1L)
 		isEditMode = applicationId != -1L
 		val preLinkSermonId = intent.getLongExtra(EXTRA_PRELINK_SERMON_ID, -1L)
@@ -128,6 +147,42 @@ class AddApplicationActivity : AppCompatActivity() {
 		editMeditation = findViewById(R.id.edit_meditation)
 		editPrayer = findViewById(R.id.edit_prayer)
 		editObedience = findViewById(R.id.edit_obedience)
+
+		// 묵상하기 메모에서 텍스트를 길게 눌러 선택하면 뜨는 메뉴에 "굵게"를 추가한다.
+		editMeditation.customSelectionActionModeCallback =
+			object : android.view.ActionMode.Callback {
+				override fun onCreateActionMode(
+					mode: android.view.ActionMode?,
+					menu: android.view.Menu?
+				): Boolean {
+					menu?.add(0, ID_BOLD_MEDITATION, 0, "굵게")
+					return true
+				}
+
+				override fun onPrepareActionMode(
+					mode: android.view.ActionMode?,
+					menu: android.view.Menu?
+				): Boolean = false
+
+				override fun onActionItemClicked(
+					mode: android.view.ActionMode?,
+					item: android.view.MenuItem?
+				): Boolean {
+					if (item?.itemId == ID_BOLD_MEDITATION) {
+						val start = editMeditation.selectionStart
+						val end = editMeditation.selectionEnd
+						if (start in 0 until end) {
+							com.chan.bnote.ui.sermon.addsermon.RichTextUtils
+								.toggleStyle(editMeditation.text, start, end, bold = true)
+						}
+						mode?.finish()
+						return true
+					}
+					return false
+				}
+
+				override fun onDestroyActionMode(mode: android.view.ActionMode?) {}
+			}
 
 		findViewById<ImageView>(R.id.btn_prayer_info).setOnClickListener { showPrayerInfoDialog() }
 		findViewById<ImageView>(R.id.btn_obedience_info).setOnClickListener { showObedienceInfoDialog() }
@@ -174,7 +229,9 @@ class AddApplicationActivity : AppCompatActivity() {
 				existingApplication = application
 				if (application != null) {
 					editTitle.setText(application.title)
-					editMeditation.setText(application.meditationMemo)
+					editMeditation.setText(
+						com.chan.bnote.ui.sermon.addsermon.RichTextUtils.toEditable(application.meditationMemo)
+					)
 					editPrayer.setText(application.prayerMemo)
 					editObedience.setText(application.obedienceMemo)
 					selectedDateMillis = application.applicationDate
@@ -204,6 +261,31 @@ class AddApplicationActivity : AppCompatActivity() {
 				db.sermonDao().getById(preLinkSermonId)?.let { sermon ->
 					linkedSermons.add(sermon)
 					renderSermonChips()
+
+					// 카테고리를 "설교"로 자동 지정
+					val sermonCategory =
+						db.applicationCategoryDao().getAll().find { it.name == "설교" }
+					if (sermonCategory != null) {
+						selectedCategory = sermonCategory
+						btnPickCategory.text = sermonCategory.name
+					}
+
+					// 본문도 그 설교의 본문을 그대로 가져와서 채움
+					val sermonRefs = db.sermonBibleRefDao().getBySermon(sermon.id)
+					bibleRefs.addAll(
+						sermonRefs.map { ref ->
+							ApplicationBibleRef(
+								applicationId = 0,
+								startBookId = ref.startBookId,
+								startChapter = ref.startChapter,
+								startVerse = ref.startVerse,
+								endBookId = ref.endBookId,
+								endChapter = ref.endChapter,
+								endVerse = ref.endVerse
+							)
+						}
+					)
+					renderBibleRefBoxes()
 				}
 			}
 		}
@@ -343,8 +425,14 @@ class AddApplicationActivity : AppCompatActivity() {
 			val db = BibleDatabase.getInstance(applicationContext)
 			val translation = AppSettings.getPrimaryTranslation(this@AddApplicationActivity)
 			val text = fetchRefText(ref, db, translation)
-			val current = editMeditation.text?.toString().orEmpty()
-			editMeditation.setText(if (current.isBlank()) text else "$current\n\n$text")
+			// setText(String)으로 통째로 새로 넣으면 이미 적용해둔 굵게 서식이 다 사라지므로,
+			// 기존 Editable에 그대로 이어붙인다.
+			val editable = editMeditation.text
+			if (editable.isNullOrBlank()) {
+				editMeditation.setText(text)
+			} else {
+				editable.append("\n\n").append(text)
+			}
 			editMeditation.setSelection(editMeditation.text?.length ?: 0)
 		}
 	}
@@ -447,7 +535,7 @@ class AddApplicationActivity : AppCompatActivity() {
 					selectedCategory != null
 		}
 		return editTitle.text.toString().trim() != originalTitle ||
-				editMeditation.text.toString() != originalMeditation ||
+				com.chan.bnote.ui.sermon.addsermon.RichTextUtils.toStorageString(editMeditation.text) != originalMeditation ||
 				editPrayer.text.toString() != originalPrayer ||
 				editObedience.text.toString() != originalObedience ||
 				selectedDateMillis != originalDateMillis ||
@@ -472,7 +560,8 @@ class AddApplicationActivity : AppCompatActivity() {
 
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(applicationContext)
-			val meditation = editMeditation.text.toString()
+			val meditation =
+				com.chan.bnote.ui.sermon.addsermon.RichTextUtils.toStorageString(editMeditation.text)
 			val prayer = editPrayer.text.toString()
 			val obedience = editObedience.text.toString()
 

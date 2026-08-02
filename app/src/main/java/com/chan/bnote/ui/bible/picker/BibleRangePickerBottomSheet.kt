@@ -16,7 +16,7 @@ import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.bible.BibleBookGroups
 import com.chan.bnote.data.bible.BibleBooks
 import com.chan.bnote.data.sermon.SermonBibleRef
-import com.chan.bnote.ui.DraggableBottomSheet
+import com.chan.bnote.ui.FixedBottomSheetDialogFragment
 import com.chan.bnote.ui.common.GridNumberAdapter
 import com.google.android.material.checkbox.MaterialCheckBox
 import kotlinx.coroutines.launch
@@ -29,9 +29,8 @@ import kotlinx.coroutines.launch
  * 다음 장까지 걸쳐야 하면 그 옆의 "다음 장까지 선택하기"를 켜면, 시작 절을 고른 뒤 예전처럼
  * 끝 장 → 끝 절을 따로 골라서 정한다.
  */
-class BibleRangePickerBottomSheet : DraggableBottomSheet() {
+class BibleRangePickerBottomSheet : FixedBottomSheetDialogFragment() {
 
-	override val peekHeightRatio = 0.75f
 
 	// sermonId는 저장 시점에 채워지므로 0으로 임시 세팅
 	var onRangeSelected: ((SermonBibleRef) -> Unit)? = null
@@ -228,16 +227,16 @@ class BibleRangePickerBottomSheet : DraggableBottomSheet() {
 				orientation = LinearLayout.HORIZONTAL
 				layoutParams = LinearLayout.LayoutParams(
 					LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
-				).apply { bottomMargin = dp(4) }
+				).apply { bottomMargin = dp(8) }
 			}
 			for (id in group) {
 				val isSelected = id == bookId
 				val button = TextView(requireContext()).apply {
-					text = BibleBooks.nameOf(id)
+					text = BibleBooks.gridDisplayName(id)
 					gravity = Gravity.CENTER
 					textSize = 13f
 					maxLines = 2
-					setPadding(dp(4), dp(14), dp(4), dp(14))
+					setPadding(dp(4), dp(16), dp(4), dp(16))
 					background = ContextCompat.getDrawable(
 						requireContext(),
 						if (isSelected) R.drawable.bg_book_button_selected else R.drawable.bg_book_button
@@ -250,8 +249,11 @@ class BibleRangePickerBottomSheet : DraggableBottomSheet() {
 					)
 					isClickable = true
 					isFocusable = true
+					// 대부분의 책 이름은 한 줄이라 칸이 작지만, "데살로니가전서"처럼 두 줄이 되는
+					// 이름이 있는 줄(row)은 그 줄만 자연스럽게 커진다(전체 그리드가 다 같이 커지지
+					// 않도록, MATCH_PARENT로 같은 줄의 제일 큰 칸에 맞춰지게 한다).
 					layoutParams =
-						LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+						LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f)
 							.apply { marginStart = dp(4); marginEnd = dp(4) }
 					setOnClickListener {
 						bookId = id
@@ -266,10 +268,11 @@ class BibleRangePickerBottomSheet : DraggableBottomSheet() {
 			repeat(4 - group.size) {
 				row.addView(View(requireContext()).apply {
 					layoutParams =
-						LinearLayout.LayoutParams(0, 0, 1f).apply {
-							marginStart = dp(4)
-							marginEnd = dp(4)
-						}
+						LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f)
+							.apply {
+								marginStart = dp(4)
+								marginEnd = dp(4)
+							}
 				})
 			}
 			bookGridContainer.addView(row)

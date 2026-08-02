@@ -133,8 +133,10 @@ class CalendarApplicationFragment : Fragment(), FabAddHandler {
 
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(requireContext().applicationContext)
-			val startMillis = DateUtils.getMonthStartMillis(currentYear, currentMonth0)
-			val endMillis = DateUtils.getMonthEndMillisExclusive(currentYear, currentMonth0)
+			val (startMillis, endMillis) = DateUtils.getMonthGridRangeMillis(
+				currentYear,
+				currentMonth0
+			)
 			val markers = db.applicationDao().getMarkersInRange(startMillis, endMillis)
 
 			val fallbackColorHex = String.format(

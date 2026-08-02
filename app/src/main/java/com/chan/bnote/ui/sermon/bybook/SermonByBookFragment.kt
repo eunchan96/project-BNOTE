@@ -123,8 +123,13 @@ class SermonByBookFragment : Fragment(), SermonSortableFragment, FabAddHandler {
 			val db = BibleDatabase.getInstance(requireContext().applicationContext)
 			val maxChapter = db.bibleDao().getMaxChapter("NKRV", currentBookId)
 			val markers = db.sermonDao().getChapterMarkersForBook(currentBookId)
+			val sortedMarkers = com.chan.bnote.ui.sermon.SermonSortUtils.sortMarkers(
+				db, markers, sortMode,
+				markerId = { it.id },
+				markerCategoryId = { it.categoryId }
+			)
 
-			val colorsByChapter = buildColorsByChapter(markers)
+			val colorsByChapter = buildColorsByChapter(sortedMarkers)
 
 			val cells = (1..maxChapter).map { chapter ->
 				ChapterCell(chapter, colorsByChapter[chapter].orEmpty())
@@ -167,7 +172,7 @@ class SermonByBookFragment : Fragment(), SermonSortableFragment, FabAddHandler {
 	override fun setSortMode(mode: String) {
 		sortMode = mode
 		AppSettings.setByBookSortMode(requireContext(), mode)
-		loadSermonsForSelectedChapter()
+		loadChapterGrid()
 	}
 
 	private fun loadSermonsForSelectedChapter() {

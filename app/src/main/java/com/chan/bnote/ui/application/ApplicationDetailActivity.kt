@@ -4,10 +4,8 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.view.Gravity
 import android.view.View
 import android.widget.ImageView
-import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
@@ -94,9 +92,17 @@ class ApplicationDetailActivity : AppCompatActivity() {
 			}
 
 			val category = application.categoryId?.let { db.applicationCategoryDao().getById(it) }
+			val links = db.applicationSermonLinkDao().getByApplication(application.id)
+			val sermons = links.mapNotNull { db.sermonDao().getById(it.sermonId) }
+
 			val dateLabel = DateUtils.formatDate(application.applicationDate)
+			val bracketLabel = when {
+				category?.name == "설교" && sermons.isNotEmpty() -> sermons.first().title
+				category != null -> category.name
+				else -> null
+			}
 			findViewById<TextView>(R.id.text_detail_date_category).text =
-				if (category != null) "$dateLabel [${category.name}]" else dateLabel
+				if (bracketLabel != null) "$dateLabel [$bracketLabel]" else dateLabel
 
 			val refs = db.applicationBibleRefDao().getByApplication(application.id)
 			val infoView = findViewById<TextView>(R.id.text_application_info)
@@ -157,16 +163,54 @@ class ApplicationDetailActivity : AppCompatActivity() {
 				hasContent = true
 			}
 
+			if (sermons.isNotEmpty()) {
+				if (hasContent) infoBuilder.append("\n")
+				infoBuilder.append("설교 : ")
+
+				val sermonClickRanges = mutableListOf<Triple<Int, Int, Sermon>>()
+				for ((index, sermon) in sermons.withIndex()) {
+					val start = infoBuilder.length
+					infoBuilder.append(sermon.title)
+					val end = infoBuilder.length
+					sermonClickRanges.add(Triple(start, end, sermon))
+					if (index != sermons.lastIndex) infoBuilder.append(", ")
+				}
+
+				for ((start, end, sermon) in sermonClickRanges) {
+					infoBuilder.setSpan(
+						object : android.text.style.ClickableSpan() {
+							override fun onClick(widget: View) {
+								SermonDetailActivity.start(
+									this@ApplicationDetailActivity,
+									sermon.id
+								)
+							}
+
+							override fun updateDrawState(ds: android.text.TextPaint) {
+								super.updateDrawState(ds)
+								ds.color = ContextCompat.getColor(
+									this@ApplicationDetailActivity,
+									R.color.brown_primary
+								)
+								ds.isUnderlineText = true
+							}
+						},
+						start, end, android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+					)
+				}
+				hasContent = true
+			}
+
 			infoView.visibility = if (hasContent) View.VISIBLE else View.GONE
 			infoView.text = infoBuilder
 			infoView.movementMethod = android.text.method.LinkMovementMethod.getInstance()
 
-			val links = db.applicationSermonLinkDao().getByApplication(application.id)
-			val sermons = links.mapNotNull { db.sermonDao().getById(it.sermonId) }
-			renderSermonChips(sermons)
-
 			findViewById<TextView>(R.id.text_detail_meditation).text =
-				application.meditationMemo.ifBlank { "묵상 내용이 없어요" }
+				if (application.meditationMemo.isBlank()) {
+					"묵상 내용이 없어요"
+				} else {
+					com.chan.bnote.ui.sermon.addsermon.RichTextUtils.toEditable(application.meditationMemo)
+				}
 			findViewById<TextView>(R.id.text_detail_prayer).text =
 				application.prayerMemo.ifBlank { "기도 내용이 없어요" }
 			findViewById<TextView>(R.id.text_detail_obedience).text =
@@ -198,44 +242,6 @@ class ApplicationDetailActivity : AppCompatActivity() {
 		}
 	}
 
-	private fun renderSermonChips(sermons: List<Sermon>) {
-		val scroll = findViewById<View>(R.id.scroll_detail_sermon_chips)
-		val container = findViewById<LinearLayout>(R.id.container_detail_sermon_chips)
-		container.removeAllViews()
-		scroll.visibility = if (sermons.isEmpty()) View.GONE else View.VISIBLE
-
-		for (sermon in sermons) {
-			val chip = TextView(this).apply {
-				text = sermon.title
-				textSize = 13f
-				setPadding(dp(10), dp(6), dp(10), dp(6))
-				setTextColor(
-					ContextCompat.getColor(
-						this@ApplicationDetailActivity,
-						R.color.text_primary
-					)
-				)
-				background = ContextCompat.getDrawable(
-					this@ApplicationDetailActivity,
-					R.drawable.bg_book_button
-				)
-				gravity = Gravity.CENTER
-				isClickable = true
-				isFocusable = true
-				layoutParams = LinearLayout.LayoutParams(
-					LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT
-				).apply { marginEnd = dp(6) }
-				setOnClickListener {
-					SermonDetailActivity.start(
-						this@ApplicationDetailActivity,
-						sermon.id
-					)
-				}
-			}
-			container.addView(chip)
-		}
-	}
-
 	private fun confirmDelete() {
 		MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_BNOTE_Dialog)
 			.setTitle("적용 삭제")
@@ -255,6 +261,4 @@ class ApplicationDetailActivity : AppCompatActivity() {
 			.setNegativeButton("취소", null)
 			.show()
 	}
-
-	private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
 }

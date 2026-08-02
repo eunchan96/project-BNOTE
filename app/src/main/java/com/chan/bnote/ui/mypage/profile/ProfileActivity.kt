@@ -385,8 +385,10 @@ class ProfileActivity : AppCompatActivity() {
 
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(applicationContext)
-			val startMillis = DateUtils.getMonthStartMillis(calendarYear, calendarMonth0)
-			val endMillis = DateUtils.getMonthEndMillisExclusive(calendarYear, calendarMonth0)
+			val (startMillis, endMillis) = DateUtils.getMonthGridRangeMillis(
+				calendarYear,
+				calendarMonth0
+			)
 
 			val colorsByDate = mutableMapOf<Long, MutableList<String>>()
 

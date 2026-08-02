@@ -15,12 +15,12 @@ import androidx.recyclerview.widget.RecyclerView
 import com.chan.bnote.R
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.application.ApplicationCategory
+import com.chan.bnote.ui.FixedBottomSheetDialogFragment
 import com.chan.bnote.ui.common.ColorPickerBottomSheet
-import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 
-class ApplicationCategoryPickerBottomSheet : BottomSheetDialogFragment() {
+class ApplicationCategoryPickerBottomSheet : FixedBottomSheetDialogFragment() {
 
 	// null = 선택 안 함(미분류)
 	var onCategorySelected: ((ApplicationCategory?) -> Unit)? = null

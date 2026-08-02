@@ -40,4 +40,22 @@ object DateUtils {
 	}
 
 	fun formatYearMonth(year: Int, month0: Int): String = "${year}년 ${month0 + 1}월"
+
+	/**
+	 * 캘린더 그리드는 1일 앞/31일 뒤로 이전·다음 달 날짜도 몇 칸 채워서 보여주는데(빈 칸 없이
+	 * 주 단위를 맞추기 위해), 색깔 막대를 가져올 때 딱 이번 달 범위만 조회하면 그 앞뒤로 채워진
+	 * 칸에는 막대가 하나도 안 보이는 문제가 있었다. 한 주는 최대 6칸까지 앞/뒤로 채워질 수 있어서,
+	 * 앞뒤로 7일씩 넉넉히 여유를 둔 범위를 반환한다.
+	 */
+	fun getMonthGridRangeMillis(year: Int, month0: Int): Pair<Long, Long> {
+		val start = Calendar.getInstance().apply {
+			timeInMillis = getMonthStartMillis(year, month0)
+			add(Calendar.DAY_OF_YEAR, -7)
+		}.timeInMillis
+		val end = Calendar.getInstance().apply {
+			timeInMillis = getMonthEndMillisExclusive(year, month0)
+			add(Calendar.DAY_OF_YEAR, 7)
+		}.timeInMillis
+		return start to end
+	}
 }

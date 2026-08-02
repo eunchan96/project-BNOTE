@@ -35,4 +35,40 @@ object SermonSortUtils {
 
 	/** 추가순 = id순(먼저 추가한 게 먼저). */
 	fun byAddedOrder(): Comparator<Sermon> = compareBy { it.id }
+
+	/**
+	 * 캘린더/성경별 화면 상단 그리드의 색깔 막대들은(하루 또는 한 장에 설교가 여러 개일 때) 원래
+	 * DB에 저장된 순서(추가한 순)로만 나오고 있었는데, 그러면 아래 목록에서 고른 정렬 방식(성경순
+	 * · 카테고리순 등)과 안 맞았다. 마커(SermonMarker/ChapterMarker)에도 같은 정렬을 적용해서
+	 * 맞춰준다. 마커엔 설교 날짜가 없어서 "DATE" 모드는 없는 것으로 보고 추가순으로 대체한다.
+	 */
+	suspend fun <T> sortMarkers(
+		db: BibleDatabase,
+		markers: List<T>,
+		sortMode: String,
+		markerId: (T) -> Long,
+		markerCategoryId: (T) -> Long?
+	): List<T> {
+		return when (sortMode) {
+			"CATEGORY" -> {
+				val categoryOrder = loadCategoryOrderMap(db)
+				markers.sortedBy { categoryOrder[markerCategoryId(it)] ?: Int.MAX_VALUE }
+			}
+
+			"BIBLE" -> {
+				val refs = markers.associate {
+					markerId(it) to db.sermonBibleRefDao().getFirstRef(markerId(it))
+				}
+				markers.sortedWith(
+					compareBy(
+						{ refs[markerId(it)]?.startBookId ?: Int.MAX_VALUE },
+						{ refs[markerId(it)]?.startChapter ?: Int.MAX_VALUE },
+						{ refs[markerId(it)]?.startVerse ?: Int.MAX_VALUE }
+					)
+				)
+			}
+
+			else -> markers.sortedBy { markerId(it) }
+		}
+	}
 }

@@ -8,13 +8,13 @@ import android.widget.TextView
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.chan.bnote.R
+import com.chan.bnote.ui.FixedBottomSheetDialogFragment
 import com.chan.bnote.ui.common.GridNumberAdapter
-import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 
 class MonthYearPickerBottomSheet(
 	initialYear: Int,
 	private val initialMonth0: Int // 0-indexed
-) : BottomSheetDialogFragment() {
+) : FixedBottomSheetDialogFragment() {
 
 	var onSelected: ((year: Int, month0: Int) -> Unit)? = null
 

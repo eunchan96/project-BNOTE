@@ -177,6 +177,16 @@ class SettingsActivity : AppCompatActivity() {
 			switchChapterSwipe.isChecked = !switchChapterSwipe.isChecked
 		}
 
+		val switchBibleScrollbar = findViewById<Switch>(R.id.switch_bible_scrollbar).apply {
+			isChecked = AppSettings.isBibleScrollbarVisible(this@SettingsActivity)
+			setOnCheckedChangeListener { _, checked ->
+				AppSettings.setBibleScrollbarVisible(this@SettingsActivity, checked)
+			}
+		}
+		findViewById<View>(R.id.row_bible_scrollbar_toggle).setOnClickListener {
+			switchBibleScrollbar.isChecked = !switchBibleScrollbar.isChecked
+		}
+
 		val switchReadingCheckPosition =
 			findViewById<Switch>(R.id.switch_reading_check_position).apply {
 				isChecked = AppSettings.isReadingCheckBottomButtonMode(this@SettingsActivity)

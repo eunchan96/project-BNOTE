@@ -105,6 +105,7 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 	private var primaryTranslation: Translation = Translation.NKRV
 	private var secondaryTranslation: Translation? = null
 	private var currentFontSize: Int = 16
+	private var currentScrollbarVisible = true
 	private var scrollSpeed = 3
 
 	private var isReadingPlanEnabled = false
@@ -210,6 +211,7 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		secondaryTranslation = Translation.values().firstOrNull { it.code == savedSecondaryCode }
 
 		currentFontSize = AppSettings.getFontSize(requireContext())
+		currentScrollbarVisible = AppSettings.isBibleScrollbarVisible(requireContext())
 		isReadingPlanEnabled = AppSettings.isReadingPlanEnabled(requireContext())
 		isAutoScrollEnabled = AppSettings.isAutoScrollEnabled(requireContext())
 		scrollSpeed = AppSettings.getScrollSpeed(requireContext())
@@ -274,6 +276,9 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		}
 		view.findViewById<TextView>(R.id.btn_toolbar_memo).setOnClickListener {
 			onMemoButtonClicked()
+		}
+		view.findViewById<TextView>(R.id.btn_toolbar_memorize).setOnClickListener {
+			onMemorizeButtonClicked()
 		}
 	}
 
@@ -699,6 +704,22 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 				if (afterCount > 0) pageAdapter.notifyItemRangeChanged(position + 1, afterCount)
 			}
 		}
+		val newScrollbarVisible = AppSettings.isBibleScrollbarVisible(requireContext())
+		if (newScrollbarVisible != currentScrollbarVisible) {
+			currentScrollbarVisible = newScrollbarVisible
+			// 지금 보이는 페이지는 바로 적용하고, 나머지 페이지는 bind() 시점에 다시 확인해서
+			// 반영하도록 다시 그려야 함으로 표시한다(폰트 크기 변경과 동일한 방식).
+			if (::recyclerView.isInitialized) {
+				recyclerView.isVerticalScrollBarEnabled = newScrollbarVisible
+			}
+			if (::viewPager.isInitialized && ::pageAdapter.isInitialized) {
+				val position = viewPager.currentItem
+				if (position > 0) pageAdapter.notifyItemRangeChanged(0, position)
+				val afterCount = pageAdapter.itemCount - position - 1
+				if (afterCount > 0) pageAdapter.notifyItemRangeChanged(position + 1, afterCount)
+			}
+		}
+
 		scrollSpeed = AppSettings.getScrollSpeed(requireContext())
 		updateReadingCheckBottomButton()
 		if (::viewPager.isInitialized) {
@@ -969,6 +990,54 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 			}
 		}
 		picker.show(parentFragmentManager, "scrap_group_picker")
+	}
+
+	/** 선택한 구절 범위(전체를 하나의 연속 구간으로 봄)를 암송 그룹에 추가하고, 그 구절의
+	 * 상세(메모) 화면으로 바로 이동한다. */
+	private fun onMemorizeButtonClicked() {
+		if (selectedVerses.isEmpty()) return
+		val sortedSelected = selectedVerses.sorted()
+		val startVerse = sortedSelected.first()
+		val endVerse = sortedSelected.last()
+		val verseText = currentVerses
+			.filter { it.verse in startVerse..endVerse }
+			.sortedBy { it.verse }
+			.joinToString("\n") { it.text }
+
+		val memorizePicker =
+			com.chan.bnote.ui.mypage.memorization.MemorizationGroupPickerBottomSheet()
+		memorizePicker.onGroupSelected = { group ->
+			lifecycleScope.launch {
+				val db = BibleDatabase.getInstance(requireContext().applicationContext)
+				val alreadyExists = db.memorizationVerseDao().existsCount(
+					currentBookId, currentChapter, startVerse,
+					currentBookId, currentChapter, endVerse
+				) > 0
+				if (alreadyExists) {
+					Toast.makeText(requireContext(), "이미 등록된 구절이에요", Toast.LENGTH_SHORT).show()
+					clearSelection()
+					return@launch
+				}
+				val newVerseId = db.memorizationVerseDao().insert(
+					com.chan.bnote.data.mypage.memorization.MemorizationVerse(
+						groupId = group.id,
+						startBookId = currentBookId,
+						startChapter = currentChapter,
+						startVerse = startVerse,
+						endBookId = currentBookId,
+						endChapter = currentChapter,
+						endVerse = endVerse,
+						verseText = verseText
+					)
+				)
+				clearSelection()
+				startActivity(
+					com.chan.bnote.ui.mypage.memorization.MemorizationVerseDetailActivity
+						.createIntent(requireContext(), newVerseId)
+				)
+			}
+		}
+		memorizePicker.show(parentFragmentManager, "memorize_group_picker")
 	}
 
 	private fun openHighlightColorPicker(verseNum: Int, start: Int, end: Int) {

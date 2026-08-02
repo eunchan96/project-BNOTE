@@ -8,12 +8,12 @@ import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.chan.bnote.R
-import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import com.chan.bnote.ui.FixedBottomSheetDialogFragment
 
 class SortOptionBottomSheet(
 	private val title: String,
 	private val options: List<String>
-) : BottomSheetDialogFragment() {
+) : FixedBottomSheetDialogFragment() {
 
 	var onSelected: ((position: Int) -> Unit)? = null
 

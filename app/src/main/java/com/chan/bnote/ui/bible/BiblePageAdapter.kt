@@ -56,6 +56,10 @@ class BiblePageAdapter(private val fragment: BibleFragment) :
 			boundChapter = chapter
 			loadJob?.cancel()
 			recyclerView.adapter = null
+			// 설정에서 바뀌었을 수 있으니 매번 다시 확인해서 반영한다(뷰홀더는 재활용되므로
+			// init 시점에만 적용하면 이미 만들어진 페이지에는 설정 변경이 반영되지 않는다).
+			recyclerView.isVerticalScrollBarEnabled =
+				com.chan.bnote.data.AppSettings.isBibleScrollbarVisible(fragment.requireContext())
 			loadJob = fragment.viewLifecycleOwner.lifecycleScope.launch {
 				val page = fragment.loadPageData(bookId, chapter)
 				val footer = fragment.createFooterAdapterFor(bookId, chapter, page.isRead)
