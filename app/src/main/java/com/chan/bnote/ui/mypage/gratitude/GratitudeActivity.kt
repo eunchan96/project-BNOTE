@@ -126,8 +126,10 @@ class GratitudeActivity : AppCompatActivity() {
 
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(applicationContext)
-			val startMillis = DateUtils.getMonthStartMillis(currentYear, currentMonth0)
-			val endMillis = DateUtils.getMonthEndMillisExclusive(currentYear, currentMonth0)
+			val (startMillis, endMillis) = DateUtils.getMonthGridRangeMillis(
+				currentYear,
+				currentMonth0
+			)
 			val datesWithNotes =
 				db.gratitudeNoteDao().getDatesInRange(startMillis, endMillis).toSet()
 

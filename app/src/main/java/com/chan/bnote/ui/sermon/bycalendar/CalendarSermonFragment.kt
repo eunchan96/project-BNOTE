@@ -139,8 +139,10 @@ class CalendarSermonFragment : Fragment(), SermonSortableFragment, FabAddHandler
 
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(requireContext().applicationContext)
-			val startMillis = DateUtils.getMonthStartMillis(currentYear, currentMonth0)
-			val endMillis = DateUtils.getMonthEndMillisExclusive(currentYear, currentMonth0)
+			val (startMillis, endMillis) = DateUtils.getMonthGridRangeMillis(
+				currentYear,
+				currentMonth0
+			)
 			val markers = db.sermonDao().getSermonMarkersInRange(startMillis, endMillis)
 			val sortedMarkers = com.chan.bnote.ui.sermon.SermonSortUtils.sortMarkers(
 				db, markers, sortMode,
