@@ -275,6 +275,9 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		view.findViewById<TextView>(R.id.btn_toolbar_memo).setOnClickListener {
 			onMemoButtonClicked()
 		}
+		view.findViewById<TextView>(R.id.btn_toolbar_memorize).setOnClickListener {
+			onMemorizeButtonClicked()
+		}
 	}
 
 	override fun getTopBarConfig() = TopBarConfig(
@@ -969,6 +972,54 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 			}
 		}
 		picker.show(parentFragmentManager, "scrap_group_picker")
+	}
+
+	/** 선택한 구절 범위(전체를 하나의 연속 구간으로 봄)를 암송 그룹에 추가하고, 그 구절의
+	 * 상세(메모) 화면으로 바로 이동한다. */
+	private fun onMemorizeButtonClicked() {
+		if (selectedVerses.isEmpty()) return
+		val sortedSelected = selectedVerses.sorted()
+		val startVerse = sortedSelected.first()
+		val endVerse = sortedSelected.last()
+		val verseText = currentVerses
+			.filter { it.verse in startVerse..endVerse }
+			.sortedBy { it.verse }
+			.joinToString("\n") { it.text }
+
+		val memorizePicker =
+			com.chan.bnote.ui.mypage.memorization.MemorizationGroupPickerBottomSheet()
+		memorizePicker.onGroupSelected = { group ->
+			lifecycleScope.launch {
+				val db = BibleDatabase.getInstance(requireContext().applicationContext)
+				val alreadyExists = db.memorizationVerseDao().existsCount(
+					currentBookId, currentChapter, startVerse,
+					currentBookId, currentChapter, endVerse
+				) > 0
+				if (alreadyExists) {
+					Toast.makeText(requireContext(), "이미 등록된 구절이에요", Toast.LENGTH_SHORT).show()
+					clearSelection()
+					return@launch
+				}
+				val newVerseId = db.memorizationVerseDao().insert(
+					com.chan.bnote.data.mypage.memorization.MemorizationVerse(
+						groupId = group.id,
+						startBookId = currentBookId,
+						startChapter = currentChapter,
+						startVerse = startVerse,
+						endBookId = currentBookId,
+						endChapter = currentChapter,
+						endVerse = endVerse,
+						verseText = verseText
+					)
+				)
+				clearSelection()
+				startActivity(
+					com.chan.bnote.ui.mypage.memorization.MemorizationVerseDetailActivity
+						.createIntent(requireContext(), newVerseId)
+				)
+			}
+		}
+		memorizePicker.show(parentFragmentManager, "memorize_group_picker")
 	}
 
 	private fun openHighlightColorPicker(verseNum: Int, start: Int, end: Int) {
