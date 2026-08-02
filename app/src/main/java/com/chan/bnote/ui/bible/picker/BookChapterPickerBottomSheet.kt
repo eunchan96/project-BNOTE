@@ -128,7 +128,7 @@ class BookChapterPickerBottomSheet(
 					gravity = Gravity.CENTER
 					textSize = 13f
 					maxLines = 2
-					setPadding(dp(4), dp(15), dp(4), dp(15))
+					setPadding(dp(4), dp(16), dp(4), dp(16))
 					background = androidx.core.content.ContextCompat.getDrawable(
 						requireContext(),
 						if (isSelected) R.drawable.bg_book_button_selected else R.drawable.bg_book_button
