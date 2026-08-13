@@ -158,6 +158,9 @@
             android:name=".ui.knowledge.UnitListActivity"
             android:exported="false" />
         <activity
+            android:name=".ui.knowledge.UnitCategoryListActivity"
+            android:exported="false" />
+        <activity
             android:name=".ui.knowledge.UnitDetailActivity"
             android:exported="false" />
         <activity
