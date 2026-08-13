@@ -31,6 +31,11 @@ object UnitRepository {
 				id = obj.getString("id"),
 				title = obj.getString("title"),
 				category = obj.getString("category"),
+				subcategory = if (obj.has("subcategory") && !obj.isNull("subcategory")) {
+					obj.getString("subcategory")
+				} else {
+					null
+				},
 				summary = obj.getString("summary"),
 				description = obj.getString("description"),
 				keyBookId = obj.getInt("keyBookId"),
