@@ -14,7 +14,7 @@ object BibleSeeder {
 
 	// 성경 본문 assets(JSON)를 고칠 때마다 이 숫자를 1씩 올린다.
 	// 그러면 이미 앱을 쓰고 있던 사용자도 다음 실행 시 그 번역본만 자동으로 다시 심어진다.
-	private const val SEED_VERSION = 4
+	private const val SEED_VERSION = 5
 
 	// 배포 전 오탈자 등을 계속 확인하는 동안엔 true로 두면 매번(앱 실행마다) 무조건 다시 심는다.
 	// 실제 배포 전에는 반드시 false로 바꿔서, 위 SEED_VERSION 번호로만 재시딩되게 할 것.
