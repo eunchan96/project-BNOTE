@@ -143,9 +143,9 @@ class MemoListActivity : AppCompatActivity() {
 
 	private suspend fun fetchWordMemoWord(db: BibleDatabase, memo: WordMemo): String {
 		val verseText = db.bibleDao().getVerses(memo.translation, memo.bookId, memo.chapter)
-			.find { it.verse == memo.verse }?.text ?: return ""
-		if (memo.startOffset < 0 || memo.endOffset > verseText.length || memo.startOffset >= memo.endOffset) return ""
-		return verseText.substring(memo.startOffset, memo.endOffset)
+			.find { it.verse == memo.verse } ?: return ""
+		if (memo.startOffset < 0 || memo.endOffset > verseText.text.length || memo.startOffset >= memo.endOffset) return ""
+		return verseText.text.substring(memo.startOffset, memo.endOffset)
 	}
 
 	private fun openVerseMemoEditor(memo: VerseMemo) {
