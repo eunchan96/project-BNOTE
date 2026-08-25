@@ -512,7 +512,11 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		val innerRecyclerView = viewPager.getChildAt(0) as? RecyclerView
 		val holder =
 			innerRecyclerView?.findViewHolderForAdapterPosition(position) as? BiblePageAdapter.PageViewHolder
-		holder?.currentRecyclerView()?.let { rv ->
+		// 아래 코루틴에서 절 스크롤을 시도해도 되는지 판단하는 플래그. holder를 못 찾으면
+		// recyclerView 필드가 이 페이지 것으로 갱신 안 됐다는 뜻이라, 그 상태로 스크롤하면 엉뚱한
+		// (이전 장의) 목록이 움직여버릴 위험이 있어서 이 경우엔 스크롤을 건너뛴다(bind() 쪽
+		// 코루틴이 나중에 정상적으로 처리해줄 것이다).
+		val recyclerViewIsFreshForThisPage = holder?.currentRecyclerView()?.let { rv ->
 			recyclerView = rv
 			(rv.adapter as? androidx.recyclerview.widget.ConcatAdapter)
 				?.adapters
@@ -524,11 +528,25 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 					// 지금 진짜 selectedVerses로 강제 동기화해서 선택 배경색이 어긋나지 않게 한다.
 					adapter.updateSelection(selectedVerses.toSet())
 				}
-		}
+			true
+		} ?: false
 
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(requireContext().applicationContext)
 			currentVerses = db.bibleDao().getVerses(primaryTranslation.code, bookId, chapter)
+
+			// consumePendingMemoOpen과 같은 이유(ViewPager2 prefetch로 bind()가 다시 안 불릴 수
+			// 있음)로, 절 스크롤 요청도 여기서 같이 확인해서 처리한다. recyclerView가 아직 이 페이지
+			// 것으로 안 갱신됐으면(=holder를 못 찾음) 여기서 미리 소비해버리지 않는다 — 그러면 값이
+			// 지워진 채로 정작 스크롤은 못 한 상태가 돼서, 나중에 bind()가 정상적으로 불려도 이미
+			// 늦어버린다. 그럴 땐 그냥 안 건드리고 bind() 쪽 코루틴이 처리하게 둔다.
+			if (recyclerViewIsFreshForThisPage) {
+				consumePendingScrollVerse(bookId, chapter)?.let { verseNum ->
+					val index = currentVerses.indexOfFirst { it.verse == verseNum }
+					if (index >= 0) recyclerView.scrollToPosition(index)
+				}
+			}
+
 			currentSecondaryMap = secondaryTranslation?.let { sec ->
 				db.bibleDao().getVerses(sec.code, bookId, chapter)
 					.associate { it.verse to SecondaryVerseText(it.text, it.text2) }
