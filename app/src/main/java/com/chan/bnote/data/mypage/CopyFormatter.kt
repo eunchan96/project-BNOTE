@@ -22,8 +22,7 @@ object CopyFormatter {
 		if (sortedVerses.isEmpty()) return ""
 
 		val isMulti = sortedVerses.size > 1
-		val firstVerse = sortedVerses.first().verse
-		val lastVerse = sortedVerses.last().verse
+		val verseNumbers = sortedVerses.map { it.verse }
 
 		fun verseLine(v: BibleVerse, showNumber: Boolean): String {
 			var body = v.fullText()
@@ -50,7 +49,7 @@ object CopyFormatter {
 		return when (config.refVerseSeparator) {
 			CopyFormatConfig.Separator.SPACE -> {
 				val reference =
-					buildInlineReference(bookId, chapter, firstVerse, lastVerse, isMulti, config)
+					buildInlineReference(bookId, chapter, verseNumbers, config)
 				val showNumber = isMulti && config.showVerseNumberWhenMulti
 				var body = sortedVerses.joinToString(multiSep) { verseLine(it, showNumber) }
 				// 따옴표는 절 하나하나가 아니라, 선택한 구절 전체를 한 번만 감싼다.
@@ -71,29 +70,51 @@ object CopyFormatter {
 		}
 	}
 
-	/** 짧게(창 1:1) / 중간(창세기 1:1) / 길게(창세기 1장 1절) 형태의 인용 참조를 만든다. */
+	/** 짧게(창 1:1) / 중간(창세기 1:1) / 길게(창세기 1장 1절) 형태의 인용 참조를 만든다.
+	 * 절 번호가 연속이 아니면(예: 1절과 5절만 선택) "1~5절"처럼 뭉뚱그리지 않고
+	 * 연속 구간별로 나눠서 "1,5절"처럼, 연속 구간이 섞여 있으면 "1~2,5절"처럼 보여준다. */
 	private fun buildInlineReference(
 		bookId: Int,
 		chapter: Int,
-		firstVerse: Int,
-		lastVerse: Int,
-		isMulti: Boolean,
+		verseNumbers: List<Int>,
 		config: CopyFormatConfig
 	): String {
 		val bookName = bookNameFor(bookId, config)
 		val sp = if (config.refSpacing) " " else ""
+		val rangeText = formatVerseRanges(verseNumbers)
 
 		val core = if (config.refLength == CopyFormatConfig.RefLength.LONG) {
 			val unit = BibleBooks.chapterUnit(bookId)
-			val versePart = if (isMulti) "$firstVerse~${lastVerse}절" else "${firstVerse}절"
-			"$bookName$sp$chapter$unit$sp$versePart"
+			"$bookName$sp$chapter$unit$sp${rangeText}절"
 		} else {
 			// 짧게/중간 둘 다 "장:절" 표기를 쓰고, 책이름 길이만 다르다.
-			val versePart = if (isMulti) "$firstVerse~$lastVerse" else "$firstVerse"
-			"$bookName$sp$chapter:$versePart"
+			"$bookName$sp$chapter:$rangeText"
 		}
 
 		return wrapWithBracket(core, config.refBracket)
+	}
+
+	/** 정렬된 절 번호 목록을 연속 구간별로 묶어서 "1", "1~5", "1,5", "1~2,5" 같은 문자열로 만든다. */
+	private fun formatVerseRanges(sortedVerseNumbers: List<Int>): String {
+		if (sortedVerseNumbers.isEmpty()) return ""
+
+		val ranges = mutableListOf<Pair<Int, Int>>()
+		var rangeStart = sortedVerseNumbers.first()
+		var rangeEnd = rangeStart
+		for (verse in sortedVerseNumbers.drop(1)) {
+			if (verse == rangeEnd + 1) {
+				rangeEnd = verse
+			} else {
+				ranges.add(rangeStart to rangeEnd)
+				rangeStart = verse
+				rangeEnd = verse
+			}
+		}
+		ranges.add(rangeStart to rangeEnd)
+
+		return ranges.joinToString(",") { (start, end) ->
+			if (start == end) "$start" else "$start~$end"
+		}
 	}
 
 	/** 줄바꿈 형식일 때 맨 위에 오는 "(창세기 1장)" 같은 헤더. 절 정보는 각 줄에서 따로 보여주므로 안 붙인다. */
