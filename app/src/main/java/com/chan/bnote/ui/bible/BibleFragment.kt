@@ -467,7 +467,15 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 	/** 페이지 하나의 데이터/어댑터가 다 준비됐을 때 BiblePageAdapter가 불러준다. onBiblePageSettled의
 	 * 뷰홀더 조회가 타이밍상 아직 준비 안 된 페이지를 못 찾는 경우가 있어서, 그 보완으로 여기서도
 	 * "지금 보이는 장이 맞으면" recyclerView/adapter를 채워준다. 이게 없으면 lateinit adapter가 아직
-	 * 초기화되기 전에 절을 탭했을 때 앱이 튕길 수 있다. */
+	 * 초기화되기 전에 절을 탭했을 때 앱이 튕길 수 있다.
+	 *
+	 * 절 선택 배경색이 가끔 안 바뀌던 버그: loadPageData()는 로딩을 "시작하는" 시점에 selectedVerses를
+	 * 스냅샷으로 찍어서 새 VerseAdapter의 초기 선택 상태로 넘기는데, 그 로딩(코루틴으로 DB 조회 여러
+	 * 번)이 끝나기 전에 사용자가 절을 탭하면 selectedVerses(진짜 소스)는 정확히 바뀌지만 화면엔 아직
+	 * 옛 어댑터가 붙어있어서(새 어댑터로 막 교체되는 중) 그 탭이 반영될 화면이 없다. 로딩이 끝나고
+	 * 새 어댑터가 붙을 땐 이미 지나버린 스냅샷을 쓰므로 그 사이에 탭한 절이 빠진 채로 나온다.
+	 * 그래서 새 어댑터를 붙인 직후 스냅샷이 아니라 "지금" 진짜 selectedVerses로 한 번 더 강제
+	 * 동기화한다. */
 	fun onPageDataReady(
 		bookId: Int,
 		chapter: Int,
@@ -477,6 +485,7 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		if (bookId != currentBookId || chapter != currentChapter) return
 		recyclerView = pageRecyclerView
 		adapter = pageAdapter
+		adapter.updateSelection(selectedVerses.toSet())
 	}
 
 	private fun onBiblePageSettled(position: Int) {
@@ -502,7 +511,12 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 				?.adapters
 				?.filterIsInstance<VerseAdapter>()
 				?.firstOrNull()
-				?.let { adapter = it }
+				?.let {
+					adapter = it
+					// onPageDataReady와 같은 이유로, 여기서 찾은 어댑터도 스냅샷이 아니라
+					// 지금 진짜 selectedVerses로 강제 동기화해서 선택 배경색이 어긋나지 않게 한다.
+					adapter.updateSelection(selectedVerses.toSet())
+				}
 		}
 
 		lifecycleScope.launch {
