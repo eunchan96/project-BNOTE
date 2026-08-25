@@ -38,8 +38,8 @@ import com.chan.bnote.ui.appendix.ResponsiveReadingListActivity
 import com.chan.bnote.ui.appendix.TenCommandmentsActivity
 import com.chan.bnote.ui.bible.hymn.HymnListActivity
 import com.chan.bnote.ui.bible.memo.MemoListActivity
-import com.chan.bnote.ui.bible.memo.VerseMemoEditorActivity
-import com.chan.bnote.ui.bible.memo.WordMemoEditorActivity
+import com.chan.bnote.ui.bible.memo.VerseMemoEditorBottomSheet
+import com.chan.bnote.ui.bible.memo.WordMemoEditorBottomSheet
 import com.chan.bnote.ui.bible.picker.BookChapterPickerBottomSheet
 import com.chan.bnote.ui.bible.picker.TranslationPickerBottomSheet
 import com.chan.bnote.ui.bible.scrap.ScrapActivity
@@ -100,6 +100,22 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 	private var pendingScrollChapter: Int? = null
 	private var pendingScrollVerse: Int? = null
 
+	// 메모 목록/최근 활동에서 "그 구절로 이동한 뒤 메모 편집 시트를 자동으로 띄워달라"는 요청을
+	// 잠깐 담아둔다. consumePendingScrollVerse와 같은 시점(페이지 데이터가 다 준비된 뒤)에 함께
+	// 소비한다 — 그래야 시트를 열 때 필요한 절 본문 등이 이미 로드돼 있다.
+	private var pendingOpenVerseMemo: PendingVerseMemoOpen? = null
+	private var pendingOpenWordMemo: PendingWordMemoOpen? = null
+
+	private data class PendingVerseMemoOpen(val bookId: Int, val chapter: Int, val verse: Int)
+	private data class PendingWordMemoOpen(
+		val bookId: Int,
+		val chapter: Int,
+		val verse: Int,
+		val startOffset: Int,
+		val endOffset: Int,
+		val segment: Int
+	)
+
 	private var currentBookId = 1
 	private var currentChapter = 1
 	private var primaryTranslation: Translation = Translation.NKRV
@@ -116,22 +132,6 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 
 	private val selectedVerses = mutableSetOf<Int>()
 	private lateinit var selectionToolbar: View
-
-	private val verseMemoEditorLauncher = registerForActivityResult(
-		ActivityResultContracts.StartActivityForResult()
-	) { result ->
-		if (result.resultCode == Activity.RESULT_OK) {
-			lifecycleScope.launch { refreshMemos() }
-		}
-	}
-
-	private val wordMemoEditorLauncher = registerForActivityResult(
-		ActivityResultContracts.StartActivityForResult()
-	) { result ->
-		if (result.resultCode == Activity.RESULT_OK) {
-			lifecycleScope.launch { refreshMemos() }
-		}
-	}
 
 	private var currentVerses: List<BibleVerse> = emptyList()
 	private var currentSecondaryMap: Map<Int, SecondaryVerseText>? = null
@@ -644,6 +644,43 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 			return verse
 		}
 		return null
+	}
+
+	/** 메모 목록 화면·마이페이지 최근 활동에서 "이 구절 메모 보러 가기"를 눌렀을 때 호출한다.
+	 * 실제로 그 장으로 이동해서 페이지가 다 준비된 뒤(consumePendingMemoOpen) 시트가 뜬다. */
+	fun requestOpenVerseMemoAfterNavigate(bookId: Int, chapter: Int, verse: Int) {
+		pendingOpenVerseMemo = PendingVerseMemoOpen(bookId, chapter, verse)
+	}
+
+	/** 위와 같은 이유로, 단어 메모 버전. 시작/끝 오프셋까지 알아야 어떤 단어 메모인지 특정할 수 있다. */
+	fun requestOpenWordMemoAfterNavigate(
+		bookId: Int,
+		chapter: Int,
+		verse: Int,
+		startOffset: Int,
+		endOffset: Int,
+		segment: Int
+	) {
+		pendingOpenWordMemo =
+			PendingWordMemoOpen(bookId, chapter, verse, startOffset, endOffset, segment)
+	}
+
+	/** consumePendingScrollVerse와 같은 시점에 불러준다 — 스크롤까지 끝난 뒤 시트를 띄워야
+	 * 자연스럽다. 요청이 지금 페이지(bookId, chapter) 것이 아니면 조용히 버린다(다른 데로
+	 * 이동해버린 경우 등). */
+	fun consumePendingMemoOpen(bookId: Int, chapter: Int) {
+		pendingOpenVerseMemo?.let { req ->
+			pendingOpenVerseMemo = null
+			if (req.bookId == bookId && req.chapter == chapter) {
+				showVerseMemoEditDialog(req.verse, currentVerseMemos[req.verse])
+			}
+		}
+		pendingOpenWordMemo?.let { req ->
+			pendingOpenWordMemo = null
+			if (req.bookId == bookId && req.chapter == chapter) {
+				showWordMemoEditDialog(req.verse, req.startOffset, req.endOffset, req.segment, null)
+			}
+		}
 	}
 
 	/** 상단 아이콘이든 하단 버튼이든, 읽음 표시를 누르면 결국 이걸 탄다. */
@@ -1271,14 +1308,12 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 	}
 
 	private fun showVerseMemoEditDialog(verseNum: Int, existing: VerseMemo?) {
-		verseMemoEditorLauncher.launch(
-			VerseMemoEditorActivity.createIntent(
-				context = requireContext(),
-				bookId = currentBookId,
-				chapter = currentChapter,
-				verse = verseNum
-			)
-		)
+		VerseMemoEditorBottomSheet().apply {
+			this.bookId = currentBookId
+			this.chapter = currentChapter
+			this.verse = verseNum
+			onChanged = { lifecycleScope.launch { refreshMemos() } }
+		}.show(childFragmentManager, "verse_memo_editor")
 	}
 
 	private fun showVerseMemoDialog(verseNum: Int, memo: VerseMemo) {
@@ -1292,18 +1327,16 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		segment: Int,
 		existing: WordMemo?
 	) {
-		wordMemoEditorLauncher.launch(
-			WordMemoEditorActivity.createIntent(
-				context = requireContext(),
-				translation = primaryTranslation.code,
-				bookId = currentBookId,
-				chapter = currentChapter,
-				verse = verseNum,
-				startOffset = start,
-				endOffset = end,
-				segment = segment
-			)
-		)
+		WordMemoEditorBottomSheet().apply {
+			this.translation = primaryTranslation.code
+			this.bookId = currentBookId
+			this.chapter = currentChapter
+			this.verse = verseNum
+			this.startOffset = start
+			this.endOffset = end
+			this.segment = segment
+			onChanged = { lifecycleScope.launch { refreshMemos() } }
+		}.show(childFragmentManager, "word_memo_editor")
 	}
 
 	private fun showWordMemoViewDialog(verseNum: Int, memo: WordMemo) {

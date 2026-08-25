@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?><!-- PWA(VerseMemoEditorSheet.tsx)와 같은 구조: 제목+추가+닫기 헤더, 절 본문 미리보기, 메모 박스들
+     (박스 하나에 여러 개 가능, 각 박스엔 삭제 버튼만), 맨 아래 저장 버튼 하나로 한꺼번에 저장. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@color/surface_elevated">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="16dp"
+        android:paddingEnd="8dp"
+        android:paddingTop="12dp">
+
+        <TextView
+            android:id="@+id/text_sheet_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textSize="17sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary"
+            android:maxLines="1"
+            android:ellipsize="end"
+            tools:text="창세기 1장 1절 메모" />
+
+        <ImageView
+            android:id="@+id/btn_add_memo_box"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:padding="9dp"
+            android:src="@drawable/ic_add"
+            android:contentDescription="메모 추가"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:focusable="true" />
+
+        <ImageView
+            android:id="@+id/btn_close_sheet"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:padding="10dp"
+            android:src="@drawable/ic_close"
+            app:tint="@color/text_hint"
+            android:contentDescription="닫기"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:focusable="true" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/text_verse_preview"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="12dp"
+        android:textSize="14sp"
+        android:textColor="@color/text_secondary"
+        tools:text="태초에 하나님이 천지를 창조하시니라" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/divider_light" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="420dp">
+
+        <LinearLayout
+            android:id="@+id/container_memo_boxes"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp" />
+    </ScrollView>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/divider_light" />
+
+    <TextView
+        android:id="@+id/btn_save_memo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="14dp"
+        android:text="저장"
+        android:textSize="15sp"
+        android:gravity="center"
+        android:textColor="@color/white"
+        android:background="@color/brown_primary"
+        android:clickable="true"
+        android:focusable="true" />
+
+</LinearLayout>

@@ -1,6 +1,5 @@
 package com.chan.bnote.ui.bible.memo
 
-import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.graphics.Typeface
@@ -16,7 +15,6 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
@@ -36,8 +34,6 @@ class MemoListActivity : AppCompatActivity() {
 
 	companion object {
 		private const val EXTRA_INITIAL_TAB = "extra_initial_tab"
-		private const val EXTRA_OPEN_VERSE_MEMO_ID = "extra_open_verse_memo_id"
-		private const val EXTRA_OPEN_WORD_MEMO_ID = "extra_open_word_memo_id"
 		private const val TAB_VERSE = 0
 		private const val TAB_WORD = 1
 
@@ -46,14 +42,6 @@ class MemoListActivity : AppCompatActivity() {
 
 		fun wordMemoIntent(context: Context): Intent =
 			Intent(context, MemoListActivity::class.java).putExtra(EXTRA_INITIAL_TAB, TAB_WORD)
-
-		/** 목록을 거치지 않고 특정 구절 메모의 편집 화면으로 바로 들어간다 (예: 마이페이지 최근 활동 칩). */
-		fun verseMemoEditIntent(context: Context, memoId: Long): Intent =
-			verseMemoIntent(context).putExtra(EXTRA_OPEN_VERSE_MEMO_ID, memoId)
-
-		/** 목록을 거치지 않고 특정 단어 메모의 편집 화면으로 바로 들어간다. */
-		fun wordMemoEditIntent(context: Context, memoId: Long): Intent =
-			wordMemoIntent(context).putExtra(EXTRA_OPEN_WORD_MEMO_ID, memoId)
 	}
 
 	private lateinit var tabBarContainer: LinearLayout
@@ -61,22 +49,6 @@ class MemoListActivity : AppCompatActivity() {
 	private lateinit var emptyText: TextView
 
 	private var currentTab = TAB_VERSE
-
-	private val verseMemoEditorLauncher = registerForActivityResult(
-		ActivityResultContracts.StartActivityForResult()
-	) { result ->
-		if (result.resultCode == Activity.RESULT_OK) {
-			lifecycleScope.launch { loadCurrentTab() }
-		}
-	}
-
-	private val wordMemoEditorLauncher = registerForActivityResult(
-		ActivityResultContracts.StartActivityForResult()
-	) { result ->
-		if (result.resultCode == Activity.RESULT_OK) {
-			lifecycleScope.launch { loadCurrentTab() }
-		}
-	}
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
@@ -99,23 +71,6 @@ class MemoListActivity : AppCompatActivity() {
 		currentTab = intent.getIntExtra(EXTRA_INITIAL_TAB, TAB_VERSE)
 		renderTabs()
 		loadCurrentTab()
-
-		openRequestedMemoDirectly()
-	}
-
-	private fun openRequestedMemoDirectly() {
-		val verseMemoId = intent.getLongExtra(EXTRA_OPEN_VERSE_MEMO_ID, -1L)
-		val wordMemoId = intent.getLongExtra(EXTRA_OPEN_WORD_MEMO_ID, -1L)
-		if (verseMemoId == -1L && wordMemoId == -1L) return
-
-		lifecycleScope.launch {
-			val db = BibleDatabase.getInstance(applicationContext)
-			if (verseMemoId != -1L) {
-				db.verseMemoDao().getById(verseMemoId)?.let { openVerseMemoEditor(it) }
-			} else if (wordMemoId != -1L) {
-				db.wordMemoDao().getById(wordMemoId)?.let { openWordMemoEditor(it, db) }
-			}
-		}
 	}
 
 	private fun renderTabs() {
@@ -208,28 +163,12 @@ class MemoListActivity : AppCompatActivity() {
 	}
 
 	private fun openVerseMemoEditor(memo: VerseMemo) {
-		verseMemoEditorLauncher.launch(
-			VerseMemoEditorActivity.createIntent(
-				context = this@MemoListActivity,
-				bookId = memo.bookId,
-				chapter = memo.chapter,
-				verse = memo.verse
-			)
-		)
+		navigateToBibleAndOpenVerseMemo(memo.bookId, memo.chapter, memo.verse)
 	}
 
 	private fun openWordMemoEditor(memo: WordMemo, db: BibleDatabase) {
-		wordMemoEditorLauncher.launch(
-			WordMemoEditorActivity.createIntent(
-				context = this@MemoListActivity,
-				translation = memo.translation,
-				bookId = memo.bookId,
-				chapter = memo.chapter,
-				verse = memo.verse,
-				startOffset = memo.startOffset,
-				endOffset = memo.endOffset,
-				segment = memo.segment
-			)
+		navigateToBibleAndOpenWordMemo(
+			memo.bookId, memo.chapter, memo.verse, memo.startOffset, memo.endOffset, memo.segment
 		)
 	}
 
@@ -336,6 +275,40 @@ class MemoListActivity : AppCompatActivity() {
 			putExtra(MainActivity.EXTRA_NAVIGATE_BOOK_ID, bookId)
 			putExtra(MainActivity.EXTRA_NAVIGATE_CHAPTER, chapter)
 			putExtra(MainActivity.EXTRA_NAVIGATE_VERSE, verse)
+			flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+		}
+		startActivity(intent)
+	}
+
+	/** 행 전체를 눌렀을 때: 그 구절로 이동하고, 도착하면 구절 메모 편집 시트를 자동으로 띄운다. */
+	private fun navigateToBibleAndOpenVerseMemo(bookId: Int, chapter: Int, verse: Int) {
+		val intent = Intent(this, MainActivity::class.java).apply {
+			putExtra(MainActivity.EXTRA_NAVIGATE_BOOK_ID, bookId)
+			putExtra(MainActivity.EXTRA_NAVIGATE_CHAPTER, chapter)
+			putExtra(MainActivity.EXTRA_NAVIGATE_VERSE, verse)
+			putExtra(MainActivity.EXTRA_NAVIGATE_OPEN_VERSE_MEMO, true)
+			flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+		}
+		startActivity(intent)
+	}
+
+	/** 위와 같은 이유로, 단어 메모 버전. */
+	private fun navigateToBibleAndOpenWordMemo(
+		bookId: Int,
+		chapter: Int,
+		verse: Int,
+		startOffset: Int,
+		endOffset: Int,
+		segment: Int
+	) {
+		val intent = Intent(this, MainActivity::class.java).apply {
+			putExtra(MainActivity.EXTRA_NAVIGATE_BOOK_ID, bookId)
+			putExtra(MainActivity.EXTRA_NAVIGATE_CHAPTER, chapter)
+			putExtra(MainActivity.EXTRA_NAVIGATE_VERSE, verse)
+			putExtra(MainActivity.EXTRA_NAVIGATE_OPEN_WORD_MEMO, true)
+			putExtra(MainActivity.EXTRA_NAVIGATE_WORD_START, startOffset)
+			putExtra(MainActivity.EXTRA_NAVIGATE_WORD_END, endOffset)
+			putExtra(MainActivity.EXTRA_NAVIGATE_WORD_SEGMENT, segment)
 			flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
 		}
 		startActivity(intent)

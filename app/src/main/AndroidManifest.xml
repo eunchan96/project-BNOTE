@@ -61,14 +61,6 @@
             android:windowSoftInputMode="adjustResize"
             android:exported="false" />
         <activity
-            android:name=".ui.bible.memo.WordMemoEditorActivity"
-            android:exported="false"
-            android:windowSoftInputMode="adjustResize" />
-        <activity
-            android:name=".ui.bible.memo.VerseMemoEditorActivity"
-            android:exported="false"
-            android:windowSoftInputMode="adjustResize" />
-        <activity
             android:name=".ui.mypage.settings.SettingsActivity"
             android:exported="false" />
         <activity
