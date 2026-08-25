@@ -501,6 +501,13 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		}
 		AppSettings.setLastRead(requireContext(), bookId, chapter)
 
+		// ViewPager2가 인접 페이지를 미리 만들어둔(prefetch) 경우 BiblePageAdapter.bind()가 다시
+		// 안 불릴 수 있어서, 그 안에서만 소비하던 "이동 후 메모 시트 자동 열기" 요청이 놓치는 문제가
+		// 있었다(다른 장으로 이동하면 스크롤만 되고 시트가 안 뜨다가, 나중에 그 페이지가 결국
+		// bind()될 때—예: 다른 메모 칩을 눌렀을 때—뒤늦게 그 옛날 요청이 실행돼서 엉뚱한 메모가
+		// 열리는 것처럼 보였다). onPageSelected로 항상 확실히 불리는 여기서도 같이 소비한다.
+		consumePendingMemoOpen(bookId, chapter)
+
 		// ViewPager2 안쪽 RecyclerView에서 지금 페이지의 뷰홀더를 찾아 recyclerView/adapter를 갱신한다.
 		val innerRecyclerView = viewPager.getChildAt(0) as? RecyclerView
 		val holder =

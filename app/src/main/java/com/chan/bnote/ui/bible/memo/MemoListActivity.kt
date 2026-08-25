@@ -106,14 +106,7 @@ class MemoListActivity : AppCompatActivity() {
 					}
 					addRow(
 						label = buildStyledLabel("${memo.chapter}:${memo.verse}", memo.text),
-						onClickEdit = { openVerseMemoEditor(memo) },
-						onClickGoToVerse = {
-							navigateToBible(
-								memo.bookId,
-								memo.chapter,
-								memo.verse
-							)
-						}
+						onClickEdit = { openVerseMemoEditor(memo) }
 					)
 				}
 			}
@@ -134,14 +127,7 @@ class MemoListActivity : AppCompatActivity() {
 					// 실제로는 비동기 조회가 필요해서, 우선 뼈대만 넣고 뒤에서 단어를 채워 넣는다.
 					val row = addRow(
 						label = buildStyledLabel("${memo.chapter}:${memo.verse}", memo.text),
-						onClickEdit = { openWordMemoEditor(memo, db) },
-						onClickGoToVerse = {
-							navigateToBible(
-								memo.bookId,
-								memo.chapter,
-								memo.verse
-							)
-						}
+						onClickEdit = { openWordMemoEditor(memo, db) }
 					)
 					lifecycleScope.launch {
 						val word = fetchWordMemoWord(db, memo)
@@ -222,12 +208,9 @@ class MemoListActivity : AppCompatActivity() {
 		container.addView(header)
 	}
 
-	/** 행 전체를 누르면 메모 수정, 오른쪽의 작은 버튼을 누르면 해당 구절로 이동. 콘텐츠 TextView를 반환해서 나중에 텍스트를 바꿔 넣을 수 있게 한다. */
-	private fun addRow(
-		label: CharSequence,
-		onClickEdit: () -> Unit,
-		onClickGoToVerse: () -> Unit
-	): TextView {
+	/** 행 전체를 누르면 그 메모가 있는 구절로 이동해서 편집 시트가 자동으로 열린다. 콘텐츠
+	 * TextView를 반환해서 나중에 텍스트를 바꿔 넣을 수 있게 한다. */
+	private fun addRow(label: CharSequence, onClickEdit: () -> Unit): TextView {
 		val row = LinearLayout(this).apply {
 			orientation = LinearLayout.HORIZONTAL
 			gravity = Gravity.CENTER_VERTICAL
@@ -245,39 +228,13 @@ class MemoListActivity : AppCompatActivity() {
 			setTextColor(ContextCompat.getColor(this@MemoListActivity, R.color.text_primary))
 			maxLines = 2
 			ellipsize = TextUtils.TruncateAt.END
-			setPadding(dp(16), dp(10), dp(8), dp(10))
+			setPadding(dp(16), dp(10), dp(16), dp(10))
 			layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
 		}
 
-		val goToVerseBtn = ImageView(this).apply {
-			setImageResource(R.drawable.ic_book_open)
-			imageTintList =
-				ContextCompat.getColorStateList(this@MemoListActivity, R.color.icon_action_tint)
-			contentDescription = "구절로 이동"
-			background = ContextCompat.getDrawable(
-				this@MemoListActivity, android.R.drawable.list_selector_background
-			)
-			setPadding(dp(10), dp(10), dp(10), dp(10))
-			isClickable = true
-			isFocusable = true
-			layoutParams = LinearLayout.LayoutParams(dp(40), dp(40)).apply { marginEnd = dp(8) }
-			setOnClickListener { onClickGoToVerse() }
-		}
-
 		row.addView(contentView)
-		row.addView(goToVerseBtn)
 		container.addView(row)
 		return contentView
-	}
-
-	private fun navigateToBible(bookId: Int, chapter: Int, verse: Int) {
-		val intent = Intent(this, MainActivity::class.java).apply {
-			putExtra(MainActivity.EXTRA_NAVIGATE_BOOK_ID, bookId)
-			putExtra(MainActivity.EXTRA_NAVIGATE_CHAPTER, chapter)
-			putExtra(MainActivity.EXTRA_NAVIGATE_VERSE, verse)
-			flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-		}
-		startActivity(intent)
 	}
 
 	/** 행 전체를 눌렀을 때: 그 구절로 이동하고, 도착하면 구절 메모 편집 시트를 자동으로 띄운다. */
