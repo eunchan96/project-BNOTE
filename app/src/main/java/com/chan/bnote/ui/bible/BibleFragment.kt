@@ -813,6 +813,9 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 				val index = currentVerses.indexOfFirst { it.verse == verseNum }
 				if (index >= 0 && ::recyclerView.isInitialized) recyclerView.scrollToPosition(index)
 			}
+			// 이미 보고 있는 장이면 페이지가 다시 만들어지지 않아서(BiblePageAdapter.bind()가 다시 안 불림)
+			// consumePendingMemoOpen이 호출될 기회가 없었다 — 여기서 바로 소비해준다.
+			consumePendingMemoOpen(bookId, chapter)
 			return
 		}
 
@@ -914,8 +917,33 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		} else {
 			selectedVerses.add(verseNum)
 		}
-		if (::adapter.isInitialized) adapter.updateSelection(selectedVerses.toSet())
+		resolveCurrentVerseAdapter()?.updateSelection(selectedVerses.toSet())
 		updateToolbarVisibility()
+	}
+
+	/** this.adapter 필드를 그냥 믿는 대신, 지금 실제로 화면에 붙어 있는 페이지의 VerseAdapter를
+	 * ViewPager2에서 직접 다시 찾아온다(onBiblePageSettled와 같은 방식). 캐시된 필드가 어떤
+	 * 이유로든 최신 상태와 어긋나 있어도, 탭할 때마다 이렇게 다시 확인하면 항상 지금 보이는
+	 * 화면에 정확히 반영된다 — 선택 배경색이 가끔 안 바뀌던 문제의 근본 대책. */
+	private fun resolveCurrentVerseAdapter(): VerseAdapter? {
+		if (!::viewPager.isInitialized) return if (::adapter.isInitialized) adapter else null
+
+		val position = viewPager.currentItem
+		val innerRecyclerView = viewPager.getChildAt(0) as? RecyclerView
+		val holder =
+			innerRecyclerView?.findViewHolderForAdapterPosition(position) as? BiblePageAdapter.PageViewHolder
+		val rv = holder?.currentRecyclerView()
+		val live = (rv?.adapter as? androidx.recyclerview.widget.ConcatAdapter)
+			?.adapters
+			?.filterIsInstance<VerseAdapter>()
+			?.firstOrNull()
+
+		if (live != null && rv != null) {
+			recyclerView = rv
+			adapter = live
+			return live
+		}
+		return if (::adapter.isInitialized) adapter else null
 	}
 
 	private fun clearSelection() {

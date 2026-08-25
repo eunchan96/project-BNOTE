@@ -1,5 +1,6 @@
-<?xml version="1.0" encoding="utf-8"?><!-- PWA(VerseMemoEditorSheet.tsx)와 같은 구조: 제목+추가+닫기 헤더, 절 본문 미리보기, 메모 박스들
-     (박스 하나에 여러 개 가능, 각 박스엔 삭제 버튼만), 맨 아래 저장 버튼 하나로 한꺼번에 저장. -->
+<?xml version="1.0" encoding="utf-8"?><!-- PWA(VerseMemoEditorSheet.tsx)와 같은 구조: 제목+추가 헤더, 절 본문 미리보기, 메모 박스들
+     (박스 하나에 여러 개 가능, 각 박스엔 삭제 버튼만), 맨 아래 저장 버튼 하나로 한꺼번에 저장.
+     닫기는 X 버튼 없이 바깥 스크림 탭 / 시스템 뒤로가기로만 한다. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -39,18 +40,6 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:clickable="true"
             android:focusable="true" />
-
-        <ImageView
-            android:id="@+id/btn_close_sheet"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:padding="10dp"
-            android:src="@drawable/ic_close"
-            app:tint="@color/text_hint"
-            android:contentDescription="닫기"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:clickable="true"
-            android:focusable="true" />
     </LinearLayout>
 
     <TextView
@@ -69,9 +58,12 @@
         android:layout_height="1dp"
         android:background="@color/divider_light" />
 
-    <ScrollView
+    <!-- 메모 박스가 몇 개 없어도 420dp를 다 채우던 문제 — wrap_content로 바꿔서 내용만큼만
+         차지하게 하고, 박스가 많아져서 화면을 넘어갈 때만 스크롤되게 maxHeight를 걸어둔다. -->
+    <com.chan.bnote.ui.common.MaxHeightScrollView
         android:layout_width="match_parent"
-        android:layout_height="420dp">
+        android:layout_height="wrap_content"
+        app:maxHeight="420dp">
 
         <LinearLayout
             android:id="@+id/container_memo_boxes"
@@ -79,17 +71,16 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:padding="16dp" />
-    </ScrollView>
-
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="@color/divider_light" />
+    </com.chan.bnote.ui.common.MaxHeightScrollView>
 
     <TextView
         android:id="@+id/btn_save_memo"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="16dp"
         android:padding="14dp"
         android:text="저장"
         android:textSize="15sp"

@@ -60,7 +60,6 @@ class WordMemoEditorBottomSheet : FixedBottomSheetDialogFragment() {
 
 		container = view.findViewById(R.id.container_memo_boxes)
 		view.findViewById<ImageView>(R.id.btn_add_memo_box).setOnClickListener { addBox(null) }
-		view.findViewById<ImageView>(R.id.btn_close_sheet).setOnClickListener { dismiss() }
 		view.findViewById<TextView>(R.id.btn_save_memo).setOnClickListener { saveAll() }
 
 		loadExisting(view)
