@@ -973,7 +973,7 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 
 	private fun clearSelection() {
 		selectedVerses.clear()
-		if (::adapter.isInitialized) adapter.updateSelection(emptySet())
+		resolveCurrentVerseAdapter()?.updateSelection(emptySet())
 		selectionToolbar.visibility = View.GONE
 		highlightColorToolbar.visibility = View.GONE
 		pendingHighlightVerses = null
@@ -1351,7 +1351,7 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 			.getForChapter(primaryTranslation.code, currentBookId, currentChapter)
 			.groupBy { it.verse }
 		currentHighlights = refreshed
-		if (::adapter.isInitialized) adapter.updateHighlights(refreshed)
+		resolveCurrentVerseAdapter()?.updateHighlights(refreshed)
 	}
 
 	private fun onMemoButtonClicked() {
@@ -1403,6 +1403,6 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		currentWordMemos = db.wordMemoDao()
 			.getForChapter(primaryTranslation.code, currentBookId, currentChapter)
 			.groupBy { it.verse }
-		if (::adapter.isInitialized) adapter.updateMemos(currentVerseMemos, currentWordMemos)
+		resolveCurrentVerseAdapter()?.updateMemos(currentVerseMemos, currentWordMemos)
 	}
 }
