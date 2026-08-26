@@ -24,7 +24,7 @@ interface WordMemoDao {
 	@Query("SELECT * FROM word_memos WHERE translation = :translation AND bookId = :bookId AND chapter = :chapter")
 	suspend fun getForChapter(translation: String, bookId: Int, chapter: Int): List<WordMemo>
 
-	@Query("SELECT * FROM word_memos ORDER BY bookId ASC, chapter ASC, verse ASC")
+	@Query("SELECT * FROM word_memos ORDER BY bookId ASC, chapter ASC, verse ASC, startOffset ASC")
 	suspend fun getAll(): List<WordMemo>
 
 	@Query("SELECT * FROM word_memos ORDER BY updatedAt DESC LIMIT :limit")
@@ -51,6 +51,22 @@ interface WordMemoDao {
 		verse: Int,
 		startOffset: Int,
 		endOffset: Int,
+		segment: Int
+	): List<WordMemo>
+
+	@Query(
+		"""
+    SELECT * FROM word_memos
+    WHERE translation = :translation AND bookId = :bookId AND chapter = :chapter AND verse = :verse
+      AND segment = :segment
+    ORDER BY startOffset ASC, endOffset ASC
+    """
+	)
+	suspend fun getForVerseSegment(
+		translation: String,
+		bookId: Int,
+		chapter: Int,
+		verse: Int,
 		segment: Int
 	): List<WordMemo>
 }

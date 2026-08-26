@@ -77,6 +77,7 @@ class BiblePageAdapter(private val fragment: BibleFragment) :
 						0
 					)
 				}
+				fragment.consumePendingMemoOpen(bookId, chapter)
 			}
 		}
 

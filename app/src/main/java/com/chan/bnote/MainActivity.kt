@@ -26,6 +26,15 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 		const val EXTRA_NAVIGATE_CHAPTER = "extra_navigate_chapter"
 		const val EXTRA_NAVIGATE_VERSE = "extra_navigate_verse"
 
+		// 메모 목록 화면·마이페이지 최근 활동에서 "이 메모 보러 가기"를 눌렀을 때, 그 구절로
+		// 이동한 다음 자동으로 메모 편집 시트를 띄우기 위한 요청. MemoListActivity는 별도
+		// Activity라 BibleNavigationHost를 바로 못 쓰므로 Intent extra로 넘긴다.
+		const val EXTRA_NAVIGATE_OPEN_VERSE_MEMO = "extra_navigate_open_verse_memo"
+		const val EXTRA_NAVIGATE_OPEN_WORD_MEMO = "extra_navigate_open_word_memo"
+		const val EXTRA_NAVIGATE_WORD_START = "extra_navigate_word_start"
+		const val EXTRA_NAVIGATE_WORD_END = "extra_navigate_word_end"
+		const val EXTRA_NAVIGATE_WORD_SEGMENT = "extra_navigate_word_segment"
+
 		private const val TAG_BIBLE = "tab_bible"
 		private const val TAG_SERMON = "tab_sermon"
 		private const val TAG_MYPAGE = "tab_mypage"
@@ -105,7 +114,9 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 				// 바로 이어서 navigateToBibleChapter()를 부르면, 앞의 트랜잭션이 아직 반영되기 전이라
 				// isAdded가 false로 나와서 성경 프래그먼트가 중복으로 만들어지며 튕기는 문제가 있었다.
 				// 그래서 이 경우엔 switchToBible()을 건너뛰고 바로 이동한다(그 안에서 알아서 만든다).
-				navigateToBibleChapter(navBookId, navChapter, navVerse)
+				navigateToBibleChapterInternal(navBookId, navChapter, navVerse) { fragment ->
+					requestPendingMemoOpenIfAny(fragment, intent, navBookId, navChapter, navVerse)
+				}
 			} else {
 				// 완전히 새로 앱을 시작할 때는 마지막에 보던 탭이 무엇이었든 항상 성경 탭으로 시작한다.
 				// (성경 탭 자체는 BibleFragment가 마지막으로 읽던 책/장을 스스로 복원한다.)
@@ -136,7 +147,39 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 		val chapter = intent.getIntExtra(EXTRA_NAVIGATE_CHAPTER, -1)
 		if (bookId != -1 && chapter != -1) {
 			val verse = intent.getIntExtra(EXTRA_NAVIGATE_VERSE, -1).takeIf { it != -1 }
-			navigateToBibleChapter(bookId, chapter, verse)
+			navigateToBibleChapterInternal(bookId, chapter, verse) { fragment ->
+				requestPendingMemoOpenIfAny(fragment, intent, bookId, chapter, verse)
+			}
+		}
+	}
+
+	/** EXTRA_NAVIGATE_OPEN_VERSE_MEMO/EXTRA_NAVIGATE_OPEN_WORD_MEMO가 실려 있으면(메모 목록 화면·
+	 * 마이페이지 최근 활동에서 넘어온 경우), 넘겨받은 프래그먼트에 "이동 끝나면 시트 열어줘" 요청을
+	 * 걸어둔다. verse가 없으면(이론상 항상 있어야 하지만 방어적으로) 아무것도 하지 않는다.
+	 * 반드시 실제 페이지 이동이 트리거되기 전에(navigateToBibleChapterInternal의 beforeNavigate로)
+	 * 호출해야 한다 — 아래 참고. */
+	private fun requestPendingMemoOpenIfAny(
+		fragment: BibleFragment,
+		intent: android.content.Intent,
+		bookId: Int,
+		chapter: Int,
+		verse: Int?
+	) {
+		if (verse == null) return
+		if (intent.getBooleanExtra(EXTRA_NAVIGATE_OPEN_VERSE_MEMO, false)) {
+			fragment.requestOpenVerseMemoAfterNavigate(bookId, chapter, verse)
+		} else if (intent.getBooleanExtra(EXTRA_NAVIGATE_OPEN_WORD_MEMO, false)) {
+			val start = intent.getIntExtra(EXTRA_NAVIGATE_WORD_START, 0)
+			val end = intent.getIntExtra(EXTRA_NAVIGATE_WORD_END, 0)
+			val segment = intent.getIntExtra(EXTRA_NAVIGATE_WORD_SEGMENT, 0)
+			fragment.requestOpenWordMemoAfterNavigate(
+				bookId,
+				chapter,
+				verse,
+				start,
+				end,
+				segment
+			)
 		}
 	}
 
@@ -319,12 +362,55 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 		if (show) android.view.View.VISIBLE else android.view.View.GONE
 
 	override fun navigateToBibleChapter(bookId: Int, chapter: Int, verse: Int?) {
+		navigateToBibleChapterInternal(bookId, chapter, verse)
+	}
+
+	override fun navigateToBibleChapterAndOpenVerseMemo(bookId: Int, chapter: Int, verse: Int) {
+		navigateToBibleChapterInternal(bookId, chapter, verse) { fragment ->
+			fragment.requestOpenVerseMemoAfterNavigate(bookId, chapter, verse)
+		}
+	}
+
+	override fun navigateToBibleChapterAndOpenWordMemo(
+		bookId: Int,
+		chapter: Int,
+		verse: Int,
+		startOffset: Int,
+		endOffset: Int,
+		segment: Int
+	) {
+		navigateToBibleChapterInternal(bookId, chapter, verse) { fragment ->
+			fragment.requestOpenWordMemoAfterNavigate(
+				bookId,
+				chapter,
+				verse,
+				startOffset,
+				endOffset,
+				segment
+			)
+		}
+	}
+
+	/** 실제로 페이지를 옮기는 부분(existing.navigateTo(...)의 setCurrentItem)을 부르기 "전에"
+	 * beforeNavigate를 먼저 실행해준다. 순서가 바뀌면(이동시킨 다음에 요청을 걸면) setCurrentItem이
+	 * onPageSelected를 그 자리에서 바로 실행시켜 버리는 경우가 있어서, 그때는 아직 요청이 걸리기
+	 * 전이라 아무것도 못 걸러내고 페이지 정착 콜백이 그냥 지나가버린다 — "이동만 되고 시트는 안
+	 * 뜨는" 문제의 원인이었다. 새로 만드는 프래그먼트의 경우, 생성 직후(아직 화면엔 안 붙었지만
+	 * 인스턴스는 이미 있는 시점)에 걸어두면 뷰가 나중에 준비된 뒤 자연스럽게 소비된다. */
+	private fun navigateToBibleChapterInternal(
+		bookId: Int,
+		chapter: Int,
+		verse: Int?,
+		beforeNavigate: ((BibleFragment) -> Unit)? = null
+	) {
 		val existing = bibleFragment
 		if (existing != null && existing.isAdded) {
+			beforeNavigate?.invoke(existing)
 			switchTo(existing, TAG_BIBLE, navBible)
 			existing.navigateTo(bookId, chapter, verse)
 		} else {
 			val fragment = BibleFragment.newInstance(bookId, chapter, verse)
+			beforeNavigate?.invoke(fragment)
 			bibleFragment = fragment
 			switchTo(fragment, TAG_BIBLE, navBible)
 		}

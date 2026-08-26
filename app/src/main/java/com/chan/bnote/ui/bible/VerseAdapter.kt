@@ -443,14 +443,12 @@ class VerseAdapter(
 					}
 
 					ID_MEMO -> {
-						val overlapping = wordMemosOfSegment.firstOrNull { m ->
-							!(end <= m.startOffset || start >= m.endOffset)
-						}
-						if (overlapping != null) {
-							onWordMemoView(verseItem.verse, overlapping)
-						} else {
-							onWordMemoCreate(verseItem.verse, start, end, segment)
-						}
+						// 겹치는 기존 메모가 있어도 여기서 미리 그 메모로 보내지 않는다. 사용자가
+						// 드래그한 범위 그대로 onWordMemoCreate에 넘기면, 시트 안에서 "정확히 같은
+						// 범위(primary)"와 "위치는 다르지만 겹치는 메모(겹치는 메모 그룹)"를 알아서
+						// 구분해서 보여준다 — 여기서 미리 하나로 리다이렉트하면 그 판정 로직이
+						// 무력화돼서 "겹치는 메모"가 아예 안 뜨게 된다.
+						onWordMemoCreate(verseItem.verse, start, end, segment)
 						mode?.finish()
 						return true
 					}
@@ -587,14 +585,8 @@ class VerseAdapter(
 					}
 
 					ID_MEMO -> {
-						val overlapping = wordMemosOfBothSegments.firstOrNull { m ->
-							m.segment == segment && !(end <= m.startOffset || start >= m.endOffset)
-						}
-						if (overlapping != null) {
-							onWordMemoView(verseItem.verse, overlapping)
-						} else {
-							onWordMemoCreate(verseItem.verse, start, end, segment)
-						}
+						// 위와 같은 이유로, 여기서도 미리 리다이렉트하지 않는다.
+						onWordMemoCreate(verseItem.verse, start, end, segment)
 						mode?.finish()
 						return true
 					}

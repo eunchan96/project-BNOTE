@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="280dp"
     android:layout_height="match_parent">
 
@@ -45,16 +46,31 @@
                     android:clickable="true"
                     android:focusable="true" />
 
-                <TextView
+                <LinearLayout
                     android:id="@+id/menu_appendix"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
                     android:padding="16dp"
-                    android:text="부록  ▾"
-                    android:textSize="16sp"
                     android:background="?attr/selectableItemBackground"
                     android:clickable="true"
-                    android:focusable="true" />
+                    android:focusable="true">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="부록"
+                        android:textSize="16sp" />
+
+                    <ImageView
+                        android:id="@+id/icon_appendix_toggle"
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_marginStart="4dp"
+                        android:src="@drawable/ic_chevron_down"
+                        app:tint="@color/text_hint" />
+                </LinearLayout>
 
                 <LinearLayout
                     android:id="@+id/container_appendix_list"

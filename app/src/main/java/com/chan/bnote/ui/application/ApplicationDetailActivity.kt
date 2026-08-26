@@ -41,6 +41,7 @@ class ApplicationDetailActivity : AppCompatActivity() {
 
 	private var applicationId: Long = -1L
 	private var changed = false
+	private var currentApplication: com.chan.bnote.data.application.Application? = null
 
 	private val editLauncher = registerForActivityResult(
 		ActivityResultContracts.StartActivityForResult()
@@ -68,6 +69,7 @@ class ApplicationDetailActivity : AppCompatActivity() {
 			setResult(if (changed) Activity.RESULT_OK else Activity.RESULT_CANCELED)
 			finish()
 		}
+		findViewById<ImageView>(R.id.btn_share_application).setOnClickListener { shareApplication() }
 		findViewById<ImageView>(R.id.btn_edit_application).setOnClickListener {
 			editLauncher.launch(AddApplicationActivity.editIntent(this, applicationId))
 		}
@@ -90,6 +92,7 @@ class ApplicationDetailActivity : AppCompatActivity() {
 				finish()
 				return@launch
 			}
+			currentApplication = application
 
 			val category = application.categoryId?.let { db.applicationCategoryDao().getById(it) }
 			val links = db.applicationSermonLinkDao().getByApplication(application.id)
@@ -240,6 +243,30 @@ class ApplicationDetailActivity : AppCompatActivity() {
 				}
 			}
 		}
+	}
+
+	/** 묵상하기 / 기도하기 / 순종하기 메모를 정해진 형식으로 묶어서 클립보드에 복사한다.
+	 * 리치텍스트(굵게 등) 서식이 적용된 메모는 HTML로 저장되므로, RichTextUtils로 화면에 보이는
+	 * 텍스트만 뽑아서(태그 없이) 복사한다. */
+	private fun shareApplication() {
+		val application = currentApplication ?: return
+
+		val meditation =
+			com.chan.bnote.ui.sermon.addsermon.RichTextUtils.toEditable(application.meditationMemo)
+				.toString()
+		val prayer =
+			com.chan.bnote.ui.sermon.addsermon.RichTextUtils.toEditable(application.prayerMemo)
+				.toString()
+		val obedience =
+			com.chan.bnote.ui.sermon.addsermon.RichTextUtils.toEditable(application.obedienceMemo)
+				.toString()
+
+		val text = "$meditation\n\n$prayer\n\n※ $obedience"
+
+		val clipboard =
+			getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+		clipboard.setPrimaryClip(android.content.ClipData.newPlainText("application", text))
+		android.widget.Toast.makeText(this, "복사했어요", android.widget.Toast.LENGTH_SHORT).show()
 	}
 
 	private fun confirmDelete() {

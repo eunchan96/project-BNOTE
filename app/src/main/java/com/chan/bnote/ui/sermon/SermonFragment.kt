@@ -41,8 +41,17 @@ class SermonFragment : Fragment(), TopBarActionHandler {
 		val pagerAdapter = SermonSubPagerAdapter(this)
 		viewPager.adapter = pagerAdapter
 
+		// 예전엔 어댑터가 자체적으로 만든 프래그먼트를 Map에 담아뒀다가 그걸로 FAB 클릭을
+		// 처리했는데, ViewPager2가 화면 밖 페이지를 파괴했다가 다시 만드는 시점과 그 Map이
+		// 어긋나면(예: 스와이프를 빠르게 여러 번 하거나 스크롤이 많이 밀렸다 온 경우) 이미
+		// 뷰가 없어진 옛 프래그먼트 참조가 남아있어서 버튼을 눌러도 아무 반응이 없는 문제가
+		// 있었다. FragmentManager에 실제로 붙어 있는(지금 화면에 보이는) 프래그먼트를 태그로
+		// 직접 찾으면 이런 어긋남이 생기지 않는다. FragmentStateAdapter는 각 페이지를
+		// "f" + position 태그로 등록해서 관리한다.
 		view.findViewById<TextView>(R.id.fab_add_sermon_tab).setOnClickListener {
-			(pagerAdapter.fragmentAt(viewPager.currentItem) as? FabAddHandler)?.onFabAddClicked()
+			val currentFragment =
+				childFragmentManager.findFragmentByTag("f${viewPager.currentItem}")
+			(currentFragment as? FabAddHandler)?.onFabAddClicked()
 		}
 
 		subtabCalendar.setOnClickListener { viewPager.setCurrentItem(0, true) }

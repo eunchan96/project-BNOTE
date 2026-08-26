@@ -38,8 +38,8 @@ import com.chan.bnote.ui.appendix.ResponsiveReadingListActivity
 import com.chan.bnote.ui.appendix.TenCommandmentsActivity
 import com.chan.bnote.ui.bible.hymn.HymnListActivity
 import com.chan.bnote.ui.bible.memo.MemoListActivity
-import com.chan.bnote.ui.bible.memo.VerseMemoEditorActivity
-import com.chan.bnote.ui.bible.memo.WordMemoEditorActivity
+import com.chan.bnote.ui.bible.memo.VerseMemoEditorBottomSheet
+import com.chan.bnote.ui.bible.memo.WordMemoEditorBottomSheet
 import com.chan.bnote.ui.bible.picker.BookChapterPickerBottomSheet
 import com.chan.bnote.ui.bible.picker.TranslationPickerBottomSheet
 import com.chan.bnote.ui.bible.scrap.ScrapActivity
@@ -100,6 +100,22 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 	private var pendingScrollChapter: Int? = null
 	private var pendingScrollVerse: Int? = null
 
+	// 메모 목록/최근 활동에서 "그 구절로 이동한 뒤 메모 편집 시트를 자동으로 띄워달라"는 요청을
+	// 잠깐 담아둔다. consumePendingScrollVerse와 같은 시점(페이지 데이터가 다 준비된 뒤)에 함께
+	// 소비한다 — 그래야 시트를 열 때 필요한 절 본문 등이 이미 로드돼 있다.
+	private var pendingOpenVerseMemo: PendingVerseMemoOpen? = null
+	private var pendingOpenWordMemo: PendingWordMemoOpen? = null
+
+	private data class PendingVerseMemoOpen(val bookId: Int, val chapter: Int, val verse: Int)
+	private data class PendingWordMemoOpen(
+		val bookId: Int,
+		val chapter: Int,
+		val verse: Int,
+		val startOffset: Int,
+		val endOffset: Int,
+		val segment: Int
+	)
+
 	private var currentBookId = 1
 	private var currentChapter = 1
 	private var primaryTranslation: Translation = Translation.NKRV
@@ -116,22 +132,6 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 
 	private val selectedVerses = mutableSetOf<Int>()
 	private lateinit var selectionToolbar: View
-
-	private val verseMemoEditorLauncher = registerForActivityResult(
-		ActivityResultContracts.StartActivityForResult()
-	) { result ->
-		if (result.resultCode == Activity.RESULT_OK) {
-			lifecycleScope.launch { refreshMemos() }
-		}
-	}
-
-	private val wordMemoEditorLauncher = registerForActivityResult(
-		ActivityResultContracts.StartActivityForResult()
-	) { result ->
-		if (result.resultCode == Activity.RESULT_OK) {
-			lifecycleScope.launch { refreshMemos() }
-		}
-	}
 
 	private var currentVerses: List<BibleVerse> = emptyList()
 	private var currentSecondaryMap: Map<Int, SecondaryVerseText>? = null
@@ -467,7 +467,15 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 	/** 페이지 하나의 데이터/어댑터가 다 준비됐을 때 BiblePageAdapter가 불러준다. onBiblePageSettled의
 	 * 뷰홀더 조회가 타이밍상 아직 준비 안 된 페이지를 못 찾는 경우가 있어서, 그 보완으로 여기서도
 	 * "지금 보이는 장이 맞으면" recyclerView/adapter를 채워준다. 이게 없으면 lateinit adapter가 아직
-	 * 초기화되기 전에 절을 탭했을 때 앱이 튕길 수 있다. */
+	 * 초기화되기 전에 절을 탭했을 때 앱이 튕길 수 있다.
+	 *
+	 * 절 선택 배경색이 가끔 안 바뀌던 버그: loadPageData()는 로딩을 "시작하는" 시점에 selectedVerses를
+	 * 스냅샷으로 찍어서 새 VerseAdapter의 초기 선택 상태로 넘기는데, 그 로딩(코루틴으로 DB 조회 여러
+	 * 번)이 끝나기 전에 사용자가 절을 탭하면 selectedVerses(진짜 소스)는 정확히 바뀌지만 화면엔 아직
+	 * 옛 어댑터가 붙어있어서(새 어댑터로 막 교체되는 중) 그 탭이 반영될 화면이 없다. 로딩이 끝나고
+	 * 새 어댑터가 붙을 땐 이미 지나버린 스냅샷을 쓰므로 그 사이에 탭한 절이 빠진 채로 나온다.
+	 * 그래서 새 어댑터를 붙인 직후 스냅샷이 아니라 "지금" 진짜 selectedVerses로 한 번 더 강제
+	 * 동기화한다. */
 	fun onPageDataReady(
 		bookId: Int,
 		chapter: Int,
@@ -477,6 +485,7 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		if (bookId != currentBookId || chapter != currentChapter) return
 		recyclerView = pageRecyclerView
 		adapter = pageAdapter
+		adapter.updateSelection(selectedVerses.toSet())
 	}
 
 	private fun onBiblePageSettled(position: Int) {
@@ -492,22 +501,52 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		}
 		AppSettings.setLastRead(requireContext(), bookId, chapter)
 
+		// ViewPager2가 인접 페이지를 미리 만들어둔(prefetch) 경우 BiblePageAdapter.bind()가 다시
+		// 안 불릴 수 있어서, 그 안에서만 소비하던 "이동 후 메모 시트 자동 열기" 요청이 놓치는 문제가
+		// 있었다(다른 장으로 이동하면 스크롤만 되고 시트가 안 뜨다가, 나중에 그 페이지가 결국
+		// bind()될 때—예: 다른 메모 칩을 눌렀을 때—뒤늦게 그 옛날 요청이 실행돼서 엉뚱한 메모가
+		// 열리는 것처럼 보였다). onPageSelected로 항상 확실히 불리는 여기서도 같이 소비한다.
+		consumePendingMemoOpen(bookId, chapter)
+
 		// ViewPager2 안쪽 RecyclerView에서 지금 페이지의 뷰홀더를 찾아 recyclerView/adapter를 갱신한다.
 		val innerRecyclerView = viewPager.getChildAt(0) as? RecyclerView
 		val holder =
 			innerRecyclerView?.findViewHolderForAdapterPosition(position) as? BiblePageAdapter.PageViewHolder
-		holder?.currentRecyclerView()?.let { rv ->
+		// 아래 코루틴에서 절 스크롤을 시도해도 되는지 판단하는 플래그. holder를 못 찾으면
+		// recyclerView 필드가 이 페이지 것으로 갱신 안 됐다는 뜻이라, 그 상태로 스크롤하면 엉뚱한
+		// (이전 장의) 목록이 움직여버릴 위험이 있어서 이 경우엔 스크롤을 건너뛴다(bind() 쪽
+		// 코루틴이 나중에 정상적으로 처리해줄 것이다).
+		val recyclerViewIsFreshForThisPage = holder?.currentRecyclerView()?.let { rv ->
 			recyclerView = rv
 			(rv.adapter as? androidx.recyclerview.widget.ConcatAdapter)
 				?.adapters
 				?.filterIsInstance<VerseAdapter>()
 				?.firstOrNull()
-				?.let { adapter = it }
-		}
+				?.let {
+					adapter = it
+					// onPageDataReady와 같은 이유로, 여기서 찾은 어댑터도 스냅샷이 아니라
+					// 지금 진짜 selectedVerses로 강제 동기화해서 선택 배경색이 어긋나지 않게 한다.
+					adapter.updateSelection(selectedVerses.toSet())
+				}
+			true
+		} ?: false
 
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(requireContext().applicationContext)
 			currentVerses = db.bibleDao().getVerses(primaryTranslation.code, bookId, chapter)
+
+			// consumePendingMemoOpen과 같은 이유(ViewPager2 prefetch로 bind()가 다시 안 불릴 수
+			// 있음)로, 절 스크롤 요청도 여기서 같이 확인해서 처리한다. recyclerView가 아직 이 페이지
+			// 것으로 안 갱신됐으면(=holder를 못 찾음) 여기서 미리 소비해버리지 않는다 — 그러면 값이
+			// 지워진 채로 정작 스크롤은 못 한 상태가 돼서, 나중에 bind()가 정상적으로 불려도 이미
+			// 늦어버린다. 그럴 땐 그냥 안 건드리고 bind() 쪽 코루틴이 처리하게 둔다.
+			if (recyclerViewIsFreshForThisPage) {
+				consumePendingScrollVerse(bookId, chapter)?.let { verseNum ->
+					val index = currentVerses.indexOfFirst { it.verse == verseNum }
+					if (index >= 0) recyclerView.scrollToPosition(index)
+				}
+			}
+
 			currentSecondaryMap = secondaryTranslation?.let { sec ->
 				db.bibleDao().getVerses(sec.code, bookId, chapter)
 					.associate { it.verse to SecondaryVerseText(it.text, it.text2) }
@@ -630,6 +669,43 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 			return verse
 		}
 		return null
+	}
+
+	/** 메모 목록 화면·마이페이지 최근 활동에서 "이 구절 메모 보러 가기"를 눌렀을 때 호출한다.
+	 * 실제로 그 장으로 이동해서 페이지가 다 준비된 뒤(consumePendingMemoOpen) 시트가 뜬다. */
+	fun requestOpenVerseMemoAfterNavigate(bookId: Int, chapter: Int, verse: Int) {
+		pendingOpenVerseMemo = PendingVerseMemoOpen(bookId, chapter, verse)
+	}
+
+	/** 위와 같은 이유로, 단어 메모 버전. 시작/끝 오프셋까지 알아야 어떤 단어 메모인지 특정할 수 있다. */
+	fun requestOpenWordMemoAfterNavigate(
+		bookId: Int,
+		chapter: Int,
+		verse: Int,
+		startOffset: Int,
+		endOffset: Int,
+		segment: Int
+	) {
+		pendingOpenWordMemo =
+			PendingWordMemoOpen(bookId, chapter, verse, startOffset, endOffset, segment)
+	}
+
+	/** consumePendingScrollVerse와 같은 시점에 불러준다 — 스크롤까지 끝난 뒤 시트를 띄워야
+	 * 자연스럽다. 요청이 지금 페이지(bookId, chapter) 것이 아니면 조용히 버린다(다른 데로
+	 * 이동해버린 경우 등). */
+	fun consumePendingMemoOpen(bookId: Int, chapter: Int) {
+		pendingOpenVerseMemo?.let { req ->
+			pendingOpenVerseMemo = null
+			if (req.bookId == bookId && req.chapter == chapter) {
+				showVerseMemoEditDialog(req.verse, currentVerseMemos[req.verse])
+			}
+		}
+		pendingOpenWordMemo?.let { req ->
+			pendingOpenWordMemo = null
+			if (req.bookId == bookId && req.chapter == chapter) {
+				showWordMemoEditDialog(req.verse, req.startOffset, req.endOffset, req.segment, null)
+			}
+		}
 	}
 
 	/** 상단 아이콘이든 하단 버튼이든, 읽음 표시를 누르면 결국 이걸 탄다. */
@@ -762,6 +838,9 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 				val index = currentVerses.indexOfFirst { it.verse == verseNum }
 				if (index >= 0 && ::recyclerView.isInitialized) recyclerView.scrollToPosition(index)
 			}
+			// 이미 보고 있는 장이면 페이지가 다시 만들어지지 않아서(BiblePageAdapter.bind()가 다시 안 불림)
+			// consumePendingMemoOpen이 호출될 기회가 없었다 — 여기서 바로 소비해준다.
+			consumePendingMemoOpen(bookId, chapter)
 			return
 		}
 
@@ -863,13 +942,38 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		} else {
 			selectedVerses.add(verseNum)
 		}
-		if (::adapter.isInitialized) adapter.updateSelection(selectedVerses.toSet())
+		resolveCurrentVerseAdapter()?.updateSelection(selectedVerses.toSet())
 		updateToolbarVisibility()
+	}
+
+	/** this.adapter 필드를 그냥 믿는 대신, 지금 실제로 화면에 붙어 있는 페이지의 VerseAdapter를
+	 * ViewPager2에서 직접 다시 찾아온다(onBiblePageSettled와 같은 방식). 캐시된 필드가 어떤
+	 * 이유로든 최신 상태와 어긋나 있어도, 탭할 때마다 이렇게 다시 확인하면 항상 지금 보이는
+	 * 화면에 정확히 반영된다 — 선택 배경색이 가끔 안 바뀌던 문제의 근본 대책. */
+	private fun resolveCurrentVerseAdapter(): VerseAdapter? {
+		if (!::viewPager.isInitialized) return if (::adapter.isInitialized) adapter else null
+
+		val position = viewPager.currentItem
+		val innerRecyclerView = viewPager.getChildAt(0) as? RecyclerView
+		val holder =
+			innerRecyclerView?.findViewHolderForAdapterPosition(position) as? BiblePageAdapter.PageViewHolder
+		val rv = holder?.currentRecyclerView()
+		val live = (rv?.adapter as? androidx.recyclerview.widget.ConcatAdapter)
+			?.adapters
+			?.filterIsInstance<VerseAdapter>()
+			?.firstOrNull()
+
+		if (live != null && rv != null) {
+			recyclerView = rv
+			adapter = live
+			return live
+		}
+		return if (::adapter.isInitialized) adapter else null
 	}
 
 	private fun clearSelection() {
 		selectedVerses.clear()
-		if (::adapter.isInitialized) adapter.updateSelection(emptySet())
+		resolveCurrentVerseAdapter()?.updateSelection(emptySet())
 		selectionToolbar.visibility = View.GONE
 		highlightColorToolbar.visibility = View.GONE
 		pendingHighlightVerses = null
@@ -1247,7 +1351,7 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 			.getForChapter(primaryTranslation.code, currentBookId, currentChapter)
 			.groupBy { it.verse }
 		currentHighlights = refreshed
-		if (::adapter.isInitialized) adapter.updateHighlights(refreshed)
+		resolveCurrentVerseAdapter()?.updateHighlights(refreshed)
 	}
 
 	private fun onMemoButtonClicked() {
@@ -1257,14 +1361,12 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 	}
 
 	private fun showVerseMemoEditDialog(verseNum: Int, existing: VerseMemo?) {
-		verseMemoEditorLauncher.launch(
-			VerseMemoEditorActivity.createIntent(
-				context = requireContext(),
-				bookId = currentBookId,
-				chapter = currentChapter,
-				verse = verseNum
-			)
-		)
+		VerseMemoEditorBottomSheet().apply {
+			this.bookId = currentBookId
+			this.chapter = currentChapter
+			this.verse = verseNum
+			onChanged = { lifecycleScope.launch { refreshMemos() } }
+		}.show(childFragmentManager, "verse_memo_editor")
 	}
 
 	private fun showVerseMemoDialog(verseNum: Int, memo: VerseMemo) {
@@ -1278,18 +1380,16 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		segment: Int,
 		existing: WordMemo?
 	) {
-		wordMemoEditorLauncher.launch(
-			WordMemoEditorActivity.createIntent(
-				context = requireContext(),
-				translation = primaryTranslation.code,
-				bookId = currentBookId,
-				chapter = currentChapter,
-				verse = verseNum,
-				startOffset = start,
-				endOffset = end,
-				segment = segment
-			)
-		)
+		WordMemoEditorBottomSheet().apply {
+			this.translation = primaryTranslation.code
+			this.bookId = currentBookId
+			this.chapter = currentChapter
+			this.verse = verseNum
+			this.startOffset = start
+			this.endOffset = end
+			this.segment = segment
+			onChanged = { lifecycleScope.launch { refreshMemos() } }
+		}.show(childFragmentManager, "word_memo_editor")
 	}
 
 	private fun showWordMemoViewDialog(verseNum: Int, memo: WordMemo) {
@@ -1303,6 +1403,6 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		currentWordMemos = db.wordMemoDao()
 			.getForChapter(primaryTranslation.code, currentBookId, currentChapter)
 			.groupBy { it.verse }
-		if (::adapter.isInitialized) adapter.updateMemos(currentVerseMemos, currentWordMemos)
+		resolveCurrentVerseAdapter()?.updateMemos(currentVerseMemos, currentWordMemos)
 	}
 }

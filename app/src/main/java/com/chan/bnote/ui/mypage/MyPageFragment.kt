@@ -22,7 +22,6 @@ import com.chan.bnote.data.mypage.profile.ProfileDisplay
 import com.chan.bnote.ui.BibleNavigationHost
 import com.chan.bnote.ui.TopBarActionHandler
 import com.chan.bnote.ui.TopBarConfig
-import com.chan.bnote.ui.bible.memo.MemoListActivity
 import com.chan.bnote.ui.mypage.memorization.MemorizationVerseListActivity
 import com.chan.bnote.ui.mypage.prayer.PrayerRequestActivity
 import com.chan.bnote.ui.mypage.profile.ProfileActivity
@@ -154,12 +153,10 @@ class MyPageFragment : Fragment(), TopBarActionHandler {
 				val ref = "${BibleBooks.nameOf(memo.bookId)} ${memo.chapter}:${memo.verse}"
 				chips.add(
 					RecentChip(label = suffixSpan(ref, "메모"), timestamp = memo.updatedAt) {
-						startActivity(
-							MemoListActivity.verseMemoEditIntent(
-								requireContext(),
-								memo.id
+						(requireActivity() as? BibleNavigationHost)
+							?.navigateToBibleChapterAndOpenVerseMemo(
+								memo.bookId, memo.chapter, memo.verse
 							)
-						)
 					}
 				)
 			}
@@ -179,12 +176,11 @@ class MyPageFragment : Fragment(), TopBarActionHandler {
 						(if (word.isNotEmpty()) " $word" else "")
 				chips.add(
 					RecentChip(label = suffixSpan(ref, "메모"), timestamp = memo.updatedAt) {
-						startActivity(
-							MemoListActivity.wordMemoEditIntent(
-								requireContext(),
-								memo.id
+						(requireActivity() as? BibleNavigationHost)
+							?.navigateToBibleChapterAndOpenWordMemo(
+								memo.bookId, memo.chapter, memo.verse,
+								memo.startOffset, memo.endOffset, memo.segment
 							)
-						)
 					}
 				)
 			}
