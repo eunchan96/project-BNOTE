@@ -53,4 +53,20 @@ interface WordMemoDao {
 		endOffset: Int,
 		segment: Int
 	): List<WordMemo>
+
+	@Query(
+		"""
+    SELECT * FROM word_memos
+    WHERE translation = :translation AND bookId = :bookId AND chapter = :chapter AND verse = :verse
+      AND segment = :segment
+    ORDER BY startOffset ASC, endOffset ASC
+    """
+	)
+	suspend fun getForVerseSegment(
+		translation: String,
+		bookId: Int,
+		chapter: Int,
+		verse: Int,
+		segment: Int
+	): List<WordMemo>
 }
