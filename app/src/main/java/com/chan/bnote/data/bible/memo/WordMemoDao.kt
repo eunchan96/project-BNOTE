@@ -24,7 +24,7 @@ interface WordMemoDao {
 	@Query("SELECT * FROM word_memos WHERE translation = :translation AND bookId = :bookId AND chapter = :chapter")
 	suspend fun getForChapter(translation: String, bookId: Int, chapter: Int): List<WordMemo>
 
-	@Query("SELECT * FROM word_memos ORDER BY bookId ASC, chapter ASC, verse ASC")
+	@Query("SELECT * FROM word_memos ORDER BY bookId ASC, chapter ASC, verse ASC, startOffset ASC")
 	suspend fun getAll(): List<WordMemo>
 
 	@Query("SELECT * FROM word_memos ORDER BY updatedAt DESC LIMIT :limit")

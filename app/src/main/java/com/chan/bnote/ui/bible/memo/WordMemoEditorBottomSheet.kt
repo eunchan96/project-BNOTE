@@ -52,9 +52,10 @@ class WordMemoEditorBottomSheet : FixedBottomSheetDialogFragment() {
 		val selectedText: String
 	)
 
-	/** 겹치는 메모 하나의 그룹(위치가 같은 메모들 묶음). 토글 헤더 + 그 아래 박스들을 같이 관리한다. */
+	/** 겹치는 메모 하나의 그룹(위치가 같은 메모들 묶음). 토글 헤더(화살표+텍스트) + 그 아래
+	 * 박스들을 같이 관리한다. */
 	private class Group(
-		val header: TextView,
+		val header: View,
 		val boxesContainer: LinearLayout,
 		val boxes: MutableList<Box> = mutableListOf()
 	)
@@ -119,7 +120,7 @@ class WordMemoEditorBottomSheet : FixedBottomSheetDialogFragment() {
 			}
 
 			if (restOverlapping.isNotEmpty()) {
-				addSeparatorLabel("선택한 부분과 겹치는 기존 메모")
+				addSeparatorLabel("겹치는 메모")
 				val grouped = restOverlapping.groupBy { it.startOffset to it.endOffset }
 				for ((key, memosInGroup) in grouped) {
 					val groupText = safeSubstring(verseText, key.first, key.second)
@@ -151,29 +152,53 @@ class WordMemoEditorBottomSheet : FixedBottomSheetDialogFragment() {
 		container.addView(header)
 	}
 
+	/** 새로 만드는 primary 박스는 항상 마지막 primary 박스 바로 다음에 끼워 넣는다("겹치는 메모"
+	 * 그룹들보다 아래로 밀려나지 않게). primary 박스가 아직 하나도 없으면(이론상 항상 최소 하나는
+	 * 있지만 방어적으로) 맨 위에 끼워 넣는다. */
+	private fun insertionIndexForNewPrimaryBox(): Int {
+		val lastPrimary = boxes.lastOrNull { it.kind == BoxKind.PRIMARY }
+		return if (lastPrimary != null) container.indexOfChild(lastPrimary.root) + 1 else 0
+	}
+
 	private fun addPrimaryBox(existing: WordMemo?, start: Int, end: Int) {
 		val selectedText = safeSubstring(verseText, start, end)
 		val box = buildBoxView(existing, BoxKind.PRIMARY, start, end, selectedText)
 		boxes.add(box)
-		container.addView(box.root)
+		container.addView(box.root, insertionIndexForNewPrimaryBox())
 		box.root.findViewById<ImageView>(R.id.btn_delete_box)
 			.setOnClickListener { removeBox(box, group = null) }
 	}
 
 	/** 위치가 같은(=하나의 그룹으로 묶이는) 겹치는 메모들. 토글 헤더를 누르면 펼쳐지고,
-	 * 기본은 접힌 채로 시작한다(PWA와 동일). */
+	 * 기본은 접힌 채로 시작한다(PWA와 동일). 접힘/펼침 표시는 화살표 아이콘을 90도 회전시켜서
+	 * 보여준다(펼쳐지면 아래를 향하게). */
 	private fun addOverlappingGroup(selectedText: String, memos: List<WordMemo>) {
 		val boxesContainer = LinearLayout(requireContext()).apply {
 			orientation = LinearLayout.VERTICAL
 			visibility = View.GONE
 		}
 
-		val header = TextView(requireContext()).apply {
-			text = "▸ $selectedText"
+		val chevron = ImageView(requireContext()).apply {
+			setImageResource(R.drawable.ic_chevron_right)
+			androidx.core.content.ContextCompat.getColorStateList(
+				requireContext(), R.color.text_hint
+			)?.let { imageTintList = it }
+			layoutParams = LinearLayout.LayoutParams(dp(20), dp(20))
+			rotation = 0f
+		}
+		val headerLabel = TextView(requireContext()).apply {
+			text = selectedText
 			textSize = 14f
 			setTextColor(
 				androidx.core.content.ContextCompat.getColor(requireContext(), R.color.text_primary)
 			)
+			layoutParams = LinearLayout.LayoutParams(
+				0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f
+			).apply { marginStart = dp(6) }
+		}
+		val header = LinearLayout(requireContext()).apply {
+			orientation = LinearLayout.HORIZONTAL
+			gravity = android.view.Gravity.CENTER_VERTICAL
 			setBackgroundColor(
 				androidx.core.content.ContextCompat.getColor(
 					requireContext(),
@@ -183,6 +208,8 @@ class WordMemoEditorBottomSheet : FixedBottomSheetDialogFragment() {
 			setPadding(dp(10), dp(10), dp(10), dp(10))
 			isClickable = true
 			isFocusable = true
+			addView(chevron)
+			addView(headerLabel)
 		}
 
 		val group = Group(header, boxesContainer)
@@ -191,7 +218,7 @@ class WordMemoEditorBottomSheet : FixedBottomSheetDialogFragment() {
 		header.setOnClickListener {
 			val collapsed = boxesContainer.visibility != View.VISIBLE
 			boxesContainer.visibility = if (collapsed) View.VISIBLE else View.GONE
-			header.text = (if (collapsed) "▾ " else "▸ ") + selectedText
+			chevron.animate().rotation(if (collapsed) 90f else 0f).setDuration(150).start()
 		}
 
 		container.addView(header)
