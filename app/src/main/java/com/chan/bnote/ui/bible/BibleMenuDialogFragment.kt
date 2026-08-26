@@ -6,6 +6,7 @@ import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.Switch
 import android.widget.TextView
@@ -95,7 +96,8 @@ class BibleMenuDialogFragment(
 		}
 
 		val appendixContainer = view.findViewById<LinearLayout>(R.id.container_appendix_list)
-		val appendixToggle = view.findViewById<TextView>(R.id.menu_appendix)
+		val appendixToggle = view.findViewById<LinearLayout>(R.id.menu_appendix)
+		val appendixToggleIcon = view.findViewById<ImageView>(R.id.icon_appendix_toggle)
 
 		val appendixItems = listOf("주기도문", "사도신경", "십계명", "교독문")
 		for (itemName in appendixItems) {
@@ -119,7 +121,8 @@ class BibleMenuDialogFragment(
 		appendixToggle.setOnClickListener {
 			val expanding = appendixContainer.visibility != View.VISIBLE
 			appendixContainer.visibility = if (expanding) View.VISIBLE else View.GONE
-			appendixToggle.text = if (expanding) "부록  ▴" else "부록  ▾"
+			appendixToggleIcon.animate().rotation(if (expanding) 180f else 0f).setDuration(150)
+				.start()
 		}
 
 		view.findViewById<Switch>(R.id.switch_reading_plan).apply {
