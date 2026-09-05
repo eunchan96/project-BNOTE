@@ -785,9 +785,7 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 			currentScrollbarVisible = newScrollbarVisible
 			// 지금 보이는 페이지는 바로 적용하고, 나머지 페이지는 bind() 시점에 다시 확인해서
 			// 반영하도록 다시 그려야 함으로 표시한다(폰트 크기 변경과 동일한 방식).
-			if (::recyclerView.isInitialized) {
-				recyclerView.isVerticalScrollBarEnabled = newScrollbarVisible
-			}
+			resolveCurrentPageViewHolder()?.setScrollbarEnabled(newScrollbarVisible)
 			if (::viewPager.isInitialized && ::pageAdapter.isInitialized) {
 				val position = viewPager.currentItem
 				if (position > 0) pageAdapter.notifyItemRangeChanged(0, position)
@@ -969,6 +967,15 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 			return live
 		}
 		return if (::adapter.isInitialized) adapter else null
+	}
+
+	/** resolveCurrentVerseAdapter()와 같은 방식으로, 지금 보이는 페이지의 PageViewHolder 자체를
+	 * 찾아온다(스크롤바처럼 뷰홀더 단위로 상태를 갖는 것을 즉시 갱신할 때 쓴다). */
+	private fun resolveCurrentPageViewHolder(): BiblePageAdapter.PageViewHolder? {
+		if (!::viewPager.isInitialized) return null
+		val position = viewPager.currentItem
+		val innerRecyclerView = viewPager.getChildAt(0) as? RecyclerView
+		return innerRecyclerView?.findViewHolderForAdapterPosition(position) as? BiblePageAdapter.PageViewHolder
 	}
 
 	private fun clearSelection() {

@@ -24,9 +24,11 @@ class BiblePageAdapter(private val fragment: BibleFragment) :
 	override fun getItemCount(): Int = BibleChapterIndex.totalPages()
 
 	override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PageViewHolder {
-		val view =
+		val root =
 			LayoutInflater.from(parent.context).inflate(R.layout.item_bible_page, parent, false)
-		return PageViewHolder(view as RecyclerView)
+		val recyclerView = root.findViewById<RecyclerView>(R.id.recycler_page_verses)
+		val scrollbarView = root.findViewById<VerseScrollbarView>(R.id.verse_scrollbar)
+		return PageViewHolder(root, recyclerView, scrollbarView)
 	}
 
 	override fun onBindViewHolder(holder: PageViewHolder, position: Int) {
@@ -38,9 +40,16 @@ class BiblePageAdapter(private val fragment: BibleFragment) :
 		holder.cancel()
 	}
 
-	class PageViewHolder(private val recyclerView: RecyclerView) :
-		RecyclerView.ViewHolder(recyclerView) {
+	class PageViewHolder(
+		root: android.view.View,
+		private val recyclerView: RecyclerView,
+		private val scrollbarView: VerseScrollbarView
+	) : RecyclerView.ViewHolder(root) {
 		private var loadJob: Job? = null
+
+		// 스크롤 리스너가 매번 호출하는 updateFrom()이 설정에서 꺼둔 스크롤바를 다시 보이게
+		// 만들어버리지 않도록, "지금 설정상 켜져 있는지"를 따로 기억해둔다.
+		private var scrollbarEnabled = true
 		var boundBookId: Int = -1
 			private set
 		var boundChapter: Int = -1
@@ -49,6 +58,16 @@ class BiblePageAdapter(private val fragment: BibleFragment) :
 		init {
 			recyclerView.layoutManager = LinearLayoutManager(recyclerView.context)
 			recyclerView.itemAnimator = null
+			recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+				override fun onScrolled(rv: RecyclerView, dx: Int, dy: Int) {
+					if (scrollbarEnabled) scrollbarView.updateFrom(rv)
+				}
+			})
+			// 처음 레이아웃이 잡히는 시점(뷰 크기가 0에서 실제 값으로 바뀌는 순간)에도 한 번
+			// 다시 그려줘야, 페이지가 열리자마자(스크롤 전) 스크롤바가 바로 보인다.
+			scrollbarView.addOnLayoutChangeListener { _, _, _, _, bottom, _, _, _, oldBottom ->
+				if (bottom != oldBottom && scrollbarEnabled) scrollbarView.updateFrom(recyclerView)
+			}
 		}
 
 		fun bind(fragment: BibleFragment, bookId: Int, chapter: Int) {
@@ -58,8 +77,11 @@ class BiblePageAdapter(private val fragment: BibleFragment) :
 			recyclerView.adapter = null
 			// 설정에서 바뀌었을 수 있으니 매번 다시 확인해서 반영한다(뷰홀더는 재활용되므로
 			// init 시점에만 적용하면 이미 만들어진 페이지에는 설정 변경이 반영되지 않는다).
-			recyclerView.isVerticalScrollBarEnabled =
+			scrollbarEnabled =
 				com.chan.bnote.data.AppSettings.isBibleScrollbarVisible(fragment.requireContext())
+			scrollbarView.visibility =
+				if (scrollbarEnabled) android.view.View.VISIBLE else android.view.View.GONE
+
 			loadJob = fragment.viewLifecycleOwner.lifecycleScope.launch {
 				val page = fragment.loadPageData(bookId, chapter)
 				val footer = fragment.createFooterAdapterFor(bookId, chapter, page.isRead)
@@ -78,6 +100,12 @@ class BiblePageAdapter(private val fragment: BibleFragment) :
 					)
 				}
 				fragment.consumePendingMemoOpen(bookId, chapter)
+
+				if (scrollbarEnabled) {
+					// 새 어댑터/데이터가 붙은 뒤 다음 레이아웃 패스에서 실제 스크롤 범위가 확정되면
+					// 그때 한 번 그려준다(리스트가 바뀌자마자 곧바로 계산하면 아직 옛 값일 수 있음).
+					recyclerView.post { scrollbarView.updateFrom(recyclerView) }
+				}
 			}
 		}
 
@@ -86,5 +114,19 @@ class BiblePageAdapter(private val fragment: BibleFragment) :
 		}
 
 		fun currentRecyclerView(): RecyclerView = recyclerView
+
+		/** 설정에서 스크롤바 표시를 껐다 켰다 했을 때, 페이지가 다시 bind()되지 않아도(=지금
+		 * 보고 있는 장 그대로일 때도) 바로 반영하기 위한 함수. 뷰의 visibility만 바꾸면 내부에
+		 * 남아있는 scrollbarEnabled 플래그가 여전히 옛 값이라, 스크롤 리스너가 그 플래그를 보고
+		 * 다시 켜버릴 수 있다 — 그래서 반드시 이 함수로 플래그까지 같이 바꿔야 한다. */
+		fun setScrollbarEnabled(enabled: Boolean) {
+			scrollbarEnabled = enabled
+			if (enabled) {
+				scrollbarView.visibility = android.view.View.VISIBLE
+				scrollbarView.updateFrom(recyclerView)
+			} else {
+				scrollbarView.visibility = android.view.View.GONE
+			}
+		}
 	}
 }

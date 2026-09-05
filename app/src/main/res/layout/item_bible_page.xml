@@ -1,9 +1,19 @@
-<?xml version="1.0" encoding="utf-8"?>
-<androidx.recyclerview.widget.RecyclerView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/recycler_page_verses"
+<?xml version="1.0" encoding="utf-8"?><!-- 시스템 기본 스크롤바 대신 VerseScrollbarView로 직접 그린다(끝까지 정확히 닿는 모양을 위해).
+     그래서 RecyclerView 자체의 android:scrollbars는 꺼둔다. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:scrollbars="vertical"
-    android:scrollbarSize="3dp"
-    android:scrollbarStyle="outsideOverlay"
-    android:fadeScrollbars="true" />
+    android:layout_height="match_parent">
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recycler_page_verses"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scrollbars="none" />
+
+    <com.chan.bnote.ui.bible.VerseScrollbarView
+        android:id="@+id/verse_scrollbar"
+        android:layout_width="8dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="end" />
+
+</FrameLayout>
