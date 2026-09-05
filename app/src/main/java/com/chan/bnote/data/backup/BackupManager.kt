@@ -2,7 +2,12 @@ package com.chan.bnote.data.backup
 
 import android.content.Context
 import android.net.Uri
+import androidx.room.withTransaction
 import com.chan.bnote.data.BibleDatabase
+import com.chan.bnote.data.application.Application
+import com.chan.bnote.data.application.ApplicationBibleRef
+import com.chan.bnote.data.application.ApplicationCategory
+import com.chan.bnote.data.application.ApplicationSermonLink
 import com.chan.bnote.data.bible.bookmark.BibleBookmark
 import com.chan.bnote.data.bible.memo.VerseMemo
 import com.chan.bnote.data.bible.memo.WordMemo
@@ -10,6 +15,8 @@ import com.chan.bnote.data.bible.partialhighlight.PartialHighlight
 import com.chan.bnote.data.bible.scrap.Scrap
 import com.chan.bnote.data.bible.scrap.ScrapGroup
 import com.chan.bnote.data.mypage.CopyFormatPreset
+import com.chan.bnote.data.mypage.gratitude.GratitudeEntry
+import com.chan.bnote.data.mypage.gratitude.GratitudeNote
 import com.chan.bnote.data.mypage.memorization.MemorizationGroup
 import com.chan.bnote.data.mypage.memorization.MemorizationVerse
 import com.chan.bnote.data.mypage.memorization.VerseMemorizationProgress
@@ -23,6 +30,8 @@ import com.chan.bnote.data.sermon.SermonBibleRef
 import com.chan.bnote.data.sermon.preacher.Preacher
 import com.chan.bnote.data.sermon.sermoncategory.SermonCategory
 import com.chan.bnote.data.sermon.sermonphoto.SermonPhoto
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -44,7 +53,7 @@ object BackupManager {
 	private const val SERMON_PHOTOS_DIR = "sermon_photos"
 	private const val PROFILE_PHOTO_DIR = "profile_photo"
 
-	suspend fun export(context: Context, destination: Uri) {
+	suspend fun export(context: Context, destination: Uri) = withContext(Dispatchers.IO) {
 		val db = BibleDatabase.getInstance(context.applicationContext)
 		val json = buildBackupJson(db)
 
@@ -60,7 +69,7 @@ object BackupManager {
 		} ?: throw IllegalStateException("파일을 열 수 없어요")
 	}
 
-	suspend fun import(context: Context, source: Uri) {
+	suspend fun import(context: Context, source: Uri) = withContext(Dispatchers.IO) {
 		val db = BibleDatabase.getInstance(context.applicationContext)
 		var json: JSONObject? = null
 
@@ -107,6 +116,30 @@ object BackupManager {
 		root.put("sermons", JSONArray(db.sermonDao().getAll().map { it.toJson() }))
 		root.put("sermonBibleRefs", JSONArray(db.sermonBibleRefDao().getAll().map { it.toJson() }))
 		root.put("sermonPhotos", JSONArray(db.sermonPhotoDao().getAll().map { it.toJson() }))
+		root.put(
+			"applicationCategories",
+			JSONArray(db.applicationCategoryDao().getAll().map { it.toJson() })
+		)
+		root.put("applications", JSONArray(db.applicationDao().getAll().map { it.toJson() }))
+		root.put(
+			"applicationBibleRefs",
+			JSONArray(db.applicationDao().getAll().flatMap { app ->
+				db.applicationBibleRefDao().getByApplication(app.id)
+			}.map { it.toJson() })
+		)
+		root.put(
+			"applicationSermonLinks",
+			JSONArray(db.applicationDao().getAll().flatMap { app ->
+				db.applicationSermonLinkDao().getByApplication(app.id)
+			}.map { it.toJson() })
+		)
+		root.put("gratitudeNotes", JSONArray(db.gratitudeNoteDao().getAll().map { it.toJson() }))
+		root.put(
+			"gratitudeEntries",
+			JSONArray(db.gratitudeNoteDao().getAll().flatMap { note ->
+				db.gratitudeEntryDao().getByNote(note.id)
+			}.map { it.toJson() })
+		)
 		root.put("prayerRequests", JSONArray(db.prayerRequestDao().getAll().map { it.toJson() }))
 		root.put(
 			"memorizationGroups",
@@ -148,7 +181,20 @@ object BackupManager {
 
 	// --- 불러오기 ---
 
+	/** 삭제 후 다시 채우는 전체 과정을 하나의 트랜잭션으로 묶는다. 안 그러면 중간에(예: 사진이
+	 * 많아 오래 걸리는 도중 앱이 죽거나 기기가 꺼지면) 기존 데이터는 지워졌는데 새 데이터는 일부만
+	 * 들어간 채로 남아버릴 수 있다 — 트랜잭션으로 묶어두면 끝까지 못 갔을 때 전부 원래대로 롤백된다. */
 	private suspend fun restoreFromJson(context: Context, db: BibleDatabase, root: JSONObject) {
+		db.withTransaction {
+			restoreFromJsonInternal(context, db, root)
+		}
+	}
+
+	private suspend fun restoreFromJsonInternal(
+		context: Context,
+		db: BibleDatabase,
+		root: JSONObject
+	) {
 		// 1) 기존 사용자 데이터를 전부 지운다 (성경/찬송가 내장 데이터는 건드리지 않음).
 		db.bookmarkDao().deleteAll()
 		db.partialHighlightDao().deleteAll()
@@ -161,6 +207,12 @@ object BackupManager {
 		db.sermonDao().deleteAll()
 		db.sermonCategoryDao().deleteAll()
 		db.preacherDao().deleteAll()
+		db.applicationSermonLinkDao().deleteAll()
+		db.applicationBibleRefDao().deleteAll()
+		db.applicationDao().deleteAll()
+		db.applicationCategoryDao().deleteAll()
+		db.gratitudeEntryDao().deleteAll()
+		db.gratitudeNoteDao().deleteAll()
 		db.prayerRequestDao().deleteAll()
 		db.verseMemorizationProgressDao().deleteAll()
 		db.memorizationVerseDao().deleteAllVerses()
@@ -282,6 +334,93 @@ object BackupManager {
 			)
 		}
 		if (photosToInsert.isNotEmpty()) db.sermonPhotoDao().insertAll(photosToInsert)
+
+		val applicationCategoryIdMap = mutableMapOf<Long, Long>()
+		for (i in 0 until root.optJSONArray("applicationCategories")?.length().orZero()) {
+			val obj = root.getJSONArray("applicationCategories").getJSONObject(i)
+			val oldId = obj.getLong("id")
+			val newId = db.applicationCategoryDao().insert(
+				ApplicationCategory(
+					name = obj.getString("name"),
+					colorHex = obj.getString("colorHex"),
+					isDefault = obj.optBoolean("isDefault", false),
+					sortOrder = obj.optInt("sortOrder", 0)
+				)
+			)
+			applicationCategoryIdMap[oldId] = newId
+		}
+
+		val applicationIdMap = mutableMapOf<Long, Long>()
+		for (i in 0 until root.optJSONArray("applications")?.length().orZero()) {
+			val obj = root.getJSONArray("applications").getJSONObject(i)
+			val oldId = obj.getLong("id")
+			val oldCategoryId = if (obj.has("categoryId")) obj.getLong("categoryId") else null
+			val newId = db.applicationDao().insert(
+				Application(
+					title = obj.getString("title"),
+					categoryId = oldCategoryId?.let { applicationCategoryIdMap[it] },
+					applicationDate = obj.getLong("applicationDate"),
+					meditationMemo = obj.optString("meditationMemo", ""),
+					prayerMemo = obj.optString("prayerMemo", ""),
+					obedienceMemo = obj.optString("obedienceMemo", ""),
+					createdAt = obj.optLong("createdAt", System.currentTimeMillis())
+				)
+			)
+			applicationIdMap[oldId] = newId
+		}
+
+		val applicationRefsToInsert = mutableListOf<ApplicationBibleRef>()
+		for (i in 0 until root.optJSONArray("applicationBibleRefs")?.length().orZero()) {
+			val obj = root.getJSONArray("applicationBibleRefs").getJSONObject(i)
+			val newApplicationId = applicationIdMap[obj.getLong("applicationId")] ?: continue
+			applicationRefsToInsert.add(applicationBibleRefFromJson(obj, newApplicationId))
+		}
+		if (applicationRefsToInsert.isNotEmpty()) {
+			db.applicationBibleRefDao().insertAll(applicationRefsToInsert)
+		}
+
+		// 설교와의 연결은 적용 id, 설교 id 둘 다 새로 매핑된 값을 알아야 하므로(설교는 위에서 이미
+		// 처리해서 sermonIdMap이 준비돼 있다) 여기서 처리한다.
+		for (i in 0 until root.optJSONArray("applicationSermonLinks")?.length().orZero()) {
+			val obj = root.getJSONArray("applicationSermonLinks").getJSONObject(i)
+			val newApplicationId = applicationIdMap[obj.getLong("applicationId")] ?: continue
+			val newSermonId = sermonIdMap[obj.getLong("sermonId")] ?: continue
+			db.applicationSermonLinkDao()
+				.insert(
+					ApplicationSermonLink(
+						applicationId = newApplicationId,
+						sermonId = newSermonId
+					)
+				)
+		}
+
+		val gratitudeNoteIdMap = mutableMapOf<Long, Long>()
+		for (i in 0 until root.optJSONArray("gratitudeNotes")?.length().orZero()) {
+			val obj = root.getJSONArray("gratitudeNotes").getJSONObject(i)
+			val oldId = obj.getLong("id")
+			val newId = db.gratitudeNoteDao().insert(
+				GratitudeNote(
+					date = obj.getLong("date"),
+					createdAt = obj.optLong("createdAt", System.currentTimeMillis())
+				)
+			)
+			gratitudeNoteIdMap[oldId] = newId
+		}
+
+		val gratitudeEntriesToInsert = mutableListOf<GratitudeEntry>()
+		for (i in 0 until root.optJSONArray("gratitudeEntries")?.length().orZero()) {
+			val obj = root.getJSONArray("gratitudeEntries").getJSONObject(i)
+			val newNoteId = gratitudeNoteIdMap[obj.getLong("noteId")] ?: continue
+			gratitudeEntriesToInsert.add(
+				GratitudeEntry(
+					noteId = newNoteId,
+					text = obj.getString("text"),
+					sortOrder = obj.optInt("sortOrder", 0)
+				)
+			)
+		}
+		if (gratitudeEntriesToInsert.isNotEmpty()) db.gratitudeEntryDao()
+			.insertAll(gratitudeEntriesToInsert)
 
 		for (i in 0 until root.optJSONArray("prayerRequests")?.length().orZero()) {
 			db.prayerRequestDao()
@@ -520,6 +659,55 @@ object BackupManager {
 		// 절대경로 대신 zip 안 상대경로("sermon_photos/파일명")로 저장한다.
 		put("filePath", "$SERMON_PHOTOS_DIR/${File(filePath).name}")
 		put("sortOrder", sortOrder)
+	}
+
+	private fun ApplicationCategory.toJson() = JSONObject().apply {
+		put("id", id); put("name", name); put("colorHex", colorHex)
+		put("isDefault", isDefault); put("sortOrder", sortOrder)
+	}
+
+	private fun Application.toJson() = JSONObject().apply {
+		put("id", id); put("title", title)
+		categoryId?.let { put("categoryId", it) }
+		put("applicationDate", applicationDate)
+		put("meditationMemo", meditationMemo)
+		put("prayerMemo", prayerMemo)
+		put("obedienceMemo", obedienceMemo)
+		put("createdAt", createdAt)
+	}
+
+	private fun ApplicationBibleRef.toJson() = JSONObject().apply {
+		put("applicationId", applicationId)
+		put("startBookId", startBookId); put("startChapter", startChapter); put(
+		"startVerse",
+		startVerse
+	)
+		put("endBookId", endBookId); put("endChapter", endChapter); put("endVerse", endVerse)
+		put("isChapterOnly", isChapterOnly)
+	}
+
+	private fun applicationBibleRefFromJson(o: JSONObject, newApplicationId: Long) =
+		ApplicationBibleRef(
+			applicationId = newApplicationId,
+			startBookId = o.getInt("startBookId"),
+			startChapter = o.getInt("startChapter"),
+			startVerse = o.getInt("startVerse"),
+			endBookId = o.getInt("endBookId"),
+			endChapter = o.getInt("endChapter"),
+			endVerse = o.getInt("endVerse"),
+			isChapterOnly = o.optBoolean("isChapterOnly", false)
+		)
+
+	private fun ApplicationSermonLink.toJson() = JSONObject().apply {
+		put("applicationId", applicationId); put("sermonId", sermonId)
+	}
+
+	private fun GratitudeNote.toJson() = JSONObject().apply {
+		put("id", id); put("date", date); put("createdAt", createdAt)
+	}
+
+	private fun GratitudeEntry.toJson() = JSONObject().apply {
+		put("noteId", noteId); put("text", text); put("sortOrder", sortOrder)
 	}
 
 	private fun PrayerRequest.toJson() = JSONObject().apply {
