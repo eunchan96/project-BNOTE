@@ -47,6 +47,10 @@ object AppSettings {
 	private const val KEY_READING_REMINDER_MINUTE = "reading_reminder_minute"
 	private const val KEY_SERMON_UNCATEGORIZED_POSITION = "sermon_uncategorized_position"
 	private const val KEY_APPLICATION_UNCATEGORIZED_POSITION = "application_uncategorized_position"
+	private const val KEY_AUTO_BACKUP_ENABLED = "auto_backup_enabled"
+	private const val KEY_AUTO_BACKUP_INTERVAL_DAYS = "auto_backup_interval_days"
+	private const val KEY_AUTO_BACKUP_LAST_CHECK = "auto_backup_last_check"
+	private const val KEY_AUTO_BACKUP_FOLDER_URI = "auto_backup_folder_uri"
 
 	fun getPrimaryTranslation(context: Context): String {
 		return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
@@ -394,5 +398,56 @@ object AppSettings {
 	fun setApplicationUncategorizedPosition(context: Context, position: Int) {
 		context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
 			.edit().putInt(KEY_APPLICATION_UNCATEGORIZED_POSITION, position).apply()
+	}
+
+	// --- 자동 데이터 내보내기 ---
+
+	fun isAutoBackupEnabled(context: Context): Boolean {
+		return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.getBoolean(KEY_AUTO_BACKUP_ENABLED, false)
+	}
+
+	/** 켤 때는 그 시점을 기준(마지막 확인 시각)으로 새로 잡는다 — 그래야 "토글한 시점부터"
+	 * 주기가 시작된다. 끌 때는 기준 시각을 건드릴 필요 없다(다시 켜면 그때부터 다시 잰다). */
+	fun setAutoBackupEnabled(context: Context, enabled: Boolean) {
+		val prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+		prefs.edit().putBoolean(KEY_AUTO_BACKUP_ENABLED, enabled).apply()
+		if (enabled) {
+			prefs.edit().putLong(KEY_AUTO_BACKUP_LAST_CHECK, System.currentTimeMillis()).apply()
+		}
+	}
+
+	/** 자동 내보내기 주기(일수). 기본은 30일(1개월). */
+	fun getAutoBackupIntervalDays(context: Context): Int {
+		return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.getInt(KEY_AUTO_BACKUP_INTERVAL_DAYS, 30)
+	}
+
+	fun setAutoBackupIntervalDays(context: Context, days: Int) {
+		context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.edit().putInt(KEY_AUTO_BACKUP_INTERVAL_DAYS, days).apply()
+	}
+
+	/** 마지막으로 "주기가 지났는지" 확인(=알림을 띄웠는지)한 시각. 알림에 예/아니요 어느 쪽으로
+	 * 답하든, 다음 확인은 여기서부터 다시 주기만큼 지나야 뜬다 — 답을 안 골랐다고 매일 뜨지 않는다. */
+	fun getAutoBackupLastCheck(context: Context): Long {
+		return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.getLong(KEY_AUTO_BACKUP_LAST_CHECK, System.currentTimeMillis())
+	}
+
+	fun setAutoBackupLastCheck(context: Context, timestamp: Long) {
+		context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.edit().putLong(KEY_AUTO_BACKUP_LAST_CHECK, timestamp).apply()
+	}
+
+	/** 자동 내보내기가 저장될 폴더(SAF tree Uri를 문자열로). 아직 안 골랐으면 null. */
+	fun getAutoBackupFolderUri(context: Context): String? {
+		return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.getString(KEY_AUTO_BACKUP_FOLDER_URI, null)
+	}
+
+	fun setAutoBackupFolderUri(context: Context, uri: String) {
+		context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.edit().putString(KEY_AUTO_BACKUP_FOLDER_URI, uri).apply()
 	}
 }

@@ -3,14 +3,19 @@ package com.chan.bnote
 import android.os.Bundle
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import com.chan.bnote.data.AppSettings
+import com.chan.bnote.data.backup.AutoBackupManager
+import com.chan.bnote.data.backup.BackupManager
 import com.chan.bnote.ui.BibleNavigationHost
 import com.chan.bnote.ui.TopBarActionHandler
 import com.chan.bnote.ui.TopBarConfig
@@ -18,6 +23,8 @@ import com.chan.bnote.ui.TopBarConfigListener
 import com.chan.bnote.ui.bible.BibleFragment
 import com.chan.bnote.ui.mypage.MyPageFragment
 import com.chan.bnote.ui.sermon.SermonFragment
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationHost {
 
@@ -138,6 +145,71 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 			window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 		} else {
 			window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+		}
+		checkAutoBackupPrompt()
+	}
+
+	// --- 자동 데이터 내보내기 ---
+
+	private var autoBackupDialogShown = false
+
+	/** 설정에서 폴더를 아직 안 골라둔 상태로 "예"를 눌렀을 때 대비한 대체 경로 — 수동 내보내기와
+	 * 똑같이 그 자리에서 저장 위치를 고르게 한다. */
+	private val autoBackupFallbackExportLauncher = registerForActivityResult(
+		ActivityResultContracts.CreateDocument("application/zip")
+	) { uri ->
+		if (uri != null) runExport(uri, "자동 백업을 저장했어요")
+	}
+
+	/** onResume마다 불리지만, 주기가 안 지났으면 바로 빠져나가고(shouldPromptNow), 이미 이번에
+	 * 창을 띄웠으면(autoBackupDialogShown) 또 안 띄운다 — 설정 화면 갔다 오는 것처럼 onResume이
+	 * 여러 번 불려도 중복으로 뜨지 않는다. */
+	private fun checkAutoBackupPrompt() {
+		if (autoBackupDialogShown) return
+		if (!AutoBackupManager.shouldPromptNow(this)) return
+		autoBackupDialogShown = true
+
+		MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_BNOTE_Dialog)
+			.setTitle("정기 데이터 백업")
+			.setMessage("설정해두신 주기가 지났어요. 지금 데이터를 내보낼까요?")
+			.setPositiveButton("예") { _, _ ->
+				AutoBackupManager.markChecked(this)
+				startAutoBackup()
+			}
+			.setNegativeButton("아니요") { _, _ ->
+				AutoBackupManager.markChecked(this)
+			}
+			.setCancelable(false)
+			.show()
+	}
+
+	private fun startAutoBackup() {
+		val folderUri = AutoBackupManager.getFolderUri(this)
+		if (folderUri != null && AutoBackupManager.hasValidFolderPermission(this, folderUri)) {
+			val fileUri = AutoBackupManager.createBackupFileInFolder(this, folderUri)
+			if (fileUri != null) {
+				runExport(fileUri, "${AutoBackupManager.displayNameFor(folderUri)} 폴더에 백업을 저장했어요")
+				return
+			}
+		}
+		// 설정에서 폴더를 아직 안 골랐거나(또는 권한이 사라졌으면) 수동 내보내기처럼 그 자리에서
+		// 위치를 고르게 한다.
+		val fileName = "bnote_backup_auto_${System.currentTimeMillis()}.zip"
+		autoBackupFallbackExportLauncher.launch(fileName)
+	}
+
+	private fun runExport(destination: android.net.Uri, successMessage: String) {
+		lifecycleScope.launch {
+			try {
+				BackupManager.export(this@MainActivity, destination)
+				Toast.makeText(this@MainActivity, successMessage, Toast.LENGTH_LONG).show()
+			} catch (e: Exception) {
+				Toast.makeText(
+					this@MainActivity,
+					"자동 백업에 실패했어요: ${e.message}",
+					Toast.LENGTH_LONG
+				).show()
+			}
 		}
 	}
 
