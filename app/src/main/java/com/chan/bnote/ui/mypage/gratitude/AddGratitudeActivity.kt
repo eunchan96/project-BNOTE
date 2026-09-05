@@ -145,9 +145,47 @@ class AddGratitudeActivity : AppCompatActivity() {
 
 	private fun addEntryRow(initialText: String) {
 		val row = layoutInflater.inflate(R.layout.item_gratitude_entry_row, containerEntries, false)
-		row.findViewById<EditText>(R.id.edit_gratitude_entry).setText(initialText)
+		val editText = row.findViewById<EditText>(R.id.edit_gratitude_entry)
+		editText.setText(initialText)
+
+		// textMultiLine이라 길게 쓰면 화면 폭에서 자연스럽게 줄바꿈(래핑)되지만, 실제로 개행 문자
+		// ("\n")가 들어가는 건 막는다 — 각 칸은 어디까지나 한 줄짜리 항목이어야 한다. 키보드마다
+		// 엔터를 처리하는 방식이 조금씩 달라서(어떤 키보드는 그냥 "\n"을 넣어버림), 입력 필터로
+		// 한 번 더 확실히 걸러낸다.
+		editText.filters = arrayOf(android.text.InputFilter { source, _, _, _, _, _ ->
+			if (source.contains("\n")) source.toString().replace("\n", "") else source
+		})
+
+		editText.setOnEditorActionListener { view, actionId, event ->
+			val isEnterKeyDown = event != null &&
+					event.keyCode == android.view.KeyEvent.KEYCODE_ENTER &&
+					event.action == android.view.KeyEvent.ACTION_DOWN
+			if (actionId == android.view.inputmethod.EditorInfo.IME_ACTION_NEXT || isEnterKeyDown) {
+				focusNextRowAfter(view as EditText)
+				true
+			} else if (actionId == android.view.inputmethod.EditorInfo.IME_ACTION_DONE) {
+				view.clearFocus()
+				true
+			} else {
+				false
+			}
+		}
+
 		containerEntries.addView(row)
 		updateImeActionsForRows()
+	}
+
+	/** 지금 칸 다음에 있는 행의 입력칸으로 포커스를 옮긴다(그 행이 맨 마지막이면 아무 일도 안 함). */
+	private fun focusNextRowAfter(current: EditText) {
+		for (i in 0 until containerEntries.childCount) {
+			val row = containerEntries.getChildAt(i)
+			val editText = row.findViewById<EditText>(R.id.edit_gratitude_entry)
+			if (editText === current) {
+				val nextRow = containerEntries.getChildAt(i + 1) ?: return
+				nextRow.findViewById<EditText>(R.id.edit_gratitude_entry).requestFocus()
+				return
+			}
+		}
 	}
 
 	/** 키보드의 엔터 자리에 "다음" 버튼이 뜨게 해서, 다음 칸을 직접 안 눌러도 그대로 넘어갈 수
@@ -172,7 +210,11 @@ class AddGratitudeActivity : AppCompatActivity() {
 		val texts = mutableListOf<String>()
 		for (i in 0 until containerEntries.childCount) {
 			val row = containerEntries.getChildAt(i)
-			val text = row.findViewById<EditText>(R.id.edit_gratitude_entry).text.toString().trim()
+			// 입력 필터로 개행을 걸러내고 있지만, 혹시 다른 경로(자동완성 등)로 섞여 들어왔을 수도
+			// 있으니 저장 직전에도 한 번 더 확실히 없앤다 — 개행이 남아있으면 캘린더 미리보기의
+			// 들여쓰기 계산이 어긋난다.
+			val text = row.findViewById<EditText>(R.id.edit_gratitude_entry).text.toString()
+				.replace("\n", " ").trim()
 			texts.add(text)
 		}
 		return texts

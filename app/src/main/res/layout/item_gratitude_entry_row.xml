@@ -27,6 +27,6 @@
         android:paddingTop="8dp"
         android:paddingBottom="8dp"
         android:background="@null"
-        android:inputType="text"
+        android:inputType="textMultiLine"
         android:imeOptions="actionNext" />
 </LinearLayout>
