@@ -158,7 +158,7 @@ class AddSermonActivity : AppCompatActivity() {
 		}
 
 		findViewById<TextView>(R.id.text_top_bar_title).text =
-			if (isEditMode) "설교 기록 수정" else "설교 기록 추가"
+			if (isEditMode) "설교 노트 수정" else "설교 노트 작성"
 		findViewById<ImageView>(R.id.btn_top_bar_back).setOnClickListener { handleBackPress() }
 		onBackPressedDispatcher.addCallback(
 			this,
