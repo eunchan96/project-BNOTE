@@ -147,6 +147,25 @@ class AddGratitudeActivity : AppCompatActivity() {
 		val row = layoutInflater.inflate(R.layout.item_gratitude_entry_row, containerEntries, false)
 		row.findViewById<EditText>(R.id.edit_gratitude_entry).setText(initialText)
 		containerEntries.addView(row)
+		updateImeActionsForRows()
+	}
+
+	/** 키보드의 엔터 자리에 "다음" 버튼이 뜨게 해서, 다음 칸을 직접 안 눌러도 그대로 넘어갈 수
+	 * 있게 한다(각 칸이 한 줄짜리라 원래 줄바꿈이 필요 없다). 실제로 다음 칸이 있는 행만 "다음"으로
+	 * 보여주고, 맨 마지막 행은 "완료"로 보여준다 — "+ 항목 추가"로 새 행이 생기면 그 직전까지
+	 * "완료"였던 행도 다시 "다음"으로 바뀌어야 하므로 매번 전체를 다시 맞춘다. */
+	private fun updateImeActionsForRows() {
+		val count = containerEntries.childCount
+		for (i in 0 until count) {
+			val editText =
+				containerEntries.getChildAt(i).findViewById<EditText>(R.id.edit_gratitude_entry)
+			val isLast = i == count - 1
+			editText.imeOptions = if (isLast) {
+				android.view.inputmethod.EditorInfo.IME_ACTION_DONE
+			} else {
+				android.view.inputmethod.EditorInfo.IME_ACTION_NEXT
+			}
+		}
 	}
 
 	private fun currentEntryTexts(): List<String> {

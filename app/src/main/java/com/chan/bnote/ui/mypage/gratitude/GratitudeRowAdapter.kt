@@ -9,7 +9,7 @@ import com.chan.bnote.R
 import com.chan.bnote.data.DateUtils
 import com.chan.bnote.data.mypage.gratitude.GratitudeNote
 
-data class GratitudeRowData(val note: GratitudeNote, val previewText: String)
+data class GratitudeRowData(val note: GratitudeNote, val previewText: CharSequence)
 
 class GratitudeRowAdapter(
 	private val rows: List<GratitudeRowData>,
