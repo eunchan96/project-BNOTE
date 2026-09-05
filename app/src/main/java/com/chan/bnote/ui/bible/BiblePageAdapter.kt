@@ -111,6 +111,7 @@ class BiblePageAdapter(private val fragment: BibleFragment) :
 
 		fun cancel() {
 			loadJob?.cancel()
+			scrollbarView.cancelPendingFade()
 		}
 
 		fun currentRecyclerView(): RecyclerView = recyclerView

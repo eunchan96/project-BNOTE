@@ -55,9 +55,7 @@ class VerseScrollbarView @JvmOverloads constructor(
 		val offset = recyclerView.computeVerticalScrollOffset()
 
 		if (range <= extent || height <= 0) {
-			hasContentToShow = false
-			fadeHandler.removeCallbacks(fadeOutRunnable)
-			alpha = 0f
+			hide()
 			return
 		}
 		hasContentToShow = true
@@ -74,6 +72,12 @@ class VerseScrollbarView @JvmOverloads constructor(
 		showThenScheduleFadeOut()
 	}
 
+	private fun hide() {
+		hasContentToShow = false
+		fadeHandler.removeCallbacks(fadeOutRunnable)
+		alpha = 0f
+	}
+
 	/** 지금 바로 보이게 하고(혹시 페이드아웃 중이었다면 멈추고), 잠시 뒤 다시 옅어지도록 예약한다.
 	 * 스크롤이 계속되는 동안엔 매번 이 예약이 새로 걸리므로, 실제로는 스크롤이 멈추고 나서야
 	 * VISIBLE_DURATION_MS만큼 지난 뒤에 사라진다. */
@@ -87,6 +91,13 @@ class VerseScrollbarView @JvmOverloads constructor(
 	override fun onDetachedFromWindow() {
 		super.onDetachedFromWindow()
 		fadeHandler.removeCallbacks(fadeOutRunnable)
+	}
+
+	/** 뷰홀더가 재활용돼서 다른 장으로 바뀔 때 호출한다. 예약해둔 페이드아웃 타이머가 남아있으면
+	 * 새 장의 스크롤바가 뜬금없이 옅어져 버릴 수 있어서, 재활용 시점에 확실히 지워준다. */
+	fun cancelPendingFade() {
+		fadeHandler.removeCallbacks(fadeOutRunnable)
+		animate().cancel()
 	}
 
 	override fun onDraw(canvas: Canvas) {
