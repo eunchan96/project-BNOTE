@@ -22,6 +22,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import com.chan.bnote.R
 import com.chan.bnote.data.AppSettings
+import com.chan.bnote.data.backup.AutoBackupManager
 import com.chan.bnote.data.backup.BackupManager
 import com.chan.bnote.notification.NotificationScheduler
 import com.chan.bnote.ui.mypage.guide.UserGuideActivity
@@ -96,6 +97,17 @@ class SettingsActivity : AppCompatActivity() {
 		ActivityResultContracts.OpenDocument()
 	) { uri ->
 		if (uri != null) confirmImport(uri)
+	}
+
+	/** 자동 내보내기가 저장될 폴더를 한 번 골라두면, 그 다음부턴 매번 위치를 고르지 않고 그 폴더에
+	 * 바로 저장한다(AutoBackupManager 참고). */
+	private val autoBackupFolderLauncher = registerForActivityResult(
+		ActivityResultContracts.OpenDocumentTree()
+	) { uri ->
+		if (uri != null) {
+			AutoBackupManager.saveFolderUri(this, uri)
+			refreshAutoBackupFolderLabel()
+		}
 	}
 
 	override fun onCreate(savedInstanceState: Bundle?) {
@@ -220,6 +232,9 @@ class SettingsActivity : AppCompatActivity() {
 		findViewById<TextView>(R.id.btn_import_data).setOnClickListener {
 			importDataLauncher.launch(arrayOf("application/zip"))
 		}
+
+		setupAutoBackupUi()
+
 		findViewById<TextView>(R.id.menu_user_guide).setOnClickListener {
 			startActivity(Intent(this, UserGuideActivity::class.java))
 		}
@@ -228,6 +243,82 @@ class SettingsActivity : AppCompatActivity() {
 		}
 
 		setupNotificationSettings()
+	}
+
+	/** (일수, 버튼/목록에 보여줄 짧은 이름) 쌍. AppSettings에는 일수로 저장한다. */
+	private val autoBackupIntervalOptions = listOf(
+		7 to "1주",
+		14 to "2주",
+		30 to "1개월",
+		90 to "3개월",
+		180 to "6개월",
+		365 to "1년"
+	)
+
+	private fun setupAutoBackupUi() {
+		val switchAutoBackup = findViewById<Switch>(R.id.switch_auto_backup)
+		val btnInterval = findViewById<TextView>(R.id.btn_auto_backup_interval)
+		val rowFolder = findViewById<View>(R.id.row_auto_backup_folder)
+
+		fun updateIntervalLabel() {
+			val days = AppSettings.getAutoBackupIntervalDays(this)
+			val label = autoBackupIntervalOptions.firstOrNull { it.first == days }?.second ?: "1개월"
+			// 매일 말씀 알림·통독 리마인더의 시간 버튼("오전 8:00 ▾")과 같은 형식으로 통일.
+			btnInterval.text = "$label ▾"
+		}
+
+		fun refreshFolderRowVisibility(enabled: Boolean) {
+			rowFolder.visibility = if (enabled) View.VISIBLE else View.GONE
+		}
+
+		switchAutoBackup.isChecked = AppSettings.isAutoBackupEnabled(this)
+		updateIntervalLabel()
+		refreshAutoBackupFolderLabel()
+		refreshFolderRowVisibility(switchAutoBackup.isChecked)
+
+		switchAutoBackup.setOnCheckedChangeListener { _, checked ->
+			AppSettings.setAutoBackupEnabled(this, checked)
+			refreshFolderRowVisibility(checked)
+			// 처음 켤 때 폴더를 아직 안 골라뒀으면, 그 자리에서 바로 고르게 한다.
+			if (checked && AutoBackupManager.getFolderUri(this) == null) {
+				autoBackupFolderLauncher.launch(null)
+			}
+		}
+		findViewById<View>(R.id.row_auto_backup_toggle).setOnClickListener {
+			switchAutoBackup.isChecked = !switchAutoBackup.isChecked
+		}
+
+		rowFolder.setOnClickListener {
+			autoBackupFolderLauncher.launch(null)
+		}
+
+		btnInterval.setOnClickListener {
+			val labels = autoBackupIntervalOptions.map { it.second }.toTypedArray()
+			val currentDays = AppSettings.getAutoBackupIntervalDays(this)
+			val currentIndex = autoBackupIntervalOptions.indexOfFirst { it.first == currentDays }
+				.coerceAtLeast(0)
+
+			MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_BNOTE_Dialog)
+				.setTitle("자동 내보내기 주기")
+				.setSingleChoiceItems(labels, currentIndex) { dialog, which ->
+					val chosenDays = autoBackupIntervalOptions[which].first
+					AppSettings.setAutoBackupIntervalDays(this, chosenDays)
+					updateIntervalLabel()
+					dialog.dismiss()
+				}
+				.setNegativeButton("취소", null)
+				.show()
+		}
+	}
+
+	private fun refreshAutoBackupFolderLabel() {
+		val textFolder = findViewById<TextView>(R.id.text_auto_backup_folder)
+		val folderUri = AutoBackupManager.getFolderUri(this)
+		textFolder.text = if (folderUri != null) {
+			AutoBackupManager.displayNameFor(folderUri)
+		} else {
+			"선택 안 함"
+		}
 	}
 
 	private fun confirmImport(uri: android.net.Uri) {

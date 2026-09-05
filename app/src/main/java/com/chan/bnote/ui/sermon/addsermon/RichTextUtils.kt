@@ -24,9 +24,16 @@ object RichTextUtils {
 	fun toEditable(raw: String): CharSequence {
 		if (raw.isEmpty() || !looksLikeHtml(raw)) return raw
 		var restored = HtmlCompat.fromHtml(raw, HtmlCompat.FROM_HTML_MODE_LEGACY) as CharSequence
-		// Html.fromHtml이 문단마다 붙이는 끝 개행을 하나 정리한다.
-		if (restored.isNotEmpty() && restored.last() == '\n') {
-			restored = restored.subSequence(0, restored.length - 1)
+		// Html.fromHtml이 문단(<p>)마다 뒤에 개행을 붙이는데, 마지막 문단 뒤에도 그대로 남아서
+		// 끝에 원치 않는 개행이 생긴다. 정확히 하나만 남는 게 아니라 문단 구성에 따라 여러 개가
+		// 남을 수 있어서(그래서 "가끔"만 문제로 보였던 것), 끝에 남은 개행을 개수 상관없이 전부
+		// 정리한다. subSequence를 쓰므로 굵게·밑줄 같은 서식(Span)은 그대로 유지된다.
+		var trimmedLength = restored.length
+		while (trimmedLength > 0 && restored[trimmedLength - 1] == '\n') {
+			trimmedLength--
+		}
+		if (trimmedLength != restored.length) {
+			restored = restored.subSequence(0, trimmedLength)
 		}
 		return restored
 	}

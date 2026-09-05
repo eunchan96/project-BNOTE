@@ -8,6 +8,7 @@
          그리는 선택 배경은 우리가 이미 칠해둔 하이라이트 배경보다 먼저 그려지는 구조라 하이라이트에
          가려 안 보였는데, 이건 하이라이트와 똑같이 스패너블에 직접 얹는 배경 스팬이라 그 위에 그려진다. -->
     <color name="verse_selection_background">#B0B0B0</color>
+    <color name="verse_scrollbar_thumb">#B3707070</color>
     <color name="brown_primary_dark">#5D4037</color>
     <color name="brown_light">#A1887F</color>
 

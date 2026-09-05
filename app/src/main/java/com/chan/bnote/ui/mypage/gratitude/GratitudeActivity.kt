@@ -245,7 +245,7 @@ class GratitudeActivity : AppCompatActivity() {
 
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(applicationContext)
-			val rows = GratitudeRowBuilder.build(db, notes)
+			val rows = GratitudeRowBuilder.build(applicationContext, db, notes)
 			recyclerView.adapter = GratitudeRowAdapter(rows) { note ->
 				editLauncher.launch(
 					AddGratitudeActivity.editIntent(
