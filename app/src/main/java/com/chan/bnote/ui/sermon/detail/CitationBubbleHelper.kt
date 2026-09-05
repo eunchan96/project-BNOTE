@@ -121,9 +121,14 @@ object CitationBubbleHelper {
 			}
 			val matchedVerses = group.segments.flatMap { it.start..it.end }.toSet()
 			val allVerses = db.bibleDao().getVerses("NKRV", citation.bookId, group.chapter)
-			val bodyText = allVerses.filter { it.verse in matchedVerses }
-				.sortedBy { it.verse }
-				.joinToString("\n") { it.text }
+			val sortedVerses = allVerses.filter { it.verse in matchedVerses }.sortedBy { it.verse }
+			// 절이 하나뿐이면 굳이 번호를 안 붙이고, 여러 절이면 줄바꿈만으로는 구분이 잘 안 되니
+			// 각 줄 앞에 [절번호]를 붙여서 어느 절인지 바로 알 수 있게 한다.
+			val bodyText = if (sortedVerses.size > 1) {
+				sortedVerses.joinToString("\n") { "[${it.verse}] ${it.text}" }
+			} else {
+				sortedVerses.joinToString("\n") { it.text }
+			}
 
 			"$bookName ${group.chapter}${BibleBooks.chapterUnit(citation.bookId)} ${versesLabel}절\n$bodyText"
 		}
@@ -158,7 +163,13 @@ object CitationBubbleHelper {
 			setTextColor(Color.WHITE)
 			textSize = 13f
 			val horizontalPad = (16 * density).toInt()
-			setPadding(horizontalPad, (12 * density).toInt(), horizontalPad, (16 * density).toInt())
+			val verticalPad = (12 * density).toInt()
+			// TriangleBubbleDrawable은 뷰 맨 아래 tailHeight(8dp)만큼을 꼬리 삼각형으로 잘라서
+			// 그린다. background는 padding 영역까지 포함해서 뷰 전체를 채우므로, 텍스트가 실제로
+			// 놓이는 "박스" 부분(꼬리 제외)을 기준으로 위/아래 여백을 시각적으로 맞추려면 아래쪽
+			// 패딩에 꼬리 높이만큼을 더 얹어야 한다. 안 그러면 텍스트가 꼬리 쪽으로 치우쳐 보인다.
+			val tailHeightPx = (8 * density).toInt()
+			setPadding(horizontalPad, verticalPad, horizontalPad, verticalPad + tailHeightPx)
 			background = TriangleBubbleDrawable(tailRatio, density)
 		}
 
