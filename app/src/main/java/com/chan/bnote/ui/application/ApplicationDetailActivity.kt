@@ -52,6 +52,22 @@ class ApplicationDetailActivity : AppCompatActivity() {
 		}
 	}
 
+	/** "감사 노트도 작성하기"로 새로 작성하고 저장을 완료하면, 이 상세 화면으로 그냥 돌아오는 대신
+	 * 방금 쓴 감사 노트(그 날짜)가 바로 보이는 감사 노트 화면으로 이동시킨다. */
+	private val writeGratitudeLauncher = registerForActivityResult(
+		ActivityResultContracts.StartActivityForResult()
+	) { result ->
+		val dateMillis = currentApplication?.applicationDate
+		if (result.resultCode == Activity.RESULT_OK && dateMillis != null) {
+			startActivity(
+				com.chan.bnote.ui.mypage.gratitude.GratitudeActivity.intentForDate(
+					this,
+					dateMillis
+				)
+			)
+		}
+	}
+
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 		enableEdgeToEdge()
@@ -262,7 +278,7 @@ class ApplicationDetailActivity : AppCompatActivity() {
 			} else {
 				btnGratitude.text = "감사 노트도 작성하기"
 				btnGratitude.setOnClickListener {
-					startActivity(
+					writeGratitudeLauncher.launch(
 						com.chan.bnote.ui.mypage.gratitude.AddGratitudeActivity
 							.createIntent(
 								this@ApplicationDetailActivity,
