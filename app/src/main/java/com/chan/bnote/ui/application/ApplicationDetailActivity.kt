@@ -208,16 +208,45 @@ class ApplicationDetailActivity : AppCompatActivity() {
 			infoView.text = infoBuilder
 			infoView.movementMethod = android.text.method.LinkMovementMethod.getInstance()
 
-			findViewById<TextView>(R.id.text_detail_meditation).text =
+			val textHintColor =
+				androidx.core.content.ContextCompat.getColor(
+					this@ApplicationDetailActivity,
+					R.color.text_hint
+				)
+			val textPrimaryColor =
+				androidx.core.content.ContextCompat.getColor(
+					this@ApplicationDetailActivity,
+					R.color.text_primary
+				)
+
+			findViewById<TextView>(R.id.text_detail_meditation).apply {
 				if (application.meditationMemo.isBlank()) {
-					"묵상 내용이 없어요"
+					text = "묵상 내용이 없어요"
+					setTextColor(textHintColor)
 				} else {
-					com.chan.bnote.ui.sermon.addsermon.RichTextUtils.toEditable(application.meditationMemo)
+					text =
+						com.chan.bnote.ui.sermon.addsermon.RichTextUtils.toEditable(application.meditationMemo)
+					setTextColor(textPrimaryColor)
 				}
-			findViewById<TextView>(R.id.text_detail_prayer).text =
-				application.prayerMemo.ifBlank { "기도 내용이 없어요" }
-			findViewById<TextView>(R.id.text_detail_obedience).text =
-				application.obedienceMemo.ifBlank { "순종 내용이 없어요" }
+			}
+			findViewById<TextView>(R.id.text_detail_prayer).apply {
+				if (application.prayerMemo.isBlank()) {
+					text = "기도 내용이 없어요"
+					setTextColor(textHintColor)
+				} else {
+					text = application.prayerMemo
+					setTextColor(textPrimaryColor)
+				}
+			}
+			findViewById<TextView>(R.id.text_detail_obedience).apply {
+				if (application.obedienceMemo.isBlank()) {
+					text = "순종 내용이 없어요"
+					setTextColor(textHintColor)
+				} else {
+					text = application.obedienceMemo
+					setTextColor(textPrimaryColor)
+				}
+			}
 
 			val existingGratitudeNote =
 				db.gratitudeNoteDao().getByDate(application.applicationDate).firstOrNull()
