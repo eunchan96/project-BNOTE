@@ -363,23 +363,63 @@ class AddSermonActivity : AppCompatActivity() {
 			return
 		}
 
-		for (ref in bibleRefs) {
+		for (i in 0 until bibleRefs.size - 1) {
+			val ref = bibleRefs[i]
 			flexboxRefs.addView(
 				buildRefBox(ref.toDisplayLabel(), fullWidth = false) {
 					openBibleRangePicker(existing = ref)
 				}
 			)
 		}
+
+		// 마지막 본문 박스는 "+" 버튼과 하나의 묶음(LinearLayout)으로 만들어서 flexbox에 통째로
+		// 하나의 항목으로 넣는다 — flexbox는 항목 하나하나를 따로 줄바꿈 여부를 판단하므로, 그냥
+		// 나열만 하면 줄이 애매하게 남았을 때 "+" 버튼만 혼자 다음 줄로 떨어질 수 있다. 묶어두면
+		// 그 둘이 항상 같이 다니고(줄이 부족하면 묶음 전체가 다음 줄로 넘어감), 앞줄에 남는
+		// 박스들도 "+" 버튼 몫까지 정확히 계산해서 그 줄을 끝까지 채울 수 있다.
+		val lastRef = bibleRefs.last()
+		val lastBox = buildRefBox(lastRef.toDisplayLabel(), fullWidth = false) {
+			openBibleRangePicker(existing = lastRef)
+		}
 		val addButton = buildAddSquareButton { openBibleRangePicker(existing = null) }
-		flexboxRefs.addView(addButton)
+
+		// buildRefBox/buildAddSquareButton이 만들어준 FlexboxLayout.LayoutParams는 이 묶음
+		// 안(일반 LinearLayout)에서는 그대로 안 통하므로, 여기서 실제로 쓰일
+		// LinearLayout.LayoutParams로 새로 지정한다. lastBox는 폭을 0dp로 두지 않고
+		// wrap_content + weight=1로 둬서 "일단 제 글자 크기만큼은 꼭 차지하고, 묶음이 늘어나면
+		// 그 늘어난 만큼만 추가로 흡수"하게 한다(0dp+weight로 두면 또 처음부터 거의 0폭으로
+		// 측정돼서 "박스 안에서 줄바꿈"되는 예전 버그가 재발한다). addButton은 고정 정사각형.
+		lastBox.layoutParams = LinearLayout.LayoutParams(
+			ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, 1f
+		).apply { marginEnd = dp(8) }
+		addButton.layoutParams =
+			LinearLayout.LayoutParams(
+				ViewGroup.LayoutParams.WRAP_CONTENT,
+				ViewGroup.LayoutParams.WRAP_CONTENT
+			)
+
+		val lastGroup = LinearLayout(this).apply {
+			orientation = LinearLayout.HORIZONTAL
+			addView(lastBox)
+			addView(addButton)
+			layoutParams = com.google.android.flexbox.FlexboxLayout.LayoutParams(
+				ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
+			).apply {
+				flexGrow = 1f
+				flexShrink = 0f
+				bottomMargin = dp(8)
+			}
+		}
+		flexboxRefs.addView(lastGroup)
 
 		// 본문 박스들이 실제로 배치된 뒤, 그 높이에 맞춰 "+" 버튼을 정확히 정사각형으로 맞춘다.
+		// flexboxRefs.getChildAt(0)을 쓰면 본문이 1개뿐일 때 그게 lastGroup 자신이 돼서(그 안에
+		// 아직 정사각형으로 안 맞춰진 addButton이 포함된 채로 측정되는) 순환 참조가 생겨 버튼이
+		// 점점 커지는 문제가 있었다 — 항상 실제 박스인 lastBox에서 직접 높이를 가져온다.
 		flexboxRefs.post {
-			val refBox = flexboxRefs.getChildAt(0)
-			val height = refBox?.height ?: 0
+			val height = lastBox.height
 			if (height > 0) {
-				val lp =
-					addButton.layoutParams as com.google.android.flexbox.FlexboxLayout.LayoutParams
+				val lp = addButton.layoutParams as LinearLayout.LayoutParams
 				lp.height = height
 				lp.width = height
 				addButton.layoutParams = lp
@@ -414,8 +454,6 @@ class AddSermonActivity : AppCompatActivity() {
 			this.text = text
 			textSize = 15f
 			gravity = Gravity.START or Gravity.CENTER_VERTICAL
-			maxLines = 1
-			ellipsize = android.text.TextUtils.TruncateAt.END
 			setPadding(dp(12), dp(8), dp(12), dp(8))
 			setTextColor(ContextCompat.getColor(this@AddSermonActivity, R.color.text_primary))
 			background =
@@ -423,12 +461,26 @@ class AddSermonActivity : AppCompatActivity() {
 			isClickable = true
 			isFocusable = true
 			layoutParams = com.google.android.flexbox.FlexboxLayout.LayoutParams(
-				if (fullWidth) ViewGroup.LayoutParams.MATCH_PARENT else 0,
+				if (fullWidth) ViewGroup.LayoutParams.MATCH_PARENT else ViewGroup.LayoutParams.WRAP_CONTENT,
 				ViewGroup.LayoutParams.WRAP_CONTENT
 			).apply {
+				// width가 wrap_content라서(= flexBasis가 "이 박스의 원래 텍스트 크기") flexGrow를
+				// 다시 켜도 안전하다 — 전에 "박스 안에서 텍스트가 줄바꿈"되던 버그는 width를
+				// 0dp로 뒀을 때(flexbox가 박스를 먼저 거의 0폭으로 측정한 뒤 늘리는 방식)만
+				// 생기던 문제였다. flexGrow=1로 두면, 한 줄에 들어간 박스들이 그 줄의 남는
+				// 공간을("+" 버튼은 flexGrow가 없어 고정 크기라 자연히 제외되고) 서로 나눠
+				// 가지면서 줄 전체를 꽉 채운다. flexShrink=0은 그대로 둬서, 그래도 안 맞으면
+				// 줄어드는 대신 다음 줄로 넘어간다.
 				flexGrow = 1f
-				marginEnd = dp(4)
-				bottomMargin = dp(4)
+				flexShrink = 0f
+				// 설교자/카테고리 박스는 각각 marginEnd 4dp + marginStart 4dp를 따로 갖고 있어서
+				// (안드로이드는 마진을 자동으로 안 합쳐주므로) 실제 간격이 8dp다. 본문 박스는
+				// marginEnd만 있었어서 그 절반(4dp)밖에 안 됐던 것 — 8dp로 맞춘다. 마지막 본문
+				// 박스의 marginEnd가 곧 "+" 버튼과의 간격이므로 그쪽도 같이 맞춰진다. 단,
+				// fullWidth(본문을 아직 하나도 안 골랐을 때의 "본문 선택" 박스 하나뿐인 경우)는
+				// 뒤에 다른 박스가 없으니 marginEnd를 주면 오른쪽에 불필요한 공백만 생긴다.
+				if (!fullWidth) marginEnd = dp(8)
+				bottomMargin = dp(8)
 			}
 			setOnClickListener { onClick() }
 		}

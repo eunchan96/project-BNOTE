@@ -102,11 +102,16 @@
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:layout_marginTop="8dp"
-                    android:gravity="center_vertical">
+                    android:gravity="top">
 
+                    <!-- 본문 박스가 길어져서 여러 줄이 되더라도, "본문" 라벨은 항상 첫 줄에
+                         맞춰 보이도록 gravity를 top으로 두고 박스와 똑같은 상하 패딩(8dp)을
+                         준다 — 그래야 라벨 텍스트가 첫 줄 박스들의 텍스트와 정확히 나란해진다. -->
                     <TextView
                         android:layout_width="44dp"
                         android:layout_height="wrap_content"
+                        android:paddingTop="8dp"
+                        android:paddingBottom="8dp"
                         android:text="본문"
                         android:textSize="15sp"
                         android:textColor="@color/text_secondary" />
@@ -121,14 +126,14 @@
                 </LinearLayout>
 
                 <!-- 설교 (설교자 + 카테고리)
-                     본문 구절 칩(buildRefBox)마다 bottomMargin 4dp가 이미 붙어있어서(여러 줄로
-                     넘칠 때 줄 간격용), 이 행의 marginTop을 8dp로 그대로 두면 "제목→본문"(8dp)보다
-                     "본문→설교"(4+8=12dp) 간격이 더 벌어져 보인다. 4dp로 줄여서 4+4=8dp로 맞춘다. -->
+                     본문 구절 칩(buildRefBox)마다 bottomMargin 8dp가 이미 붙어있어서(여러 줄로
+                     넘칠 때 줄 간격용), 이 행에 marginTop을 더 주면 "제목→본문"(8dp)보다
+                     "본문→설교"(8dp+marginTop) 간격이 더 벌어져 보인다. marginTop 없이 0으로
+                     둬서 8dp로 맞춘다. -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:layout_marginTop="4dp"
                     android:gravity="center_vertical">
 
                     <TextView
