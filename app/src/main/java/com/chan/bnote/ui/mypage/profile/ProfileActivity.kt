@@ -36,7 +36,6 @@ import com.chan.bnote.ui.sermon.bycalendar.CalendarDayCell
 import com.chan.bnote.ui.sermon.bycalendar.CalendarGridAdapter
 import com.chan.bnote.ui.sermon.bycalendar.MonthYearPickerBottomSheet
 import com.chan.bnote.ui.sermon.detail.SermonDetailActivity
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 import java.util.Calendar
 
@@ -419,33 +418,38 @@ class ProfileActivity : AppCompatActivity() {
 	}
 
 	/** 캘린더에서 날짜를 누르면, 그날 쓴 설교노트·적용·감사 노트·기도제목을 한 목록으로 모아서
-	 * 보여준다. 항목을 고르면 그 상세 화면(또는 감사 노트·기도제목처럼 상세가 따로 없는 것들은
-	 * 그 목록 화면)으로 이동한다. */
+	 * bottom sheet로 보여준다(캘린더 점과 같은 색으로 구분). 항목을 고르면 그 상세 화면(또는
+	 * 감사 노트·기도제목처럼 상세가 따로 없는 것들은 그 목록 화면)으로 이동한다. */
 	private fun showActivitiesForDate(dateMillis: Long) {
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(applicationContext)
-
-			data class ActivityItem(val label: String, val onClick: () -> Unit)
-
-			val items = mutableListOf<ActivityItem>()
+			val entries = mutableListOf<DailyActivitiesBottomSheet.Entry>()
 
 			db.sermonDao().getByDate(dateMillis).forEach { sermon ->
-				items.add(
-					ActivityItem("[설교] ${sermon.title.ifBlank { "제목 없음" }}") {
-						SermonDetailActivity.start(this@ProfileActivity, sermon.id)
-					}
+				entries.add(
+					DailyActivitiesBottomSheet.Entry(
+						typeLabel = "설교노트",
+						title = sermon.title.ifBlank { "제목 없음" },
+						colorHex = "#43A047"
+					) { SermonDetailActivity.start(this@ProfileActivity, sermon.id) }
 				)
 			}
 			db.applicationDao().getByDate(dateMillis).forEach { application ->
-				items.add(
-					ActivityItem("[적용] ${application.title.ifBlank { "제목 없음" }}") {
-						ApplicationDetailActivity.start(this@ProfileActivity, application.id)
-					}
+				entries.add(
+					DailyActivitiesBottomSheet.Entry(
+						typeLabel = "적용",
+						title = application.title.ifBlank { "제목 없음" },
+						colorHex = "#8E24AA"
+					) { ApplicationDetailActivity.start(this@ProfileActivity, application.id) }
 				)
 			}
 			if (db.gratitudeNoteDao().getByDate(dateMillis).isNotEmpty()) {
-				items.add(
-					ActivityItem("[감사 노트]") {
+				entries.add(
+					DailyActivitiesBottomSheet.Entry(
+						typeLabel = "감사 노트",
+						title = "이 날의 감사 노트 보기",
+						colorHex = "#FDD835"
+					) {
 						startActivity(
 							GratitudeActivity.intentForDate(
 								this@ProfileActivity,
@@ -458,8 +462,12 @@ class ProfileActivity : AppCompatActivity() {
 			db.prayerRequestDao().getAll()
 				.filter { DateUtils.normalizeToDayStart(it.createdAt) == dateMillis }
 				.forEach { prayer ->
-					items.add(
-						ActivityItem("[기도제목] ${prayer.content.take(30)}") {
+					entries.add(
+						DailyActivitiesBottomSheet.Entry(
+							typeLabel = "기도제목",
+							title = prayer.content,
+							colorHex = "#795548"
+						) {
 							startActivity(
 								Intent(
 									this@ProfileActivity,
@@ -470,18 +478,16 @@ class ProfileActivity : AppCompatActivity() {
 					)
 				}
 
-			if (items.isEmpty()) return@launch
+			if (entries.isEmpty()) return@launch
 
 			val cal = Calendar.getInstance().apply { timeInMillis = dateMillis }
 			val dateLabel =
 				"${cal.get(Calendar.YEAR)}년 ${cal.get(Calendar.MONTH) + 1}월 ${cal.get(Calendar.DAY_OF_MONTH)}일"
 
-			MaterialAlertDialogBuilder(this@ProfileActivity, R.style.ThemeOverlay_BNOTE_Dialog)
-				.setTitle(dateLabel)
-				.setItems(items.map { it.label }.toTypedArray()) { _, which ->
-					items[which].onClick()
-				}
-				.show()
+			DailyActivitiesBottomSheet().apply {
+				this.dateLabel = dateLabel
+				this.entries = entries
+			}.show(supportFragmentManager, "daily_activities")
 		}
 	}
 

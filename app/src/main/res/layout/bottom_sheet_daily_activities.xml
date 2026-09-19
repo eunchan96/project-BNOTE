@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?><!-- 내 정보 화면 캘린더에서 날짜를 눌렀을 때 그날 쓴 것들을 보여주는 목록. 다른 bottom sheet들과
+     같은 언어(고정 높이, 드래그 없음, 항목 선택/바깥 탭/뒤로가기로 닫힘)를 쓴다. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@color/surface_elevated">
+
+    <TextView
+        android:id="@+id/text_sheet_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
+        android:paddingTop="18dp"
+        android:paddingBottom="4dp"
+        android:textSize="17sp"
+        android:textStyle="bold"
+        android:textColor="@color/text_primary"
+        tools:text="9월 19일" />
+
+    <com.chan.bnote.ui.common.MaxHeightScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:maxHeight="420dp">
+
+        <LinearLayout
+            android:id="@+id/container_activity_rows"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingTop="8dp"
+            android:paddingBottom="20dp" />
+    </com.chan.bnote.ui.common.MaxHeightScrollView>
+
+</LinearLayout>
