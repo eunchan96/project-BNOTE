@@ -23,16 +23,20 @@ import com.chan.bnote.R
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.DateUtils
 import com.chan.bnote.data.mypage.profile.ProfileDisplay
+import com.chan.bnote.ui.application.ApplicationDetailActivity
 import com.chan.bnote.ui.bible.BookmarkListActivity
 import com.chan.bnote.ui.bible.HighlightListActivity
 import com.chan.bnote.ui.bible.memo.MemoListActivity
 import com.chan.bnote.ui.bible.scrap.ScrapActivity
+import com.chan.bnote.ui.mypage.gratitude.GratitudeActivity
 import com.chan.bnote.ui.mypage.memorization.MemorizationVerseListActivity
 import com.chan.bnote.ui.mypage.prayer.PrayerRequestActivity
 import com.chan.bnote.ui.sermon.SermonSearchActivity
 import com.chan.bnote.ui.sermon.bycalendar.CalendarDayCell
 import com.chan.bnote.ui.sermon.bycalendar.CalendarGridAdapter
 import com.chan.bnote.ui.sermon.bycalendar.MonthYearPickerBottomSheet
+import com.chan.bnote.ui.sermon.detail.SermonDetailActivity
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 import java.util.Calendar
 
@@ -410,7 +414,74 @@ class ProfileActivity : AppCompatActivity() {
 
 			val cells = buildActivityMonthCells(calendarYear, calendarMonth0, colorsByDate)
 			findViewById<RecyclerView>(R.id.recycler_profile_calendar_grid).adapter =
-				CalendarGridAdapter(cells, -1L) { /* 보기 전용 — 눌러도 아무 동작 없음 */ }
+				CalendarGridAdapter(cells, -1L) { cell -> showActivitiesForDate(cell.dateMillis) }
+		}
+	}
+
+	/** 캘린더에서 날짜를 누르면, 그날 쓴 설교노트·적용·감사 노트·기도제목을 한 목록으로 모아서
+	 * 보여준다. 항목을 고르면 그 상세 화면(또는 감사 노트·기도제목처럼 상세가 따로 없는 것들은
+	 * 그 목록 화면)으로 이동한다. */
+	private fun showActivitiesForDate(dateMillis: Long) {
+		lifecycleScope.launch {
+			val db = BibleDatabase.getInstance(applicationContext)
+
+			data class ActivityItem(val label: String, val onClick: () -> Unit)
+
+			val items = mutableListOf<ActivityItem>()
+
+			db.sermonDao().getByDate(dateMillis).forEach { sermon ->
+				items.add(
+					ActivityItem("[설교] ${sermon.title.ifBlank { "제목 없음" }}") {
+						SermonDetailActivity.start(this@ProfileActivity, sermon.id)
+					}
+				)
+			}
+			db.applicationDao().getByDate(dateMillis).forEach { application ->
+				items.add(
+					ActivityItem("[적용] ${application.title.ifBlank { "제목 없음" }}") {
+						ApplicationDetailActivity.start(this@ProfileActivity, application.id)
+					}
+				)
+			}
+			if (db.gratitudeNoteDao().getByDate(dateMillis).isNotEmpty()) {
+				items.add(
+					ActivityItem("[감사 노트]") {
+						startActivity(
+							GratitudeActivity.intentForDate(
+								this@ProfileActivity,
+								dateMillis
+							)
+						)
+					}
+				)
+			}
+			db.prayerRequestDao().getAll()
+				.filter { DateUtils.normalizeToDayStart(it.createdAt) == dateMillis }
+				.forEach { prayer ->
+					items.add(
+						ActivityItem("[기도제목] ${prayer.content.take(30)}") {
+							startActivity(
+								Intent(
+									this@ProfileActivity,
+									PrayerRequestActivity::class.java
+								)
+							)
+						}
+					)
+				}
+
+			if (items.isEmpty()) return@launch
+
+			val cal = Calendar.getInstance().apply { timeInMillis = dateMillis }
+			val dateLabel =
+				"${cal.get(Calendar.YEAR)}년 ${cal.get(Calendar.MONTH) + 1}월 ${cal.get(Calendar.DAY_OF_MONTH)}일"
+
+			MaterialAlertDialogBuilder(this@ProfileActivity, R.style.ThemeOverlay_BNOTE_Dialog)
+				.setTitle(dateLabel)
+				.setItems(items.map { it.label }.toTypedArray()) { _, which ->
+					items[which].onClick()
+				}
+				.show()
 		}
 	}
 
