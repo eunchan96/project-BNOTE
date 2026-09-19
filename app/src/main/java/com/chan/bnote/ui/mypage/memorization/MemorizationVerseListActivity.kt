@@ -10,7 +10,6 @@ import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
@@ -199,25 +198,12 @@ class MemorizationVerseListActivity : AppCompatActivity() {
 	}
 
 	private fun buildDialogEditText(hintText: String): EditText {
-		return EditText(this).apply {
-			hint = hintText
-			setPadding(48, 32, 48, 32)
-			textSize = 15f
-			background = ContextCompat.getDrawable(
-				this@MemorizationVerseListActivity,
-				R.drawable.bg_book_button
-			)
-		}
+		return com.chan.bnote.ui.common.DialogStyle.buildEditText(this, hintText)
 	}
 
 	private fun wrapInDialogContainer(view: EditText): FrameLayout {
-		return FrameLayout(this).apply {
-			setPadding(dp(24), dp(16), dp(24), dp(0))
-			addView(view)
-		}
+		return com.chan.bnote.ui.common.DialogStyle.wrapInDialogContainer(this, view)
 	}
-
-	private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
 
 	private fun loadGroupVerses(group: MemorizationGroup) {
 		lifecycleScope.launch {

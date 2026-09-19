@@ -2,13 +2,10 @@ package com.chan.bnote.ui.sermon.category
 
 import android.os.Bundle
 import android.view.View
-import android.widget.EditText
-import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
@@ -162,18 +159,10 @@ class CategoryManageActivity : AppCompatActivity() {
 	}
 
 	private fun showEditDialog(existing: SermonCategory?) {
-		val editText = EditText(this).apply {
-			hint = "카테고리 이름"
-			setText(existing?.name ?: "")
-			setPadding(48, 32, 48, 32)
-			textSize = 15f
-			background =
-				ContextCompat.getDrawable(this@CategoryManageActivity, R.drawable.bg_book_button)
-		}
-		val container = FrameLayout(this).apply {
-			setPadding(dp(24), dp(16), dp(24), dp(0))
-			addView(editText)
-		}
+		val editText = com.chan.bnote.ui.common.DialogStyle.buildEditText(
+			this, "카테고리 이름", existing?.name ?: ""
+		)
+		val container = com.chan.bnote.ui.common.DialogStyle.wrapInDialogContainer(this, editText)
 
 		MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_BNOTE_Dialog)
 			.setTitle(if (existing == null) "카테고리 추가" else "카테고리 수정")
@@ -251,7 +240,5 @@ class CategoryManageActivity : AppCompatActivity() {
 			.setNegativeButton("취소", null)
 			.show()
 	}
-
-	private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
 
 }

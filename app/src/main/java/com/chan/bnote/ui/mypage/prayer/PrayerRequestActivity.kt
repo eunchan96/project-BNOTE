@@ -1,15 +1,11 @@
 package com.chan.bnote.ui.mypage.prayer
 
 import android.os.Bundle
-import android.view.Gravity
 import android.view.View
-import android.widget.EditText
-import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
@@ -86,62 +82,16 @@ class PrayerRequestActivity : AppCompatActivity() {
 	}
 
 	private fun showAddDialog() {
-		val editText = buildDialogEditText()
-		val container = wrapInDialogContainer(editText)
-		MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_BNOTE_Dialog)
-			.setTitle("기도제목 추가")
-			.setView(container)
-			.setPositiveButton("추가") { _, _ ->
-				val text = editText.text.toString().trim()
-				if (text.isNotEmpty()) {
-					lifecycleScope.launch {
-						val db = BibleDatabase.getInstance(applicationContext)
-						db.prayerRequestDao().insert(PrayerRequest(content = text))
-						loadItems()
-					}
-				}
-			}
-			.setNegativeButton("취소", null)
-			.show()
+		PrayerRequestEditorBottomSheet().apply {
+			onChanged = { loadItems() }
+		}.show(supportFragmentManager, "prayer_editor")
 	}
 
 	private fun showEditDialog(item: PrayerRequest) {
-		val editText = buildDialogEditText().apply { setText(item.content) }
-		val container = wrapInDialogContainer(editText)
-		MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_BNOTE_Dialog)
-			.setTitle("기도제목 수정")
-			.setView(container)
-			.setPositiveButton("저장") { _, _ ->
-				val text = editText.text.toString().trim()
-				if (text.isNotEmpty()) {
-					lifecycleScope.launch {
-						val db = BibleDatabase.getInstance(applicationContext)
-						db.prayerRequestDao().update(item.copy(content = text))
-						loadItems()
-					}
-				}
-			}
-			.setNegativeButton("취소", null)
-			.show()
-	}
-
-	private fun buildDialogEditText(): EditText {
-		return EditText(this).apply {
-			hint = "기도제목을 적어보세요"
-			setPadding(48, 32, 48, 32)
-			textSize = 15f
-			minLines = 3
-			gravity = Gravity.TOP or Gravity.START
-			background =
-				ContextCompat.getDrawable(this@PrayerRequestActivity, R.drawable.bg_book_button)
-		}
-	}
-
-	private fun wrapInDialogContainer(editText: EditText): FrameLayout {
-		return FrameLayout(this).apply {
-			setPadding(dp(24), dp(16), dp(24), dp(0))
-			addView(editText)
-		}
+		PrayerRequestEditorBottomSheet().apply {
+			existing = item
+			onChanged = { loadItems() }
+		}.show(supportFragmentManager, "prayer_editor")
 	}
 
 	private fun confirmDelete(item: PrayerRequest) {
@@ -158,6 +108,4 @@ class PrayerRequestActivity : AppCompatActivity() {
 			.setNegativeButton("취소", null)
 			.show()
 	}
-
-	private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
 }

@@ -37,9 +37,12 @@
         <item name="android:backgroundDimEnabled">true</item>
     </style>
 
-    <!-- 카테고리/설교자/그룹 추가·수정 등에 쓰는 입력 다이얼로그 공용 스타일 -->
+    <!-- 카테고리/설교자/그룹 추가·수정 등에 쓰는 입력 다이얼로그 공용 스타일.
+         배경을 원래 크림색(dialog_background)에서 흰색(surface_elevated)으로 바꿨다 —
+         bottom sheet들과 같은 배경이어야 그 안의 테두리 입력칸(bg_memo_box_outline 등)이
+         실제로 잘 구분돼 보이고, 앱 전체적으로도 느낌이 통일된다. -->
     <style name="ThemeOverlay.BNOTE.Dialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
-        <item name="colorSurface">@color/dialog_background</item>
+        <item name="colorSurface">@color/surface_elevated</item>
         <item name="materialAlertDialogTitleTextStyle">@style/BNOTE.Dialog.TitleText</item>
     </style>
 
