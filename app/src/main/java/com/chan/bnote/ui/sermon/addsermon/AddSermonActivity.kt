@@ -27,6 +27,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.doOnPreDraw
 import androidx.lifecycle.lifecycleScope
 import coil.load
 import com.chan.bnote.R
@@ -416,13 +417,72 @@ class AddSermonActivity : AppCompatActivity() {
 		// flexboxRefs.getChildAt(0)을 쓰면 본문이 1개뿐일 때 그게 lastGroup 자신이 돼서(그 안에
 		// 아직 정사각형으로 안 맞춰진 addButton이 포함된 채로 측정되는) 순환 참조가 생겨 버튼이
 		// 점점 커지는 문제가 있었다 — 항상 실제 박스인 lastBox에서 직접 높이를 가져온다.
-		flexboxRefs.post {
+		//
+		// post{}를 중첩해서 쓰면 "그 다음 프레임"이 실제로 레이아웃이 다 끝난 뒤라는 보장이 없다
+		// (Choreographer의 레이아웃 트래버설과 Handler post()의 실행 순서가 항상 정해진 게 아님).
+		// doOnPreDraw는 정확히 "이번 레이아웃이 다 끝나고 화면에 그려지기 직전"에 불려서 훨씬
+		// 확실하다.
+		flexboxRefs.doOnPreDraw {
 			val height = lastBox.height
 			if (height > 0) {
 				val lp = addButton.layoutParams as LinearLayout.LayoutParams
-				lp.height = height
-				lp.width = height
-				addButton.layoutParams = lp
+				if (lp.height != height || lp.width != height) {
+					lp.height = height
+					lp.width = height
+					addButton.layoutParams = lp
+				}
+			}
+			// "+" 버튼 크기가 바뀌면 레이아웃이 다시 잡히므로, 그 레이아웃이 끝난 뒤(doOnPreDraw를
+			// 한 번 더 걸어서) 각 줄이 실제로 얼마나 채워졌는지 보고 남는 공간을 직접 나눠준다.
+			flexboxRefs.doOnPreDraw { fillRefBoxLinesCompletely() }
+		}
+	}
+
+	/** flexboxRefs 안의 항목들을 실제 배치된 y좌표(top) 기준으로 줄별로 묶은 뒤, 각 줄에 남는
+	 * 폭이 있으면 그 줄 안의 flexGrow 항목들(본문 박스들·마지막 묶음)에게 균등하게 나눠 더해서
+	 * 줄 전체가 끝까지 채워지도록 만든다. */
+	private fun fillRefBoxLinesCompletely() {
+		val containerWidth = flexboxRefs.width
+		if (containerWidth <= 0 || flexboxRefs.childCount == 0) return
+
+		val children = (0 until flexboxRefs.childCount).map { flexboxRefs.getChildAt(it) }
+		// top이 완전히 똑같은 값끼리만 묶으면, 같은 줄인데도 높이가 미세하게(1~2px) 다른 항목이
+		// 있을 때(예: "+" 버튼이 포함된 마지막 묶음은 alignItems=center로 인해 top이 살짝 다를 수
+		// 있음) 서로 다른 줄로 잘못 나뉠 수 있다. 8px 오차까지는 같은 줄로 본다.
+		val sorted = children.sortedBy { it.top }
+		val lines = mutableListOf<MutableList<View>>()
+		val lineTolerancePx = dp(4)
+		for (child in sorted) {
+			val currentLine = lines.lastOrNull()
+			if (currentLine != null && kotlin.math.abs(child.top - currentLine.first().top) <= lineTolerancePx) {
+				currentLine.add(child)
+			} else {
+				lines.add(mutableListOf(child))
+			}
+		}
+
+		for (line in lines) {
+			val growable = line.filter {
+				val lp = it.layoutParams as? com.google.android.flexbox.FlexboxLayout.LayoutParams
+				(lp?.flexGrow ?: 0f) > 0f
+			}
+			if (growable.isEmpty()) continue
+
+			val usedWidth = line.sumOf { child ->
+				val lp = child.layoutParams as com.google.android.flexbox.FlexboxLayout.LayoutParams
+				child.width + lp.marginStart + lp.marginEnd
+			}
+			val extra = containerWidth - usedWidth
+			if (extra <= 0) continue
+
+			val perItem = extra / growable.size
+			growable.forEachIndexed { index, child ->
+				val lp = child.layoutParams as com.google.android.flexbox.FlexboxLayout.LayoutParams
+				// 나머지(나눗셈 오차)는 마지막 항목이 떠안아서, 합계가 정확히 남는 폭과 같아지게 한다.
+				val addAmount =
+					if (index == growable.lastIndex) extra - perItem * (growable.size - 1) else perItem
+				lp.width = child.width + addAmount
+				child.layoutParams = lp
 			}
 		}
 	}
