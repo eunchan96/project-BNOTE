@@ -462,6 +462,14 @@ class AddSermonActivity : AppCompatActivity() {
 		}
 
 		for (line in lines) {
+			// 이 줄에서 실제로 가장 오른쪽에 있는(=마지막) 박스를 찾는다. 설교자/카테고리 행에서
+			// 마지막인 "카테고리" 박스는 애초에 marginEnd가 없어서 행 끝까지 닿는데, 본문 박스는
+			// 줄바꿈이 동적이라 어떤 박스가 마지막이 될지 만들 때는 알 수 없어서 전부 똑같이
+			// marginEnd(8dp)를 갖고 있다 — 그래서 그 박스를 늘려도 뒤에 marginEnd만큼의 여백은
+			// (배경색 밖의 공간이라) 그대로 남아있었다. 여기서 실제 마지막 박스를 찾아 그
+			// marginEnd를 0으로 만들어 없애준다.
+			val lastInLine = line.maxByOrNull { it.right }
+
 			val growable = line.filter {
 				val lp = it.layoutParams as? com.google.android.flexbox.FlexboxLayout.LayoutParams
 				(lp?.flexGrow ?: 0f) > 0f
@@ -470,10 +478,16 @@ class AddSermonActivity : AppCompatActivity() {
 
 			val usedWidth = line.sumOf { child ->
 				val lp = child.layoutParams as com.google.android.flexbox.FlexboxLayout.LayoutParams
-				child.width + lp.marginStart + lp.marginEnd
+				val effectiveMarginEnd = if (child === lastInLine) 0 else lp.marginEnd
+				child.width + lp.marginStart + effectiveMarginEnd
 			}
 			val extra = containerWidth - usedWidth
-			if (extra <= 0) continue
+			if (extra <= 0) {
+				// 늘릴 공간은 없어도, 마지막 박스의 marginEnd는 그대로 없애줘야 한다(원래도
+				// 정확히 꽉 차 있었을 뿐 여백이 필요 없는 경우).
+				if (lastInLine != null) removeMarginEnd(lastInLine)
+				continue
+			}
 
 			val perItem = extra / growable.size
 			growable.forEachIndexed { index, child ->
@@ -482,8 +496,18 @@ class AddSermonActivity : AppCompatActivity() {
 				val addAmount =
 					if (index == growable.lastIndex) extra - perItem * (growable.size - 1) else perItem
 				lp.width = child.width + addAmount
+				if (child === lastInLine) lp.marginEnd = 0
 				child.layoutParams = lp
 			}
+		}
+	}
+
+	private fun removeMarginEnd(view: View) {
+		val lp =
+			view.layoutParams as? com.google.android.flexbox.FlexboxLayout.LayoutParams ?: return
+		if (lp.marginEnd != 0) {
+			lp.marginEnd = 0
+			view.layoutParams = lp
 		}
 	}
 
