@@ -8,6 +8,22 @@
 
     <include layout="@layout/include_activity_top_bar" />
 
+    <!-- 미리보기. 스크롤 영역 밖에 고정해서, 아래 설정을 만지는 동안에도 계속 보이게 한다. 크기는 코드에서
+         실제 위젯 크기에 맞춰 정한다(WidgetConfigActivity 참고). -->
+    <FrameLayout
+        android:id="@+id/container_preview_backdrop"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="16dp"
+        android:background="@drawable/bg_widget_preview_backdrop">
+
+        <FrameLayout
+            android:id="@+id/container_widget_preview"
+            android:layout_width="180dp"
+            android:layout_height="110dp"
+            android:layout_gravity="center" />
+    </FrameLayout>
+
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent">

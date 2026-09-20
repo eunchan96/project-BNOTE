@@ -4,9 +4,11 @@ import android.appwidget.AppWidgetManager
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
+import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.RadioButton
 import android.widget.RadioGroup
+import android.widget.RemoteViews
 import android.widget.SeekBar
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
@@ -17,11 +19,16 @@ import androidx.lifecycle.lifecycleScope
 import com.chan.bnote.R
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.mypage.memorization.MemorizationGroup
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 /**
  * 위젯을 홈 화면에 올릴 때(그리고 위젯을 길게 눌러 "설정"을 고를 때) 뜨는 설정 화면.
  * 두 위젯이 같은 화면을 쓰고(테마 · 배경 투명도), 암송 위젯일 때만 "암송 그룹" 선택이 추가로 나온다.
+ *
+ * 화면 위쪽에 미리보기가 떠서, 테마·투명도·그룹을 바꾸는 즉시 위젯이 어떻게 보일지 확인할 수 있다.
+ * 미리보기는 따로 만든 그림이 아니라 진짜 위젯과 같은 코드(buildViews)로 만든 RemoteViews를 이 화면에
+ * 직접 펼쳐서(apply) 보여주기 때문에, 글자 크기·줄바꿈·색까지 홈 화면에서의 모습과 같다.
  *
  * 위젯 설정 화면은 시작할 때 결과를 RESULT_CANCELED로 두었다가 "완료"를 눌렀을 때만 RESULT_OK로
  * 바꿔야 한다 — 그래야 뒤로가기로 나갔을 때 시스템이 그 위젯 추가를 취소해준다. 또 설정 화면이 있는
@@ -32,11 +39,17 @@ class WidgetConfigActivity : AppCompatActivity() {
 	private var appWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID
 	private var isMemorizationWidget = false
 	private var groups: List<MemorizationGroup> = emptyList()
+	private var groupsLoaded = false
 
 	private lateinit var radioTheme: RadioGroup
 	private lateinit var radioGroups: RadioGroup
 	private lateinit var seekTransparency: SeekBar
 	private lateinit var textTransparencyValue: TextView
+	private lateinit var previewContainer: FrameLayout
+
+	private var previewWidthDp = 0
+	private var previewHeightDp = 0
+	private var previewJob: Job? = null
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
@@ -64,6 +77,12 @@ class WidgetConfigActivity : AppCompatActivity() {
 		findViewById<TextView>(R.id.text_top_bar_title).text = "위젯 설정"
 		findViewById<ImageView>(R.id.btn_top_bar_back).setOnClickListener { finish() }
 
+		val providerName = AppWidgetManager.getInstance(this)
+			.getAppWidgetInfo(appWidgetId)?.provider?.className
+		isMemorizationWidget = providerName == MemorizationWidgetProvider::class.java.name
+
+		setupPreviewSize()
+
 		radioTheme = findViewById(R.id.radio_theme)
 		radioGroups = findViewById(R.id.radio_groups)
 		radioTheme.check(
@@ -73,6 +92,7 @@ class WidgetConfigActivity : AppCompatActivity() {
 				R.id.radio_theme_light
 			}
 		)
+		radioTheme.setOnCheckedChangeListener { _, _ -> refreshPreview() }
 
 		seekTransparency = findViewById(R.id.seek_transparency)
 		textTransparencyValue = findViewById(R.id.text_transparency_value)
@@ -82,21 +102,84 @@ class WidgetConfigActivity : AppCompatActivity() {
 		seekTransparency.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
 			override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
 				updateTransparencyLabel()
+				refreshPreview()
 			}
 
 			override fun onStartTrackingTouch(seekBar: SeekBar?) {}
 			override fun onStopTrackingTouch(seekBar: SeekBar?) {}
 		})
 
-		val providerName = AppWidgetManager.getInstance(this)
-			.getAppWidgetInfo(appWidgetId)?.provider?.className
-		isMemorizationWidget = providerName == MemorizationWidgetProvider::class.java.name
 		if (isMemorizationWidget) {
 			findViewById<View>(R.id.container_group_section).visibility = View.VISIBLE
+			radioGroups.setOnCheckedChangeListener { _, _ -> refreshPreview() }
 			loadGroups()
 		}
 
 		findViewById<TextView>(R.id.btn_widget_config_done).setOnClickListener { saveAndFinish() }
+
+		refreshPreview()
+	}
+
+	/**
+	 * 미리보기 영역의 크기를 실제 위젯 크기에 맞춘다. 위젯이 아주 큰 경우엔 설정 화면을 다 차지하지
+	 * 않도록 상한을 둔다(이때는 정확한 크기가 아니라 대표적인 모습을 보여주는 셈이다).
+	 */
+	private fun setupPreviewSize() {
+		val (widthDp, heightDp) = WidgetViews.sizeDp(this, appWidgetId)
+		previewWidthDp = minOf(widthDp, MAX_PREVIEW_WIDTH_DP)
+		previewHeightDp = minOf(heightDp, MAX_PREVIEW_HEIGHT_DP)
+
+		previewContainer = findViewById(R.id.container_widget_preview)
+		val params = previewContainer.layoutParams
+		params.width = dp(previewWidthDp)
+		params.height = dp(previewHeightDp)
+		previewContainer.layoutParams = params
+	}
+
+	/** 지금 화면에서 고른 값(저장 전)으로 위젯을 만들어 미리보기에 펼친다. */
+	private fun refreshPreview() {
+		// 슬라이더를 빠르게 움직이면 요청이 여러 번 겹치니, 이전 것은 취소하고 마지막 것만 그린다.
+		previewJob?.cancel()
+		previewJob = lifecycleScope.launch {
+			val spec = WidgetRenderSpec(
+				style = currentStyle(),
+				widthDp = previewWidthDp,
+				heightDp = previewHeightDp,
+				group = currentGroupChoice(),
+				isPreview = true
+			)
+			val context = applicationContext
+			val views: RemoteViews = try {
+				if (isMemorizationWidget) {
+					MemorizationWidget.buildViews(context, appWidgetId, spec)
+				} else {
+					TodayVerseWidget.buildViews(context, appWidgetId, spec)
+				}
+			} catch (e: Exception) {
+				WidgetViews.errorViews(context, appWidgetId)
+			}
+			previewContainer.removeAllViews()
+			previewContainer.addView(views.apply(this@WidgetConfigActivity, previewContainer))
+		}
+	}
+
+	private fun currentStyle() = WidgetStyle(
+		theme = if (radioTheme.checkedRadioButtonId == R.id.radio_theme_dark) {
+			WidgetTheme.DARK
+		} else {
+			WidgetTheme.LIGHT
+		},
+		transparencyPercent = seekTransparency.progress * TRANSPARENCY_STEP
+	)
+
+	/** 지금 고른 암송 그룹. 그룹 목록을 아직 못 불러왔으면 저장돼 있던 값을 쓴다. 전체 그룹이면 null. */
+	private fun currentGroupChoice(): WidgetSettings.GroupChoice? {
+		if (!isMemorizationWidget) return null
+		if (!groupsLoaded) return WidgetSettings.getGroup(this, appWidgetId)
+		val checked = radioGroups.findViewById<RadioButton>(radioGroups.checkedRadioButtonId)
+		val groupId = checked?.tag as? Long ?: ALL_GROUPS
+		return groups.firstOrNull { it.id == groupId }
+			?.let { WidgetSettings.GroupChoice(it.id, it.name) }
 	}
 
 	private fun updateTransparencyLabel() {
@@ -108,6 +191,8 @@ class WidgetConfigActivity : AppCompatActivity() {
 			val db = BibleDatabase.getInstance(applicationContext)
 			groups = db.memorizationVerseDao().getAllGroups()
 			showGroupOptions()
+			groupsLoaded = true
+			refreshPreview()
 		}
 	}
 
@@ -136,27 +221,17 @@ class WidgetConfigActivity : AppCompatActivity() {
 	}
 
 	private fun saveAndFinish() {
-		val theme = if (radioTheme.checkedRadioButtonId == R.id.radio_theme_dark) {
-			WidgetTheme.DARK
-		} else {
-			WidgetTheme.LIGHT
-		}
-		WidgetSettings.setTheme(this, appWidgetId, theme)
-		WidgetSettings.setTransparency(
-			this, appWidgetId, seekTransparency.progress * TRANSPARENCY_STEP
-		)
+		val style = currentStyle()
+		WidgetSettings.setTheme(this, appWidgetId, style.theme)
+		WidgetSettings.setTransparency(this, appWidgetId, style.transparencyPercent)
 
 		if (isMemorizationWidget) {
-			val checked = radioGroups.findViewById<RadioButton>(radioGroups.checkedRadioButtonId)
-			val groupId = checked?.tag as? Long ?: ALL_GROUPS
-			val group = groups.firstOrNull { it.id == groupId }
+			val group = currentGroupChoice()
 
 			// 다른 그룹을 골랐다면 그 그룹의 첫 구절부터 보이도록 "다음" 횟수를 되돌린다.
 			val before = WidgetSettings.getGroup(this, appWidgetId)
 			if (before?.id != group?.id) WidgetSettings.setOffset(this, appWidgetId, 0)
-			WidgetSettings.setGroup(
-				this, appWidgetId, group?.let { WidgetSettings.GroupChoice(it.id, it.name) }
-			)
+			WidgetSettings.setGroup(this, appWidgetId, group)
 		}
 
 		lifecycleScope.launch {
@@ -170,10 +245,16 @@ class WidgetConfigActivity : AppCompatActivity() {
 		}
 	}
 
+	private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
+
 	private companion object {
 		const val ALL_GROUPS = -1L
 
 		// 투명도 슬라이더는 10% 단위(0~10칸)로 움직인다.
 		const val TRANSPARENCY_STEP = 10
+
+		// 미리보기 영역의 최대 크기. 이보다 큰 위젯은 이 크기로 줄여서 보여준다.
+		const val MAX_PREVIEW_WIDTH_DP = 340
+		const val MAX_PREVIEW_HEIGHT_DP = 240
 	}
 }

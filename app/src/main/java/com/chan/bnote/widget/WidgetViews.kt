@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.Paint
+import android.graphics.Typeface
 import android.text.StaticLayout
 import android.text.TextPaint
 import android.util.TypedValue
@@ -17,10 +18,25 @@ import com.chan.bnote.R
 import com.chan.bnote.widget.WidgetViews.MIN_TEXT_SP
 
 /**
+ * 위젯 화면을 만들 때의 조건. 홈 화면의 실제 위젯은 저장된 설정과 실제 크기로 그리고(savedSpec),
+ * 위젯 설정 화면의 미리보기는 지금 고르고 있는 값과 미리보기 크기로 같은 코드를 태워서 그린다.
+ *
+ * [group]은 암송 위젯만 쓴다(null이면 전체 그룹). [isPreview]가 true면 탭했을 때 동작(PendingIntent)을
+ * 달지 않고, 저장된 설정도 건드리지 않는다.
+ */
+data class WidgetRenderSpec(
+	val style: WidgetStyle,
+	val widthDp: Int,
+	val heightDp: Int,
+	val group: WidgetSettings.GroupChoice? = null,
+	val isPreview: Boolean = false
+)
+
+/**
  * 두 위젯이 함께 쓰는 RemoteViews 도구 모음(테마 적용, 빈 상태 표시, 글자 크기, 탭 동작).
  *
- * 두 위젯의 레이아웃은 widget_root / widget_bg / widget_title / widget_text / widget_label /
- * widget_message 여섯 개의 id를 똑같이 갖고 있어서, 여기 함수들은 어느 위젯이든 그대로 쓸 수 있다.
+ * 두 위젯의 레이아웃은 widget_root / widget_bg / widget_icon / widget_title / widget_text /
+ * widget_label / widget_message 일곱 개의 id를 똑같이 갖고 있어서, 여기 함수들은 어느 위젯이든 그대로 쓸 수 있다.
  */
 object WidgetViews {
 
@@ -39,32 +55,48 @@ object WidgetViews {
 	private const val MAX_TEXT_SP = 18f
 	private const val TEXT_STEP_SP = 0.5f
 
-	// 레이아웃(widget_content)의 안쪽 여백, 그리고 런처가 그리는 실제 크기와 어긋날 수 있어서 남겨두는 여유
-	private const val CONTENT_PADDING_DP = 12
+	// 레이아웃(widget_content)의 안쪽 여백(가로 14dp, 세로 12dp), 그리고 런처가 그리는 실제 크기와
+	// 어긋날 수 있어서 남겨두는 여유
+	private const val CONTENT_PADDING_H_DP = 14
+	private const val CONTENT_PADDING_V_DP = 12
 	private const val SAFETY_WIDTH_DP = 4
 	private const val SAFETY_HEIGHT_DP = 2
 
 	// 레이아웃 XML의 lineSpacingMultiplier와 같은 값이어야 계산이 맞는다.
-	private const val LINE_SPACING_MULTIPLIER = 1.1f
+	private const val LINE_SPACING_MULTIPLIER = 1.15f
 
 	/** 본문에 쓸 글자 크기와, 그 크기에서 화면에 들어가는 최대 줄 수. */
 	data class TextFit(val sizeSp: Float, val maxLines: Int)
 
+	/** 실제 홈 화면 위젯을 그릴 때의 조건: 저장된 설정 + 런처가 알려준 실제 크기. */
+	fun savedSpec(context: Context, appWidgetId: Int): WidgetRenderSpec {
+		val (widthDp, heightDp) = sizeDp(context, appWidgetId)
+		return WidgetRenderSpec(
+			style = WidgetSettings.getStyle(context, appWidgetId),
+			widthDp = widthDp,
+			heightDp = heightDp,
+			group = WidgetSettings.getGroup(context, appWidgetId),
+			isPreview = false
+		)
+	}
+
 	/**
-	 * 위젯에 저장된 테마·배경 투명도를 적용하고, 적용한 테마를 돌려준다(위젯별로 더 칠할 게 있을 때 쓴다).
+	 * [style]의 테마·배경 투명도를 적용하고, 적용한 테마를 돌려준다(위젯별로 더 칠할 게 있을 때 쓴다).
 	 *
 	 * 배경은 root의 background가 아니라 그 뒤에 깔아둔 ImageView(widget_bg)로 그린다. 뷰 전체의
 	 * alpha를 낮추면 글자까지 같이 흐려지지만, 이미지뷰의 imageAlpha는 배경 그림에만 적용돼서
 	 * 둥근 모서리·테두리는 그대로 두고 배경만 투명하게 만들 수 있다.
 	 */
-	fun applyTheme(context: Context, views: RemoteViews, appWidgetId: Int): WidgetTheme {
-		val theme = WidgetSettings.getTheme(context, appWidgetId)
-		val opacityPercent = 100 - WidgetSettings.getTransparency(context, appWidgetId)
+	fun applyTheme(context: Context, views: RemoteViews, style: WidgetStyle): WidgetTheme {
+		val theme = style.theme
+		val opacityPercent = 100 - style.transparencyPercent
+		val accent = ContextCompat.getColor(context, theme.accentRes)
 
 		// 배경은 리소스 한정자가 아니라 여기서 골라 넣는다(WidgetTheme 설명 참고).
 		views.setImageViewResource(R.id.widget_bg, theme.backgroundRes)
 		views.setInt(R.id.widget_bg, "setImageAlpha", opacityPercent * 255 / 100)
-		views.setTextColor(R.id.widget_title, ContextCompat.getColor(context, theme.accentRes))
+		views.setInt(R.id.widget_icon, "setColorFilter", accent)
+		views.setTextColor(R.id.widget_title, accent)
 		views.setTextColor(R.id.widget_text, ContextCompat.getColor(context, theme.primaryTextRes))
 		views.setTextColor(
 			R.id.widget_label,
@@ -94,7 +126,7 @@ object WidgetViews {
 	/** 데이터를 못 읽었을 때 쓰는 화면. 어느 위젯이든 같은 레이아웃 id를 가지므로 하나로 충분하다. */
 	fun errorViews(context: Context, appWidgetId: Int): RemoteViews {
 		val views = RemoteViews(context.packageName, R.layout.widget_today_verse)
-		applyTheme(context, views, appWidgetId)
+		applyTheme(context, views, WidgetSettings.getStyle(context, appWidgetId))
 		showMessage(views, "위젯을 불러오지 못했어요.\n눌러서 앱을 열어주세요")
 		views.setOnClickPendingIntent(R.id.widget_root, openAppIntent(context, appWidgetId))
 		return views
@@ -155,13 +187,14 @@ object WidgetViews {
 		reserveDp: Int
 	): TextFit {
 		val metrics = context.resources.displayMetrics
-		val widthPx = ((widthDp - 2 * CONTENT_PADDING_DP - SAFETY_WIDTH_DP) * metrics.density)
+		val widthPx = ((widthDp - 2 * CONTENT_PADDING_H_DP - SAFETY_WIDTH_DP) * metrics.density)
 			.toInt().coerceAtLeast(1)
 		val heightPx =
-			((heightDp - 2 * CONTENT_PADDING_DP - reserveDp - SAFETY_HEIGHT_DP) * metrics.density)
+			((heightDp - 2 * CONTENT_PADDING_V_DP - reserveDp - SAFETY_HEIGHT_DP) * metrics.density)
 				.coerceAtLeast(1f)
 
-		val paint = TextPaint(Paint.ANTI_ALIAS_FLAG)
+		// 본문은 레이아웃에서 fontFamily="serif"(명조 계열)로 그려지므로, 재는 쪽도 같은 서체로 잰다.
+		val paint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply { typeface = Typeface.SERIF }
 		var size = MAX_TEXT_SP
 		while (true) {
 			// sp → px 변환은 시스템 글꼴 크기 설정까지 반영하는 방식으로 한다(런처가 그릴 때와 같다).

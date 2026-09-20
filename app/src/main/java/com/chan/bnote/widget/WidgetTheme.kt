@@ -14,21 +14,24 @@ enum class WidgetTheme(
 	val backgroundRes: Int,
 	val primaryTextRes: Int,
 	val secondaryTextRes: Int,
-	val accentRes: Int
+	val accentRes: Int,
+	val pillRes: Int
 ) {
 	LIGHT(
 		"LIGHT",
 		R.drawable.bg_widget_light,
 		R.color.widget_light_text_primary,
 		R.color.widget_light_text_secondary,
-		R.color.widget_light_accent
+		R.color.widget_light_accent,
+		R.drawable.bg_widget_pill_light
 	),
 	DARK(
 		"DARK",
 		R.drawable.bg_widget_dark,
 		R.color.widget_dark_text_primary,
 		R.color.widget_dark_text_secondary,
-		R.color.widget_dark_accent
+		R.color.widget_dark_accent,
+		R.drawable.bg_widget_pill_dark
 	);
 
 	companion object {

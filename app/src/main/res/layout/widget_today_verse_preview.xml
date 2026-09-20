@@ -15,7 +15,10 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        android:padding="12dp">
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="12dp">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -23,12 +26,22 @@
             android:orientation="horizontal"
             android:gravity="center_vertical">
 
+            <ImageView
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:scaleType="fitCenter"
+                android:importantForAccessibility="no"
+                android:src="@drawable/ic_book_open"
+                android:tint="@color/widget_light_accent" />
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
                 android:text="오늘의 말씀"
-                android:textSize="12sp"
+                android:textSize="11sp"
                 android:textStyle="bold"
+                android:letterSpacing="0.04"
                 android:textColor="@color/widget_light_accent" />
 
             <TextView
@@ -40,7 +53,7 @@
                 android:maxLines="1"
                 android:ellipsize="end"
                 android:text="시편 23편 1절"
-                android:textSize="12sp"
+                android:textSize="11sp"
                 android:textColor="@color/widget_light_text_secondary" />
         </LinearLayout>
 
@@ -48,10 +61,12 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
+            android:layout_marginTop="6dp"
             android:gravity="center_vertical"
+            android:fontFamily="serif"
             android:text="여호와는 나의 목자시니 내가 부족함이 없으리로다"
             android:textSize="18sp"
-            android:lineSpacingMultiplier="1.1"
+            android:lineSpacingMultiplier="1.15"
             android:textColor="@color/widget_light_text_primary" />
 
     </LinearLayout>

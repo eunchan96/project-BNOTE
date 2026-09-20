@@ -3,6 +3,9 @@ package com.chan.bnote.widget
 import android.content.Context
 import com.chan.bnote.widget.WidgetSettings.clear
 
+/** 위젯의 겉모습 설정(테마 + 배경 투명도%). */
+data class WidgetStyle(val theme: WidgetTheme, val transparencyPercent: Int)
+
 /**
  * 위젯별 설정(테마, 배경 투명도, 암송 위젯이 보여줄 그룹, 넘긴 횟수). 같은 위젯을 여러 개 올려도 서로 다른
  * 설정을 가질 수 있도록 위젯 id를 키에 붙여서 저장한다. 위젯을 지우면 [clear]로 함께 지운다.
@@ -36,6 +39,9 @@ object WidgetSettings {
 			.putInt("transparency_$appWidgetId", percent.coerceIn(0, 100))
 			.apply()
 	}
+
+	fun getStyle(context: Context, appWidgetId: Int): WidgetStyle =
+		WidgetStyle(getTheme(context, appWidgetId), getTransparency(context, appWidgetId))
 
 	/** 고른 암송 그룹. "전체 그룹"이면 null. */
 	fun getGroup(context: Context, appWidgetId: Int): GroupChoice? {

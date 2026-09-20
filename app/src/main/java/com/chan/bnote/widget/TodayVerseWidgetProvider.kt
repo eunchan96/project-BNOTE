@@ -14,36 +14,48 @@ class TodayVerseWidgetProvider : AsyncWidgetProvider()
  */
 object TodayVerseWidget {
 
-	// 위젯 안에서 본문 말고 세로로 차지하는 부분(제목·위치 표기가 한 줄 + 간격)
-	private const val RESERVED_HEIGHT_DP = 20
+	// 위젯 안에서 본문 말고 세로로 차지하는 부분(제목·위치 표기가 한 줄 + 본문 위 간격)
+	private const val RESERVED_HEIGHT_DP = 22
 
-	suspend fun buildViews(context: Context, appWidgetId: Int): RemoteViews {
+	/**
+	 * [spec]을 안 주면 저장된 설정과 실제 크기로 그린다(홈 화면 위젯). 위젯 설정 화면의 미리보기는
+	 * 지금 고르는 값이 담긴 spec을 넘겨서 같은 코드로 그린다.
+	 */
+	suspend fun buildViews(
+		context: Context,
+		appWidgetId: Int,
+		spec: WidgetRenderSpec = WidgetViews.savedSpec(context, appWidgetId)
+	): RemoteViews {
 		val views = RemoteViews(context.packageName, R.layout.widget_today_verse)
-		WidgetViews.applyTheme(context, views, appWidgetId)
+		WidgetViews.applyTheme(context, views, spec.style)
 
 		val daily = DailyVerseProvider.getToday(context)
 		if (daily == null) {
 			// 성경 본문은 성경 탭을 처음 열 때 심어지기 때문에, 설치 직후 앱을 한 번도 안 열었으면
 			// 아직 읽을 구절이 없다. 앱을 열면 시딩이 끝나고(앱이 백그라운드로 갈 때 위젯이 갱신된다).
 			WidgetViews.showMessage(views, "앱을 한 번 열어 성경 데이터를 준비해 주세요")
-			views.setOnClickPendingIntent(
-				R.id.widget_root,
-				WidgetViews.openAppIntent(context, appWidgetId)
-			)
+			if (!spec.isPreview) {
+				views.setOnClickPendingIntent(
+					R.id.widget_root, WidgetViews.openAppIntent(context, appWidgetId)
+				)
+			}
 			return views
 		}
 
-		val (widthDp, heightDp) = WidgetViews.sizeDp(context, appWidgetId)
-		WidgetViews.setBodyText(context, views, daily.text, widthDp, heightDp, RESERVED_HEIGHT_DP)
+		WidgetViews.setBodyText(
+			context, views, daily.text, spec.widthDp, spec.heightDp, RESERVED_HEIGHT_DP
+		)
 		views.setTextViewText(R.id.widget_label, daily.label)
 		WidgetViews.showBody(views)
 
-		views.setOnClickPendingIntent(
-			R.id.widget_root,
-			WidgetViews.openBibleIntent(
-				context, appWidgetId, daily.bookId, daily.chapter, daily.startVerse
+		if (!spec.isPreview) {
+			views.setOnClickPendingIntent(
+				R.id.widget_root,
+				WidgetViews.openBibleIntent(
+					context, appWidgetId, daily.bookId, daily.chapter, daily.startVerse
+				)
 			)
-		)
+		}
 		return views
 	}
 }
