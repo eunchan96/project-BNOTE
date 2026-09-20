@@ -3,6 +3,8 @@ package com.chan.bnote.widget
 import android.appwidget.AppWidgetManager
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
+import android.view.Gravity
 import android.view.View
 import android.widget.FrameLayout
 import android.widget.ImageView
@@ -19,6 +21,7 @@ import androidx.lifecycle.lifecycleScope
 import com.chan.bnote.R
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.mypage.memorization.MemorizationGroup
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
@@ -155,12 +158,40 @@ class WidgetConfigActivity : AppCompatActivity() {
 				} else {
 					TodayVerseWidget.buildViews(context, appWidgetId, spec)
 				}
+			} catch (e: CancellationException) {
+				// 뒤이어 새 요청이 들어와서 취소된 것이니, 오류 화면을 그리지 말고 그대로 끝낸다.
+				throw e
 			} catch (e: Exception) {
 				WidgetViews.errorViews(context, appWidgetId)
 			}
-			previewContainer.removeAllViews()
-			previewContainer.addView(views.apply(this@WidgetConfigActivity, previewContainer))
+
+			// 미리보기가 실패해도 설정 화면 전체가 죽으면 안 되니, 여기서 잡아서 안내 문구로 대신한다.
+			try {
+				// 반드시 액티비티(this)가 아니라 applicationContext로 펼친다. 액티비티의 LayoutInflater에는
+				// AppCompat이 붙어 있어서 <TextView>·<ImageView>가 AppCompatTextView·AppCompatImageView로
+				// 바뀌는데, 이 뷰들이 다시 정의한 메서드(setBackgroundResource, setImageResource 등)는
+				// RemoteViews가 요구하는 @RemotableViewMethod 표시가 없어서 "can't use method with
+				// RemoteViews" 오류로 앱이 죽는다. 홈 화면 런처에서는 AppCompat이 없어서 문제가 없다.
+				val previewView = views.apply(context, previewContainer)
+				previewContainer.removeAllViews()
+				previewContainer.addView(previewView)
+			} catch (e: CancellationException) {
+				throw e
+			} catch (e: Exception) {
+				Log.e(TAG, "위젯 미리보기를 그리지 못했어요", e)
+				showPreviewError(e)
+			}
 		}
+	}
+
+	private fun showPreviewError(e: Exception) {
+		previewContainer.removeAllViews()
+		previewContainer.addView(TextView(this).apply {
+			text = "미리보기를 표시하지 못했어요\n(${e.javaClass.simpleName})"
+			textSize = 12f
+			gravity = Gravity.CENTER
+			setTextColor(0xFFFFFFFF.toInt())
+		})
 	}
 
 	private fun currentStyle() = WidgetStyle(
@@ -248,6 +279,7 @@ class WidgetConfigActivity : AppCompatActivity() {
 	private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
 
 	private companion object {
+		const val TAG = "WidgetConfig"
 		const val ALL_GROUPS = -1L
 
 		// 투명도 슬라이더는 10% 단위(0~10칸)로 움직인다.

@@ -20,7 +20,8 @@
     <color name="widget_dark_pill_fill">#1FD2BDB3</color>
     <color name="widget_dark_pill_stroke">#66D2BDB3</color>
 
-    <!-- 위젯 설정 화면의 미리보기 뒤 배경(투명도가 바뀌는 게 보이도록 색이 있는 배경을 깐다) -->
-    <color name="widget_preview_backdrop_start">#5C7FB0</color>
-    <color name="widget_preview_backdrop_end">#B07A9A</color>
+    <!-- 위젯 설정 화면의 미리보기 뒤 배경. 투명도가 바뀌는 게 보이도록 라이트·다크 위젯 둘 다 구분되는
+         중간 밝기의 회색 계열을 깔았다(너무 튀지 않게 차분한 색). -->
+    <color name="widget_preview_backdrop_start">#8494A3</color>
+    <color name="widget_preview_backdrop_end">#A89F98</color>
 </resources>

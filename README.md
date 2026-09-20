@@ -39,15 +39,19 @@ BNOTE는 서버 없이 완전히 기기 안에서만 동작하는 안드로이�
 - 성경읽기표 진행률
 - 올해 약속의 말씀 — 등록하면 바로 암송 구절로 연동
 - 기도제목 노트 (응답 체크)
-- 암송 구절 (그룹 관리, 그룹/개별 암송 연습, 힌트)
+- 암송 구절 (그룹 관리, 그룹/개별 암송 연습, 힌트, 홈 화면 위젯)
 - 감사 노트 (날짜별로 감사한 일을 여러 줄로 기록)
 - 최근 활동(최근 본 장 · 메모 · 설교노트) 바로가기
 
 ### 설정 및 관리
 
 - 글자 크기, 다크모드, 화면 켜짐 유지, 자동스크롤 속도, 성경 탭 스크롤바 표시
-- 매일 말씀 알림 — 미리 선정한 2,000여 개 구절 중에서 날짜를 기준으로 하루에 한 구절을 보내요. 같은 날에는 모든 사용자가 같은 구절을 받아요.
+- 매일 말씀 알림 — 미리 선정한 2,000여 개 구절 중에서 날짜를 기준으로 하루에 한 구절을 보내요. 같은 날에는 모든 사용자가 같은 구절을 받아요. 홈 화면의 "오늘의
+  말씀"
+  위젯에도 같은 구절이 나와요.
 - 통독 리마인더 — 그날 성경읽기표 체크가 없을 때만 알림
+- 홈 화면 위젯 — "오늘의 말씀"과 "암송 구절" 두 종류. 위젯마다 라이트/다크 테마와 배경 투명도를 고를 수 있고,
+  설정 화면의 미리보기로 바로 확인해요. 날짜가 바뀌면 자동으로 다음 구절로 바뀌어요.
 - **데이터 내보내기 / 불러오기** — 사이드로딩 앱 특성상 업데이트 시 데이터가 초기화될 수 있어, 백업 zip 파일로 모든 사용자 데이터(사진 포함)를 내보내고 복원할 수
   있어요.
 - 자동 내보내기 — 정한 주기가 지난 뒤 앱을 열면 내보낼지 묻고, 미리 골라둔 폴더에 바로 저장
@@ -70,6 +74,7 @@ BNOTE는 서버 없이 완전히 기기 안에서만 동작하는 안드로이�
 - **레이아웃**: [Flexbox for Android](https://github.com/google/flexbox-layout)
 - **알림 스케줄링**: AlarmManager 정확 알람 + BroadcastReceiver (알람이 울리면 다음 날 같은 시각으로 스스로 재예약하고, 재부팅하면
   BootReceiver가 다시 예약)
+- **홈 화면 위젯**: AppWidgetProvider + RemoteViews (날짜가 바뀌는 자정에 알람으로 갱신)
 - **시작화면**: [Core SplashScreen](https://developer.android.com/develop/ui/views/launch/splash-screen)
 
 | 항목                   | 값                |
@@ -102,6 +107,7 @@ com.chan.bnote
 ├── ui/                        # 화면 (Activity / Fragment / Adapter / BottomSheet)
 │   ├── bible/, sermon/, application/, mypage/, knowledge/, appendix/, common/
 ├── notification/              # 알림 스케줄링 (AlarmManager)
+├── widget/                    # 홈 화면 위젯 (오늘의 말씀 · 암송 구절)
 ├── MainActivity.kt            # 하단 탭 3개(성경 · 설교/적용 · 마이페이지) 호스트
 └── BnoteApplication.kt        # 크래시 로거 초기화
 ```
@@ -122,13 +128,13 @@ Android Studio에서 프로젝트를 열고 Gradle Sync 후 실행하면 돼요.
 성경 본문, 찬송가, 배경지식 같은 데이터 파일은 저장소에 포함되어 있지 않아요(`.gitignore`의 `app/src/main/assets/`). 실행하려면 아래 경로에 직접
 넣어줘야 해요.
 
-| 경로 (`app/src/main/assets/`)                                                                                | 용도                                                                 |
-|------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------|
-| `nkrv.json` `krv.json` `ksb.json` `klb.json` `easy.json` `niv.json` `kjv.json` `esv.json`                  | 번역본 본문 (없는 파일은 건너뛰어요)                                              |
-| `notification/daily_verses.json`                                                                           | 매일 말씀 알림에 쓰는 구절 목록 (`book`, `chapter`, `start_verse`, `end_verse`) |
-| `hymns/hymns.json`                                                                                         | 찬송가 목록                                                             |
-| `knowledge/*.json`                                                                                         | 성경 배경지식                                                            |
-| `appendix/` (`lords_prayer.json` `apostles_creed.json` `ten_commandments.json` `responsive_readings.json`) | 부록                                                                 |
+| 경로 (`app/src/main/assets/`)                                                                                | 용도                                                                             |
+|------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------|
+| `nkrv.json` `krv.json` `ksb.json` `klb.json` `easy.json` `niv.json` `kjv.json` `esv.json`                  | 번역본 본문 (없는 파일은 건너뛰어요)                                                          |
+| `notification/daily_verses.json`                                                                           | 매일 말씀 알림 · 오늘의 말씀 위젯에 쓰는 구절 목록 (`book`, `chapter`, `start_verse`, `end_verse`) |
+| `hymns/hymns.json`                                                                                         | 찬송가 목록                                                                         |
+| `knowledge/*.json`                                                                                         | 성경 배경지식                                                                        |
+| `appendix/` (`lords_prayer.json` `apostles_creed.json` `ten_commandments.json` `responsive_readings.json`) | 부록                                                                             |
 
 ### 배포용 APK 만들기
 
