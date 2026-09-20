@@ -50,6 +50,7 @@ class AddSermonActivity : AppCompatActivity() {
 		private const val EXTRA_SERMON_ID = "extra_sermon_id"
 		private const val EXTRA_INITIAL_DATE_MILLIS = "extra_initial_date_millis"
 		private const val MAX_PHOTOS = 5
+		private const val AUTO_SAVE_DELAY_MS = 3000L
 
 		/** 신규 등록용 Intent. */
 		fun createIntent(
@@ -88,6 +89,10 @@ class AddSermonActivity : AppCompatActivity() {
 	private var originalPhotoPaths: List<String> = emptyList()
 	private var pendingCaptureFile: File? = null
 
+	// 타이핑하다가(또는 앱이 갑자기 죽는 등으로) 내용이 날아가는 걸 막기 위한 자동 저장.
+	// 입력이 멈추고 AUTO_SAVE_DELAY_MS만큼 지나면 조용히(화면 이동 없이) 저장한다.
+	private var autoSaveJob: kotlinx.coroutines.Job? = null
+
 	private lateinit var flexboxRefs: com.google.android.flexbox.FlexboxLayout
 	private lateinit var btnPickPreacher: TextView
 	private lateinit var btnPickCategory: TextView
@@ -110,6 +115,7 @@ class AddSermonActivity : AppCompatActivity() {
 			}
 		}
 		renderPhotoThumbnails()
+		scheduleAutoSave()
 	}
 
 	private val takePictureLauncher = registerForActivityResult(
@@ -120,6 +126,7 @@ class AddSermonActivity : AppCompatActivity() {
 		if (success && file != null) {
 			photoPaths.add(file.absolutePath)
 			renderPhotoThumbnails()
+			scheduleAutoSave()
 		}
 	}
 
@@ -128,6 +135,21 @@ class AddSermonActivity : AppCompatActivity() {
 	) { granted ->
 		if (granted) launchCamera() else {
 			Toast.makeText(this, "카메라 권한이 필요해요", Toast.LENGTH_SHORT).show()
+		}
+	}
+
+	override fun onPause() {
+		super.onPause()
+		// 화면이 백그라운드로 가는 순간(다른 앱으로 전환, 홈 버튼 등) 바로 한 번 저장을 시도한다 —
+		// 그 사이에 시스템이 프로세스를 종료해버려도 최소한 이 시점까지 쓴 내용은 남아있게 하기
+		// 위함이다. 디바운스(3초 대기)까지 기다리지 않고 즉시 실행한다.
+		val title = editTitle.text.toString().trim()
+		val preacherId = selectedPreacherId
+		if (title.isNotEmpty() && preacherId != null && hasUnsavedContent()) {
+			autoSaveJob?.cancel()
+			lifecycleScope.launch {
+				persistSermon(title, editMemo.text, editLink.text.toString().trim(), preacherId)
+			}
 		}
 	}
 
@@ -194,6 +216,17 @@ class AddSermonActivity : AppCompatActivity() {
 			}
 		}
 		editLink = findViewById(R.id.edit_sermon_link)
+
+		val autoSaveWatcher = object : android.text.TextWatcher {
+			override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+			override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+			override fun afterTextChanged(s: android.text.Editable?) {
+				scheduleAutoSave()
+			}
+		}
+		editTitle.addTextChangedListener(autoSaveWatcher)
+		editMemo.addTextChangedListener(autoSaveWatcher)
+		editLink.addTextChangedListener(autoSaveWatcher)
 		btnDate = findViewById(R.id.btn_pick_date)
 		btnPickPreacher = findViewById(R.id.btn_pick_preacher)
 		btnPickCategory = findViewById(R.id.btn_pick_category)
@@ -223,6 +256,7 @@ class AddSermonActivity : AppCompatActivity() {
 					picked.set(year, month, day, 0, 0, 0)
 					selectedDateMillis = DateUtils.normalizeToDayStart(picked.timeInMillis)
 					updateDateText()
+					scheduleAutoSave()
 				},
 				cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH)
 			).show()
@@ -233,6 +267,7 @@ class AddSermonActivity : AppCompatActivity() {
 			picker.onPreacherSelected = { preacher ->
 				selectedPreacherId = preacher.id
 				btnPickPreacher.text = preacher.name
+				scheduleAutoSave()
 			}
 			picker.show(supportFragmentManager, "preacher_picker")
 		}
@@ -242,6 +277,7 @@ class AddSermonActivity : AppCompatActivity() {
 			picker.onCategorySelected = { category ->
 				selectedCategoryId = category?.id
 				btnPickCategory.text = category?.name ?: "카테고리 선택"
+				scheduleAutoSave()
 			}
 			picker.show(supportFragmentManager, "category_picker")
 		}
@@ -347,6 +383,7 @@ class AddSermonActivity : AppCompatActivity() {
 			thumb.findViewById<ImageView>(R.id.btn_remove_photo).setOnClickListener {
 				photoPaths.remove(path)
 				renderPhotoThumbnails()
+				scheduleAutoSave()
 			}
 			photoContainer.addView(thumb)
 		}
@@ -522,10 +559,12 @@ class AddSermonActivity : AppCompatActivity() {
 				bibleRefs.add(ref)
 			}
 			renderBibleRefBoxes()
+			scheduleAutoSave()
 		}
 		rangePicker.onDeleteRequested = {
 			bibleRefs.remove(existing)
 			renderBibleRefBoxes()
+			scheduleAutoSave()
 		}
 		rangePicker.show(supportFragmentManager, "bible_range_picker")
 	}
@@ -595,6 +634,8 @@ class AddSermonActivity : AppCompatActivity() {
 	private fun applyFormatting(bold: Boolean) {
 		val range = requireSelection() ?: return
 		RichTextUtils.toggleStyle(editMemo.text, range.first, range.second, bold)
+		// setSpan()은 TextWatcher를 안 부르므로(글자 내용 자체는 안 바뀌니까), 여기서 직접 예약한다.
+		scheduleAutoSave()
 	}
 
 	private fun showColorPicker() {
@@ -629,6 +670,7 @@ class AddSermonActivity : AppCompatActivity() {
 						range.second,
 						Color.parseColor(hex)
 					)
+					scheduleAutoSave()
 					dialog.dismiss()
 				}
 			}
@@ -661,7 +703,10 @@ class AddSermonActivity : AppCompatActivity() {
 		}
 
 	private fun hasUnsavedContent(): Boolean {
-		if (!isEditMode) {
+		// 자동 저장 덕분에 "새로 작성 중"이던 설교도 중간에 한 번 저장돼서 existingSermon이 생길
+		// 수 있다 — 그 뒤로는(원래부터 수정 모드였든, 자동 저장으로 방금 생겼든) 항상 "마지막으로
+		// 저장된 상태"와 비교해야 한다. 아직 한 번도 저장된 적 없을 때만 단순히 "뭐라도 썼는지"를 본다.
+		if (existingSermon == null) {
 			return editTitle.text.toString().isNotBlank() ||
 					editMemo.text.toString().isNotBlank() ||
 					editLink.text.toString().isNotBlank() ||
@@ -670,7 +715,7 @@ class AddSermonActivity : AppCompatActivity() {
 					selectedCategoryId != null ||
 					selectedPreacherId != null
 		}
-		// 수정 모드에서는 원본과 실제로 달라진 게 있을 때만 "저장 안 된 변경사항"으로 본다.
+		// 원본(또는 마지막 자동 저장 시점)과 실제로 달라진 게 있을 때만 "저장 안 된 변경사항"으로 본다.
 		return editTitle.text.toString().trim() != originalTitle ||
 				RichTextUtils.toStorageString(editMemo.text) != originalMemo ||
 				editLink.text.toString().trim() != originalLink ||
@@ -683,16 +728,28 @@ class AddSermonActivity : AppCompatActivity() {
 
 	private fun handleBackPress() {
 		if (!hasUnsavedContent()) {
+			// 자동 저장 덕분에, "지금은 더 바뀐 게 없어도" 이 화면에 머무는 동안 이미 DB에 실제로
+			// 저장이 됐을 수 있다 — 그런 경우 호출한 화면(설교 상세 등)이 최신 내용으로 새로고침
+			// 되도록 RESULT_OK를 같이 넘겨준다.
+			if (existingSermon != null) setResult(Activity.RESULT_OK)
 			finish()
 			return
 		}
 		com.chan.bnote.ui.common.UnsavedChangesDialog.show(
 			context = this,
-			onDiscard = { finish() }
+			onDiscard = {
+				if (existingSermon != null) setResult(Activity.RESULT_OK)
+				finish()
+			}
 		)
 	}
 
-	private fun save(title: String, memo: CharSequence, link: String) {
+	private fun save(
+		title: String,
+		memo: CharSequence,
+		link: String,
+		exitAfterSave: Boolean = true
+	) {
 		if (title.isEmpty()) {
 			Toast.makeText(this, "제목을 입력해주세요", Toast.LENGTH_SHORT).show()
 			return
@@ -702,56 +759,126 @@ class AddSermonActivity : AppCompatActivity() {
 			Toast.makeText(this, "설교자를 선택해주세요", Toast.LENGTH_SHORT).show()
 			return
 		}
-		val memoText = RichTextUtils.toStorageString(memo)
-		val linkValue = link.trim().ifEmpty { null }
+		// 수동으로(저장 버튼이든 Ctrl+S든) 바로 저장을 실행하는 경우, 뒤이어 자동으로 또 한 번
+		// 저장이 실행되지 않도록 예약해둔 자동 저장은 취소한다.
+		autoSaveJob?.cancel()
 
 		lifecycleScope.launch {
-			val db = BibleDatabase.getInstance(applicationContext)
+			val sermonId = persistSermon(title, memo, link, preacherId)
 
-			val sermonId: Long
-			val current = existingSermon
-			if (current == null) {
-				sermonId = db.sermonDao().insert(
-					Sermon(
-						title = title, preacherId = preacherId, sermonDate = selectedDateMillis,
-						categoryId = selectedCategoryId, memo = memoText, link = linkValue
-					)
-				)
+			if (exitAfterSave) {
+				setResult(Activity.RESULT_OK)
+				if (isNewlyCreated) {
+					// 새로 작성한 설교는 어디서 시작했든(캘린더 등) 그 설교의 상세 화면으로 바로
+					// 이동해줘야 하므로 새로 연다.
+					SermonDetailActivity.start(this@AddSermonActivity, sermonId)
+				}
+				// 수정인 경우엔 항상 설교 상세 화면(editSermonLauncher)에서 열렸으므로, 여기서 새
+				// 상세 화면을 또 띄우면 뒤로가기 시 상세 화면이 중복으로 쌓인다. RESULT_OK로 finish만
+				// 하면 원래 상세 화면이 자기 자신을 다시 불러온다(editSermonLauncher 콜백 참고).
+				finish()
 			} else {
-				sermonId = current.id
-				db.sermonDao().update(
-					current.copy(
-						title = title, preacherId = preacherId, sermonDate = selectedDateMillis,
-						categoryId = selectedCategoryId, memo = memoText, link = linkValue
-					)
-				)
-				db.sermonBibleRefDao().deleteBySermon(sermonId)
+				Toast.makeText(this@AddSermonActivity, "저장했어요", Toast.LENGTH_SHORT).show()
 			}
-
-			if (bibleRefs.isNotEmpty()) {
-				db.sermonBibleRefDao().insertAll(bibleRefs.map { it.copy(sermonId = sermonId) })
-			}
-
-			db.sermonPhotoDao().deleteBySermon(sermonId)
-			if (photoPaths.isNotEmpty()) {
-				db.sermonPhotoDao().insertAll(
-					photoPaths.mapIndexed { index, path ->
-						SermonPhoto(sermonId = sermonId, filePath = path, sortOrder = index)
-					}
-				)
-			}
-
-			setResult(Activity.RESULT_OK)
-			if (current == null) {
-				// 새로 작성한 설교는 어디서 시작했든(캘린더 등) 그 설교의 상세 화면으로 바로
-				// 이동해줘야 하므로 새로 연다.
-				SermonDetailActivity.start(this@AddSermonActivity, sermonId)
-			}
-			// 수정인 경우엔 항상 설교 상세 화면(editSermonLauncher)에서 열렸으므로, 여기서 새
-			// 상세 화면을 또 띄우면 뒤로가기 시 상세 화면이 중복으로 쌓인다. RESULT_OK로 finish만
-			// 하면 원래 상세 화면이 자기 자신을 다시 불러온다(editSermonLauncher 콜백 참고).
-			finish()
 		}
+	}
+
+	/** 실제로 DB에 쓰는 부분만 따로 뗀 것. 자동 저장·Ctrl+S·저장 버튼이 전부 이 함수를 공유한다.
+	 * 저장이 끝나면 existingSermon과 "원본" 비교값들을 지금 상태로 갱신해서, 이 화면을 계속
+	 * 붙잡고 있는 동안 (1) 다음 저장은 새로 만들지 않고 이어서 수정하고 (2) hasUnsavedContent()가
+	 * "방금 자동 저장된 상태"를 기준으로 다시 비교하도록 한다. */
+	private var isNewlyCreated = false
+
+	private suspend fun persistSermon(
+		title: String,
+		memo: CharSequence,
+		link: String,
+		preacherId: Long
+	): Long {
+		val memoText = RichTextUtils.toStorageString(memo)
+		val linkValue = link.trim().ifEmpty { null }
+		val db = BibleDatabase.getInstance(applicationContext)
+
+		val sermonId: Long
+		val current = existingSermon
+		if (current == null) {
+			sermonId = db.sermonDao().insert(
+				Sermon(
+					title = title, preacherId = preacherId, sermonDate = selectedDateMillis,
+					categoryId = selectedCategoryId, memo = memoText, link = linkValue
+				)
+			)
+			isNewlyCreated = true
+		} else {
+			sermonId = current.id
+			db.sermonDao().update(
+				current.copy(
+					title = title, preacherId = preacherId, sermonDate = selectedDateMillis,
+					categoryId = selectedCategoryId, memo = memoText, link = linkValue
+				)
+			)
+			db.sermonBibleRefDao().deleteBySermon(sermonId)
+		}
+
+		if (bibleRefs.isNotEmpty()) {
+			db.sermonBibleRefDao().insertAll(bibleRefs.map { it.copy(sermonId = sermonId) })
+		}
+
+		db.sermonPhotoDao().deleteBySermon(sermonId)
+		if (photoPaths.isNotEmpty()) {
+			db.sermonPhotoDao().insertAll(
+				photoPaths.mapIndexed { index, path ->
+					SermonPhoto(sermonId = sermonId, filePath = path, sortOrder = index)
+				}
+			)
+		}
+
+		// 방금 저장한 내용을 새 "기준값"으로 삼는다 — 그래야 이 화면에 계속 머무는 동안(자동 저장
+		// 등으로) 다음 비교/저장이 지금 막 저장한 상태를 기준으로 정확히 이어진다.
+		existingSermon = db.sermonDao().getById(sermonId)
+		originalTitle = title
+		originalMemo = memoText
+		originalLink = linkValue ?: ""
+		originalDateMillis = selectedDateMillis
+		originalCategoryId = selectedCategoryId
+		originalPreacherId = preacherId
+		originalRefsSignature = refsSignature(bibleRefs)
+		originalPhotoPaths = photoPaths.toList()
+
+		return sermonId
+	}
+
+	/** 입력이 멈추고 AUTO_SAVE_DELAY_MS만큼 지나면 조용히(화면 이동·안내 없이) 저장한다.
+	 * 제목·설교자처럼 저장에 꼭 필요한 값이 아직 없으면(작성 극초반) 건너뛰고, 저장할 내용이
+	 * 실제로 없으면(원본과 차이 없음) 굳이 다시 안 쓴다. */
+	private fun scheduleAutoSave() {
+		autoSaveJob?.cancel()
+		autoSaveJob = lifecycleScope.launch {
+			kotlinx.coroutines.delay(AUTO_SAVE_DELAY_MS)
+			val title = editTitle.text.toString().trim()
+			val preacherId = selectedPreacherId
+			if (title.isEmpty() || preacherId == null) return@launch
+			if (!hasUnsavedContent()) return@launch
+			persistSermon(title, editMemo.text, editLink.text.toString().trim(), preacherId)
+		}
+	}
+
+	override fun dispatchKeyEvent(event: android.view.KeyEvent): Boolean {
+		// 물리/블루투스 키보드에서 Ctrl+S를 누르면, 화면을 나가지 않고 그 자리에서 바로 저장한다
+		// (일반 저장 버튼은 저장 후 상세 화면으로 이동하지만, 이건 계속 이어서 쓸 수 있게 그대로 둔다).
+		if (event.action == android.view.KeyEvent.ACTION_DOWN &&
+			event.isCtrlPressed &&
+			event.keyCode == android.view.KeyEvent.KEYCODE_S
+		) {
+			save(
+				editTitle.text.toString().trim(),
+				editMemo.text,
+				editLink.text.toString().trim(),
+				exitAfterSave = false
+			)
+			return true
+		}
+		return super.dispatchKeyEvent(event)
 	}
 
 	private fun updateDateText() {
