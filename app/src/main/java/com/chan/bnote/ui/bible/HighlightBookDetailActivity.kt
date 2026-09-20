@@ -33,6 +33,10 @@ class HighlightBookDetailActivity : AppCompatActivity() {
 	companion object {
 		private const val EXTRA_BOOK_ID = "extra_book_id"
 
+		// 이 개수를 넘으면 장 헤더를 눌러서 접고 펼 수 있게 하고, 기본을 접힌 상태로 시작한다.
+		// 그보다 적으면(대부분의 책) 예전처럼 전부 펼쳐진 채로 바로 보인다.
+		private const val COLLAPSE_THRESHOLD = 70
+
 		fun createIntent(context: Context, bookId: Int): Intent =
 			Intent(context, HighlightBookDetailActivity::class.java)
 				.putExtra(EXTRA_BOOK_ID, bookId)
@@ -90,15 +94,32 @@ class HighlightBookDetailActivity : AppCompatActivity() {
 			val verseTextCache = mutableMapOf<Pair<Int, Int>, List<BibleVerse>>()
 			container.removeAllViews()
 
+			// 하이라이트가 너무 많으면(기준: COLLAPSE_THRESHOLD) 장별로 접어서 시작한다 —
+			// 적을 땐 예전처럼 전부 펼쳐진 채로 바로 보이는 게 더 편하다.
+			val collapseByDefault = highlights.size > COLLAPSE_THRESHOLD
+
 			// chapter별로 확실하게 묶는다(정렬 순서에 기대지 않고, 진짜로 같은 장인 것끼리 모은다).
 			val byChapter = highlights.groupBy { it.chapter }.toSortedMap()
 			for ((chapter, chapterHighlights) in byChapter) {
-				addHeader("$chapter$unit")
+				val rowsContainer = LinearLayout(this@HighlightBookDetailActivity).apply {
+					orientation = LinearLayout.VERTICAL
+					visibility = if (collapseByDefault) View.GONE else View.VISIBLE
+				}
+				addChapterHeader(
+					"$chapter$unit",
+					rowsContainer,
+					initiallyExpanded = !collapseByDefault
+				)
 
 				// 절이 소제목으로 둘로 나뉘는 예외 구절은 같은 절에 하이라이트가 segment별로 2개
-				// 생기는데(둘 다 덮으려고), 목록에서는 한 절이니까 한 줄로 합쳐서 보여준다.
-				val byVerse = chapterHighlights.groupBy { it.verse }.toSortedMap()
-				for ((verseNum, verseHighlights) in byVerse) {
+				// 생기는데(둘 다 덮으려고), 목록에서는 한 절이니까 한 줄로 합쳐서 보여준다. 단,
+				// 색이 다른 하이라이트는 같은 절이어도 서로 다른 걸로 취급해서 따로 보여준다
+				// (절 안에서 부분적으로 색을 다르게 칠했을 수 있으므로).
+				val byVerseAndColor = chapterHighlights
+					.groupBy { it.verse to it.colorHex }
+					.toSortedMap(compareBy({ it.first }, { it.second }))
+				for ((key, verseHighlights) in byVerseAndColor) {
+					val (verseNum, colorHex) = key
 					val sorted = verseHighlights.sortedBy { it.segment }
 					val previewParts = sorted.map { highlight ->
 						val verses =
@@ -124,8 +145,9 @@ class HighlightBookDetailActivity : AppCompatActivity() {
 					}
 
 					addRow(
+						container = rowsContainer,
 						label = "$verseNum" + "절  " + previewParts.joinToString(" "),
-						colorHex = sorted.first().colorHex,
+						colorHex = colorHex,
 						highlight = sorted.first()
 					)
 				}
@@ -133,8 +155,14 @@ class HighlightBookDetailActivity : AppCompatActivity() {
 		}
 	}
 
-	private fun addHeader(label: String) {
-		val header = TextView(this).apply {
+	private fun addChapterHeader(
+		label: String,
+		rowsContainer: LinearLayout,
+		initiallyExpanded: Boolean
+	) {
+		var isExpanded = initiallyExpanded
+
+		val headerLabel = TextView(this).apply {
 			text = label
 			textSize = 13f
 			setTypeface(typeface, Typeface.BOLD)
@@ -144,12 +172,45 @@ class HighlightBookDetailActivity : AppCompatActivity() {
 					R.color.brown_primary
 				)
 			)
-			setPadding(dp(16), dp(16), dp(16), dp(6))
+			layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
 		}
+		// 하이라이트 수와 무관하게 항상 접고 펼 수 있게 하고, 처음 열릴 때의 펼침 여부만
+		// COLLAPSE_THRESHOLD 기준으로 다르게 시작한다.
+		val chevron = ImageView(this).apply {
+			setImageResource(R.drawable.ic_chevron_down)
+			imageTintList =
+				ContextCompat.getColorStateList(this@HighlightBookDetailActivity, R.color.text_hint)
+			layoutParams = LinearLayout.LayoutParams(dp(18), dp(18))
+			rotation = if (isExpanded) 180f else 0f
+		}
+		val header = LinearLayout(this).apply {
+			orientation = LinearLayout.HORIZONTAL
+			gravity = Gravity.CENTER_VERTICAL
+			setPadding(dp(16), dp(16), dp(16), dp(6))
+			isClickable = true
+			isFocusable = true
+			background = ContextCompat.getDrawable(
+				this@HighlightBookDetailActivity, android.R.drawable.list_selector_background
+			)
+			addView(headerLabel)
+			addView(chevron)
+		}
+		header.setOnClickListener {
+			isExpanded = !isExpanded
+			rowsContainer.visibility = if (isExpanded) View.VISIBLE else View.GONE
+			chevron.animate().rotation(if (isExpanded) 180f else 0f).setDuration(150).start()
+		}
+
 		container.addView(header)
+		container.addView(rowsContainer)
 	}
 
-	private fun addRow(label: String, colorHex: String, highlight: PartialHighlight) {
+	private fun addRow(
+		container: LinearLayout,
+		label: String,
+		colorHex: String,
+		highlight: PartialHighlight
+	) {
 		val row = LinearLayout(this).apply {
 			orientation = LinearLayout.HORIZONTAL
 			gravity = Gravity.CENTER_VERTICAL

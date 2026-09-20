@@ -26,6 +26,21 @@ import java.util.Calendar
 
 class GratitudeActivity : AppCompatActivity() {
 
+	companion object {
+		private const val EXTRA_INITIAL_DATE_MILLIS = "extra_initial_date_millis"
+
+		/** 특정 날짜가 선택된 채로 열린다(예: 적용 상세 화면에서 감사 노트를 막 작성하고 돌아왔을 때
+		 * 그 날짜를 바로 보여주기 위함). */
+		fun intentForDate(
+			context: android.content.Context,
+			dateMillis: Long
+		): android.content.Intent {
+			return android.content.Intent(context, GratitudeActivity::class.java).apply {
+				putExtra(EXTRA_INITIAL_DATE_MILLIS, dateMillis)
+			}
+		}
+	}
+
 	private lateinit var monthYearText: TextView
 	private lateinit var gridRecycler: RecyclerView
 
@@ -70,6 +85,14 @@ class GratitudeActivity : AppCompatActivity() {
 		}
 
 		findViewById<ImageView>(R.id.btn_top_bar_back).setOnClickListener { finish() }
+
+		val initialDateMillis = intent.getLongExtra(EXTRA_INITIAL_DATE_MILLIS, -1L)
+		if (initialDateMillis != -1L) {
+			val cal = Calendar.getInstance().apply { timeInMillis = initialDateMillis }
+			currentYear = cal.get(Calendar.YEAR)
+			currentMonth0 = cal.get(Calendar.MONTH)
+			selectedDate = DateUtils.normalizeToDayStart(initialDateMillis)
+		}
 
 		monthYearText = findViewById(R.id.text_month_year)
 		gridRecycler = findViewById(R.id.recycler_calendar_grid)

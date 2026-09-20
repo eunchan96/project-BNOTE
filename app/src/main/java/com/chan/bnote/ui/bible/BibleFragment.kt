@@ -834,6 +834,12 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		if (bookId == currentBookId && chapter == currentChapter) {
 			scrollToVerse?.let { verseNum ->
 				val index = currentVerses.indexOfFirst { it.verse == verseNum }
+				// 캐시해둔 recyclerView 필드를 그냥 믿지 않는다 — 앱이 잠깐 백그라운드로 갔다가
+				// 돌아오는 등의 상황에서 이 필드가 실제로 화면에 붙어있는 페이지와 어긋나 있을 수
+				// 있다(같은 장으로 연달아 두 번째 이동할 때만 이 분기를 타는데, 그때 하필 낡은
+				// 참조를 쓰면 스크롤이 안 먹혔다). 매번 지금 진짜 보이는 페이지에서 다시 찾는다.
+				val liveRecyclerView = resolveCurrentPageViewHolder()?.currentRecyclerView()
+				if (liveRecyclerView != null) recyclerView = liveRecyclerView
 				if (index >= 0 && ::recyclerView.isInitialized) recyclerView.scrollToPosition(index)
 			}
 			// 이미 보고 있는 장이면 페이지가 다시 만들어지지 않아서(BiblePageAdapter.bind()가 다시 안 불림)

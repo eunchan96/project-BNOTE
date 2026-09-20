@@ -3,14 +3,11 @@ package com.chan.bnote.ui.bible.scrap
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
-import android.widget.EditText
-import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -141,16 +138,8 @@ class ScrapActivity : AppCompatActivity() {
 	}
 
 	private fun showAddGroupDialog() {
-		val editText = EditText(this).apply {
-			hint = "그룹 이름"
-			setPadding(48, 32, 48, 32)
-			textSize = 15f
-			background = ContextCompat.getDrawable(this@ScrapActivity, R.drawable.bg_book_button)
-		}
-		val container = FrameLayout(this).apply {
-			setPadding(dp(24), dp(16), dp(24), dp(0))
-			addView(editText)
-		}
+		val editText = com.chan.bnote.ui.common.DialogStyle.buildEditText(this, "그룹 이름")
+		val container = com.chan.bnote.ui.common.DialogStyle.wrapInDialogContainer(this, editText)
 		MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_BNOTE_Dialog)
 			.setTitle("새 그룹 추가")
 			.setView(container)
@@ -169,16 +158,8 @@ class ScrapActivity : AppCompatActivity() {
 	}
 
 	private fun showRenameGroupDialog(group: ScrapGroup) {
-		val editText = EditText(this).apply {
-			setText(group.name)
-			setPadding(48, 32, 48, 32)
-			textSize = 15f
-			background = ContextCompat.getDrawable(this@ScrapActivity, R.drawable.bg_book_button)
-		}
-		val container = FrameLayout(this).apply {
-			setPadding(dp(24), dp(16), dp(24), dp(0))
-			addView(editText)
-		}
+		val editText = com.chan.bnote.ui.common.DialogStyle.buildEditText(this, "", group.name)
+		val container = com.chan.bnote.ui.common.DialogStyle.wrapInDialogContainer(this, editText)
 		MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_BNOTE_Dialog)
 			.setTitle("그룹 이름 수정")
 			.setView(container)
@@ -253,6 +234,4 @@ class ScrapActivity : AppCompatActivity() {
 			.setNegativeButton("취소", null)
 			.show()
 	}
-
-	private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
 }

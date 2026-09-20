@@ -212,7 +212,13 @@ class SermonDetailActivity : AppCompatActivity() {
 		// 메모 (굵게/밑줄 서식 복원 + 인용 구절 강조 + 롱프레스 말풍선)
 		if (sermon.memo.isBlank()) {
 			memoView.text = "메모가 없어요"
+			memoView.setTextColor(
+				androidx.core.content.ContextCompat.getColor(this, R.color.text_hint)
+			)
 		} else {
+			memoView.setTextColor(
+				androidx.core.content.ContextCompat.getColor(this, R.color.text_primary)
+			)
 			val restored = RichTextUtils.toEditable(sermon.memo)
 			val plainText = restored.toString()
 

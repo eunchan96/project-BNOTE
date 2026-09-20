@@ -81,10 +81,13 @@ class VersionHistoryActivity : AppCompatActivity() {
 			setTextColor(ContextCompat.getColor(this@VersionHistoryActivity, R.color.brown_primary))
 			layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
 		}
-		val arrowView = TextView(this).apply {
-			text = if (isExpanded) "▾" else "▸"
-			textSize = 16f
-			setTextColor(ContextCompat.getColor(this@VersionHistoryActivity, R.color.text_hint))
+		// 부록 펼침 아이콘과 똑같은 방식: 접혀있으면 ∨(0도), 펼쳐지면 ∧(180도)로 회전한다.
+		val arrowView = ImageView(this).apply {
+			setImageResource(R.drawable.ic_chevron_down)
+			imageTintList =
+				ContextCompat.getColorStateList(this@VersionHistoryActivity, R.color.text_hint)
+			layoutParams = LinearLayout.LayoutParams(dp(20), dp(20))
+			rotation = if (isExpanded) 180f else 0f
 		}
 		header.addView(versionView)
 		header.addView(arrowView)
@@ -96,7 +99,7 @@ class VersionHistoryActivity : AppCompatActivity() {
 		}
 		for (change in entry.changes) {
 			val changeView = TextView(this).apply {
-				text = "· $change"
+				text = "・ $change"
 				textSize = 14f
 				setTextColor(
 					ContextCompat.getColor(
@@ -114,7 +117,7 @@ class VersionHistoryActivity : AppCompatActivity() {
 			isExpanded = !isExpanded
 			changesContainer.visibility =
 				if (isExpanded) android.view.View.VISIBLE else android.view.View.GONE
-			arrowView.text = if (isExpanded) "▾" else "▸"
+			arrowView.animate().rotation(if (isExpanded) 180f else 0f).setDuration(150).start()
 		}
 
 		block.addView(header)
