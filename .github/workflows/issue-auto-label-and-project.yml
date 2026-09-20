@@ -55,6 +55,12 @@ jobs:
         with:
           labels: chore
 
+      - name: "design 라벨 할당"
+        if: contains(github.event.issue.title, 'design')
+        uses: actions-ecosystem/action-add-labels@v1
+        with:
+          labels: design
+
       # === GitHub Project 자동 추가 ===
       # project-url은 Team-MyPik의 실제 프로젝트 보드 URL로 바꿔주세요
       - name: 이슈를 프로젝트의 Backlog 컬럼에 추가
