@@ -19,9 +19,8 @@ object TodayVerseWidget {
 	private const val RESERVED_HEIGHT_DP = 26
 
 	suspend fun buildViews(context: Context, appWidgetId: Int): RemoteViews {
-		val theme = WidgetSettings.getTheme(context, appWidgetId)
 		val views = RemoteViews(context.packageName, R.layout.widget_today_verse)
-		WidgetViews.applyTheme(context, views, theme)
+		WidgetViews.applyTheme(context, views, appWidgetId)
 
 		val daily = DailyVerseProvider.getToday(context)
 		if (daily == null) {

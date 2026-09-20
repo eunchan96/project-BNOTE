@@ -50,9 +50,8 @@ object MemorizationWidget {
 	private const val RESERVED_HEIGHT_DP = 46
 
 	suspend fun buildViews(context: Context, appWidgetId: Int): RemoteViews {
-		val theme = WidgetSettings.getTheme(context, appWidgetId)
 		val views = RemoteViews(context.packageName, R.layout.widget_memorization)
-		WidgetViews.applyTheme(context, views, theme)
+		val theme = WidgetViews.applyTheme(context, views, appWidgetId)
 		views.setTextColor(
 			R.id.widget_group,
 			ContextCompat.getColor(context, theme.secondaryTextRes)

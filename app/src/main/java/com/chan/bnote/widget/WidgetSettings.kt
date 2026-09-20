@@ -4,7 +4,7 @@ import android.content.Context
 import com.chan.bnote.widget.WidgetSettings.clear
 
 /**
- * 위젯별 설정(테마, 암송 위젯이 보여줄 그룹, 넘긴 횟수). 같은 위젯을 여러 개 올려도 서로 다른
+ * 위젯별 설정(테마, 배경 투명도, 암송 위젯이 보여줄 그룹, 넘긴 횟수). 같은 위젯을 여러 개 올려도 서로 다른
  * 설정을 가질 수 있도록 위젯 id를 키에 붙여서 저장한다. 위젯을 지우면 [clear]로 함께 지운다.
  *
  * 앱 설정(AppSettings)과 달리 이 기기의 홈 화면 배치에 묶인 값이라 데이터 내보내기/불러오기
@@ -25,6 +25,16 @@ object WidgetSettings {
 
 	fun setTheme(context: Context, appWidgetId: Int, theme: WidgetTheme) {
 		prefs(context).edit().putString("theme_$appWidgetId", theme.code).apply()
+	}
+
+	/** 위젯 배경의 투명도(%). 0이면 완전 불투명, 100이면 완전 투명. 글자에는 적용되지 않는다. */
+	fun getTransparency(context: Context, appWidgetId: Int): Int =
+		prefs(context).getInt("transparency_$appWidgetId", 0)
+
+	fun setTransparency(context: Context, appWidgetId: Int, percent: Int) {
+		prefs(context).edit()
+			.putInt("transparency_$appWidgetId", percent.coerceIn(0, 100))
+			.apply()
 	}
 
 	/** 고른 암송 그룹. "전체 그룹"이면 null. */
@@ -58,6 +68,7 @@ object WidgetSettings {
 		val editor = prefs(context).edit()
 		for (id in appWidgetIds) {
 			editor.remove("theme_$id")
+				.remove("transparency_$id")
 				.remove("group_id_$id")
 				.remove("group_name_$id")
 				.remove("offset_$id")

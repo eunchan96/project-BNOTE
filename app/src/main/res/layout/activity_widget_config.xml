@@ -60,6 +60,67 @@
                 android:textSize="13sp"
                 android:textColor="@color/text_secondary" />
 
+            <!-- 배경 투명도: 10% 단위로 움직인다. 글자는 그대로고 배경 그림에만 적용된다. -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="배경 투명도"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/brown_primary" />
+
+                <TextView
+                    android:id="@+id/text_transparency_value"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="14sp"
+                    android:textColor="@color/text_primary" />
+            </LinearLayout>
+
+            <SeekBar
+                android:id="@+id/seek_transparency"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:max="10" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="불투명"
+                    android:textSize="13sp"
+                    android:textColor="@color/text_secondary" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="투명"
+                    android:textSize="13sp"
+                    android:textColor="@color/text_secondary" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="높일수록 배경이 투명해져요. 글자 색은 위젯 테마를 따라서, 너무 투명하면 배경화면에 묻혀 안 보일 수 있어요."
+                android:textSize="13sp"
+                android:textColor="@color/text_secondary" />
+
             <!-- 암송 구절 위젯일 때만 보인다 -->
             <LinearLayout
                 android:id="@+id/container_group_section"

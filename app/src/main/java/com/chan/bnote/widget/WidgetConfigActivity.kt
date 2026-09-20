@@ -7,10 +7,10 @@ import android.view.View
 import android.widget.ImageView
 import android.widget.RadioButton
 import android.widget.RadioGroup
+import android.widget.SeekBar
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
@@ -21,7 +21,7 @@ import kotlinx.coroutines.launch
 
 /**
  * 위젯을 홈 화면에 올릴 때(그리고 위젯을 길게 눌러 "설정"을 고를 때) 뜨는 설정 화면.
- * 두 위젯이 같은 화면을 쓰고, 암송 위젯일 때만 "암송 그룹" 선택이 추가로 나온다.
+ * 두 위젯이 같은 화면을 쓰고(테마 · 배경 투명도), 암송 위젯일 때만 "암송 그룹" 선택이 추가로 나온다.
  *
  * 위젯 설정 화면은 시작할 때 결과를 RESULT_CANCELED로 두었다가 "완료"를 눌렀을 때만 RESULT_OK로
  * 바꿔야 한다 — 그래야 뒤로가기로 나갔을 때 시스템이 그 위젯 추가를 취소해준다. 또 설정 화면이 있는
@@ -35,6 +35,8 @@ class WidgetConfigActivity : AppCompatActivity() {
 
 	private lateinit var radioTheme: RadioGroup
 	private lateinit var radioGroups: RadioGroup
+	private lateinit var seekTransparency: SeekBar
+	private lateinit var textTransparencyValue: TextView
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
@@ -72,6 +74,20 @@ class WidgetConfigActivity : AppCompatActivity() {
 			}
 		)
 
+		seekTransparency = findViewById(R.id.seek_transparency)
+		textTransparencyValue = findViewById(R.id.text_transparency_value)
+		seekTransparency.progress =
+			WidgetSettings.getTransparency(this, appWidgetId) / TRANSPARENCY_STEP
+		updateTransparencyLabel()
+		seekTransparency.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+			override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+				updateTransparencyLabel()
+			}
+
+			override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+			override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+		})
+
 		val providerName = AppWidgetManager.getInstance(this)
 			.getAppWidgetInfo(appWidgetId)?.provider?.className
 		isMemorizationWidget = providerName == MemorizationWidgetProvider::class.java.name
@@ -81,6 +97,10 @@ class WidgetConfigActivity : AppCompatActivity() {
 		}
 
 		findViewById<TextView>(R.id.btn_widget_config_done).setOnClickListener { saveAndFinish() }
+	}
+
+	private fun updateTransparencyLabel() {
+		textTransparencyValue.text = "${seekTransparency.progress * TRANSPARENCY_STEP}%"
 	}
 
 	private fun loadGroups() {
@@ -103,14 +123,13 @@ class WidgetConfigActivity : AppCompatActivity() {
 
 		val options = listOf<MemorizationGroup?>(null) + groups
 		for (group in options) {
-			val button = RadioButton(this).apply {
-				id = View.generateViewId()
-				text = group?.name ?: "전체 그룹"
-				textSize = 16f
-				setTextColor(ContextCompat.getColor(context, R.color.text_primary))
-				// 어느 그룹인지 저장 시점에 알 수 있게 그룹 id를 달아둔다(전체 그룹은 -1).
-				tag = group?.id ?: ALL_GROUPS
-			}
+			// 위젯 테마 라디오 버튼과 똑같은 모양(높이·글자)이 되도록 같은 레이아웃으로 만든다.
+			val button = layoutInflater.inflate(R.layout.item_widget_radio, radioGroups, false)
+					as RadioButton
+			button.id = View.generateViewId()
+			button.text = group?.name ?: "전체 그룹"
+			// 어느 그룹인지 저장 시점에 알 수 있게 그룹 id를 달아둔다(전체 그룹은 -1).
+			button.tag = group?.id ?: ALL_GROUPS
 			radioGroups.addView(button)
 			if ((group?.id ?: ALL_GROUPS) == (selectedId ?: ALL_GROUPS)) button.isChecked = true
 		}
@@ -123,6 +142,9 @@ class WidgetConfigActivity : AppCompatActivity() {
 			WidgetTheme.LIGHT
 		}
 		WidgetSettings.setTheme(this, appWidgetId, theme)
+		WidgetSettings.setTransparency(
+			this, appWidgetId, seekTransparency.progress * TRANSPARENCY_STEP
+		)
 
 		if (isMemorizationWidget) {
 			val checked = radioGroups.findViewById<RadioButton>(radioGroups.checkedRadioButtonId)
@@ -150,5 +172,8 @@ class WidgetConfigActivity : AppCompatActivity() {
 
 	private companion object {
 		const val ALL_GROUPS = -1L
+
+		// 투명도 슬라이더는 10% 단위(0~10칸)로 움직인다.
+		const val TRANSPARENCY_STEP = 10
 	}
 }
