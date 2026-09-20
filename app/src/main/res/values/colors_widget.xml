@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 홈 화면 위젯 전용 색. 위젯은 앱의 다크모드 설정이 아니라 위젯별 설정(라이트/다크)을 따르므로
+         values-night와 무관하게 항상 같은 값을 쓴다. -->
+    <color name="widget_light_bg">#FFFBF8</color>
+    <color name="widget_light_border">#E6DBD5</color>
+    <color name="widget_light_text_primary">#212121</color>
+    <color name="widget_light_text_secondary">#757575</color>
+    <color name="widget_light_accent">#795548</color>
+
+    <color name="widget_dark_bg">#1E1E1E</color>
+    <color name="widget_dark_border">#333333</color>
+    <color name="widget_dark_text_primary">#EEEEEE</color>
+    <color name="widget_dark_text_secondary">#AAAAAA</color>
+    <color name="widget_dark_accent">#BCAAA4</color>
+</resources>

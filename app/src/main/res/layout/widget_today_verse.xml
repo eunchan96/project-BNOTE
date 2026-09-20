@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 오늘의 말씀 위젯. RemoteViews로 그려지므로 LinearLayout/TextView 같은 기본 뷰만 쓸 수 있다.
+     색·배경은 위젯 설정(라이트/다크)에 따라 코드(WidgetViews.applyTheme)에서 다시 넣는다. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="12dp"
+    android:background="@drawable/bg_widget_light">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:id="@+id/widget_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="오늘의 말씀"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:textColor="@color/widget_light_accent" />
+
+        <TextView
+            android:id="@+id/widget_label"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:gravity="end"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:textSize="12sp"
+            android:textColor="@color/widget_light_text_secondary" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/widget_text"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="center_vertical"
+        android:text="불러오는 중이에요"
+        android:textSize="15sp"
+        android:lineSpacingMultiplier="1.1"
+        android:maxLines="12"
+        android:ellipsize="end"
+        android:textColor="@color/widget_light_text_primary" />
+
+    <TextView
+        android:id="@+id/widget_message"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:visibility="gone"
+        android:textSize="13sp"
+        android:textColor="@color/widget_light_text_secondary" />
+
+</LinearLayout>

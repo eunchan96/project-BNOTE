@@ -234,6 +234,15 @@
         <activity
             android:name=".ui.sermon.addsermon.PhotoViewerActivity"
             android:exported="false" />
+        <!-- 홈 화면 위젯을 올릴 때 / 위젯을 길게 눌러 "설정"을 고를 때 시스템이 여는 위젯 설정 화면.
+             시스템(런처)이 직접 실행하므로 exported="true"여야 한다. -->
+        <activity
+            android:name=".widget.WidgetConfigActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
+            </intent-filter>
+        </activity>
 
         <receiver
             android:name=".notification.AlarmReceiver"
@@ -245,6 +254,34 @@
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
+
+        <!-- 홈 화면 위젯 -->
+        <receiver
+            android:name=".widget.TodayVerseWidgetProvider"
+            android:label="오늘의 말씀"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_today_verse_info" />
+        </receiver>
+        <receiver
+            android:name=".widget.MemorizationWidgetProvider"
+            android:label="암송 구절"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_memorization_info" />
+        </receiver>
+        <!-- 날짜가 바뀌는 자정에 위젯을 다시 그리는 알람을 받는다 -->
+        <receiver
+            android:name=".widget.WidgetUpdateReceiver"
+            android:exported="false" />
 
         <provider
             android:name="androidx.core.content.FileProvider"
