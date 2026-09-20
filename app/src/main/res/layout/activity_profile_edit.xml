@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/profile_edit_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/surface_background">
+
+    <include layout="@layout/include_activity_top_bar" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- 사진 -->
+            <LinearLayout
+                android:id="@+id/btn_edit_photo"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackground"
+                android:padding="12dp">
+
+                <com.google.android.material.imageview.ShapeableImageView
+                    android:id="@+id/img_edit_photo"
+                    android:layout_width="96dp"
+                    android:layout_height="96dp"
+                    android:scaleType="centerCrop"
+                    android:background="@color/input_background"
+                    app:shapeAppearanceOverlay="@style/ShapeAppearance.BNOTE.Circle"
+                    android:src="@drawable/ic_person" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="사진 변경"
+                    android:textSize="13sp"
+                    android:textColor="@color/brown_primary" />
+            </LinearLayout>
+
+            <!-- 이름(별명) -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="이름(별명)"
+                android:textSize="13sp"
+                android:textColor="@color/text_secondary" />
+
+            <EditText
+                android:id="@+id/input_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:background="@drawable/bg_book_button"
+                android:padding="12dp"
+                android:textSize="15sp"
+                android:textColor="@color/text_primary"
+                android:hint="이름 또는 별명"
+                android:inputType="text"
+                android:maxLines="1" />
+
+            <!-- 교회 -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="교회"
+                android:textSize="13sp"
+                android:textColor="@color/text_secondary" />
+
+            <EditText
+                android:id="@+id/input_church"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:background="@drawable/bg_book_button"
+                android:padding="12dp"
+                android:textSize="15sp"
+                android:textColor="@color/text_primary"
+                android:hint="예: 꿈꾸는좋은교회"
+                android:inputType="text"
+                android:maxLines="1" />
+
+            <!-- 부서 -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="부서"
+                android:textSize="13sp"
+                android:textColor="@color/text_secondary" />
+
+            <EditText
+                android:id="@+id/input_department"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:background="@drawable/bg_book_button"
+                android:padding="12dp"
+                android:textSize="15sp"
+                android:textColor="@color/text_primary"
+                android:hint="예: 1남선교회, 청년부"
+                android:inputType="text"
+                android:maxLines="1" />
+
+            <!-- 직분 -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="직분"
+                android:textSize="13sp"
+                android:textColor="@color/text_secondary" />
+
+            <EditText
+                android:id="@+id/input_position"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:background="@drawable/bg_book_button"
+                android:padding="12dp"
+                android:textSize="15sp"
+                android:textColor="@color/text_primary"
+                android:hint="예: 집사, 형제"
+                android:inputType="text"
+                android:maxLines="1" />
+
+            <TextView
+                android:id="@+id/btn_save_profile"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="28dp"
+                android:padding="14dp"
+                android:gravity="center"
+                android:text="저장"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="@color/white"
+                android:background="@drawable/bg_save_button"
+                android:clickable="true"
+                android:focusable="true" />
+
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

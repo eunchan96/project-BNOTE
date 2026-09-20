@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/culture_detail_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/surface_background">
+
+    <include layout="@layout/include_activity_top_bar" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="20dp">
+
+            <TextView
+                android:id="@+id/text_category"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="13sp"
+                android:textColor="@color/brown_primary"
+                android:textStyle="bold"
+                tools:text="가정" />
+
+            <TextView
+                android:id="@+id/text_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary"
+                tools:text="결혼 풍습" />
+
+            <TextView
+                android:id="@+id/text_summary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:textSize="15sp"
+                android:textColor="@color/text_secondary"
+                tools:text="집안 어른들이 정하는 정혼과 두 단계의 결혼 절차" />
+
+            <TextView
+                android:id="@+id/text_description"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:textSize="15sp"
+                android:lineSpacingExtra="5dp"
+                android:textColor="@color/text_primary"
+                tools:text="결혼은 대개 집안 어른들이..." />
+
+            <TextView
+                android:id="@+id/btn_key_verse"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:padding="14dp"
+                android:gravity="center"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:textColor="@color/brown_primary"
+                android:background="@drawable/bg_book_button"
+                android:clickable="true"
+                android:focusable="true"
+                tools:text="마태복음 1장 보러 가기" />
+
+        </LinearLayout>
+    </ScrollView>
+
+</LinearLayout>

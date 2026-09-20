@@ -1,0 +1,336 @@
+package com.chan.bnote.ui.application
+
+import android.app.Activity
+import android.content.Context
+import android.content.Intent
+import android.os.Bundle
+import android.view.View
+import android.widget.ImageView
+import android.widget.TextView
+import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.lifecycleScope
+import com.chan.bnote.MainActivity
+import com.chan.bnote.R
+import com.chan.bnote.data.BibleDatabase
+import com.chan.bnote.data.DateUtils
+import com.chan.bnote.data.sermon.Sermon
+import com.chan.bnote.ui.application.addapplication.AddApplicationActivity
+import com.chan.bnote.ui.sermon.detail.SermonDetailActivity
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import kotlinx.coroutines.launch
+
+class ApplicationDetailActivity : AppCompatActivity() {
+
+	companion object {
+		private const val EXTRA_APPLICATION_ID = "extra_application_id"
+
+		fun start(context: Context, applicationId: Long) {
+			context.startActivity(createIntent(context, applicationId))
+		}
+
+		fun createIntent(context: Context, applicationId: Long): Intent {
+			return Intent(context, ApplicationDetailActivity::class.java)
+				.putExtra(EXTRA_APPLICATION_ID, applicationId)
+		}
+	}
+
+	private var applicationId: Long = -1L
+	private var changed = false
+	private var currentApplication: com.chan.bnote.data.application.Application? = null
+
+	private val editLauncher = registerForActivityResult(
+		ActivityResultContracts.StartActivityForResult()
+	) { result ->
+		if (result.resultCode == Activity.RESULT_OK) {
+			changed = true
+			loadApplication()
+		}
+	}
+
+	/** "감사 노트도 작성하기"로 새로 작성하고 저장을 완료하면, 이 상세 화면으로 그냥 돌아오는 대신
+	 * 방금 쓴 감사 노트(그 날짜)가 바로 보이는 감사 노트 화면으로 이동시킨다. */
+	private val writeGratitudeLauncher = registerForActivityResult(
+		ActivityResultContracts.StartActivityForResult()
+	) { result ->
+		val dateMillis = currentApplication?.applicationDate
+		if (result.resultCode == Activity.RESULT_OK && dateMillis != null) {
+			startActivity(
+				com.chan.bnote.ui.mypage.gratitude.GratitudeActivity.intentForDate(
+					this,
+					dateMillis
+				)
+			)
+		}
+	}
+
+	override fun onCreate(savedInstanceState: Bundle?) {
+		super.onCreate(savedInstanceState)
+		enableEdgeToEdge()
+		setContentView(R.layout.activity_application_detail)
+
+		ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.application_detail_root)) { v, insets ->
+			val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+			v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+			insets
+		}
+
+		applicationId = intent.getLongExtra(EXTRA_APPLICATION_ID, -1L)
+
+		findViewById<ImageView>(R.id.btn_top_bar_back).setOnClickListener {
+			setResult(if (changed) Activity.RESULT_OK else Activity.RESULT_CANCELED)
+			finish()
+		}
+		findViewById<ImageView>(R.id.btn_share_application).setOnClickListener { shareApplication() }
+		findViewById<ImageView>(R.id.btn_edit_application).setOnClickListener {
+			editLauncher.launch(AddApplicationActivity.editIntent(this, applicationId))
+		}
+		findViewById<ImageView>(R.id.btn_delete_application).setOnClickListener { confirmDelete() }
+
+		loadApplication()
+	}
+
+	override fun onResume() {
+		super.onResume()
+		// 감사 노트를 작성/확인하러 갔다가(일반 startActivity라 결과 콜백이 없음) 돌아왔을 수도
+		// 있으니, "감사 노트도 작성하기"/"감사 노트 보러 가기" 버튼 상태를 다시 확인한다.
+		if (applicationId != -1L) loadApplication()
+	}
+
+	private fun loadApplication() {
+		lifecycleScope.launch {
+			val db = BibleDatabase.getInstance(applicationContext)
+			val application = db.applicationDao().getById(applicationId) ?: run {
+				finish()
+				return@launch
+			}
+			currentApplication = application
+
+			val category = application.categoryId?.let { db.applicationCategoryDao().getById(it) }
+			val links = db.applicationSermonLinkDao().getByApplication(application.id)
+			val sermons = links.mapNotNull { db.sermonDao().getById(it.sermonId) }
+
+			val dateLabel = DateUtils.formatDate(application.applicationDate)
+			val bracketLabel = when {
+				category?.name == "설교" && sermons.isNotEmpty() -> sermons.first().title
+				category != null -> category.name
+				else -> null
+			}
+			findViewById<TextView>(R.id.text_detail_date_category).text =
+				if (bracketLabel != null) "$dateLabel [$bracketLabel]" else dateLabel
+
+			val refs = db.applicationBibleRefDao().getByApplication(application.id)
+			val infoView = findViewById<TextView>(R.id.text_application_info)
+			val infoBuilder = android.text.SpannableStringBuilder()
+			var hasContent = false
+
+			if (application.title.isNotBlank()) {
+				infoBuilder.append("제목 : ${application.title}")
+				hasContent = true
+			}
+
+			if (refs.isNotEmpty()) {
+				if (hasContent) infoBuilder.append("\n")
+				infoBuilder.append("본문 : ")
+
+				val refClickRanges =
+					mutableListOf<Triple<Int, Int, com.chan.bnote.data.application.ApplicationBibleRef>>()
+				for ((index, ref) in refs.withIndex()) {
+					val start = infoBuilder.length
+					infoBuilder.append(ref.toDisplayLabel())
+					val end = infoBuilder.length
+					refClickRanges.add(Triple(start, end, ref))
+					if (index != refs.lastIndex) infoBuilder.append(", ")
+				}
+
+				for ((start, end, ref) in refClickRanges) {
+					infoBuilder.setSpan(
+						object : android.text.style.ClickableSpan() {
+							override fun onClick(widget: View) {
+								val mainIntent = Intent(
+									this@ApplicationDetailActivity,
+									MainActivity::class.java
+								).apply {
+									putExtra(MainActivity.EXTRA_NAVIGATE_BOOK_ID, ref.startBookId)
+									putExtra(MainActivity.EXTRA_NAVIGATE_CHAPTER, ref.startChapter)
+									if (!ref.isChapterOnly) putExtra(
+										MainActivity.EXTRA_NAVIGATE_VERSE,
+										ref.startVerse
+									)
+									flags =
+										Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+								}
+								startActivity(mainIntent)
+							}
+
+							override fun updateDrawState(ds: android.text.TextPaint) {
+								super.updateDrawState(ds)
+								ds.color = ContextCompat.getColor(
+									this@ApplicationDetailActivity,
+									R.color.brown_primary
+								)
+								ds.isUnderlineText = true
+							}
+						},
+						start, end, android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+					)
+				}
+				hasContent = true
+			}
+
+			if (sermons.isNotEmpty()) {
+				if (hasContent) infoBuilder.append("\n")
+				infoBuilder.append("설교 : ")
+
+				val sermonClickRanges = mutableListOf<Triple<Int, Int, Sermon>>()
+				for ((index, sermon) in sermons.withIndex()) {
+					val start = infoBuilder.length
+					infoBuilder.append(sermon.title)
+					val end = infoBuilder.length
+					sermonClickRanges.add(Triple(start, end, sermon))
+					if (index != sermons.lastIndex) infoBuilder.append(", ")
+				}
+
+				for ((start, end, sermon) in sermonClickRanges) {
+					infoBuilder.setSpan(
+						object : android.text.style.ClickableSpan() {
+							override fun onClick(widget: View) {
+								SermonDetailActivity.start(
+									this@ApplicationDetailActivity,
+									sermon.id
+								)
+							}
+
+							override fun updateDrawState(ds: android.text.TextPaint) {
+								super.updateDrawState(ds)
+								ds.color = ContextCompat.getColor(
+									this@ApplicationDetailActivity,
+									R.color.brown_primary
+								)
+								ds.isUnderlineText = true
+							}
+						},
+						start, end, android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+					)
+				}
+				hasContent = true
+			}
+
+			infoView.visibility = if (hasContent) View.VISIBLE else View.GONE
+			infoView.text = infoBuilder
+			infoView.movementMethod = android.text.method.LinkMovementMethod.getInstance()
+
+			val textHintColor =
+				androidx.core.content.ContextCompat.getColor(
+					this@ApplicationDetailActivity,
+					R.color.text_hint
+				)
+			val textPrimaryColor =
+				androidx.core.content.ContextCompat.getColor(
+					this@ApplicationDetailActivity,
+					R.color.text_primary
+				)
+
+			findViewById<TextView>(R.id.text_detail_meditation).apply {
+				if (application.meditationMemo.isBlank()) {
+					text = "묵상 내용이 없어요"
+					setTextColor(textHintColor)
+				} else {
+					text =
+						com.chan.bnote.ui.sermon.addsermon.RichTextUtils.toEditable(application.meditationMemo)
+					setTextColor(textPrimaryColor)
+				}
+			}
+			findViewById<TextView>(R.id.text_detail_prayer).apply {
+				if (application.prayerMemo.isBlank()) {
+					text = "기도 내용이 없어요"
+					setTextColor(textHintColor)
+				} else {
+					text = application.prayerMemo
+					setTextColor(textPrimaryColor)
+				}
+			}
+			findViewById<TextView>(R.id.text_detail_obedience).apply {
+				if (application.obedienceMemo.isBlank()) {
+					text = "순종 내용이 없어요"
+					setTextColor(textHintColor)
+				} else {
+					text = application.obedienceMemo
+					setTextColor(textPrimaryColor)
+				}
+			}
+
+			val existingGratitudeNote =
+				db.gratitudeNoteDao().getByDate(application.applicationDate).firstOrNull()
+			val btnGratitude = findViewById<TextView>(R.id.btn_write_gratitude)
+			if (existingGratitudeNote != null) {
+				btnGratitude.text = "감사 노트 보러 가기"
+				btnGratitude.setOnClickListener {
+					startActivity(
+						com.chan.bnote.ui.mypage.gratitude.AddGratitudeActivity
+							.editIntent(this@ApplicationDetailActivity, existingGratitudeNote.id)
+					)
+				}
+			} else {
+				btnGratitude.text = "감사 노트도 작성하기"
+				btnGratitude.setOnClickListener {
+					writeGratitudeLauncher.launch(
+						com.chan.bnote.ui.mypage.gratitude.AddGratitudeActivity
+							.createIntent(
+								this@ApplicationDetailActivity,
+								initialDateMillis = application.applicationDate
+							)
+					)
+				}
+			}
+		}
+	}
+
+	/** 묵상하기 / 기도하기 / 순종하기 메모를 정해진 형식으로 묶어서 클립보드에 복사한다.
+	 * 리치텍스트(굵게 등) 서식이 적용된 메모는 HTML로 저장되므로, RichTextUtils로 화면에 보이는
+	 * 텍스트만 뽑아서(태그 없이) 복사한다. */
+	private fun shareApplication() {
+		val application = currentApplication ?: return
+
+		val meditation =
+			com.chan.bnote.ui.sermon.addsermon.RichTextUtils.toEditable(application.meditationMemo)
+				.toString()
+		val prayer =
+			com.chan.bnote.ui.sermon.addsermon.RichTextUtils.toEditable(application.prayerMemo)
+				.toString()
+		val obedience =
+			com.chan.bnote.ui.sermon.addsermon.RichTextUtils.toEditable(application.obedienceMemo)
+				.toString()
+
+		val text = "$meditation\n\n$prayer\n\n※ $obedience"
+
+		val clipboard =
+			getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+		clipboard.setPrimaryClip(android.content.ClipData.newPlainText("application", text))
+		android.widget.Toast.makeText(this, "복사했어요", android.widget.Toast.LENGTH_SHORT).show()
+	}
+
+	private fun confirmDelete() {
+		MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_BNOTE_Dialog)
+			.setTitle("적용 삭제")
+			.setMessage("이 적용을 삭제할까요?")
+			.setPositiveButton("삭제") { _, _ ->
+				lifecycleScope.launch {
+					val db = BibleDatabase.getInstance(applicationContext)
+					db.applicationDao().getById(applicationId)?.let { application ->
+						db.applicationBibleRefDao().deleteByApplication(application.id)
+						db.applicationSermonLinkDao().deleteByApplication(application.id)
+						db.applicationDao().delete(application)
+					}
+					setResult(Activity.RESULT_OK)
+					finish()
+				}
+			}
+			.setNegativeButton("취소", null)
+			.show()
+	}
+}

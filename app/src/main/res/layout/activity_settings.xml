@@ -1,0 +1,560 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/settings_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/surface_background">
+
+    <include layout="@layout/include_activity_top_bar" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- 글자 크기 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:paddingTop="16dp"
+                android:paddingBottom="6dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="글자 크기"
+                    android:textSize="16sp"
+                    android:textColor="@color/text_primary" />
+
+                <TextView
+                    android:id="@+id/btn_font_minus"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:gravity="center"
+                    android:text="-"
+                    android:textSize="16sp"
+                    android:textColor="@color/text_primary"
+                    android:background="@drawable/bg_book_button"
+                    android:clickable="true"
+                    android:focusable="true" />
+
+                <TextView
+                    android:id="@+id/text_font_size"
+                    android:layout_width="48dp"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:textSize="15sp"
+                    android:textColor="@color/text_primary" />
+
+                <TextView
+                    android:id="@+id/btn_font_plus"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:gravity="center"
+                    android:text="+"
+                    android:textSize="16sp"
+                    android:textColor="@color/text_primary"
+                    android:background="@drawable/bg_book_button"
+                    android:clickable="true"
+                    android:focusable="true" />
+            </LinearLayout>
+
+            <!-- 스크롤 속도 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:paddingTop="6dp"
+                android:paddingBottom="16dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="자동스크롤 속도"
+                    android:textSize="16sp"
+                    android:textColor="@color/text_primary" />
+
+                <TextView
+                    android:id="@+id/btn_speed_minus"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:gravity="center"
+                    android:text="-"
+                    android:textSize="16sp"
+                    android:textColor="@color/text_primary"
+                    android:background="@drawable/bg_book_button"
+                    android:clickable="true"
+                    android:focusable="true" />
+
+                <TextView
+                    android:id="@+id/text_scroll_speed"
+                    android:layout_width="48dp"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:textSize="15sp"
+                    android:textColor="@color/text_primary" />
+
+                <TextView
+                    android:id="@+id/btn_speed_plus"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:gravity="center"
+                    android:text="+"
+                    android:textSize="16sp"
+                    android:textColor="@color/text_primary"
+                    android:background="@drawable/bg_book_button"
+                    android:clickable="true"
+                    android:focusable="true" />
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@color/divider_light" />
+
+            <!-- 다크모드 -->
+            <LinearLayout
+                android:id="@+id/row_dark_mode_toggle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="56dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="다크모드"
+                    android:textSize="16sp"
+                    android:textColor="@color/text_primary" />
+
+                <Switch
+                    android:id="@+id/switch_dark_mode"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <!-- 화면 켜짐 유지 -->
+            <LinearLayout
+                android:id="@+id/row_keep_screen_on_toggle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="56dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="화면 켜짐 유지"
+                    android:textSize="16sp"
+                    android:textColor="@color/text_primary" />
+
+                <Switch
+                    android:id="@+id/switch_keep_screen_on"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <!-- 스와이프로 장 이동 -->
+            <LinearLayout
+                android:id="@+id/row_chapter_swipe_toggle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="56dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="스와이프로 장 이동"
+                    android:textSize="16sp"
+                    android:textColor="@color/text_primary" />
+
+                <Switch
+                    android:id="@+id/switch_chapter_swipe"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <!-- 성경 탭 스크롤바 표시 -->
+            <LinearLayout
+                android:id="@+id/row_bible_scrollbar_toggle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="56dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="성경 탭 스크롤바 표시"
+                    android:textSize="16sp"
+                    android:textColor="@color/text_primary" />
+
+                <Switch
+                    android:id="@+id/switch_bible_scrollbar"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <!-- 성경읽기표 체크 표시 방식 -->
+            <LinearLayout
+                android:id="@+id/row_reading_check_position_toggle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="56dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="성경읽기표 체크를 하단 버튼으로 표시"
+                    android:textSize="16sp"
+                    android:textColor="@color/text_primary" />
+
+                <Switch
+                    android:id="@+id/switch_reading_check_position"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <!-- 함께보기 포함 -->
+            <LinearLayout
+                android:id="@+id/row_copy_secondary_toggle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="56dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="복사 시 함께보기 포함"
+                    android:textSize="16sp"
+                    android:textColor="@color/text_primary" />
+
+                <Switch
+                    android:id="@+id/switch_copy_secondary"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <!-- 참조 표기 방식 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="56dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="복사 형식"
+                    android:textSize="16sp"
+                    android:textColor="@color/text_primary" />
+
+                <TextView
+                    android:id="@+id/btn_copy_reference_style"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="설정하기 ▾"
+                    android:textSize="13sp"
+                    android:textColor="@color/brown_primary"
+                    android:padding="8dp"
+                    android:clickable="true"
+                    android:focusable="true" />
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@color/divider_light" />
+
+            <!-- 알림 -->
+            <LinearLayout
+                android:id="@+id/row_daily_verse_toggle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="56dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="매일 말씀 알림"
+                    android:textSize="16sp"
+                    android:textColor="@color/text_primary" />
+
+                <TextView
+                    android:id="@+id/btn_daily_verse_time"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp"
+                    android:paddingTop="4dp"
+                    android:paddingBottom="4dp"
+                    android:textSize="14sp"
+                    android:textColor="@color/brown_primary"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="?attr/selectableItemBackground"
+                    tools:text="오전 8:00" />
+
+                <Switch
+                    android:id="@+id/switch_daily_verse_noti"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/row_reading_reminder_toggle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="56dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="통독 리마인더"
+                    android:textSize="16sp"
+                    android:textColor="@color/text_primary" />
+
+                <TextView
+                    android:id="@+id/btn_reading_reminder_time"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp"
+                    android:paddingTop="4dp"
+                    android:paddingBottom="4dp"
+                    android:textSize="14sp"
+                    android:textColor="@color/brown_primary"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="?attr/selectableItemBackground"
+                    tools:text="오후 9:00" />
+
+                <Switch
+                    android:id="@+id/switch_reading_reminder"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp" />
+            </LinearLayout>
+
+            <!-- 데이터 내보내기/불러오기 -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@color/divider_light" />
+
+            <TextView
+                android:id="@+id/btn_export_data"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="16dp"
+                android:text="데이터 내보내기"
+                android:textSize="16sp"
+                android:textColor="@color/text_primary"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true" />
+
+            <TextView
+                android:id="@+id/btn_import_data"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="16dp"
+                android:text="데이터 불러오기"
+                android:textSize="16sp"
+                android:textColor="@color/text_primary"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true" />
+
+            <!-- 자동 내보내기 -->
+            <LinearLayout
+                android:id="@+id/row_auto_backup_toggle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="56dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="자동 내보내기"
+                    android:textSize="16sp"
+                    android:textColor="@color/text_primary" />
+
+                <TextView
+                    android:id="@+id/btn_auto_backup_interval"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp"
+                    android:paddingTop="4dp"
+                    android:paddingBottom="4dp"
+                    android:textSize="14sp"
+                    android:textColor="@color/brown_primary"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="?attr/selectableItemBackground"
+                    tools:text="1개월▾" />
+
+                <Switch
+                    android:id="@+id/switch_auto_backup"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/row_auto_backup_folder"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:paddingBottom="8dp"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="저장 폴더"
+                    android:textSize="14sp"
+                    android:textColor="@color/text_secondary" />
+
+                <TextView
+                    android:id="@+id/text_auto_backup_folder"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:maxWidth="160dp"
+                    android:maxLines="1"
+                    android:ellipsize="middle"
+                    android:textSize="14sp"
+                    android:textColor="@color/text_secondary"
+                    tools:text="선택 안 함" />
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@color/divider_light" />
+
+            <TextView
+                android:id="@+id/menu_user_guide"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="16dp"
+                android:text="사용 가이드"
+                android:textSize="16sp"
+                android:textColor="@color/text_primary"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true" />
+
+            <TextView
+                android:id="@+id/menu_app_info"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="16dp"
+                android:text="앱 정보"
+                android:textSize="16sp"
+                android:textColor="@color/text_primary"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true" />
+
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

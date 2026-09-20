@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:layout_marginBottom="12dp"
+    android:background="@drawable/bg_memo_box_outline">
+
+    <EditText
+        android:id="@+id/edit_box_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="120dp"
+        android:gravity="top|start"
+        android:background="@android:color/transparent"
+        android:padding="12dp"
+        android:hint="메모"
+        android:textSize="15sp"
+        android:textColor="@color/text_primary"
+        android:textColorHint="@color/text_hint"
+        android:inputType="textMultiLine|textCapSentences"
+        android:overScrollMode="never" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical|end"
+        android:paddingStart="8dp"
+        android:paddingEnd="4dp"
+        android:paddingBottom="2dp">
+
+        <CheckBox
+            android:id="@+id/chk_box_propagate"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="다른 구절에도 추가"
+            android:textSize="13sp"
+            android:textColor="@color/text_secondary"
+            android:visibility="gone" />
+
+        <ImageView
+            android:id="@+id/btn_delete_box"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:padding="9dp"
+            android:src="@drawable/ic_delete"
+            app:tint="@color/brown_primary"
+            android:contentDescription="삭제"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:focusable="true" />
+    </LinearLayout>
+
+</LinearLayout>

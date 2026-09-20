@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 컨벤션 문서
+    url: https://app.notion.com/p/5852abdfa9e982df879081da8b815ba7
+    about: 커밋/브랜치/코드/네이밍 컨벤션은 여기서 확인하세요.

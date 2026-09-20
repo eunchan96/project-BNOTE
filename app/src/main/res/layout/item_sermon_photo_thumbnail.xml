@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="80dp"
+    android:layout_height="80dp"
+    android:layout_marginEnd="8dp">
+
+    <ImageView
+        android:id="@+id/image_photo_thumbnail"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:background="@drawable/bg_book_button"
+        android:contentDescription="첨부 사진" />
+
+    <ImageView
+        android:id="@+id/btn_remove_photo"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_gravity="top|end"
+        android:layout_margin="2dp"
+        android:padding="4dp"
+        android:src="@drawable/ic_delete"
+        android:background="@drawable/bg_play_overlay_circle"
+        android:contentDescription="삭제"
+        android:clickable="true"
+        android:focusable="true" />
+
+</FrameLayout>

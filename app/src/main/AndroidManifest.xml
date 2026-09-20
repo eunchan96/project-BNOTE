@@ -2,25 +2,259 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- 찬송 화면의 유튜브 재생/썸네일 로딩에 필요 -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- 매일 말씀 알림 · 통독 리마인더를 정확한 시각에 보내기 위한 정확 알람 권한.
+         Android 12+에서는 사용자가 설정 화면에서 직접 허용해야 한다(SettingsActivity 참고). -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <!-- 재부팅 시 정확 알람(위 알림들)을 다시 예약하기 위해 필요 -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- 성경 탭 메뉴의 "방해금지 모드 활성화" 토글용. 이것만으로 실제 방해금지를 켤 순 없고,
+         NotificationManager.isNotificationPolicyAccessGranted()가 true여야(사용자가 설정
+         화면에서 직접 허용해야) 실제로 켤 수 있다. -->
+    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
+    <!-- 설교 사진 첨부(카메라 촬영)에 필요 -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
+
     <application
+        android:name=".BnoteApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@drawable/ic_launcher_bnote_v2"
         android:label="@string/app_name"
-        android:roundIcon="@mipmap/ic_launcher_round"
+        android:roundIcon="@drawable/ic_launcher_bnote_v2"
         android:supportsRtl="true"
         android:theme="@style/Theme.BNOTE"
         tools:targetApi="31">
         <activity
             android:name=".MainActivity"
-            android:exported="true">
+            android:exported="true"
+            android:theme="@style/Theme.BNOTE.Splash"
+            android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".ui.bible.scrap.ScrapActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.appendix.AppendixTextActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.appendix.TenCommandmentsActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.appendix.ResponsiveReadingListActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.appendix.ResponsiveReadingDetailActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.sermon.addsermon.AddSermonActivity"
+            android:windowSoftInputMode="adjustResize"
+            android:exported="false" />
+        <activity
+            android:name=".ui.mypage.settings.SettingsActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.mypage.readingplan.ReadingPlanActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.mypage.profile.ProfileActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.mypage.profile.ProfileEditActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name=".ui.mypage.verseofyear.VerseOfYearActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.mypage.memorization.MemorizationPracticeActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.mypage.memorization.MemorizationVerseListActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.mypage.gratitude.GratitudeActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.mypage.gratitude.AddGratitudeActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.mypage.settings.AppInfoActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.mypage.guide.UserGuideActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.mypage.guide.UserGuideDetailActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.mypage.settings.OpenSourceLicensesActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.mypage.settings.VersionHistoryActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.mypage.settings.SeedReconciliationActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.mypage.memorization.MemorizationVerseDetailActivity"
+            android:windowSoftInputMode="adjustResize"
+            android:exported="false" />
+        <activity
+            android:name=".ui.knowledge.BibleKnowledgeHubActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.knowledge.BibleFigureListActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.knowledge.BibleFigureDetailActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.knowledge.BiblePlaceListActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.knowledge.BiblePlaceDetailActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.knowledge.GenealogyListActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.knowledge.GenealogyDetailActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.knowledge.TimelineListActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.knowledge.TopicListActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.knowledge.TopicDetailActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.knowledge.CultureListActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.knowledge.CultureDetailActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.knowledge.UnitListActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.knowledge.UnitCategoryListActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.knowledge.UnitDetailActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.knowledge.ParableListActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.knowledge.ParableDetailActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.mypage.prayer.PrayerRequestActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.mypage.verseofyear.VerseOfYearEditActivity"
+            android:windowSoftInputMode="adjustResize"
+            android:exported="false" />
+        <activity
+            android:name=".ui.sermon.category.CategoryManageActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.sermon.bypreacher.PreacherManageActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.sermon.bypreacher.PreacherSermonListActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.application.category.ApplicationCategoryManageActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.application.category.CategoryApplicationListActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.application.addapplication.AddApplicationActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.application.ApplicationDetailActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.sermon.detail.SermonDetailActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.bible.ChapterSermonsActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.bible.CopyFormatEditorActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name=".ui.sermon.SermonSearchActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name=".ui.sermon.category.CategorySermonListActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.bible.BibleSearchActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name=".ui.bible.BookmarkListActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.bible.HighlightListActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.bible.HighlightBookDetailActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.bible.memo.MemoListActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.bible.hymn.HymnListActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.bible.hymn.HymnCategoryGridActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.bible.hymn.HymnDetailActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.sermon.addsermon.PhotoViewerActivity"
+            android:exported="false" />
+
+        <receiver
+            android:name=".notification.AlarmReceiver"
+            android:exported="false" />
+        <receiver
+            android:name=".notification.BootReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
     </application>
 
 </manifest>
