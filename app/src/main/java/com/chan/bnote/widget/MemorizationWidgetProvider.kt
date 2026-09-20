@@ -4,7 +4,6 @@ import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.content.Intent
-import android.util.TypedValue
 import android.view.View
 import android.widget.RemoteViews
 import androidx.core.content.ContextCompat
@@ -47,7 +46,7 @@ class MemorizationWidgetProvider : AsyncWidgetProvider() {
 object MemorizationWidget {
 
 	// 위젯 안에서 본문 말고 세로로 차지하는 부분(제목 줄 + 구절 위치 줄 + 간격)
-	private const val RESERVED_HEIGHT_DP = 46
+	private const val RESERVED_HEIGHT_DP = 44
 
 	suspend fun buildViews(context: Context, appWidgetId: Int): RemoteViews {
 		val views = RemoteViews(context.packageName, R.layout.widget_memorization)
@@ -107,11 +106,13 @@ object MemorizationWidget {
 		val (widthDp, heightDp) = WidgetViews.sizeDp(context, appWidgetId)
 		views.setTextViewText(R.id.widget_group, "$groupName · ${index + 1}/${verses.size}")
 		views.setTextViewText(R.id.widget_label, verse.toDisplayLabel())
-		views.setTextViewText(R.id.widget_text, verse.verseText)
-		views.setTextViewTextSize(
-			R.id.widget_text,
-			TypedValue.COMPLEX_UNIT_SP,
-			WidgetViews.pickTextSizeSp(verse.verseText, widthDp, heightDp, RESERVED_HEIGHT_DP)
+		WidgetViews.setBodyText(
+			context,
+			views,
+			verse.verseText,
+			widthDp,
+			heightDp,
+			RESERVED_HEIGHT_DP
 		)
 		WidgetViews.showBody(views)
 

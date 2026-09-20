@@ -2,8 +2,8 @@
      한 번만 갱신하기 위해서다(WidgetUpdater 참고). -->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:minWidth="250dp"
-    android:minHeight="180dp"
+    android:minWidth="180dp"
+    android:minHeight="110dp"
     android:minResizeWidth="110dp"
     android:minResizeHeight="40dp"
     android:targetCellWidth="3"

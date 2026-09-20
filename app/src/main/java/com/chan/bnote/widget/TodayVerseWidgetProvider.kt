@@ -1,7 +1,6 @@
 package com.chan.bnote.widget
 
 import android.content.Context
-import android.util.TypedValue
 import android.widget.RemoteViews
 import com.chan.bnote.R
 import com.chan.bnote.notification.DailyVerseProvider
@@ -16,7 +15,7 @@ class TodayVerseWidgetProvider : AsyncWidgetProvider()
 object TodayVerseWidget {
 
 	// 위젯 안에서 본문 말고 세로로 차지하는 부분(제목·위치 표기가 한 줄 + 간격)
-	private const val RESERVED_HEIGHT_DP = 26
+	private const val RESERVED_HEIGHT_DP = 20
 
 	suspend fun buildViews(context: Context, appWidgetId: Int): RemoteViews {
 		val views = RemoteViews(context.packageName, R.layout.widget_today_verse)
@@ -35,12 +34,7 @@ object TodayVerseWidget {
 		}
 
 		val (widthDp, heightDp) = WidgetViews.sizeDp(context, appWidgetId)
-		views.setTextViewText(R.id.widget_text, daily.text)
-		views.setTextViewTextSize(
-			R.id.widget_text,
-			TypedValue.COMPLEX_UNIT_SP,
-			WidgetViews.pickTextSizeSp(daily.text, widthDp, heightDp, RESERVED_HEIGHT_DP)
-		)
+		WidgetViews.setBodyText(context, views, daily.text, widthDp, heightDp, RESERVED_HEIGHT_DP)
 		views.setTextViewText(R.id.widget_label, daily.label)
 		WidgetViews.showBody(views)
 
