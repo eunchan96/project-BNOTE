@@ -17,6 +17,7 @@ import com.chan.bnote.data.bible.BibleBookGroups
 import com.chan.bnote.data.bible.BibleBooks
 import com.chan.bnote.data.sermon.SermonBibleRef
 import com.chan.bnote.ui.FixedBottomSheetDialogFragment
+import com.chan.bnote.ui.common.BookGrid
 import com.chan.bnote.ui.common.GridNumberAdapter
 import com.google.android.material.checkbox.MaterialCheckBox
 import kotlinx.coroutines.launch
@@ -222,7 +223,9 @@ class BibleRangePickerBottomSheet : FixedBottomSheetDialogFragment() {
 		recyclerView.visibility = View.GONE
 
 		bookGridContainer.removeAllViews()
-		for (group in BibleBookGroups.groups) {
+		// 한 줄에 몇 권을 보여줄지(글꼴이 크거나 화면이 좁으면 3권)
+		val gridColumns = BookGrid.columns(requireContext())
+		for (group in BibleBookGroups.groupsOf(gridColumns)) {
 			val row = LinearLayout(requireContext()).apply {
 				orientation = LinearLayout.HORIZONTAL
 				layoutParams = LinearLayout.LayoutParams(
@@ -235,7 +238,7 @@ class BibleRangePickerBottomSheet : FixedBottomSheetDialogFragment() {
 					text = BibleBooks.gridDisplayName(id)
 					gravity = Gravity.CENTER
 					textSize = 13f
-					maxLines = 2
+					maxLines = 3
 					setPadding(dp(4), dp(16), dp(4), dp(16))
 					background = ContextCompat.getDrawable(
 						requireContext(),
@@ -264,8 +267,8 @@ class BibleRangePickerBottomSheet : FixedBottomSheetDialogFragment() {
 				}
 				row.addView(button)
 			}
-			// 행에 4개 미만이면(구약 마지막 줄 등) 남는 칸만큼 빈 스페이서를 넣어서 늘어나지 않게 한다.
-			repeat(4 - group.size) {
+			// 행이 다 안 차면(구약 마지막 줄 등) 남는 칸만큼 빈 스페이서를 넣어서 늘어나지 않게 한다.
+			repeat(gridColumns - group.size) {
 				row.addView(View(requireContext()).apply {
 					layoutParams =
 						LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f)

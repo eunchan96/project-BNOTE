@@ -18,6 +18,7 @@ import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.bible.BibleBookGroups
 import com.chan.bnote.data.bible.BibleBooks
 import com.chan.bnote.data.mypage.readingplan.ReadingProgress
+import com.chan.bnote.ui.common.BookGrid
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 
@@ -107,7 +108,9 @@ class ReadingPlanActivity : AppCompatActivity() {
 		val gridContainer = findViewById<LinearLayout>(R.id.container_book_progress_grid)
 		gridContainer.removeAllViews()
 
-		for (group in BibleBookGroups.groups) {
+		// 한 줄에 몇 권을 보여줄지(글꼴이 크거나 화면이 좁으면 3권)
+		val gridColumns = BookGrid.columns(this)
+		for (group in BibleBookGroups.groupsOf(gridColumns)) {
 			val row = LinearLayout(this).apply {
 				orientation = LinearLayout.HORIZONTAL
 				layoutParams = LinearLayout.LayoutParams(
@@ -150,7 +153,7 @@ class ReadingPlanActivity : AppCompatActivity() {
 				val nameView = TextView(this).apply {
 					text = BibleBooks.gridDisplayName(bookId)
 					textSize = 13f
-					maxLines = 2
+					maxLines = 3
 					gravity = Gravity.CENTER
 					setTextColor(textColor)
 				}
@@ -166,9 +169,9 @@ class ReadingPlanActivity : AppCompatActivity() {
 				container.addView(countView)
 				row.addView(container)
 			}
-			// 행에 4개 미만이면(구약 마지막 줄 등), 남는 칸만큼 빈 스페이서를 넣어서
-			// 실제 칸들이 4등분 폭 그대로 유지되고 늘어나지 않게 한다.
-			repeat(4 - group.size) {
+			// 행이 다 안 차면(구약 마지막 줄 등), 남는 칸만큼 빈 스페이서를 넣어서
+			// 실제 칸들이 한 줄 칸 수만큼 등분한 폭 그대로 유지되고 늘어나지 않게 한다.
+			repeat(gridColumns - group.size) {
 				row.addView(View(this).apply {
 					layoutParams =
 						LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f)
