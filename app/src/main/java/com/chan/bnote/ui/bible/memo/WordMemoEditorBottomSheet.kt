@@ -305,9 +305,11 @@ class WordMemoEditorBottomSheet : FixedBottomSheetDialogFragment() {
 
 	private fun saveAll() {
 		if (isSaving) return
+		// 내용이 안 바뀌었어도 "다른 구절에도 추가"를 체크했으면 처리 대상이다(전파만 하면 되므로).
+		// 예전엔 내용을 고친 박스만 대상이라, 이미 저장된 메모에 체크만 하고 저장하면 그냥 닫혀버렸다.
 		val changed = boxes.filter { box ->
 			val text = box.editText.text.toString().trim()
-			text.isNotEmpty() && text != (box.existing?.text ?: "")
+			text.isNotEmpty() && (text != (box.existing?.text ?: "") || box.checkbox.isChecked)
 		}
 		if (changed.isEmpty()) {
 			dismiss()
@@ -407,6 +409,8 @@ class WordMemoEditorBottomSheet : FixedBottomSheetDialogFragment() {
 								)
 							)
 						}
+						// 지금 보고 있는 장 안의 다른 구절에도 추가됐을 수 있으니 화면(밑줄)을 다시 갱신한다.
+						onChanged?.invoke()
 						android.widget.Toast.makeText(
 							requireContext(),
 							"${matches.size}개 구절에도 추가됐어요",
