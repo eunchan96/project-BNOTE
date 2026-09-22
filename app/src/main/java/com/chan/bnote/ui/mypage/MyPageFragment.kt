@@ -117,12 +117,13 @@ class MyPageFragment : Fragment(), TopBarActionHandler {
 			val db = BibleDatabase.getInstance(requireContext().applicationContext)
 
 			val recentChapters = db.recentChapterViewDao().getRecent(5)
-			val recentSermons = db.sermonDao().getRecent(5)
+			val recentSermons = db.sermonViewDao().getRecentSermons(5)
+			val recentApplications = db.applicationViewDao().getRecentApplications(5)
 			val recentVerseMemos = db.verseMemoDao().getRecent(5)
 			val recentWordMemos = db.wordMemoDao().getRecent(5)
 
 			val container = view.findViewById<LinearLayout>(R.id.container_recent_activity)
-			if (recentChapters.isEmpty() && recentSermons.isEmpty() &&
+			if (recentChapters.isEmpty() && recentSermons.isEmpty() && recentApplications.isEmpty() &&
 				recentVerseMemos.isEmpty() && recentWordMemos.isEmpty()
 			) {
 				container.visibility = View.GONE
@@ -144,16 +145,39 @@ class MyPageFragment : Fragment(), TopBarActionHandler {
 			}
 
 			// 설교: "설교제목 설교" ("설교"만 회색)
-			for (sermon in recentSermons) {
+			for (row in recentSermons) {
+				val sermon = row.sermon
 				chips.add(
 					RecentChip(
 						label = suffixSpan(sermon.title, "설교"),
-						timestamp = sermon.createdAt
+						timestamp = row.viewedAt
 					) {
 						startActivity(
 							SermonDetailActivity.createIntent(
 								requireContext(),
 								sermon.id
+							)
+						)
+					}
+				)
+			}
+
+			// 적용: "적용제목 적용" ("적용"만 회색). 제목을 안 적었으면 ApplicationRowBuilder와
+			// 같은 방식으로 "OO월 OO일 적용"을 대신 보여준다.
+			for (row in recentApplications) {
+				val application = row.application
+				val displayTitle = application.title.ifBlank {
+					"${com.chan.bnote.data.DateUtils.formatDateShort(application.applicationDate)} 적용"
+				}
+				chips.add(
+					RecentChip(
+						label = suffixSpan(displayTitle, "적용"),
+						timestamp = row.viewedAt
+					) {
+						startActivity(
+							com.chan.bnote.ui.application.ApplicationDetailActivity.createIntent(
+								requireContext(),
+								application.id
 							)
 						)
 					}

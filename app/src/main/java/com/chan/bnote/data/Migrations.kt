@@ -159,6 +159,36 @@ val MIGRATIONS: Array<Migration> = arrayOf(
 				}
 			}
 		}
+	},
+	object : Migration(30, 31) {
+		override fun migrate(db: SupportSQLiteDatabase) {
+			// 마이페이지 "최근 활동"에서 설교·적용을 "만들거나 고친 것"이 아니라 "열어 본 것" 기준으로 보여주기 위한 열람 기록 테이블.
+			// 성경 장을 읽을 때 남기는 recent_chapter_views와 같은 구조다.
+			db.execSQL(
+				"""
+				CREATE TABLE IF NOT EXISTS sermon_views (
+					id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+					sermonId INTEGER NOT NULL,
+					viewedAt INTEGER NOT NULL
+				)
+				""".trimIndent()
+			)
+			db.execSQL(
+				"CREATE UNIQUE INDEX IF NOT EXISTS index_sermon_views_sermonId ON sermon_views (sermonId)"
+			)
+			db.execSQL(
+				"""
+				CREATE TABLE IF NOT EXISTS application_views (
+					id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+					applicationId INTEGER NOT NULL,
+					viewedAt INTEGER NOT NULL
+				)
+				""".trimIndent()
+			)
+			db.execSQL(
+				"CREATE UNIQUE INDEX IF NOT EXISTS index_application_views_applicationId ON application_views (applicationId)"
+			)
+		}
 	}
 )
 

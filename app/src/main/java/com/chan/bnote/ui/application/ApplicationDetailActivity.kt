@@ -18,6 +18,7 @@ import com.chan.bnote.MainActivity
 import com.chan.bnote.R
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.DateUtils
+import com.chan.bnote.data.application.ApplicationView
 import com.chan.bnote.data.sermon.Sermon
 import com.chan.bnote.ui.application.addapplication.AddApplicationActivity
 import com.chan.bnote.ui.sermon.detail.SermonDetailActivity
@@ -109,6 +110,8 @@ class ApplicationDetailActivity : AppCompatActivity() {
 				return@launch
 			}
 			currentApplication = application
+			// 마이페이지 "최근 활동"에 쓸 열람 기록. 설교와 같은 방식으로, 고칠 때가 아니라 열어 볼 때마다 남긴다.
+			db.applicationViewDao().upsert(ApplicationView(applicationId = application.id))
 
 			val category = application.categoryId?.let { db.applicationCategoryDao().getById(it) }
 			val links = db.applicationSermonLinkDao().getByApplication(application.id)

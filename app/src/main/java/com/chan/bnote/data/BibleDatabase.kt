@@ -12,6 +12,8 @@ import com.chan.bnote.data.application.ApplicationCategoryDao
 import com.chan.bnote.data.application.ApplicationDao
 import com.chan.bnote.data.application.ApplicationSermonLink
 import com.chan.bnote.data.application.ApplicationSermonLinkDao
+import com.chan.bnote.data.application.ApplicationView
+import com.chan.bnote.data.application.ApplicationViewDao
 import com.chan.bnote.data.application.DefaultApplicationCategories
 import com.chan.bnote.data.bible.BibleDao
 import com.chan.bnote.data.bible.BibleVerse
@@ -57,6 +59,8 @@ import com.chan.bnote.data.sermon.Sermon
 import com.chan.bnote.data.sermon.SermonBibleRef
 import com.chan.bnote.data.sermon.SermonBibleRefDao
 import com.chan.bnote.data.sermon.SermonDao
+import com.chan.bnote.data.sermon.SermonView
+import com.chan.bnote.data.sermon.SermonViewDao
 import com.chan.bnote.data.sermon.preacher.Preacher
 import com.chan.bnote.data.sermon.preacher.PreacherDao
 import com.chan.bnote.data.sermon.sermoncategory.DefaultSermonCategories
@@ -78,7 +82,8 @@ import kotlinx.coroutines.launch
 		PrayerRequest::class, VerseMemorizationProgress::class, MemorizationVerse::class,
 		MemorizationGroup::class, RecentChapterView::class, CopyFormatPreset::class,
 		Application::class, ApplicationCategory::class, ApplicationBibleRef::class,
-		ApplicationSermonLink::class, GratitudeNote::class, GratitudeEntry::class
+		ApplicationSermonLink::class, GratitudeNote::class, GratitudeEntry::class,
+		SermonView::class, ApplicationView::class
 	],
 	version = 30, // 29 -> 30 (설교 memoSearchText 추가 — 서식 있는 메모도 검색되도록)
 	exportSchema = false
@@ -111,6 +116,8 @@ abstract class BibleDatabase : RoomDatabase() {
 	abstract fun applicationSermonLinkDao(): ApplicationSermonLinkDao
 	abstract fun gratitudeNoteDao(): GratitudeNoteDao
 	abstract fun gratitudeEntryDao(): GratitudeEntryDao
+	abstract fun sermonViewDao(): SermonViewDao
+	abstract fun applicationViewDao(): ApplicationViewDao
 
 	companion object {
 		@Volatile
