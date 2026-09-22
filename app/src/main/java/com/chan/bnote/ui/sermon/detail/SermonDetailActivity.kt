@@ -277,7 +277,10 @@ class SermonDetailActivity : AppCompatActivity() {
 			val thumb = LayoutInflater.from(this)
 				.inflate(R.layout.item_sermon_detail_photo, photoContainer, false) as ImageView
 			thumb.load(photo.filePath)
-			thumb.setOnClickListener { PhotoViewerActivity.start(this, photo.filePath) }
+			// 이 사진부터 시작해서 좌우로 넘기며 나머지 사진도 볼 수 있도록 전체 목록과 인덱스를 넘긴다.
+			thumb.setOnClickListener {
+				PhotoViewerActivity.start(this, photos.map { it.filePath }, photos.indexOf(photo))
+			}
 			photoContainer.addView(thumb)
 		}
 
