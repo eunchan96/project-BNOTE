@@ -83,6 +83,18 @@ class MyPageFragment : Fragment(), TopBarActionHandler {
 		loadRecentActivity()
 	}
 
+	/** 탭이 유지되는 프래그먼트라 하단 탭을 눌러 마이페이지로 돌아와도 onResume은 다시 안 불린다
+	 * (성경 탭에서 장을 읽거나 스크랩/암송을 추가한 뒤 탭만 바꿔 돌아오면, 다른 화면을 한 번
+	 * 거치기 전까지는 "최근 활동"이 그 사이 값을 못 따라오던 원인). BibleFragment의
+	 * refreshOnReturnToTab()과 같은 이유로, hide()/show() 탭 전환 콜백에서도 다시 불러온다. */
+	override fun onHiddenChanged(hidden: Boolean) {
+		super.onHiddenChanged(hidden)
+		if (!hidden) {
+			loadProfileThumbnail()
+			loadRecentActivity()
+		}
+	}
+
 	private fun loadProfileThumbnail() {
 		val view = view ?: return
 		lifecycleScope.launch {
