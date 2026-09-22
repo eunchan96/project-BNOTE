@@ -17,6 +17,7 @@ import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.DateUtils
 import com.chan.bnote.data.application.Application
 import com.chan.bnote.ui.FabAddHandler
+import com.chan.bnote.ui.SubtabRefreshable
 import com.chan.bnote.ui.application.addapplication.AddApplicationActivity
 import com.chan.bnote.ui.sermon.bycalendar.CalendarDayCell
 import com.chan.bnote.ui.sermon.bycalendar.CalendarGridAdapter
@@ -24,7 +25,7 @@ import com.chan.bnote.ui.sermon.bycalendar.MonthYearPickerBottomSheet
 import kotlinx.coroutines.launch
 import java.util.Calendar
 
-class CalendarApplicationFragment : Fragment(), FabAddHandler {
+class CalendarApplicationFragment : Fragment(), FabAddHandler, SubtabRefreshable {
 
 	private lateinit var monthYearText: TextView
 	private lateinit var gridRecycler: RecyclerView
@@ -126,6 +127,14 @@ class CalendarApplicationFragment : Fragment(), FabAddHandler {
 				initialDateMillis = selectedDate
 			)
 		)
+	}
+
+	/** 다른 하단 탭(마이페이지 등)에 갔다가 이 탭으로 돌아왔을 때(또는 설교 탭의 다른
+	 * 서브탭에서 돌아왔을 때) 다시 불러온다. */
+	override fun onSubtabBecameVisible() {
+		if (!::monthYearText.isInitialized) return
+		loadCalendarGrid()
+		loadApplicationsForSelectedDate()
 	}
 
 	private fun loadCalendarGrid() {

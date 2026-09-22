@@ -18,6 +18,7 @@ import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.DateUtils
 import com.chan.bnote.data.sermon.Sermon
 import com.chan.bnote.ui.FabAddHandler
+import com.chan.bnote.ui.SubtabRefreshable
 import com.chan.bnote.ui.sermon.SermonRowAdapter
 import com.chan.bnote.ui.sermon.SermonRowBuilder
 import com.chan.bnote.ui.sermon.SermonSortableFragment
@@ -27,7 +28,8 @@ import com.chan.bnote.ui.sermon.detail.SermonDetailActivity
 import kotlinx.coroutines.launch
 import java.util.Calendar
 
-class CalendarSermonFragment : Fragment(), SermonSortableFragment, FabAddHandler {
+class CalendarSermonFragment : Fragment(), SermonSortableFragment, FabAddHandler,
+	SubtabRefreshable {
 
 	private lateinit var monthYearText: TextView
 	private lateinit var gridRecycler: RecyclerView
@@ -132,6 +134,14 @@ class CalendarSermonFragment : Fragment(), SermonSortableFragment, FabAddHandler
 		addSermonLauncher.launch(
 			AddSermonActivity.createIntent(requireContext(), initialDateMillis = selectedDate)
 		)
+	}
+
+	/** 다른 서브탭(성경별)에서 설교를 추가·수정·삭제하고 스와이프로 이 탭에 돌아왔을 때,
+	 * 또는 다른 하단 탭(마이페이지 등)에 갔다가 이 탭으로 돌아왔을 때 다시 불러온다. */
+	override fun onSubtabBecameVisible() {
+		if (!::monthYearText.isInitialized) return
+		loadCalendarGrid()
+		loadSermonsForSelectedDate()
 	}
 
 	private fun loadCalendarGrid() {

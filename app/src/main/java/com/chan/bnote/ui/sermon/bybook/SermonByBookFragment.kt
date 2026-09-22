@@ -19,6 +19,7 @@ import com.chan.bnote.data.bible.BibleBooks
 import com.chan.bnote.data.sermon.ChapterMarker
 import com.chan.bnote.data.sermon.Sermon
 import com.chan.bnote.ui.FabAddHandler
+import com.chan.bnote.ui.SubtabRefreshable
 import com.chan.bnote.ui.bible.picker.BookOnlyPickerBottomSheet
 import com.chan.bnote.ui.sermon.SermonRowAdapter
 import com.chan.bnote.ui.sermon.SermonRowBuilder
@@ -28,7 +29,7 @@ import com.chan.bnote.ui.sermon.addsermon.AddSermonActivity
 import com.chan.bnote.ui.sermon.detail.SermonDetailActivity
 import kotlinx.coroutines.launch
 
-class SermonByBookFragment : Fragment(), SermonSortableFragment, FabAddHandler {
+class SermonByBookFragment : Fragment(), SermonSortableFragment, FabAddHandler, SubtabRefreshable {
 
 	private lateinit var bookTitleText: TextView
 	private lateinit var chapterGridRecycler: RecyclerView
@@ -114,6 +115,14 @@ class SermonByBookFragment : Fragment(), SermonSortableFragment, FabAddHandler {
 
 	override fun onFabAddClicked() {
 		addSermonLauncher.launch(AddSermonActivity.createIntent(requireContext()))
+	}
+
+	/** 다른 서브탭(캘린더)에서 설교를 추가·수정·삭제하고 스와이프로 이 탭에 돌아왔을 때,
+	 * 또는 다른 하단 탭(마이페이지 등)에 갔다가 이 탭으로 돌아왔을 때 다시 불러온다. */
+	override fun onSubtabBecameVisible() {
+		if (!::bookTitleText.isInitialized) return
+		loadChapterGrid()
+		loadSermonsForSelectedChapter()
 	}
 
 	private fun loadChapterGrid() {
