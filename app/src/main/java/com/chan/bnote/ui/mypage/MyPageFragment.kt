@@ -36,7 +36,8 @@ import kotlinx.coroutines.launch
 class MyPageFragment : Fragment(), TopBarActionHandler {
 
 	private data class RecentChip(
-		val label: CharSequence,
+		val title: String,
+		val suffix: String? = null,
 		val timestamp: Long,
 		val onClick: () -> Unit
 	)
@@ -138,7 +139,7 @@ class MyPageFragment : Fragment(), TopBarActionHandler {
 				val unit = BibleBooks.chapterUnit(chapterView.bookId)
 				chips.add(
 					RecentChip(
-						label = "${BibleBooks.nameOf(chapterView.bookId)} ${chapterView.chapter}${unit}",
+						title = "${BibleBooks.nameOf(chapterView.bookId)} ${chapterView.chapter}${unit}",
 						timestamp = chapterView.viewedAt
 					) { navigateToBible(chapterView.bookId, chapterView.chapter) }
 				)
@@ -149,7 +150,8 @@ class MyPageFragment : Fragment(), TopBarActionHandler {
 				val sermon = row.sermon
 				chips.add(
 					RecentChip(
-						label = suffixSpan(sermon.title, "설교"),
+						title = sermon.title,
+						suffix = "설교",
 						timestamp = row.viewedAt
 					) {
 						startActivity(
@@ -171,7 +173,8 @@ class MyPageFragment : Fragment(), TopBarActionHandler {
 				}
 				chips.add(
 					RecentChip(
-						label = suffixSpan(displayTitle, "적용"),
+						title = displayTitle,
+						suffix = "적용",
 						timestamp = row.viewedAt
 					) {
 						startActivity(
@@ -188,7 +191,7 @@ class MyPageFragment : Fragment(), TopBarActionHandler {
 			for (memo in recentVerseMemos) {
 				val ref = "${BibleBooks.nameOf(memo.bookId)} ${memo.chapter}:${memo.verse}"
 				chips.add(
-					RecentChip(label = suffixSpan(ref, "메모"), timestamp = memo.updatedAt) {
+					RecentChip(title = ref, suffix = "메모", timestamp = memo.updatedAt) {
 						(requireActivity() as? BibleNavigationHost)
 							?.navigateToBibleChapterAndOpenVerseMemo(
 								memo.bookId, memo.chapter, memo.verse
@@ -211,7 +214,7 @@ class MyPageFragment : Fragment(), TopBarActionHandler {
 				val ref = "${BibleBooks.nameOf(memo.bookId)} ${memo.chapter}:${memo.verse}" +
 						(if (word.isNotEmpty()) " $word" else "")
 				chips.add(
-					RecentChip(label = suffixSpan(ref, "메모"), timestamp = memo.updatedAt) {
+					RecentChip(title = ref, suffix = "메모", timestamp = memo.updatedAt) {
 						(requireActivity() as? BibleNavigationHost)
 							?.navigateToBibleChapterAndOpenWordMemo(
 								memo.bookId, memo.chapter, memo.verse,
@@ -248,18 +251,48 @@ class MyPageFragment : Fragment(), TopBarActionHandler {
 		return spannable
 	}
 
+	/** 제목이 길면 "..."으로 줄이되, 회색 접미사("설교"/"적용"/"메모")는 절대 안 잘리고 항상 끝에 붙어 나오게 만든다. 예: "눈 앞의 사실보다... 적용".
+	 * TextView의 ellipsize 속성은 붙여넣은 문자열 전체를 하나로 보고 끝을 잘라서, 자칫하면 접미사까지 잘려나가던 문제가 있었다 — chip.title/chip.suffix를 따로 받아서 여기서 직접 잘라 붙인다.
+	 *
+	 * paint는 반드시 이 TextView에 텍스트 크기(textSize)를 먼저 설정한 뒤의 것을 써야 정확히 잰다(paint는 TextView가 그릴 때 쓰는 것과 같은 객체라, 크기를 바꾸면 즉시 반영된다). */
+	private fun buildChipLabel(
+		chip: RecentChip,
+		paint: android.text.TextPaint,
+		maxWidthPx: Int
+	): CharSequence {
+		val suffix = chip.suffix ?: return TextUtils.ellipsize(
+			chip.title, paint, maxWidthPx.toFloat(), TextUtils.TruncateAt.END
+		)
+
+		val suffixText = " $suffix"
+		val suffixWidth = paint.measureText(suffixText)
+		val titleMaxWidth = (maxWidthPx - suffixWidth).coerceAtLeast(0f)
+		val truncatedTitle =
+			TextUtils.ellipsize(chip.title, paint, titleMaxWidth, TextUtils.TruncateAt.END)
+
+		val full = "$truncatedTitle$suffixText"
+		val spannable = SpannableString(full)
+		spannable.setSpan(
+			ForegroundColorSpan(ContextCompat.getColor(requireContext(), R.color.text_hint)),
+			truncatedTitle.length, full.length,
+			Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+		)
+		return spannable
+	}
+
 	private fun renderRecentChips(chips: List<RecentChip>) {
 		val view = view ?: return
 		val container = view.findViewById<LinearLayout>(R.id.container_recent_chips)
 		container.removeAllViews()
 
+		val maxWidthPx = dp(160)
+		val horizontalPaddingPx = dp(14) * 2
+
 		for (chip in chips) {
 			val chipView = TextView(requireContext()).apply {
-				text = chip.label
 				textSize = 13f
 				maxLines = 1
-				ellipsize = TextUtils.TruncateAt.END
-				maxWidth = dp(160)
+				maxWidth = maxWidthPx // 아래서 폭에 맞춰 미리 잘라 넣지만, 혹시 몰라 안전장치로 둔다.
 				setTextColor(ContextCompat.getColor(requireContext(), R.color.brown_primary))
 				setPadding(dp(14), dp(10), dp(14), dp(10))
 				background = ContextCompat.getDrawable(requireContext(), R.drawable.bg_chip_outline)
@@ -269,6 +302,8 @@ class MyPageFragment : Fragment(), TopBarActionHandler {
 					LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT
 				).apply { marginEnd = dp(8) }
 				setOnClickListener { chip.onClick() }
+				// textSize를 이미 위에서 정했으니, 이 시점의 paint로 실제 화면에 그려질 폭을 잰다.
+				text = buildChipLabel(chip, paint, maxWidthPx - horizontalPaddingPx)
 			}
 			container.addView(chipView)
 		}
