@@ -24,7 +24,7 @@ object AppSettings {
 	private const val SEARCH_HISTORY_DELIMITER = "\u001E"
 	private const val MAX_SEARCH_HISTORY = 20
 
-	private const val DEFAULT_FONT_SIZE = 16
+	private const val DEFAULT_FONT_SIZE = 18
 	const val MIN_FONT_SIZE = 12
 	const val MAX_FONT_SIZE = 28
 

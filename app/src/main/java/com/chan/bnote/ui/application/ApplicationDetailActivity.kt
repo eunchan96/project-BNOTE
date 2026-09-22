@@ -115,11 +115,7 @@ class ApplicationDetailActivity : AppCompatActivity() {
 			val sermons = links.mapNotNull { db.sermonDao().getById(it.sermonId) }
 
 			val dateLabel = DateUtils.formatDate(application.applicationDate)
-			val bracketLabel = when {
-				category?.name == "설교" && sermons.isNotEmpty() -> sermons.first().title
-				category != null -> category.name
-				else -> null
-			}
+			val bracketLabel = category?.name
 			findViewById<TextView>(R.id.text_detail_date_category).text =
 				if (bracketLabel != null) "$dateLabel [$bracketLabel]" else dateLabel
 
