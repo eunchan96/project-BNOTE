@@ -80,7 +80,7 @@ import kotlinx.coroutines.launch
 		Application::class, ApplicationCategory::class, ApplicationBibleRef::class,
 		ApplicationSermonLink::class, GratitudeNote::class, GratitudeEntry::class
 	],
-	version = 29, // 28 -> 29 (감사 노트 - gratitude_notes/gratitude_entries 테이블 추가)
+	version = 30, // 29 -> 30 (설교 memoSearchText 추가 — 서식 있는 메모도 검색되도록)
 	exportSchema = false
 )
 abstract class BibleDatabase : RoomDatabase() {

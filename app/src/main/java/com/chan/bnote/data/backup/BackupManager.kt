@@ -297,13 +297,17 @@ object BackupManager {
 			val oldId = obj.getLong("id")
 			val oldPreacherId = if (obj.has("preacherId")) obj.getLong("preacherId") else null
 			val oldCategoryId = if (obj.has("categoryId")) obj.getLong("categoryId") else null
+			val restoredMemo = obj.optString("memo", "")
 			val newId = db.sermonDao().insert(
 				Sermon(
 					title = obj.getString("title"),
 					preacherId = oldPreacherId?.let { preacherIdMap[it] },
 					sermonDate = obj.getLong("sermonDate"),
 					categoryId = oldCategoryId?.let { categoryIdMap[it] },
-					memo = obj.optString("memo", ""),
+					memo = restoredMemo,
+					// 백업 파일(구버전 포함)엔 memoSearchText가 없을 수 있으니, memo를 화면에 보여줄 때와 같은 방식으로 풀어서 순수 텍스트를 다시 만든다.
+					memoSearchText = com.chan.bnote.ui.sermon.addsermon.RichTextUtils
+						.toEditable(restoredMemo).toString(),
 					link = if (obj.has("link")) obj.getString("link") else null,
 					createdAt = obj.optLong("createdAt", System.currentTimeMillis())
 				)

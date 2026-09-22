@@ -134,5 +134,53 @@ val MIGRATIONS: Array<Migration> = arrayOf(
 				""".trimIndent()
 			)
 		}
+	},
+	object : Migration(29, 30) {
+		override fun migrate(db: SupportSQLiteDatabase) {
+			// 설교 검색용 순수 텍스트 컬럼. memo는 굵게/밑줄/색 서식이 하나라도 있으면
+			// Html.toHtml()이 한글을 포함한 모든 글자를 HTML 문자 참조(&#45208; 등)로 바꿔서
+			// 저장하는데, 그 안에서는 LIKE로 실제 글자를 찾을 수 없었다(서식 없는 메모만
+			// 우연히 검색되던 원인). 여기 담을 순수 텍스트는 화면에 보여줄 때와 같은 방식
+			// (RichTextUtils.toEditable과 동일한 로직)으로 기존 memo를 풀어서 채운다.
+			db.execSQL("ALTER TABLE sermons ADD COLUMN memoSearchText TEXT NOT NULL DEFAULT ''")
+
+			val cursor = db.query("SELECT id, memo FROM sermons")
+			cursor.use {
+				val idIndex = it.getColumnIndexOrThrow("id")
+				val memoIndex = it.getColumnIndexOrThrow("memo")
+				while (it.moveToNext()) {
+					val id = it.getLong(idIndex)
+					val memo = it.getString(memoIndex) ?: ""
+					val plainText = decodeMemoToPlainText(memo)
+					db.execSQL(
+						"UPDATE sermons SET memoSearchText = ? WHERE id = ?",
+						arrayOf(plainText, id)
+					)
+				}
+			}
+		}
 	}
 )
+
+/** RichTextUtils.toEditable()과 같은 로직(HTML이면 풀고, sentinel 이후를 잘라내는 것)을
+ * 마이그레이션에서도 써야 하는데, 그 파일은 UI 레이어(ui.sermon.addsermon)에 있어서 여기서
+ * 직접 끌어다 쓰기보다 필요한 부분만 그대로 옮겨왔다 — Migrations.kt는 data 레이어라 UI 쪽
+ * 클래스에 의존하지 않는 편이 맞다. 로직이 바뀌면 RichTextUtils.toEditable()도 함께 확인할 것. */
+private fun decodeMemoToPlainText(raw: String): String {
+	if (raw.isEmpty() || !Regex(
+			"<(b|u|p|font)[ >]",
+			RegexOption.IGNORE_CASE
+		).containsMatchIn(raw)
+	) {
+		return raw
+	}
+	val restored =
+		androidx.core.text.HtmlCompat.fromHtml(
+			raw,
+			androidx.core.text.HtmlCompat.FROM_HTML_MODE_LEGACY
+		)
+			.toString()
+	val sentinelIndex = restored.indexOf('\u200B')
+	if (sentinelIndex >= 0) return restored.substring(0, sentinelIndex)
+	return restored.trimEnd('\n')
+}

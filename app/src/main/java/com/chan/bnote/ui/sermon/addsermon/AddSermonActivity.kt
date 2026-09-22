@@ -809,6 +809,8 @@ class AddSermonActivity : AppCompatActivity() {
 		preacherId: Long
 	): Long = persistMutex.withLock {
 		val memoText = RichTextUtils.toStorageString(memo)
+		// 검색용 순수 텍스트. memo(CharSequence)는 서식(스팬)이 있어도 .toString()하면 글자만 남는다 — 아직 HTML로 저장되기 전이라 문자 참조로 안 바뀐, 진짜 글자 그대로다.
+		val memoSearchText = memo.toString()
 		val linkValue = link.trim().ifEmpty { null }
 		val db = BibleDatabase.getInstance(applicationContext)
 
@@ -818,7 +820,8 @@ class AddSermonActivity : AppCompatActivity() {
 			sermonId = db.sermonDao().insert(
 				Sermon(
 					title = title, preacherId = preacherId, sermonDate = selectedDateMillis,
-					categoryId = selectedCategoryId, memo = memoText, link = linkValue
+					categoryId = selectedCategoryId, memo = memoText,
+					memoSearchText = memoSearchText, link = linkValue
 				)
 			)
 			isNewlyCreated = true
@@ -827,7 +830,8 @@ class AddSermonActivity : AppCompatActivity() {
 			db.sermonDao().update(
 				current.copy(
 					title = title, preacherId = preacherId, sermonDate = selectedDateMillis,
-					categoryId = selectedCategoryId, memo = memoText, link = linkValue
+					categoryId = selectedCategoryId, memo = memoText,
+					memoSearchText = memoSearchText, link = linkValue
 				)
 			)
 			db.sermonBibleRefDao().deleteBySermon(sermonId)
