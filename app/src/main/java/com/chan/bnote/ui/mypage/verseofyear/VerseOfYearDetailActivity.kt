@@ -15,6 +15,7 @@ import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.mypage.memorization.MemorizationVerse
 import com.chan.bnote.data.mypage.verseofyear.VerseOfYearRef
 import com.chan.bnote.ui.mypage.memorization.MemorizationVerseListActivity
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 
 /** 특정 연도의 약속의 말씀을 읽기 전용으로 보여준다("암송 구절" 상세 화면과 같은 가운데 정렬
@@ -59,6 +60,7 @@ class VerseOfYearDetailActivity : AppCompatActivity() {
 			startActivity(VerseOfYearEditActivity.editIntent(this, year))
 			finish()
 		}
+		findViewById<ImageView>(R.id.btn_delete_entry).setOnClickListener { confirmDelete() }
 	}
 
 	override fun onResume() {
@@ -135,5 +137,21 @@ class VerseOfYearDetailActivity : AppCompatActivity() {
 				Intent(this@VerseOfYearDetailActivity, MemorizationVerseListActivity::class.java)
 			)
 		}
+	}
+
+	private fun confirmDelete() {
+		MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_BNOTE_Dialog)
+			.setTitle("${year}년 말씀 삭제")
+			.setMessage("삭제하면 되돌릴 수 없어요. 계속할까요?")
+			.setPositiveButton("삭제") { _, _ ->
+				lifecycleScope.launch {
+					val db = BibleDatabase.getInstance(applicationContext)
+					db.verseOfYearRefDao().deleteByYear(year)
+					db.verseOfYearDao().delete(year)
+					finish()
+				}
+			}
+			.setNegativeButton("취소", null)
+			.show()
 	}
 }

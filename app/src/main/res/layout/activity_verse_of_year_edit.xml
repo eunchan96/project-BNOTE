@@ -42,19 +42,6 @@
             android:textStyle="bold"
             android:textColor="@color/white" />
 
-        <ImageView
-            android:id="@+id/btn_delete_entry"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:padding="8dp"
-            android:src="@drawable/ic_delete"
-            app:tint="@color/white"
-            android:contentDescription="삭제"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:visibility="gone"
-            android:clickable="true"
-            android:focusable="true" />
-
     </LinearLayout>
 
     <ScrollView
@@ -86,15 +73,6 @@
                 android:clickable="true"
                 android:focusable="true" />
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="성경 구절"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:textColor="@color/text_secondary"
-                android:layout_marginBottom="8dp" />
-
             <LinearLayout
                 android:id="@+id/container_bible_refs"
                 android:layout_width="match_parent"
@@ -116,15 +94,6 @@
                 android:layout_marginBottom="24dp"
                 android:clickable="true"
                 android:focusable="true" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="다짐 · 메모"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:textColor="@color/text_secondary"
-                android:layout_marginBottom="8dp" />
 
             <EditText
                 android:id="@+id/edit_verse_note"

@@ -101,12 +101,6 @@ class VerseOfYearEditActivity : AppCompatActivity() {
 			rangePicker.show(supportFragmentManager, "verse_of_year_range_picker")
 		}
 
-		val deleteBtn = findViewById<ImageView>(R.id.btn_delete_entry)
-		if (isEditMode) {
-			deleteBtn.visibility = android.view.View.VISIBLE
-			deleteBtn.setOnClickListener { confirmDelete() }
-		}
-
 		findViewById<TextView>(R.id.btn_save_verse_of_year).setOnClickListener { save() }
 		findViewById<TextView>(R.id.btn_go_memorize).setOnClickListener { saveAndGoToMemorize() }
 
@@ -143,6 +137,32 @@ class VerseOfYearEditActivity : AppCompatActivity() {
 			.show()
 	}
 
+	/** 성경 구절 선택 창을 연다. existing이 있으면(카드를 눌러서 연 경우) 그 범위를 미리
+	 * 채워주고, 창 안의 삭제 버튼도 함께 나온다("+ 성경 구절 추가"로 새로 열 때는 null). */
+	private fun openBibleRefPicker(existing: SermonBibleRef?) {
+		val rangePicker = BibleRangePickerBottomSheet()
+		rangePicker.existingRef = existing
+		rangePicker.onRangeSelected = { ref ->
+			lifecycleScope.launch {
+				val verseText = buildVerseText(ref)
+				if (existing != null) {
+					val index = bibleRefs.indexOfFirst { it.first === existing }
+					if (index >= 0) bibleRefs[index] = ref to verseText
+				} else {
+					bibleRefs.add(ref to verseText)
+				}
+				renderBibleRefChips()
+			}
+		}
+		if (existing != null) {
+			rangePicker.onDeleteRequested = {
+				bibleRefs.removeAll { it.first === existing }
+				renderBibleRefChips()
+			}
+		}
+		rangePicker.show(supportFragmentManager, "verse_of_year_range_picker")
+	}
+
 	private fun renderBibleRefChips() {
 		refsContainer.removeAllViews()
 		for ((ref, verseText) in bibleRefs) {
@@ -153,11 +173,25 @@ class VerseOfYearEditActivity : AppCompatActivity() {
 				text = verseText
 				textSize = AppSettings.getFontSize(this@VerseOfYearEditActivity).toFloat()
 			}
-			card.findViewById<TextView>(R.id.btn_remove_ref).setOnClickListener {
-				bibleRefs.removeAll { it.first === ref }
-				renderBibleRefChips()
-			}
+			card.setOnClickListener { openBibleRefPicker(ref) }
 			refsContainer.addView(card)
+		}
+
+		// 구절이 하나도 없을 땐 "+" 버튼을 눈에 띄게(전체 너비) 두고, 하나라도 있으면 작게 줄인다.
+		val addBtn = findViewById<TextView>(R.id.btn_add_bible_ref)
+		val params = addBtn.layoutParams as android.widget.LinearLayout.LayoutParams
+		if (bibleRefs.isEmpty()) {
+			params.width = android.widget.LinearLayout.LayoutParams.MATCH_PARENT
+			params.gravity = android.view.Gravity.NO_GRAVITY
+			addBtn.layoutParams = params
+			addBtn.setPadding(dp(14), dp(14), dp(14), dp(14))
+			addBtn.textSize = 15f
+		} else {
+			params.width = android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
+			params.gravity = android.view.Gravity.END
+			addBtn.layoutParams = params
+			addBtn.setPadding(dp(10), dp(8), dp(10), dp(8))
+			addBtn.textSize = 13f
 		}
 	}
 
