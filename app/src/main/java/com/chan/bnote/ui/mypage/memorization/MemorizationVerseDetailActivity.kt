@@ -51,8 +51,18 @@ class MemorizationVerseDetailActivity : AppCompatActivity() {
 
 		findViewById<ImageView>(R.id.btn_back).setOnClickListener { finish() }
 		findViewById<ImageView>(R.id.btn_delete).setOnClickListener { confirmDelete() }
+		findViewById<ImageView>(R.id.btn_edit_verse).setOnClickListener {
+			val item = verse ?: return@setOnClickListener
+			startActivity(MemorizationVerseEditActivity.createIntent(this, item.id))
+		}
 		findViewById<TextView>(R.id.btn_practice_this).setOnClickListener { practiceThisVerse() }
 
+		loadVerse()
+	}
+
+	override fun onResume() {
+		super.onResume()
+		// 수정 화면(구절 · 그룹 변경)에서 고치고 돌아왔을 수도 있으니 매번 다시 불러온다.
 		loadVerse()
 	}
 
@@ -77,11 +87,16 @@ class MemorizationVerseDetailActivity : AppCompatActivity() {
 			verse = item
 			findViewById<TextView>(R.id.text_verse_ref).text = item.toDisplayLabel()
 			findViewById<TextView>(R.id.text_verse_content).text = item.verseText
-			noteEdit.setText(item.note)
+			// onResume에서 다시 불러올 때, 방금 이 화면에서 입력 중이던 메모(아직 onPause로
+			// 저장 안 된 것)를 덮어쓰지 않도록 포커스가 없을 때만 다시 채운다.
+			if (!noteEdit.isFocused) noteEdit.setText(item.note)
+
+			val group = db.memorizationVerseDao().getAllGroups().find { it.id == item.groupId }
+			findViewById<TextView>(R.id.text_verse_group).text = "그룹 : ${group?.name ?: "미분류"}"
 		}
 	}
 
-	/** 메모는 저장 버튼 없이, 화면을 벗어날 때(뒤로가기·연습하기 이동 포함) 자동으로 저장한다. */
+	/** 메모는 저장 버튼 없이, 화면을 벗어날 때(뒤로가기·연습하기·수정 화면 이동 포함) 자동으로 저장한다. */
 	private fun saveNote() {
 		val item = verse ?: return
 		val newNote = noteEdit.text.toString()

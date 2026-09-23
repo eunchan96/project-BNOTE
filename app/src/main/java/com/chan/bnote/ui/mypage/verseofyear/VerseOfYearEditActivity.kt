@@ -52,7 +52,6 @@ class VerseOfYearEditActivity : AppCompatActivity() {
 	private val bibleRefs = mutableListOf<Pair<SermonBibleRef, String>>()
 
 	private lateinit var btnPickYear: TextView
-	private lateinit var yearFixedText: TextView
 	private lateinit var refsContainer: android.widget.LinearLayout
 	private lateinit var noteEdit: EditText
 
@@ -81,19 +80,14 @@ class VerseOfYearEditActivity : AppCompatActivity() {
 			if (isEditMode) "${editingYear}년 말씀 수정" else "약속의 말씀 추가"
 
 		btnPickYear = findViewById(R.id.btn_pick_year)
-		yearFixedText = findViewById(R.id.text_year_fixed)
 		refsContainer = findViewById(R.id.container_bible_refs)
 		noteEdit = findViewById(R.id.edit_verse_note)
 
-		if (isEditMode) {
-			btnPickYear.visibility = android.view.View.GONE
-			yearFixedText.visibility = android.view.View.VISIBLE
-			yearFixedText.text = "${editingYear}년"
-		} else {
-			selectedYear = Calendar.getInstance().get(Calendar.YEAR)
-			btnPickYear.text = "${selectedYear}년"
-			btnPickYear.setOnClickListener { showYearPicker() }
-		}
+		// 연도는 신규 작성이든 수정이든 항상 눌러서 바꿀 수 있다(수정 중에도 연도 자체를
+		// 옮길 수 있어야 하므로, "수정 모드엔 고정 텍스트만 보여준다"던 예전 분기를 없앴다).
+		selectedYear = if (isEditMode) editingYear else Calendar.getInstance().get(Calendar.YEAR)
+		btnPickYear.text = "${selectedYear}년"
+		btnPickYear.setOnClickListener { showYearPicker() }
 
 		findViewById<TextView>(R.id.btn_add_bible_ref).setOnClickListener {
 			val rangePicker = BibleRangePickerBottomSheet()
@@ -264,12 +258,15 @@ class VerseOfYearEditActivity : AppCompatActivity() {
 		}
 	}
 
-	/** 연도/구절/메모를 저장한다. 이미 존재하는 신규 연도면 null을 반환한다 (호출부에서 그냥 return). */
+	/** 연도/구절/메모를 저장한다. 이미 존재하는(그리고 지금 편집 중인 항목이 아닌) 연도면
+	 * null을 반환한다(호출부에서 그냥 return). */
 	private suspend fun persistEntry(): Int? {
-		val year = if (isEditMode) editingYear else selectedYear
+		val year = selectedYear
 		val db = BibleDatabase.getInstance(applicationContext)
 
-		if (!isEditMode) {
+		// 신규 작성이거나, 수정 중에 연도 자체를 다른 해로 옮긴 경우 — 그 해에 이미 다른 기록이
+		// 있는지 확인한다(자기 자신은 제외).
+		if (!isEditMode || year != editingYear) {
 			val existing = db.verseOfYearDao().getByYear(year)
 			if (existing != null) {
 				Toast.makeText(
@@ -279,6 +276,13 @@ class VerseOfYearEditActivity : AppCompatActivity() {
 				).show()
 				return null
 			}
+		}
+
+		// 연도를 옮긴 경우, 예전 연도의 기록은 지우고 새 연도로 다시 써야 한다(연도가
+		// VerseOfYear의 기본 키라 그냥 update로는 옮길 수 없다).
+		if (isEditMode && year != editingYear) {
+			db.verseOfYearRefDao().deleteByYear(editingYear)
+			db.verseOfYearDao().delete(editingYear)
 		}
 
 		db.verseOfYearDao().upsert(VerseOfYear(year = year, note = noteEdit.text.toString()))
@@ -297,6 +301,10 @@ class VerseOfYearEditActivity : AppCompatActivity() {
 				)
 			}
 		)
+		// 이 화면에 계속 머무는 동안(자동 저장 등) 다음 저장부터는 지금 이 연도를 "원래 연도"로
+		// 본다 — 그래야 다시 저장할 때 방금 옮긴 연도와 또 충돌 처리를 하지 않는다.
+		isEditMode = true
+		editingYear = year
 		return year
 	}
 
