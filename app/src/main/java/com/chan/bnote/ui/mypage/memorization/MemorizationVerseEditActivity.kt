@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.widget.EditText
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -32,9 +33,17 @@ class MemorizationVerseEditActivity : AppCompatActivity() {
 
 	private var verse: MemorizationVerse? = null
 	private var selectedGroup: MemorizationGroup? = null
-	private var pendingRef: SermonBibleRef? = null
 
-	private lateinit var btnPickRange: TextView
+	// 지금 화면에 보여주고 있는 범위. 처음엔 불러온 구절 그대로고, 카드를 눌러서 다시 고르면
+	// 여기가 바뀐다. 이 화면은 항상 기존 구절을 고치는 용도라 비어 있는 채로 시작하는 일은
+	// 거의 없지만, "성경 구절 추가" 버튼은 그 경우(=아직 범위가 없을 때)에만 보여준다.
+	private var currentRef: SermonBibleRef? = null
+	private var currentVerseText: String = ""
+
+	private lateinit var btnAddRange: TextView
+	private lateinit var cardRange: LinearLayout
+	private lateinit var textRangeLabel: TextView
+	private lateinit var textRangeVerse: TextView
 	private lateinit var btnPickGroup: TextView
 	private lateinit var noteEdit: EditText
 
@@ -51,10 +60,15 @@ class MemorizationVerseEditActivity : AppCompatActivity() {
 
 		findViewById<ImageView>(R.id.btn_top_bar_back).setOnClickListener { finish() }
 
-		btnPickRange = findViewById(R.id.btn_pick_range)
+		btnAddRange = findViewById(R.id.btn_add_range)
+		cardRange = findViewById(R.id.card_range)
+		textRangeLabel = findViewById(R.id.text_range_label)
+		textRangeVerse = findViewById(R.id.text_range_verse)
 		btnPickGroup = findViewById(R.id.btn_pick_group)
 		noteEdit = findViewById(R.id.edit_verse_note)
-		btnPickRange.setOnClickListener { openRangePicker() }
+
+		btnAddRange.setOnClickListener { openRangePicker(null) }
+		cardRange.setOnClickListener { openRangePicker(currentRef) }
 		btnPickGroup.setOnClickListener { openGroupPicker() }
 		findViewById<TextView>(R.id.btn_save).setOnClickListener { save() }
 
@@ -75,8 +89,19 @@ class MemorizationVerseEditActivity : AppCompatActivity() {
 				return@launch
 			}
 			verse = item
-			btnPickRange.text = item.toDisplayLabel()
 			noteEdit.setText(item.note)
+
+			currentRef = SermonBibleRef(
+				sermonId = 0,
+				startBookId = item.startBookId,
+				startChapter = item.startChapter,
+				startVerse = item.startVerse,
+				endBookId = item.endBookId,
+				endChapter = item.endChapter,
+				endVerse = item.endVerse
+			)
+			currentVerseText = item.verseText
+			updateRangeDisplay()
 
 			val group = db.memorizationVerseDao().getAllGroups().find { it.id == item.groupId }
 			selectedGroup = group
@@ -84,22 +109,40 @@ class MemorizationVerseEditActivity : AppCompatActivity() {
 		}
 	}
 
-	private fun openRangePicker() {
-		val item = verse ?: return
-		val existingRef = pendingRef ?: SermonBibleRef(
-			sermonId = 0,
-			startBookId = item.startBookId,
-			startChapter = item.startChapter,
-			startVerse = item.startVerse,
-			endBookId = item.endBookId,
-			endChapter = item.endChapter,
-			endVerse = item.endVerse
-		)
+	/** currentRef 유무에 따라 "성경 구절 추가" 버튼과 범위 카드 중 하나만 보여준다. */
+	private fun updateRangeDisplay() {
+		val ref = currentRef
+		if (ref == null) {
+			btnAddRange.visibility = android.view.View.VISIBLE
+			cardRange.visibility = android.view.View.GONE
+		} else {
+			btnAddRange.visibility = android.view.View.GONE
+			cardRange.visibility = android.view.View.VISIBLE
+			textRangeLabel.text = SermonRefLabel.of(ref)
+			textRangeVerse.text = currentVerseText
+		}
+	}
+
+	/** 성경 구절 선택 창을 연다. existing이 있으면(카드를 눌러서 연 경우) 그 범위를 미리
+	 * 채워주고, 창 안의 삭제 버튼도 함께 나온다. */
+	private fun openRangePicker(existing: SermonBibleRef?) {
 		val picker = BibleRangePickerBottomSheet()
-		picker.existingRef = existingRef
+		picker.existingRef = existing
+		// 암송 구절도 한 구절씩 정확히 고르는 경우가 많아서 기본은 꺼둔다.
+		picker.defaultMultiMode = false
 		picker.onRangeSelected = { ref ->
-			pendingRef = ref
-			btnPickRange.text = SermonRefLabel.of(ref)
+			lifecycleScope.launch {
+				currentRef = ref
+				currentVerseText = buildVerseText(ref)
+				updateRangeDisplay()
+			}
+		}
+		if (existing != null) {
+			picker.onDeleteRequested = {
+				currentRef = null
+				currentVerseText = ""
+				updateRangeDisplay()
+			}
 		}
 		picker.show(supportFragmentManager, "memorization_verse_range_picker")
 	}
@@ -116,25 +159,26 @@ class MemorizationVerseEditActivity : AppCompatActivity() {
 	private fun save() {
 		val item = verse ?: return
 		val group = selectedGroup ?: return
+		val ref = currentRef
+		if (ref == null) {
+			android.widget.Toast.makeText(this, "성경 구절을 골라주세요", android.widget.Toast.LENGTH_SHORT)
+				.show()
+			return
+		}
 		val newNote = noteEdit.text.toString()
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(applicationContext)
-			val ref = pendingRef
-			val updated = if (ref != null) {
-				item.copy(
-					groupId = group.id,
-					startBookId = ref.startBookId,
-					startChapter = ref.startChapter,
-					startVerse = ref.startVerse,
-					endBookId = ref.endBookId,
-					endChapter = ref.endChapter,
-					endVerse = ref.endVerse,
-					verseText = buildVerseText(ref),
-					note = newNote
-				)
-			} else {
-				item.copy(groupId = group.id, note = newNote)
-			}
+			val updated = item.copy(
+				groupId = group.id,
+				startBookId = ref.startBookId,
+				startChapter = ref.startChapter,
+				startVerse = ref.startVerse,
+				endBookId = ref.endBookId,
+				endChapter = ref.endChapter,
+				endVerse = ref.endVerse,
+				verseText = currentVerseText,
+				note = newNote
+			)
 			db.memorizationVerseDao().update(updated)
 			finish()
 		}

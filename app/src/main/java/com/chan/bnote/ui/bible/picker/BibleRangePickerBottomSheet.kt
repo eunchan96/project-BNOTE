@@ -40,6 +40,10 @@ class BibleRangePickerBottomSheet : FixedBottomSheetDialogFragment() {
 	var existingRef: SermonBibleRef? = null
 	var onDeleteRequested: (() -> Unit)? = null
 
+	// "여러 구절 선택하기" 체크박스의 시작 상태. 대부분의 경우(설교 본문 등)는 여러 구절을 고르는 게 자연스러워서 켜진 채로 시작하지만,
+	// 약속의 말씀·암송 구절처럼 한 구절씩 정확히 고르는 화면에서는 호출하는 쪽에서 이 값을 false로 넘겨서 꺼진 채로 시작하게 한다.
+	var defaultMultiMode: Boolean = true
+
 	private lateinit var recyclerView: RecyclerView
 	private lateinit var scrollBookGrid: ScrollView
 	private lateinit var bookGridContainer: LinearLayout
@@ -50,7 +54,7 @@ class BibleRangePickerBottomSheet : FixedBottomSheetDialogFragment() {
 	private lateinit var tabBarContainer: LinearLayout
 	private lateinit var btnDelete: ImageView
 
-	// "여러 구절 선택하기" 체크 여부 — 기본으로 켜둔다.
+	// "여러 구절 선택하기" 체크 여부 — defaultMultiMode로 시작한다(onViewCreated에서 반영).
 	private var isMultiMode = true
 
 	// "다음 장까지 선택하기" 체크 여부 — 켜져 있을 때만 예전처럼 끝 장/절을 따로 고른다.
@@ -88,6 +92,7 @@ class BibleRangePickerBottomSheet : FixedBottomSheetDialogFragment() {
 		textSelectedStart = view.findViewById(R.id.text_selected_start)
 		tabBarContainer = view.findViewById(R.id.container_tab_bar)
 		btnDelete = view.findViewById(R.id.btn_delete_ref)
+		isMultiMode = defaultMultiMode
 
 		// 이미 추가된 본문을 다시 눌러서 연 경우: 그 정보로 미리 채워둔다. (여러 구절 범위였으면 끝 장까지만
 		// 미리 채우고, 끝 절은 다시 골라야 한다 — 상태 변수 구조상 끝 절만 별도로 들고 있지 않아서다.)

@@ -142,6 +142,7 @@ class VerseOfYearEditActivity : AppCompatActivity() {
 	private fun openBibleRefPicker(existing: SermonBibleRef?) {
 		val rangePicker = BibleRangePickerBottomSheet()
 		rangePicker.existingRef = existing
+		rangePicker.defaultMultiMode = false
 		rangePicker.onRangeSelected = { ref ->
 			lifecycleScope.launch {
 				val verseText = buildVerseText(ref)
@@ -177,21 +178,24 @@ class VerseOfYearEditActivity : AppCompatActivity() {
 			refsContainer.addView(card)
 		}
 
-		// 구절이 하나도 없을 땐 "+" 버튼을 눈에 띄게(전체 너비) 두고, 하나라도 있으면 작게 줄인다.
+		// 구절이 하나도 없을 땐 "+" 버튼을 눈에 띄게(박스 있는 전체 너비)로 보여주고, 하나라도 있으면 목록 위에 붙는 작은 글자 링크로 바꾼다.
 		val addBtn = findViewById<TextView>(R.id.btn_add_bible_ref)
 		val params = addBtn.layoutParams as android.widget.LinearLayout.LayoutParams
 		if (bibleRefs.isEmpty()) {
 			params.width = android.widget.LinearLayout.LayoutParams.MATCH_PARENT
 			params.gravity = android.view.Gravity.NO_GRAVITY
 			addBtn.layoutParams = params
+			addBtn.background =
+				androidx.core.content.ContextCompat.getDrawable(this, R.drawable.bg_book_button)
 			addBtn.setPadding(dp(14), dp(14), dp(14), dp(14))
 			addBtn.textSize = 15f
 		} else {
 			params.width = android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
-			params.gravity = android.view.Gravity.END
+			params.gravity = android.view.Gravity.START
 			addBtn.layoutParams = params
-			addBtn.setPadding(dp(10), dp(8), dp(10), dp(8))
-			addBtn.textSize = 13f
+			addBtn.background = null
+			addBtn.setPadding(dp(4), dp(6), dp(4), dp(6))
+			addBtn.textSize = 14f
 		}
 	}
 
