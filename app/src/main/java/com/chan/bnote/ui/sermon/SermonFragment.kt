@@ -86,6 +86,16 @@ class SermonFragment : Fragment(), TopBarActionHandler {
 		(currentFragment as? SubtabRefreshable)?.onSubtabBecameVisible()
 	}
 
+	/** 내 정보 화면의 "설교노트"/"적용" 기록 카드처럼, 다른 화면에서 이 탭으로 이동하면서
+	 * 특정 서브탭(캘린더=0, 성경별=1, 적용=2)까지 바로 보여주고 싶을 때 MainActivity가 부른다.
+	 * onViewCreated가 아직 안 끝났으면(뷰페이저가 없으면) 조용히 무시한다 — switchTo(...)가
+	 * commitNow()를 쓰므로 실제로는 이 프래그먼트가 막 add()된 경우에도 항상 뷰가 준비된 뒤에
+	 * 불린다. */
+	fun selectSubtab(index: Int) {
+		if (!::viewPager.isInitialized) return
+		viewPager.setCurrentItem(index, false)
+	}
+
 	private fun updateSelectedTab(position: Int) {
 		subtabs.forEachIndexed { index, tab ->
 			tab.setTextColor(
