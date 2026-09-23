@@ -3,6 +3,7 @@ package com.chan.bnote.ui.mypage.memorization
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.widget.EditText
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
@@ -18,8 +19,7 @@ import com.chan.bnote.data.sermon.SermonBibleRef
 import com.chan.bnote.ui.bible.picker.BibleRangePickerBottomSheet
 import kotlinx.coroutines.launch
 
-/** 암송 구절의 성경 범위와 그룹을 바꾸는 화면. 메모는 상세 화면에서 바로 고치므로 여기서는
- * 다루지 않는다. */
+/** 암송 구절의 그룹 · 성경 범위 · 메모를 바꾸는 화면. */
 class MemorizationVerseEditActivity : AppCompatActivity() {
 
 	companion object {
@@ -36,6 +36,7 @@ class MemorizationVerseEditActivity : AppCompatActivity() {
 
 	private lateinit var btnPickRange: TextView
 	private lateinit var btnPickGroup: TextView
+	private lateinit var noteEdit: EditText
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
@@ -52,6 +53,7 @@ class MemorizationVerseEditActivity : AppCompatActivity() {
 
 		btnPickRange = findViewById(R.id.btn_pick_range)
 		btnPickGroup = findViewById(R.id.btn_pick_group)
+		noteEdit = findViewById(R.id.edit_verse_note)
 		btnPickRange.setOnClickListener { openRangePicker() }
 		btnPickGroup.setOnClickListener { openGroupPicker() }
 		findViewById<TextView>(R.id.btn_save).setOnClickListener { save() }
@@ -74,6 +76,7 @@ class MemorizationVerseEditActivity : AppCompatActivity() {
 			}
 			verse = item
 			btnPickRange.text = item.toDisplayLabel()
+			noteEdit.setText(item.note)
 
 			val group = db.memorizationVerseDao().getAllGroups().find { it.id == item.groupId }
 			selectedGroup = group
@@ -81,8 +84,6 @@ class MemorizationVerseEditActivity : AppCompatActivity() {
 		}
 	}
 
-	/** 지금 범위를 미리 채운 채로 다시 골라서 바꾼다. 여기서는 화면 표시만 갱신하고,
-	 * 실제 저장은 "저장"을 눌렀을 때 한 번에 한다. */
 	private fun openRangePicker() {
 		val item = verse ?: return
 		val existingRef = pendingRef ?: SermonBibleRef(
@@ -115,6 +116,7 @@ class MemorizationVerseEditActivity : AppCompatActivity() {
 	private fun save() {
 		val item = verse ?: return
 		val group = selectedGroup ?: return
+		val newNote = noteEdit.text.toString()
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(applicationContext)
 			val ref = pendingRef
@@ -127,10 +129,11 @@ class MemorizationVerseEditActivity : AppCompatActivity() {
 					endBookId = ref.endBookId,
 					endChapter = ref.endChapter,
 					endVerse = ref.endVerse,
-					verseText = buildVerseText(ref)
+					verseText = buildVerseText(ref),
+					note = newNote
 				)
 			} else {
-				item.copy(groupId = group.id)
+				item.copy(groupId = group.id, note = newNote)
 			}
 			db.memorizationVerseDao().update(updated)
 			finish()
@@ -156,8 +159,6 @@ class MemorizationVerseEditActivity : AppCompatActivity() {
 	}
 }
 
-/** SermonBibleRef를 "MemorizationVerse.toDisplayLabel()"과 같은 모양의 문자열로 만든다
- * (범위 선택 직후에는 아직 MemorizationVerse가 아니라 SermonBibleRef뿐이라 따로 뗀 것). */
 private object SermonRefLabel {
 	fun of(ref: SermonBibleRef): String {
 		val bookName = com.chan.bnote.data.bible.BibleBooks.nameOf(ref.startBookId)

@@ -164,7 +164,7 @@
                     android:layout_weight="1"
                     android:layout_marginStart="6dp"
                     android:padding="14dp"
-                    android:text="저장"
+                    android:text="저장하기"
                     android:gravity="center"
                     android:textColor="@color/white"
                     android:background="@drawable/bg_save_button"

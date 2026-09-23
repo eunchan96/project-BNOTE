@@ -40,74 +40,100 @@
 
     </LinearLayout>
 
-    <LinearLayout
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="20dp">
+        android:layout_height="match_parent">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="구절"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            android:textColor="@color/text_secondary"
-            android:layout_marginBottom="8dp" />
-
-        <TextView
-            android:id="@+id/btn_pick_range"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:padding="14dp"
-            android:textSize="16sp"
-            android:textColor="@color/text_primary"
-            android:background="@drawable/bg_book_button"
-            android:drawableEnd="@drawable/ic_chevron_down"
-            android:drawableTint="@color/text_hint"
-            android:drawablePadding="6dp"
-            android:layout_marginBottom="24dp"
-            android:clickable="true"
-            android:focusable="true" />
+            android:orientation="vertical"
+            android:padding="20dp">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="그룹"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            android:textColor="@color/text_secondary"
-            android:layout_marginBottom="8dp" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="그룹"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_secondary"
+                android:layout_marginBottom="8dp" />
 
-        <TextView
-            android:id="@+id/btn_pick_group"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:padding="14dp"
-            android:textSize="16sp"
-            android:textColor="@color/text_primary"
-            android:background="@drawable/bg_book_button"
-            android:drawableEnd="@drawable/ic_chevron_down"
-            android:drawableTint="@color/text_hint"
-            android:drawablePadding="6dp"
-            android:layout_marginBottom="28dp"
-            android:clickable="true"
-            android:focusable="true" />
+            <TextView
+                android:id="@+id/btn_pick_group"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="14dp"
+                android:textSize="16sp"
+                android:textColor="@color/text_primary"
+                android:background="@drawable/bg_book_button"
+                android:drawableEnd="@drawable/ic_chevron_down"
+                android:drawableTint="@color/text_hint"
+                android:drawablePadding="6dp"
+                android:layout_marginBottom="24dp"
+                android:clickable="true"
+                android:focusable="true" />
 
-        <TextView
-            android:id="@+id/btn_save"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:padding="14dp"
-            android:text="저장"
-            android:gravity="center"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:textColor="@color/white"
-            android:background="@drawable/bg_save_button"
-            android:clickable="true"
-            android:focusable="true" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="구절"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_secondary"
+                android:layout_marginBottom="8dp" />
 
-    </LinearLayout>
+            <TextView
+                android:id="@+id/btn_pick_range"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="14dp"
+                android:textSize="16sp"
+                android:textColor="@color/text_primary"
+                android:background="@drawable/bg_book_button"
+                android:drawableEnd="@drawable/ic_chevron_down"
+                android:drawableTint="@color/text_hint"
+                android:drawablePadding="6dp"
+                android:layout_marginBottom="24dp"
+                android:clickable="true"
+                android:focusable="true" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="메모"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_secondary"
+                android:layout_marginBottom="8dp" />
+
+            <EditText
+                android:id="@+id/edit_verse_note"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="100dp"
+                android:hint="이 구절에 대한 메모"
+                android:gravity="top"
+                android:textSize="15sp"
+                android:padding="14dp"
+                android:background="@drawable/bg_book_button"
+                android:layout_marginBottom="28dp" />
+
+            <TextView
+                android:id="@+id/btn_save"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="14dp"
+                android:text="저장하기"
+                android:gravity="center"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="@color/white"
+                android:background="@drawable/bg_save_button"
+                android:clickable="true"
+                android:focusable="true" />
+
+        </LinearLayout>
+    </ScrollView>
 
 </LinearLayout>

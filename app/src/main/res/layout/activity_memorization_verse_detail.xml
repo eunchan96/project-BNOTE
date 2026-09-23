@@ -92,16 +92,6 @@
                 tools:text="창세기 1장 1절" />
 
             <TextView
-                android:id="@+id/text_verse_group"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:gravity="center"
-                android:textSize="13sp"
-                android:textColor="@color/text_hint"
-                tools:text="그룹 : 기본" />
-
-            <TextView
                 android:id="@+id/text_verse_content"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -112,18 +102,19 @@
                 android:textColor="@color/text_primary"
                 tools:text="태초에 하나님이 천지를 창조하시니라" />
 
-            <EditText
-                android:id="@+id/edit_verse_note"
+            <TextView
+                android:id="@+id/text_verse_note"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
                 android:minHeight="72dp"
-                android:gravity="top"
-                android:hint="이 구절에 대한 메모"
-                android:padding="12dp"
+                android:gravity="center"
                 android:textSize="14sp"
+                android:lineSpacingExtra="4dp"
+                android:padding="12dp"
                 android:textColor="@color/text_primary"
-                android:background="@drawable/bg_book_button" />
+                android:background="@drawable/bg_book_button"
+                tools:text="이 구절을 붙들고 살자" />
 
             <TextView
                 android:id="@+id/btn_practice_this"

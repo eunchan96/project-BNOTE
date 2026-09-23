@@ -3,11 +3,11 @@ package com.chan.bnote.ui.mypage.memorization
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.widget.EditText
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
@@ -28,7 +28,6 @@ class MemorizationVerseDetailActivity : AppCompatActivity() {
 	}
 
 	private var verse: MemorizationVerse? = null
-	private lateinit var noteEdit: EditText
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
@@ -37,17 +36,9 @@ class MemorizationVerseDetailActivity : AppCompatActivity() {
 
 		ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.memorization_detail_root)) { v, insets ->
 			val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-			val ime = insets.getInsets(WindowInsetsCompat.Type.ime())
-			v.setPadding(
-				systemBars.left,
-				systemBars.top,
-				systemBars.right,
-				maxOf(systemBars.bottom, ime.bottom)
-			)
+			v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
 			insets
 		}
-
-		noteEdit = findViewById(R.id.edit_verse_note)
 
 		findViewById<ImageView>(R.id.btn_back).setOnClickListener { finish() }
 		findViewById<ImageView>(R.id.btn_delete).setOnClickListener { confirmDelete() }
@@ -62,13 +53,8 @@ class MemorizationVerseDetailActivity : AppCompatActivity() {
 
 	override fun onResume() {
 		super.onResume()
-		// 수정 화면(구절 · 그룹 변경)에서 고치고 돌아왔을 수도 있으니 매번 다시 불러온다.
+		// 수정 화면(구절 · 그룹 · 메모 변경)에서 고치고 돌아왔을 수도 있으니 매번 다시 불러온다.
 		loadVerse()
-	}
-
-	override fun onPause() {
-		super.onPause()
-		saveNote()
 	}
 
 	private fun loadVerse() {
@@ -87,26 +73,25 @@ class MemorizationVerseDetailActivity : AppCompatActivity() {
 			verse = item
 			findViewById<TextView>(R.id.text_verse_ref).text = item.toDisplayLabel()
 			findViewById<TextView>(R.id.text_verse_content).text = item.verseText
-			// onResume에서 다시 불러올 때, 방금 이 화면에서 입력 중이던 메모(아직 onPause로
-			// 저장 안 된 것)를 덮어쓰지 않도록 포커스가 없을 때만 다시 채운다.
-			if (!noteEdit.isFocused) noteEdit.setText(item.note)
 
-			val group = db.memorizationVerseDao().getAllGroups().find { it.id == item.groupId }
-			findViewById<TextView>(R.id.text_verse_group).text = "그룹 : ${group?.name ?: "미분류"}"
-		}
-	}
-
-	/** 메모는 저장 버튼 없이, 화면을 벗어날 때(뒤로가기·연습하기·수정 화면 이동 포함) 자동으로 저장한다. */
-	private fun saveNote() {
-		val item = verse ?: return
-		val newNote = noteEdit.text.toString()
-		if (newNote == item.note) return
-
-		val updated = item.copy(note = newNote)
-		verse = updated
-		lifecycleScope.launch {
-			val db = BibleDatabase.getInstance(applicationContext)
-			db.memorizationVerseDao().update(updated)
+			val noteView = findViewById<TextView>(R.id.text_verse_note)
+			if (item.note.isNotBlank()) {
+				noteView.text = item.note
+				noteView.setTextColor(
+					ContextCompat.getColor(
+						this@MemorizationVerseDetailActivity,
+						R.color.text_primary
+					)
+				)
+			} else {
+				noteView.text = "메모가 없어요"
+				noteView.setTextColor(
+					ContextCompat.getColor(
+						this@MemorizationVerseDetailActivity,
+						R.color.text_hint
+					)
+				)
+			}
 		}
 	}
 
