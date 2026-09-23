@@ -13,11 +13,14 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import com.chan.bnote.R
+import com.chan.bnote.data.AppSettings
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.mypage.memorization.MemorizationGroup
 import com.chan.bnote.data.mypage.memorization.MemorizationVerse
 import com.chan.bnote.data.sermon.SermonBibleRef
 import com.chan.bnote.ui.bible.picker.BibleRangePickerBottomSheet
+import com.chan.bnote.ui.common.RefBoxStyle
+import com.chan.bnote.ui.common.UnsavedChangesDialog
 import kotlinx.coroutines.launch
 
 /** 암송 구절의 그룹 · 성경 범위 · 메모를 바꾸는 화면. */
@@ -40,6 +43,11 @@ class MemorizationVerseEditActivity : AppCompatActivity() {
 	private var currentRef: SermonBibleRef? = null
 	private var currentVerseText: String = ""
 
+	// 뒤로가기 시 "바뀐 게 있는지" 비교할 기준값(불러온 그대로).
+	private var originalGroupId: Long = -1
+	private var originalRefSignature: String = ""
+	private var originalNote: String = ""
+
 	private lateinit var btnAddRange: TextView
 	private lateinit var cardRange: LinearLayout
 	private lateinit var textRangeLabel: TextView
@@ -58,7 +66,14 @@ class MemorizationVerseEditActivity : AppCompatActivity() {
 			insets
 		}
 
-		findViewById<ImageView>(R.id.btn_top_bar_back).setOnClickListener { finish() }
+		findViewById<ImageView>(R.id.btn_top_bar_back).setOnClickListener { handleBackPress() }
+		onBackPressedDispatcher.addCallback(
+			this,
+			object : androidx.activity.OnBackPressedCallback(true) {
+				override fun handleOnBackPressed() {
+					handleBackPress()
+				}
+			})
 
 		btnAddRange = findViewById(R.id.btn_add_range)
 		cardRange = findViewById(R.id.card_range)
@@ -71,6 +86,11 @@ class MemorizationVerseEditActivity : AppCompatActivity() {
 		cardRange.setOnClickListener { openRangePicker(currentRef) }
 		btnPickGroup.setOnClickListener { openGroupPicker() }
 		findViewById<TextView>(R.id.btn_save).setOnClickListener { save() }
+
+		// 이 화면은 항상 기존 구절을 불러오는 용도라 처음엔 currentRef가 null이다 — 불러오기
+		// 전까지도 "구절 없음" 스타일(전체 너비 박스)이 한 번 적용되게 해서, 약속의 말씀 편집과
+		// 똑같이 항상 올바른 초기 모양으로 시작하게 한다.
+		updateRangeDisplay()
 
 		loadVerse()
 	}
@@ -90,6 +110,7 @@ class MemorizationVerseEditActivity : AppCompatActivity() {
 			}
 			verse = item
 			noteEdit.setText(item.note)
+			originalNote = item.note
 
 			currentRef = SermonBibleRef(
 				sermonId = 0,
@@ -101,26 +122,34 @@ class MemorizationVerseEditActivity : AppCompatActivity() {
 				endVerse = item.endVerse
 			)
 			currentVerseText = item.verseText
+			originalRefSignature = refSignature(currentRef)
 			updateRangeDisplay()
 
 			val group = db.memorizationVerseDao().getAllGroups().find { it.id == item.groupId }
 			selectedGroup = group
+			originalGroupId = item.groupId
 			btnPickGroup.text = group?.name ?: "미분류"
 		}
 	}
 
-	/** currentRef 유무에 따라 "성경 구절 추가" 버튼과 범위 카드 중 하나만 보여준다. */
+	/** currentRef 유무에 따라 "성경 구절 추가" 버튼과 범위 카드 중 하나만 보여준다. 약속의
+	 * 말씀 편집과 똑같은 스타일(RefBoxStyle)을 그대로 쓴다 — 카드가 있으면 버튼은 목록 아래에
+	 * 붙는 작은 링크, 없으면 버튼이 전체 너비 박스가 된다. */
 	private fun updateRangeDisplay() {
 		val ref = currentRef
 		if (ref == null) {
-			btnAddRange.visibility = android.view.View.VISIBLE
 			cardRange.visibility = android.view.View.GONE
+			btnAddRange.visibility = android.view.View.VISIBLE
 		} else {
-			btnAddRange.visibility = android.view.View.GONE
 			cardRange.visibility = android.view.View.VISIBLE
+			btnAddRange.visibility = android.view.View.GONE
 			textRangeLabel.text = SermonRefLabel.of(ref)
-			textRangeVerse.text = currentVerseText
+			textRangeVerse.apply {
+				text = currentVerseText
+				textSize = AppSettings.getFontSize(this@MemorizationVerseEditActivity).toFloat()
+			}
 		}
+		RefBoxStyle.applyAddButtonStyle(this, btnAddRange, ref != null)
 	}
 
 	/** 성경 구절 선택 창을 연다. existing이 있으면(카드를 눌러서 연 경우) 그 범위를 미리
@@ -154,6 +183,25 @@ class MemorizationVerseEditActivity : AppCompatActivity() {
 			btnPickGroup.text = group.name
 		}
 		picker.show(supportFragmentManager, "memorization_group_picker")
+	}
+
+	private fun refSignature(ref: SermonBibleRef?): String {
+		ref ?: return ""
+		return "${ref.startBookId}:${ref.startChapter}:${ref.startVerse}-${ref.endBookId}:${ref.endChapter}:${ref.endVerse}"
+	}
+
+	private fun hasUnsavedContent(): Boolean {
+		return selectedGroup?.id != originalGroupId ||
+				refSignature(currentRef) != originalRefSignature ||
+				noteEdit.text.toString() != originalNote
+	}
+
+	private fun handleBackPress() {
+		if (!hasUnsavedContent()) {
+			finish()
+			return
+		}
+		UnsavedChangesDialog.show(this, onDiscard = { finish() })
 	}
 
 	private fun save() {
@@ -203,6 +251,8 @@ class MemorizationVerseEditActivity : AppCompatActivity() {
 	}
 }
 
+/** SermonBibleRef를 "MemorizationVerse.toDisplayLabel()"과 같은 모양의 문자열로 만든다
+ * (범위 선택 직후에는 아직 MemorizationVerse가 아니라 SermonBibleRef뿐이라 따로 뗀 것). */
 private object SermonRefLabel {
 	fun of(ref: SermonBibleRef): String {
 		val bookName = com.chan.bnote.data.bible.BibleBooks.nameOf(ref.startBookId)
