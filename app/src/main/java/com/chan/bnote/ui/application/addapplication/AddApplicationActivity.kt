@@ -655,7 +655,7 @@ class AddApplicationActivity : AppCompatActivity() {
 		com.google.android.material.dialog.MaterialAlertDialogBuilder(
 			this, R.style.ThemeOverlay_BNOTE_Dialog
 		)
-			.setTitle("순종하기 안내")
+			.setTitle("적용하기 안내")
 			.setMessage(message)
 			.setPositiveButton("확인", null)
 			.show()

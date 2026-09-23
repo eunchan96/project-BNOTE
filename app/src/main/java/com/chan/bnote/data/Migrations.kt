@@ -59,7 +59,7 @@ val MIGRATIONS: Array<Migration> = arrayOf(
 	},
 	object : Migration(27, 28) {
 		override fun migrate(db: SupportSQLiteDatabase) {
-			// 적용(묵상하기/기도하기/순종하기) 탭 관련 테이블들.
+			// 적용(묵상하기/기도하기/적용하기) 탭 관련 테이블들.
 			db.execSQL(
 				"""
 				CREATE TABLE IF NOT EXISTS application_categories (

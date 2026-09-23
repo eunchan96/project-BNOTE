@@ -255,7 +255,7 @@ class ApplicationDetailActivity : AppCompatActivity() {
 			}
 			findViewById<TextView>(R.id.text_detail_obedience).apply {
 				if (application.obedienceMemo.isBlank()) {
-					text = "순종 내용이 없어요"
+					text = "적용 내용이 없어요"
 					setTextColor(textHintColor)
 				} else {
 					text = application.obedienceMemo
@@ -289,7 +289,7 @@ class ApplicationDetailActivity : AppCompatActivity() {
 		}
 	}
 
-	/** 묵상하기 / 기도하기 / 순종하기 메모를 정해진 형식으로 묶어서 클립보드에 복사한다.
+	/** 묵상하기 / 기도하기 / 적용하기 메모를 정해진 형식으로 묶어서 클립보드에 복사한다.
 	 * 리치텍스트(굵게 등) 서식이 적용된 메모는 HTML로 저장되므로, RichTextUtils로 화면에 보이는
 	 * 텍스트만 뽑아서(태그 없이) 복사한다. */
 	private fun shareApplication() {

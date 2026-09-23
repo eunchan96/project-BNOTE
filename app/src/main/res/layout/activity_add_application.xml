@@ -285,7 +285,7 @@
                 android:padding="12dp"
                 android:background="@drawable/bg_book_button" />
 
-            <!-- 순종하기 -->
+            <!-- 적용하기 -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -298,7 +298,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="순종하기"
+                    android:text="적용하기"
                     android:textSize="15sp"
                     android:textStyle="bold"
                     android:textColor="@color/text_primary" />
@@ -309,7 +309,7 @@
                     android:layout_height="28dp"
                     android:padding="4dp"
                     android:src="@drawable/ic_info"
-                    android:contentDescription="순종하기 안내"
+                    android:contentDescription="적용하기 안내"
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:clickable="true"
                     android:focusable="true" />

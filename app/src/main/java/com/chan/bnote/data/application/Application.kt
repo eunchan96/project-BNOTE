@@ -12,6 +12,6 @@ data class Application(
 	val applicationDate: Long,
 	val meditationMemo: String = "", // 묵상하기
 	val prayerMemo: String = "",     // 기도하기
-	val obedienceMemo: String = "",  // 순종하기
+	val obedienceMemo: String = "",  // 적용하기
 	val createdAt: Long = System.currentTimeMillis()
 )
