@@ -50,6 +50,17 @@ data class CopyFormatConfig(
 	}
 
 	companion object {
+		/** 복사 형식을 한 번도 고른 적 없을 때의 기본값("묵상용"과 똑같은 조합) */
+		fun meditationDefault(): CopyFormatConfig = CopyFormatConfig(
+			refVerseSeparator = Separator.NEWLINE,
+			multiVerseSeparator = Separator.NEWLINE,
+			refLength = RefLength.LONG,
+			refSpacing = true,
+			refBracket = RefBracket.NONE,
+			verseNumberStyle = VerseNumberStyle.PLAIN,
+			verseNumberSpacing = 2
+		)
+
 		fun fromJson(json: String): CopyFormatConfig {
 			return try {
 				val o = JSONObject(json)

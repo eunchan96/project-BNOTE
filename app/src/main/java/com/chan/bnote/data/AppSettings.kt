@@ -283,7 +283,7 @@ object AppSettings {
 	fun getActiveCopyFormat(context: Context): com.chan.bnote.data.mypage.CopyFormatConfig {
 		val raw = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
 			.getString(KEY_ACTIVE_COPY_FORMAT, null)
-			?: return com.chan.bnote.data.mypage.CopyFormatConfig()
+			?: return com.chan.bnote.data.mypage.CopyFormatConfig.meditationDefault()
 		return com.chan.bnote.data.mypage.CopyFormatConfig.fromJson(raw)
 	}
 
