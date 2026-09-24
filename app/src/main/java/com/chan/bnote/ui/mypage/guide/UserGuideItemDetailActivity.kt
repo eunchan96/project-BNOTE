@@ -50,49 +50,112 @@ class UserGuideItemDetailActivity : AppCompatActivity() {
 		findViewById<ImageView>(R.id.btn_top_bar_back).setOnClickListener { finish() }
 		findViewById<TextView>(R.id.text_top_bar_title).text = item?.title ?: "사용 가이드"
 
-		if (item == null) {
+		if (item == null || categoryId == null) {
 			finish()
 			return
 		}
 
 		val container = findViewById<LinearLayout>(R.id.container_guide_item_detail)
 
+		// 설명을 옅은 카드 안에 넣고, 글자 크기·줄간격을 넉넉히 줘서 더 편하게 읽히게 한다
+		// (예전엔 배경 위에 글자만 덩그러니 있어서 눈에 잘 안 들어왔다).
 		val descView = TextView(this).apply {
 			text = item.description
-			textSize = 14f
+			textSize = 15.5f
 			setTextColor(
 				ContextCompat.getColor(
 					this@UserGuideItemDetailActivity,
 					R.color.text_primary
 				)
 			)
-			setLineSpacing(dp(2).toFloat(), 1f)
+			setLineSpacing(dp(6).toFloat(), 1.05f)
+			setPadding(dp(16), dp(16), dp(16), dp(16))
+			background = ContextCompat.getDrawable(
+				this@UserGuideItemDetailActivity, R.drawable.bg_book_button
+			)
 		}
 		container.addView(descView)
 
-		// 이 항목에 붙은 사진들을 캡션과 함께 세로로 쌓는다. drawable 리소스가 아직 없는 이름이면
-		// (사진을 못 붙인 항목 등) 조용히 건너뛴다 — 글만으로도 항목은 정상 표시돼야 한다.
-		for (image in item.images) {
-			val resId = resources.getIdentifier(image.resName, "drawable", packageName)
-			if (resId == 0) continue
+		renderImageGrid(container, item)
+	}
 
-			val imageView = ImageView(this).apply {
+	/** 사진들을 2열 그리드로 보여준다(리소스가 없는 항목은 조용히 건너뛴다). 화면이 아주 좁은
+	 * 폰(가장 짧은 변이 360dp 미만)에서는 그리드가 너무 빽빽해지니 한 줄에 한 장씩만 보여준다.
+	 * 어느 사진이든 누르면 이 항목의 사진 전체를 스와이프로 넘겨보는 전체화면 뷰어가 열린다. */
+	private fun renderImageGrid(container: LinearLayout, item: UserGuideContent.GuideItem) {
+		val validImages = item.images.filter {
+			resources.getIdentifier(it.resName, "drawable", packageName) != 0
+		}
+		if (validImages.isEmpty()) return
+
+		val columns = if (resources.configuration.smallestScreenWidthDp < 360) 1 else 2
+		val resNames = validImages.map { it.resName }
+
+		var index = 0
+		while (index < validImages.size) {
+			val rowImages = validImages.subList(index, minOf(index + columns, validImages.size))
+			val row = LinearLayout(this).apply {
+				orientation = LinearLayout.HORIZONTAL
+				layoutParams = LinearLayout.LayoutParams(
+					LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
+				).apply { topMargin = dp(16) }
+			}
+
+			// 그리드 칸이 다 안 채워진 마지막 줄(예: 2열인데 사진이 1장 남음)은 절반만 채우지 않고
+			// 꽉 채운 크기로 보여준다 — 어중간하게 비어 보이지 않게.
+			val fillRow = rowImages.size == columns
+			for ((offsetInRow, image) in rowImages.withIndex()) {
+				val globalIndex = index + offsetInRow
+				val cell = buildImageCell(image, resNames, globalIndex)
+				val cellParams = if (fillRow) {
+					LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+				} else {
+					LinearLayout.LayoutParams(
+						LinearLayout.LayoutParams.MATCH_PARENT,
+						LinearLayout.LayoutParams.WRAP_CONTENT
+					)
+				}
+				if (offsetInRow > 0) cellParams.marginStart = dp(10)
+				cell.layoutParams = cellParams
+				row.addView(cell)
+			}
+			container.addView(row)
+			index += columns
+		}
+	}
+
+	private fun buildImageCell(
+		image: UserGuideContent.GuideImage,
+		allResNames: List<String>,
+		indexInList: Int
+	): LinearLayout {
+		val resId = resources.getIdentifier(image.resName, "drawable", packageName)
+		return LinearLayout(this).apply {
+			orientation = LinearLayout.VERTICAL
+
+			val imageView = ImageView(this@UserGuideItemDetailActivity).apply {
 				setImageResource(resId)
 				adjustViewBounds = true
 				scaleType = ImageView.ScaleType.FIT_CENTER
 				layoutParams = LinearLayout.LayoutParams(
-					LinearLayout.LayoutParams.MATCH_PARENT,
-					LinearLayout.LayoutParams.WRAP_CONTENT
-				).apply { topMargin = dp(16) }
+					LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
+				)
 				background = ContextCompat.getDrawable(
 					this@UserGuideItemDetailActivity, R.drawable.bg_book_button
 				)
 				setPadding(dp(4), dp(4), dp(4), dp(4))
+				isClickable = true
+				isFocusable = true
+				setOnClickListener {
+					UserGuideImageViewerActivity.start(
+						this@UserGuideItemDetailActivity, allResNames, indexInList
+					)
+				}
 			}
-			container.addView(imageView)
+			addView(imageView)
 
 			if (image.caption != null) {
-				val captionView = TextView(this).apply {
+				val captionView = TextView(this@UserGuideItemDetailActivity).apply {
 					text = image.caption
 					textSize = 12f
 					gravity = android.view.Gravity.CENTER
@@ -104,7 +167,7 @@ class UserGuideItemDetailActivity : AppCompatActivity() {
 						LinearLayout.LayoutParams.WRAP_CONTENT
 					).apply { topMargin = dp(4) }
 				}
-				container.addView(captionView)
+				addView(captionView)
 			}
 		}
 	}
