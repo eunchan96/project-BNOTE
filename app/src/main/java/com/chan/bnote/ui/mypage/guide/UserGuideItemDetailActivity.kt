@@ -101,20 +101,13 @@ class UserGuideItemDetailActivity : AppCompatActivity() {
 				).apply { topMargin = dp(16) }
 			}
 
-			// 그리드 칸이 다 안 채워진 마지막 줄(예: 2열인데 사진이 1장 남음)은 절반만 채우지 않고
-			// 꽉 채운 크기로 보여준다 — 어중간하게 비어 보이지 않게.
-			val fillRow = rowImages.size == columns
+			// 사진이 한 장뿐이어도 그리드 칸(2열이면 절반 너비) 크기 그대로 보여준다
+			// 항목마다 사진 개수가 달라도 사진 크기가 들쭉날쭉해 보이지 않게 항상 같은 칸 크기를 쓴다.
 			for ((offsetInRow, image) in rowImages.withIndex()) {
 				val globalIndex = index + offsetInRow
 				val cell = buildImageCell(image, resNames, globalIndex)
-				val cellParams = if (fillRow) {
+				val cellParams =
 					LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
-				} else {
-					LinearLayout.LayoutParams(
-						LinearLayout.LayoutParams.MATCH_PARENT,
-						LinearLayout.LayoutParams.WRAP_CONTENT
-					)
-				}
 				if (offsetInRow > 0) cellParams.marginStart = dp(10)
 				cell.layoutParams = cellParams
 				row.addView(cell)
