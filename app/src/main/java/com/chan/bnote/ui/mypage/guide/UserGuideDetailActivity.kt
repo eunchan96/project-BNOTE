@@ -88,6 +88,50 @@ class UserGuideDetailActivity : AppCompatActivity() {
 			}
 			itemContainer.addView(titleView)
 			itemContainer.addView(descView)
+
+			// 사진이 있는 항목이면 설명 아래에 캡처 화면을 보여준다. 여러 장이면 캡션과 함께 세로로 쌓는다(가로로 나란히 두기엔 폰 화면이 좁다).
+			// drawable 리소스가 실제로 없는 이름이면 (아직 못 붙인 사진 등) 조용히 건너뛴다 — 텍스트만으로도 항목은 정상 표시돼야 한다.
+			for (image in item.images) {
+				val resId = resources.getIdentifier(image.resName, "drawable", packageName)
+				if (resId == 0) continue
+
+				val imageView = ImageView(this).apply {
+					setImageResource(resId)
+					adjustViewBounds = true
+					scaleType = ImageView.ScaleType.FIT_CENTER
+					layoutParams = LinearLayout.LayoutParams(
+						LinearLayout.LayoutParams.MATCH_PARENT,
+						LinearLayout.LayoutParams.WRAP_CONTENT
+					).apply {
+						topMargin = dp(12)
+						val sidePadding = dp(24)
+						marginStart = sidePadding
+						marginEnd = sidePadding
+					}
+					background = ContextCompat.getDrawable(
+						this@UserGuideDetailActivity, R.drawable.bg_book_button
+					)
+					setPadding(dp(4), dp(4), dp(4), dp(4))
+				}
+				itemContainer.addView(imageView)
+
+				if (image.caption != null) {
+					val captionView = TextView(this).apply {
+						text = image.caption
+						textSize = 12f
+						gravity = android.view.Gravity.CENTER
+						setTextColor(
+							ContextCompat.getColor(this@UserGuideDetailActivity, R.color.text_hint)
+						)
+						layoutParams = LinearLayout.LayoutParams(
+							LinearLayout.LayoutParams.MATCH_PARENT,
+							LinearLayout.LayoutParams.WRAP_CONTENT
+						).apply { topMargin = dp(4) }
+					}
+					itemContainer.addView(captionView)
+				}
+			}
+
 			container.addView(itemContainer)
 			itemViews[item.title] = itemContainer
 		}
