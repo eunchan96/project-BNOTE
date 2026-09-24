@@ -96,7 +96,8 @@
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recycler_groups"
             android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+            android:layout_height="match_parent"
+            android:padding="10dp" />
     </LinearLayout>
 
     <!-- 화면 2: 그룹 상세(선택한 그룹의 암송 구절 목록) -->
