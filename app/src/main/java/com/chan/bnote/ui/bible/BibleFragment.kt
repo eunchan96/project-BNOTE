@@ -407,6 +407,7 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 			isReadingPlanEnabled = enabled
 			AppSettings.setReadingPlanEnabled(requireContext(), enabled)
 			notifyTopBarChanged()
+			updateReadingCheckBottomButton()
 		}
 		dialog.onAutoScrollToggled = { enabled ->
 			isAutoScrollEnabled = enabled
@@ -1378,7 +1379,11 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 			this.bookId = currentBookId
 			this.chapter = currentChapter
 			this.verse = verseNum
-			onChanged = { lifecycleScope.launch { refreshMemos() } }
+			// 주의: 이 apply 블록 안에서는 그냥 lifecycleScope라고 쓰면 (this = 메모 시트)의 것이 잡힌다.
+			// 시트는 저장 직후 dismiss()로 곧바로 파괴돼서, 그 scope에서 띄운 화면 갱신(refreshMemos)이
+			// DB 조회 도중에 취소돼 버렸다 → 저장은 되는데 밑줄이 안 생기던 원인. BibleFragment의
+			// scope를 명시해서 시트가 닫혀도 갱신이 끝까지 실행되게 한다.
+			onChanged = { this@BibleFragment.lifecycleScope.launch { refreshMemos() } }
 		}.show(childFragmentManager, "verse_memo_editor")
 	}
 
@@ -1401,7 +1406,8 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 			this.startOffset = start
 			this.endOffset = end
 			this.segment = segment
-			onChanged = { lifecycleScope.launch { refreshMemos() } }
+			// 위 구절 메모 시트와 같은 이유로, BibleFragment의 lifecycleScope를 명시한다.
+			onChanged = { this@BibleFragment.lifecycleScope.launch { refreshMemos() } }
 		}.show(childFragmentManager, "word_memo_editor")
 	}
 
@@ -1410,7 +1416,9 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 	}
 
 	private suspend fun refreshMemos() {
-		val db = BibleDatabase.getInstance(requireContext().applicationContext)
+		// 갱신이 끝나기 전에 화면이 사라진 경우(context 없음)엔 조용히 건너뛴다.
+		val ctx = context ?: return
+		val db = BibleDatabase.getInstance(ctx.applicationContext)
 		currentVerseMemos =
 			db.verseMemoDao().getForChapter(currentBookId, currentChapter).associateBy { it.verse }
 		currentWordMemos = db.wordMemoDao()

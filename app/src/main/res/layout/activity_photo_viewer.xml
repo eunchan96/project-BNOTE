@@ -1,16 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/photo_viewer_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#000000">
 
-    <ImageView
-        android:id="@+id/image_fullscreen_photo"
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/pager_photo_viewer"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:scaleType="fitCenter"
-        android:contentDescription="사진" />
+        android:layout_height="match_parent" />
+
+    <TextView
+        android:id="@+id/text_photo_viewer_counter"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|center_horizontal"
+        android:layout_marginTop="16dp"
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp"
+        android:paddingTop="6dp"
+        android:paddingBottom="6dp"
+        android:text="1 / 1"
+        android:textColor="@color/white"
+        android:textSize="14sp"
+        android:background="@drawable/bg_book_progress_done"
+        android:visibility="gone" />
 
     <ImageView
         android:id="@+id/btn_close_photo_viewer"

@@ -9,6 +9,7 @@ import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.chan.bnote.R
@@ -56,7 +57,7 @@ class ScrapActivity : AppCompatActivity() {
 		btnManageGroups = findViewById(R.id.btn_manage_groups)
 		btnAddGroup = findViewById(R.id.btn_add_group)
 
-		groupRecycler.layoutManager = LinearLayoutManager(this)
+		groupRecycler.layoutManager = GridLayoutManager(this, 3)
 		verseRecycler.layoutManager = LinearLayoutManager(this)
 
 		findViewById<ImageView>(R.id.btn_back_from_list).setOnClickListener { finish() }
@@ -204,7 +205,7 @@ class ScrapActivity : AppCompatActivity() {
 			verseRecycler.adapter = ScrapVerseAdapter(
 				scraps = scraps,
 				isEditMode = isEditMode,
-				fontSize = AppSettings.getFontSize(this@ScrapActivity),
+				fontSize = AppSettings.getListPreviewFontSize(this@ScrapActivity),
 				onClick = { scrap -> navigateToScrap(scrap) },
 				onDelete = { scrap -> confirmDeleteScrap(scrap) }
 			)

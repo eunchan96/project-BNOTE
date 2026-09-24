@@ -9,7 +9,8 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="56dp"
+        android:layout_height="wrap_content"
+        android:minHeight="56dp"
         android:orientation="horizontal"
         android:gravity="center_vertical"
         android:background="@color/brown_primary"
@@ -33,6 +34,10 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_marginStart="4dp"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp"
+            android:maxLines="2"
+            android:ellipsize="end"
             android:textSize="18sp"
             android:textStyle="bold"
             android:textColor="@color/white" />
@@ -76,7 +81,8 @@
                     android:gravity="center_vertical">
 
                     <TextView
-                        android:layout_width="44dp"
+                        android:layout_width="wrap_content"
+                        android:minWidth="44dp"
                         android:layout_height="wrap_content"
                         android:text="제목"
                         android:textSize="15sp"
@@ -108,7 +114,8 @@
                          맞춰 보이도록 gravity를 top으로 두고 박스와 똑같은 상하 패딩(8dp)을
                          준다 — 그래야 라벨 텍스트가 첫 줄 박스들의 텍스트와 정확히 나란해진다. -->
                     <TextView
-                        android:layout_width="44dp"
+                        android:layout_width="wrap_content"
+                        android:minWidth="44dp"
                         android:layout_height="wrap_content"
                         android:paddingTop="8dp"
                         android:paddingBottom="8dp"
@@ -137,7 +144,8 @@
                     android:gravity="center_vertical">
 
                     <TextView
-                        android:layout_width="44dp"
+                        android:layout_width="wrap_content"
+                        android:minWidth="44dp"
                         android:layout_height="wrap_content"
                         android:text="설교"
                         android:textSize="15sp"
@@ -309,11 +317,12 @@
                 android:layout_marginEnd="16dp"
                 android:layout_marginBottom="16dp"
                 android:padding="14dp"
-                android:text="저장"
+                android:text="저장하기"
                 android:textSize="15sp"
+                android:textStyle="bold"
                 android:gravity="center"
                 android:textColor="@color/white"
-                android:background="@color/brown_primary"
+                android:background="@drawable/bg_save_button"
                 android:clickable="true"
                 android:focusable="true" />
 

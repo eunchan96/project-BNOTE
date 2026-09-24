@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?><!-- 위젯 설정 화면의 라디오 버튼 한 줄. 암송 그룹처럼 코드로 만들어 붙이는 버튼도 이 레이아웃을 써서,
+     XML로 적어둔 "위젯 테마" 버튼과 높이·글자가 똑같이 나오게 한다. -->
+<RadioButton xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:minHeight="48dp"
+    android:textSize="16sp"
+    android:textColor="@color/text_primary" />

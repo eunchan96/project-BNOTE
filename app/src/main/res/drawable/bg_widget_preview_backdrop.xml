@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 위젯 설정 화면 미리보기 뒤에 까는 배경. 홈 화면 배경화면을 흉내 내서, 배경 투명도를 올리면
+     뒤가 비쳐 보이는 게 티가 나도록 색이 있는 그라데이션으로 둔다. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <gradient
+        android:angle="315"
+        android:startColor="@color/widget_preview_backdrop_start"
+        android:endColor="@color/widget_preview_backdrop_end" />
+</shape>

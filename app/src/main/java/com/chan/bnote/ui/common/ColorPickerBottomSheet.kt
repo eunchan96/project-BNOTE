@@ -18,10 +18,13 @@ class ColorPickerBottomSheet(
 	var onColorSelected: ((String) -> Unit)? = null
 
 	companion object {
+		// 색상환 순서(빨강→주황→노랑→초록→파랑→보라)로 자연스럽게 이어지도록 정렬하고,
+		// 끝에 갈색·회색 계열 무채색을 덧붙였다. 기존보다 6개 늘려 더 다양하게 골라 쓸 수 있다.
 		val palette = listOf(
-			"#FB8C00", "#FDD835", "#8E24AA", "#795548", "#212121", "#E53935",
-			"#43A047", "#1E88E5", "#00897B", "#5E35B1", "#F06292", "#6D4C41",
-			"#9E9E9E", "#00ACC1", "#3949AB", "#7CB342", "#FF7043", "#546E7A"
+			"#E53935", "#D81B60", "#F06292", "#8E24AA", "#5E35B1", "#3949AB",
+			"#1E88E5", "#039BE5", "#00ACC1", "#00897B", "#43A047", "#7CB342",
+			"#C0CA33", "#FDD835", "#FFB300", "#FB8C00", "#F4511E", "#6D4C41",
+			"#A1887F", "#757575", "#9E9E9E", "#546E7A", "#212121", "#B71C1C"
 		)
 	}
 
@@ -39,9 +42,11 @@ class ColorPickerBottomSheet(
 		recyclerView.adapter = object : RecyclerView.Adapter<ColorViewHolder>() {
 			override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ColorViewHolder {
 				val swatch = View(parent.context)
-				val size = (44 * resources.displayMetrics.density).toInt()
+				val density = resources.displayMetrics.density
+				val size = (36 * density).toInt()
+				val margin = (6 * density).toInt()
 				swatch.layoutParams = ViewGroup.MarginLayoutParams(size, size).apply {
-					setMargins(8, 8, 8, 8)
+					setMargins(margin, margin, margin, margin)
 				}
 				return ColorViewHolder(swatch)
 			}
