@@ -108,7 +108,13 @@ class UserGuideActivity : AppCompatActivity() {
 			row.findViewById<TextView>(R.id.text_result_title).text = item.title
 			row.findViewById<TextView>(R.id.text_result_category).text = category.name
 			row.setOnClickListener {
-				startActivity(UserGuideDetailActivity.createIntent(this, category.id, item.title))
+				startActivity(
+					UserGuideItemDetailActivity.createIntent(
+						this,
+						category.id,
+						item.title
+					)
+				)
 			}
 			searchResultsContainer.addView(row)
 		}
@@ -135,7 +141,7 @@ class UserGuideActivity : AppCompatActivity() {
 				.inflate(R.layout.item_guide_category, categoryListContainer, false)
 			row.findViewById<TextView>(R.id.text_category_name).text = category.name
 			row.setOnClickListener {
-				startActivity(UserGuideDetailActivity.createIntent(this, category.id, null))
+				startActivity(UserGuideDetailActivity.createIntent(this, category.id))
 			}
 			categoryListContainer.addView(row)
 		}

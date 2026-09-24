@@ -98,6 +98,9 @@
             android:name=".ui.mypage.guide.UserGuideDetailActivity"
             android:exported="false" />
         <activity
+            android:name=".ui.mypage.guide.UserGuideItemDetailActivity"
+            android:exported="false" />
+        <activity
             android:name=".ui.mypage.settings.OpenSourceLicensesActivity"
             android:exported="false" />
         <activity
