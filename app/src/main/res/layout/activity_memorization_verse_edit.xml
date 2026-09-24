@@ -63,6 +63,7 @@
                 android:textStyle="bold"
                 android:textColor="@color/brown_primary"
                 android:background="@drawable/bg_field_underline"
+                android:backgroundTint="@color/field_underline"
                 android:drawableEnd="@drawable/ic_chevron_down"
                 android:drawableTint="@color/brown_primary"
                 android:drawablePadding="6dp"

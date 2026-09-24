@@ -643,10 +643,10 @@ class AddApplicationActivity : AppCompatActivity() {
 				start, builder.length,
 				android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
 			)
-			builder.append("\n\n")
+			builder.append("\n")
 		}
 
-		builder.append(outro)
+		builder.append("\n" + outro)
 		return builder
 	}
 

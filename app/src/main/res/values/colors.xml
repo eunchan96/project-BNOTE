@@ -39,4 +39,7 @@
     <!-- 다이얼로그(카테고리/설교자 추가 등) 배경 - 갈색 베이스 -->
     <color name="dialog_background">#F7EFEA</color>
     <color name="dialog_title_text">#5D4037</color>
+
+    <!-- bg_field_underline 에서 사용되는 색상. 다크모드에서 흰색으로 전환 -->
+    <color name="field_underline">#757575</color>
 </resources>

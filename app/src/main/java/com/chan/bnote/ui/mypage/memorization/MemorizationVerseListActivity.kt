@@ -230,6 +230,7 @@ class MemorizationVerseListActivity : AppCompatActivity() {
 	private fun showAddPicker() {
 		val group = selectedGroup ?: return
 		val rangePicker = BibleRangePickerBottomSheet()
+		rangePicker.defaultMultiMode = false
 		rangePicker.onRangeSelected = { ref -> addVerse(group, ref) }
 		rangePicker.show(supportFragmentManager, "memorization_verse_picker")
 	}
