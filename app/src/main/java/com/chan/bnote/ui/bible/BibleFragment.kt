@@ -407,6 +407,7 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 			isReadingPlanEnabled = enabled
 			AppSettings.setReadingPlanEnabled(requireContext(), enabled)
 			notifyTopBarChanged()
+			updateReadingCheckBottomButton()
 		}
 		dialog.onAutoScrollToggled = { enabled ->
 			isAutoScrollEnabled = enabled
