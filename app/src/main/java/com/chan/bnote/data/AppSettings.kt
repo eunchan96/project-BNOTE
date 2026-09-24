@@ -450,4 +450,10 @@ object AppSettings {
 		context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
 			.edit().putString(KEY_AUTO_BACKUP_FOLDER_URI, uri).apply()
 	}
+
+	/** 하이라이트·북마크·스크랩·약속의 말씀·암송 구절·검색 결과처럼 여러 구절을 목록으로 훑어보는 화면에서 쓰는 크기.
+	 * 성경 본문 읽기 화면(getFontSize 그대로)보다 살짝 작게 잡아서, 목록에 여러 줄이 한 번에 보일 때 너무 꽉 차 보이지 않게 한다. */
+	fun getListPreviewFontSize(context: Context): Int {
+		return (getFontSize(context) - 2).coerceAtLeast(MIN_FONT_SIZE)
+	}
 }

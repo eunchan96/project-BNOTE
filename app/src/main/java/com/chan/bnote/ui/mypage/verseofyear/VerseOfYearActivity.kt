@@ -68,7 +68,7 @@ class VerseOfYearActivity : AppCompatActivity() {
 			recyclerView.adapter = VerseOfYearAdapter(
 				rows = rows,
 				currentYear = currentYear,
-				fontSize = AppSettings.getFontSize(this@VerseOfYearActivity),
+				fontSize = AppSettings.getListPreviewFontSize(this@VerseOfYearActivity),
 				onOpen = { row ->
 					startActivity(
 						VerseOfYearDetailActivity.createIntent(

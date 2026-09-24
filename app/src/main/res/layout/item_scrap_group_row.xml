@@ -3,37 +3,40 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    android:gravity="center_vertical"
-    android:paddingStart="16dp"
-    android:paddingEnd="8dp"
-    android:background="?attr/selectableItemBackground"
+    android:layout_margin="6dp"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:minHeight="88dp"
+    android:padding="12dp"
+    android:background="@drawable/bg_book_button"
     android:clickable="true"
     android:focusable="true">
 
     <TextView
         android:id="@+id/text_group_row_name"
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:paddingTop="16dp"
-        android:paddingBottom="16dp"
-        android:textSize="16sp"
-        android:textColor="@color/text_primary" />
+        android:gravity="center"
+        android:textSize="14sp"
+        android:textColor="@color/text_primary"
+        android:maxLines="2"
+        android:ellipsize="end" />
 
     <TextView
         android:id="@+id/text_group_row_count"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="4dp"
-        android:textSize="13sp"
+        android:layout_marginTop="4dp"
+        android:gravity="center"
+        android:textSize="12sp"
         android:textColor="@color/text_hint" />
 
     <ImageView
         android:id="@+id/btn_edit_group"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:padding="8dp"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_marginTop="2dp"
+        android:padding="6dp"
         android:src="@drawable/ic_edit"
         app:tint="@color/icon_action_tint"
         android:contentDescription="수정"
@@ -44,9 +47,9 @@
 
     <ImageView
         android:id="@+id/btn_delete_group"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:padding="8dp"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:padding="6dp"
         android:src="@drawable/ic_delete"
         app:tint="@color/icon_action_tint"
         android:contentDescription="삭제"
@@ -54,4 +57,5 @@
         android:visibility="gone"
         android:clickable="true"
         android:focusable="true" />
+
 </LinearLayout>

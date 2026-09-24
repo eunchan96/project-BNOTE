@@ -13,9 +13,11 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.chan.bnote.R
+import com.chan.bnote.data.AppSettings
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.mypage.memorization.MemorizationGroup
 import com.chan.bnote.data.mypage.memorization.MemorizationVerse
@@ -55,7 +57,7 @@ class MemorizationVerseListActivity : AppCompatActivity() {
 		verseRecycler = findViewById(R.id.recycler_group_verses)
 		detailGroupNameText = findViewById(R.id.text_detail_group_name)
 
-		groupRecycler.layoutManager = LinearLayoutManager(this)
+		groupRecycler.layoutManager = GridLayoutManager(this, 3)
 		verseRecycler.layoutManager = LinearLayoutManager(this)
 
 		findViewById<ImageView>(R.id.btn_back_from_list).setOnClickListener { finish() }
@@ -215,6 +217,7 @@ class MemorizationVerseListActivity : AppCompatActivity() {
 
 			verseRecycler.adapter = MemorizationVerseAdapter(
 				items = verses,
+				fontSize = AppSettings.getListPreviewFontSize(this@MemorizationVerseListActivity),
 				onClick = { item ->
 					startActivity(
 						MemorizationVerseDetailActivity.createIntent(
