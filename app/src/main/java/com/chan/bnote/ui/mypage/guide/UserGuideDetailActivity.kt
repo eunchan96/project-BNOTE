@@ -1,15 +1,12 @@
 package com.chan.bnote.ui.mypage.guide
 
-import android.animation.ValueAnimator
 import android.content.Context
 import android.content.Intent
-import android.graphics.Color
-import android.graphics.Typeface
 import android.os.Bundle
-import android.view.animation.LinearInterpolator
+import android.view.LayoutInflater
+import android.view.View
 import android.widget.ImageView
 import android.widget.LinearLayout
-import android.widget.ScrollView
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -18,16 +15,16 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.chan.bnote.R
 
+/** 카테고리 하나를 골랐을 때 그 안의 항목 "목록"만 보여주는 중간 페이지. 항목 하나를 누르면
+ * UserGuideItemDetailActivity로 넘어가 그 항목만(사진 포함) 따로 본다. */
 class UserGuideDetailActivity : AppCompatActivity() {
 
 	companion object {
 		private const val EXTRA_CATEGORY_ID = "extra_category_id"
-		private const val EXTRA_HIGHLIGHT_TITLE = "extra_highlight_title"
 
-		fun createIntent(context: Context, categoryId: String, highlightTitle: String?): Intent {
+		fun createIntent(context: Context, categoryId: String): Intent {
 			return Intent(context, UserGuideDetailActivity::class.java).apply {
 				putExtra(EXTRA_CATEGORY_ID, categoryId)
-				if (highlightTitle != null) putExtra(EXTRA_HIGHLIGHT_TITLE, highlightTitle)
 			}
 		}
 	}
@@ -44,7 +41,6 @@ class UserGuideDetailActivity : AppCompatActivity() {
 		}
 
 		val categoryId = intent.getStringExtra(EXTRA_CATEGORY_ID)
-		val highlightTitle = intent.getStringExtra(EXTRA_HIGHLIGHT_TITLE)
 		val category = categoryId?.let { UserGuideContent.findCategory(it) }
 
 		findViewById<ImageView>(R.id.btn_top_bar_back).setOnClickListener { finish() }
@@ -56,68 +52,28 @@ class UserGuideDetailActivity : AppCompatActivity() {
 		}
 
 		val container = findViewById<LinearLayout>(R.id.container_guide_detail)
-		val itemViews = mutableMapOf<String, LinearLayout>()
-
-		for (item in category.items) {
-			val itemContainer = LinearLayout(this).apply {
-				orientation = LinearLayout.VERTICAL
-				setPadding(dp(4), dp(8), dp(4), dp(20))
-			}
-			val titleView = TextView(this).apply {
-				text = item.title
-				textSize = 15f
-				setTypeface(typeface, Typeface.BOLD)
-				setTextColor(
-					ContextCompat.getColor(
-						this@UserGuideDetailActivity,
-						R.color.brown_primary
+		for ((index, item) in category.items.withIndex()) {
+			if (index > 0) {
+				val divider = View(this).apply {
+					layoutParams =
+						LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(1))
+					setBackgroundColor(
+						ContextCompat.getColor(this@UserGuideDetailActivity, R.color.divider_light)
 					)
-				)
-			}
-			val descView = TextView(this).apply {
-				text = item.description
-				textSize = 14f
-				setTextColor(
-					ContextCompat.getColor(
-						this@UserGuideDetailActivity,
-						R.color.text_primary
-					)
-				)
-				setPadding(0, dp(6), 0, 0)
-				setLineSpacing(dp(2).toFloat(), 1f)
-			}
-			itemContainer.addView(titleView)
-			itemContainer.addView(descView)
-			container.addView(itemContainer)
-			itemViews[item.title] = itemContainer
-		}
-
-		if (highlightTitle != null) {
-			val target = itemViews[highlightTitle]
-			if (target != null) {
-				val scrollView = findViewById<ScrollView>(R.id.scroll_guide_detail)
-				scrollView.post {
-					scrollView.smoothScrollTo(0, target.top)
-					flashHighlight(target)
 				}
+				container.addView(divider)
 			}
-		}
-	}
 
-	/** 검색으로 찾아온 항목이 어떤 건지 한눈에 보이도록 배경을 잠깐 노랗게 깜빡인다. */
-	private fun flashHighlight(view: LinearLayout) {
-		val highlightColor = Color.parseColor("#FFF3C4")
-		val animator = ValueAnimator.ofObject(
-			android.animation.ArgbEvaluator(),
-			highlightColor,
-			Color.TRANSPARENT
-		)
-		animator.duration = 1200
-		animator.interpolator = LinearInterpolator()
-		animator.addUpdateListener { animation ->
-			view.setBackgroundColor(animation.animatedValue as Int)
+			val row = LayoutInflater.from(this)
+				.inflate(R.layout.item_guide_category, container, false)
+			row.findViewById<TextView>(R.id.text_category_name).text = item.title
+			row.setOnClickListener {
+				startActivity(
+					UserGuideItemDetailActivity.createIntent(this, category.id, item.title)
+				)
+			}
+			container.addView(row)
 		}
-		animator.start()
 	}
 
 	private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()

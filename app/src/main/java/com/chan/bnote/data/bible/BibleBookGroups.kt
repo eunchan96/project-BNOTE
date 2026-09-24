@@ -1,8 +1,15 @@
 package com.chan.bnote.data.bible
 
 object BibleBookGroups {
-	// 구약(1~39)과 신약(40~66)을 따로따로 4개씩 묶어서, 마태복음(40)이 항상 새 줄에서 시작하게 한다.
-	val groups: List<List<Int>> = (1..39).chunked(4) + (40..66).chunked(4)
+	/**
+	 * 구약(1~39)과 신약(40~66)을 따로따로 [columns]개씩 묶어서, 마태복음(40)이 항상 새 줄에서 시작하게 한다.
+	 * 한 줄에 몇 권을 보여줄지는 화면 폭과 글꼴 크기에 따라 달라진다(ui/common/BookGrid 참고).
+	 */
+	fun groupsOf(columns: Int): List<List<Int>> =
+		(1..39).chunked(columns) + (40..66).chunked(columns)
+
+	// 기본(한 줄에 4권)
+	val groups: List<List<Int>> = groupsOf(4)
 
 	/*
 	val groups: List<List<Int>> = listOf(

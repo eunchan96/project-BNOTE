@@ -87,10 +87,9 @@ class BookmarkListActivity : AppCompatActivity() {
 		recyclerView.visibility = View.VISIBLE
 		btnToggleEdit.visibility = View.VISIBLE
 
-		val fontSize = AppSettings.getFontSize(this)
 		recyclerView.adapter = BookmarkAdapter(
 			rows = bookmarks,
-			fontSize = fontSize,
+			fontSize = AppSettings.getListPreviewFontSize(this),
 			isEditMode = isEditMode,
 			onClick = { row ->
 				val result = Intent()

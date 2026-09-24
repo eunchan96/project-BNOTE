@@ -68,10 +68,13 @@ class VerseOfYearActivity : AppCompatActivity() {
 			recyclerView.adapter = VerseOfYearAdapter(
 				rows = rows,
 				currentYear = currentYear,
-				fontSize = AppSettings.getFontSize(this@VerseOfYearActivity),
-				onEdit = { row ->
+				fontSize = AppSettings.getListPreviewFontSize(this@VerseOfYearActivity),
+				onOpen = { row ->
 					startActivity(
-						VerseOfYearEditActivity.editIntent(this@VerseOfYearActivity, row.entry.year)
+						VerseOfYearDetailActivity.createIntent(
+							this@VerseOfYearActivity,
+							row.entry.year
+						)
 					)
 				}
 			)
@@ -88,14 +91,13 @@ private class VerseOfYearAdapter(
 	private val rows: List<VerseOfYearRow>,
 	private val currentYear: Int,
 	private val fontSize: Int,
-	private val onEdit: (VerseOfYearRow) -> Unit
+	private val onOpen: (VerseOfYearRow) -> Unit
 ) : RecyclerView.Adapter<VerseOfYearAdapter.ViewHolder>() {
 
 	class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
 		val year: TextView = view.findViewById(R.id.text_row_year)
 		val ref: TextView = view.findViewById(R.id.text_row_ref)
 		val verse: TextView = view.findViewById(R.id.text_row_verse)
-		val note: TextView = view.findViewById(R.id.text_row_note)
 	}
 
 	override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -114,12 +116,6 @@ private class VerseOfYearAdapter(
 		holder.ref.text = row.refs.joinToString(", ") { it.toDisplayLabel() }
 		holder.verse.text = row.refs.joinToString("\n") { it.verseText }
 		holder.verse.textSize = fontSize.toFloat()
-		if (entry.note.isNotBlank()) {
-			holder.note.text = entry.note
-			holder.note.visibility = View.VISIBLE
-		} else {
-			holder.note.visibility = View.GONE
-		}
-		holder.itemView.setOnClickListener { onEdit(row) }
+		holder.itemView.setOnClickListener { onOpen(row) }
 	}
 }

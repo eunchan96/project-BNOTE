@@ -10,7 +10,9 @@
 
     <TextView
         android:id="@+id/text_result_ref"
-        android:layout_width="64dp"
+        android:layout_width="wrap_content"
+        android:minWidth="64dp"
+        android:maxWidth="110dp"
         android:layout_height="wrap_content"
         android:textStyle="bold"
         android:textColor="@color/brown_primary"

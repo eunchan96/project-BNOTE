@@ -10,6 +10,7 @@ import androidx.fragment.app.Fragment
 import androidx.viewpager2.widget.ViewPager2
 import com.chan.bnote.R
 import com.chan.bnote.ui.FabAddHandler
+import com.chan.bnote.ui.SubtabRefreshable
 import com.chan.bnote.ui.TopBarActionHandler
 import com.chan.bnote.ui.TopBarConfig
 import com.chan.bnote.ui.sermon.category.CategoryManageActivity
@@ -61,10 +62,38 @@ class SermonFragment : Fragment(), TopBarActionHandler {
 		viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
 			override fun onPageSelected(position: Int) {
 				updateSelectedTab(position)
+				// 다른 서브탭에서 방금 추가·수정·삭제했을 수 있으니, 스와이프로 넘어온 서브탭도
+				// 다시 불러오게 한다(아래 refreshCurrentSubtab()과 같은 이유).
+				refreshCurrentSubtab()
 			}
 		})
 
 		updateSelectedTab(0)
+	}
+
+	/** 하단 탭은 hide()/show() 방식이라, 다른 탭(성경·마이페이지)에 갔다가 이 탭으로 돌아와도
+	 * onResume은 다시 안 불린다. 그 사이 어느 서브탭에서든 생겼을 변경을 반영하도록, 돌아올 때마다
+	 * 지금 보이는 서브탭을 다시 불러온다(MyPageFragment.onHiddenChanged와 같은 이유). */
+	override fun onHiddenChanged(hidden: Boolean) {
+		super.onHiddenChanged(hidden)
+		if (!hidden) refreshCurrentSubtab()
+	}
+
+	private fun refreshCurrentSubtab() {
+		if (!::viewPager.isInitialized) return
+		val currentFragment =
+			childFragmentManager.findFragmentByTag("f${viewPager.currentItem}")
+		(currentFragment as? SubtabRefreshable)?.onSubtabBecameVisible()
+	}
+
+	/** 내 정보 화면의 "설교노트"/"적용" 기록 카드처럼, 다른 화면에서 이 탭으로 이동하면서
+	 * 특정 서브탭(캘린더=0, 성경별=1, 적용=2)까지 바로 보여주고 싶을 때 MainActivity가 부른다.
+	 * onViewCreated가 아직 안 끝났으면(뷰페이저가 없으면) 조용히 무시한다 — switchTo(...)가
+	 * commitNow()를 쓰므로 실제로는 이 프래그먼트가 막 add()된 경우에도 항상 뷰가 준비된 뒤에
+	 * 불린다. */
+	fun selectSubtab(index: Int) {
+		if (!::viewPager.isInitialized) return
+		viewPager.setCurrentItem(index, false)
 	}
 
 	private fun updateSelectedTab(position: Int) {

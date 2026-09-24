@@ -18,6 +18,7 @@ import com.chan.bnote.MainActivity
 import com.chan.bnote.R
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.DateUtils
+import com.chan.bnote.data.application.ApplicationView
 import com.chan.bnote.data.sermon.Sermon
 import com.chan.bnote.ui.application.addapplication.AddApplicationActivity
 import com.chan.bnote.ui.sermon.detail.SermonDetailActivity
@@ -109,17 +110,15 @@ class ApplicationDetailActivity : AppCompatActivity() {
 				return@launch
 			}
 			currentApplication = application
+			// 마이페이지 "최근 활동"에 쓸 열람 기록. 설교와 같은 방식으로, 고칠 때가 아니라 열어 볼 때마다 남긴다.
+			db.applicationViewDao().upsert(ApplicationView(applicationId = application.id))
 
 			val category = application.categoryId?.let { db.applicationCategoryDao().getById(it) }
 			val links = db.applicationSermonLinkDao().getByApplication(application.id)
 			val sermons = links.mapNotNull { db.sermonDao().getById(it.sermonId) }
 
 			val dateLabel = DateUtils.formatDate(application.applicationDate)
-			val bracketLabel = when {
-				category?.name == "설교" && sermons.isNotEmpty() -> sermons.first().title
-				category != null -> category.name
-				else -> null
-			}
+			val bracketLabel = category?.name
 			findViewById<TextView>(R.id.text_detail_date_category).text =
 				if (bracketLabel != null) "$dateLabel [$bracketLabel]" else dateLabel
 
@@ -256,7 +255,7 @@ class ApplicationDetailActivity : AppCompatActivity() {
 			}
 			findViewById<TextView>(R.id.text_detail_obedience).apply {
 				if (application.obedienceMemo.isBlank()) {
-					text = "순종 내용이 없어요"
+					text = "적용 내용이 없어요"
 					setTextColor(textHintColor)
 				} else {
 					text = application.obedienceMemo
@@ -290,7 +289,7 @@ class ApplicationDetailActivity : AppCompatActivity() {
 		}
 	}
 
-	/** 묵상하기 / 기도하기 / 순종하기 메모를 정해진 형식으로 묶어서 클립보드에 복사한다.
+	/** 묵상하기 / 기도하기 / 적용하기 메모를 정해진 형식으로 묶어서 클립보드에 복사한다.
 	 * 리치텍스트(굵게 등) 서식이 적용된 메모는 HTML로 저장되므로, RichTextUtils로 화면에 보이는
 	 * 텍스트만 뽑아서(태그 없이) 복사한다. */
 	private fun shareApplication() {

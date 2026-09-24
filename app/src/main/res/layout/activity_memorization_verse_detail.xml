@@ -39,6 +39,18 @@
             android:textColor="@color/white" />
 
         <ImageView
+            android:id="@+id/btn_edit_verse"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:padding="8dp"
+            android:src="@drawable/ic_edit"
+            app:tint="@color/white"
+            android:contentDescription="수정하기"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:focusable="true" />
+
+        <ImageView
             android:id="@+id/btn_delete"
             android:layout_width="40dp"
             android:layout_height="40dp"
@@ -90,18 +102,19 @@
                 android:textColor="@color/text_primary"
                 tools:text="태초에 하나님이 천지를 창조하시니라" />
 
-            <EditText
-                android:id="@+id/edit_verse_note"
+            <TextView
+                android:id="@+id/text_verse_note"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
                 android:minHeight="72dp"
-                android:gravity="top"
-                android:hint="이 구절에 대한 메모"
-                android:padding="12dp"
+                android:gravity="center"
                 android:textSize="14sp"
+                android:lineSpacingExtra="4dp"
+                android:padding="12dp"
                 android:textColor="@color/text_primary"
-                android:background="@drawable/bg_book_button" />
+                android:background="@drawable/bg_book_button"
+                tools:text="이 구절을 붙들고 살자" />
 
             <TextView
                 android:id="@+id/btn_practice_this"

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?><!-- updatePeriodMillis를 0으로 꺼둔 건, 시스템의 주기 갱신(최소 30분) 대신 날짜가 바뀔 때 알람으로
+     한 번만 갱신하기 위해서다(WidgetUpdater 참고). -->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:minWidth="180dp"
+    android:minHeight="110dp"
+    android:minResizeWidth="110dp"
+    android:minResizeHeight="40dp"
+    android:targetCellWidth="3"
+    android:targetCellHeight="2"
+    android:resizeMode="horizontal|vertical"
+    android:updatePeriodMillis="0"
+    android:initialLayout="@layout/widget_today_verse"
+    android:previewLayout="@layout/widget_today_verse_preview"
+    android:configure="com.chan.bnote.widget.WidgetConfigActivity"
+    android:widgetCategory="home_screen"
+    android:widgetFeatures="reconfigurable"
+    tools:targetApi="31" />

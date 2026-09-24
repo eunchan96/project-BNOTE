@@ -22,6 +22,8 @@ import com.chan.bnote.data.mypage.verseofyear.VerseOfYear
 import com.chan.bnote.data.mypage.verseofyear.VerseOfYearRef
 import com.chan.bnote.data.sermon.SermonBibleRef
 import com.chan.bnote.ui.bible.picker.BibleRangePickerBottomSheet
+import com.chan.bnote.ui.common.RefBoxStyle
+import com.chan.bnote.ui.common.UnsavedChangesDialog
 import com.chan.bnote.ui.mypage.memorization.MemorizationVerseListActivity
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
@@ -51,8 +53,13 @@ class VerseOfYearEditActivity : AppCompatActivity() {
 	// 이번 화면에서 추가한 성경 범위들 (bookId/chapter/verse ~ end, verseText 포함해서 함께 들고 있음)
 	private val bibleRefs = mutableListOf<Pair<SermonBibleRef, String>>()
 
+	// 뒤로가기 시 "바뀐 게 있는지" 비교할 기준값. 신규 작성이면 빈 값이 기준이고, 수정이면
+	// loadExisting()에서 불러온 그대로가 기준이다.
+	private var originalYear = selectedYear
+	private var originalNote = ""
+	private var originalRefsSignature = ""
+
 	private lateinit var btnPickYear: TextView
-	private lateinit var yearFixedText: TextView
 	private lateinit var refsContainer: android.widget.LinearLayout
 	private lateinit var noteEdit: EditText
 
@@ -76,48 +83,41 @@ class VerseOfYearEditActivity : AppCompatActivity() {
 		isEditMode = intent.hasExtra(EXTRA_YEAR)
 		editingYear = intent.getIntExtra(EXTRA_YEAR, selectedYear)
 
-		findViewById<ImageView>(R.id.btn_top_bar_back).setOnClickListener { finish() }
+		findViewById<ImageView>(R.id.btn_top_bar_back).setOnClickListener { handleBackPress() }
+		onBackPressedDispatcher.addCallback(
+			this,
+			object : androidx.activity.OnBackPressedCallback(true) {
+				override fun handleOnBackPressed() {
+					handleBackPress()
+				}
+			})
+
 		findViewById<TextView>(R.id.text_top_bar_title).text =
 			if (isEditMode) "${editingYear}년 말씀 수정" else "약속의 말씀 추가"
 
 		btnPickYear = findViewById(R.id.btn_pick_year)
-		yearFixedText = findViewById(R.id.text_year_fixed)
 		refsContainer = findViewById(R.id.container_bible_refs)
 		noteEdit = findViewById(R.id.edit_verse_note)
 
-		if (isEditMode) {
-			btnPickYear.visibility = android.view.View.GONE
-			yearFixedText.visibility = android.view.View.VISIBLE
-			yearFixedText.text = "${editingYear}년"
-		} else {
-			selectedYear = Calendar.getInstance().get(Calendar.YEAR)
-			btnPickYear.text = "${selectedYear}년"
-			btnPickYear.setOnClickListener { showYearPicker() }
-		}
+		// 연도는 신규 작성이든 수정이든 항상 눌러서 바꿀 수 있다(수정 중에도 연도 자체를
+		// 옮길 수 있어야 하므로, "수정 모드엔 고정 텍스트만 보여준다"던 예전 분기를 없앴다).
+		selectedYear = if (isEditMode) editingYear else Calendar.getInstance().get(Calendar.YEAR)
+		originalYear = selectedYear
+		btnPickYear.text = "${selectedYear}년"
+		btnPickYear.setOnClickListener { showYearPicker() }
 
-		findViewById<TextView>(R.id.btn_add_bible_ref).setOnClickListener {
-			val rangePicker = BibleRangePickerBottomSheet()
-			rangePicker.onRangeSelected = { ref ->
-				lifecycleScope.launch {
-					val verseText = buildVerseText(ref)
-					bibleRefs.add(ref to verseText)
-					renderBibleRefChips()
-				}
-			}
-			rangePicker.show(supportFragmentManager, "verse_of_year_range_picker")
-		}
-
-		val deleteBtn = findViewById<ImageView>(R.id.btn_delete_entry)
-		if (isEditMode) {
-			deleteBtn.visibility = android.view.View.VISIBLE
-			deleteBtn.setOnClickListener { confirmDelete() }
-		}
+		findViewById<TextView>(R.id.btn_add_bible_ref).setOnClickListener { openBibleRefPicker(null) }
 
 		findViewById<TextView>(R.id.btn_save_verse_of_year).setOnClickListener { save() }
 		findViewById<TextView>(R.id.btn_go_memorize).setOnClickListener { saveAndGoToMemorize() }
 
 		if (isEditMode) {
 			loadExisting()
+		} else {
+			// 새로 작성할 때도 "구절 없음" 상태에 맞는 버튼 스타일(전체 너비 박스)을 처음부터
+			// 적용해야 한다 — 이 호출이 없으면 XML 기본값(wrap_content)에 그대로 머물러서
+			// 버튼이 너비를 다 안 채우던 문제가 있었다.
+			renderBibleRefChips()
 		}
 	}
 
@@ -149,6 +149,35 @@ class VerseOfYearEditActivity : AppCompatActivity() {
 			.show()
 	}
 
+	/** 성경 구절 선택 창을 연다. existing이 있으면(카드를 눌러서 연 경우) 그 범위를 미리
+	 * 채워주고, 창 안의 삭제 버튼도 함께 나온다("+ 성경 구절 추가"로 새로 열 때는 null). */
+	private fun openBibleRefPicker(existing: SermonBibleRef?) {
+		val rangePicker = BibleRangePickerBottomSheet()
+		rangePicker.existingRef = existing
+		// 한 해에 붙들 말씀은 보통 구절 하나씩 정확히 고르는 경우가 많아서, "여러 구절 선택하기"는
+		// 기본으로 꺼둔다(필요하면 시트 안에서 직접 켤 수 있다).
+		rangePicker.defaultMultiMode = false
+		rangePicker.onRangeSelected = { ref ->
+			lifecycleScope.launch {
+				val verseText = buildVerseText(ref)
+				if (existing != null) {
+					val index = bibleRefs.indexOfFirst { it.first === existing }
+					if (index >= 0) bibleRefs[index] = ref to verseText
+				} else {
+					bibleRefs.add(ref to verseText)
+				}
+				renderBibleRefChips()
+			}
+		}
+		if (existing != null) {
+			rangePicker.onDeleteRequested = {
+				bibleRefs.removeAll { it.first === existing }
+				renderBibleRefChips()
+			}
+		}
+		rangePicker.show(supportFragmentManager, "verse_of_year_range_picker")
+	}
+
 	private fun renderBibleRefChips() {
 		refsContainer.removeAllViews()
 		for ((ref, verseText) in bibleRefs) {
@@ -159,12 +188,17 @@ class VerseOfYearEditActivity : AppCompatActivity() {
 				text = verseText
 				textSize = AppSettings.getFontSize(this@VerseOfYearEditActivity).toFloat()
 			}
-			card.findViewById<TextView>(R.id.btn_remove_ref).setOnClickListener {
-				bibleRefs.removeAll { it.first === ref }
-				renderBibleRefChips()
-			}
+			// 카드를 누르면 지금 범위를 미리 채운 채로 다시 골라서 고치거나(수정), 안에 있는
+			// 삭제 버튼으로 지울 수 있다(바텀시트 하나로 수정 · 삭제를 함께 처리).
+			card.setOnClickListener { openBibleRefPicker(ref) }
 			refsContainer.addView(card)
 		}
+
+		// 구절이 하나도 없을 땐 "+" 버튼을 눈에 띄게(박스 있는 전체 너비)로, 하나라도 있으면
+		// 목록 아래에 붙는 작은 글자 링크로 보여준다. 암송 구절 편집 화면과 똑같은 스타일이다.
+		RefBoxStyle.applyAddButtonStyle(
+			this, findViewById(R.id.btn_add_bible_ref), bibleRefs.isNotEmpty()
+		)
 	}
 
 	private suspend fun buildVerseText(ref: SermonBibleRef): String {
@@ -191,6 +225,7 @@ class VerseOfYearEditActivity : AppCompatActivity() {
 			val db = BibleDatabase.getInstance(applicationContext)
 			val existing = db.verseOfYearDao().getByYear(editingYear) ?: return@launch
 			noteEdit.setText(existing.note)
+			originalNote = existing.note
 
 			val refs = db.verseOfYearRefDao().getByYear(editingYear)
 			bibleRefs.clear()
@@ -206,8 +241,28 @@ class VerseOfYearEditActivity : AppCompatActivity() {
 				)
 				bibleRefs.add(sermonRef to r.verseText)
 			}
+			originalRefsSignature = refsSignature()
 			renderBibleRefChips()
 		}
+	}
+
+	private fun refsSignature(): String =
+		bibleRefs.joinToString("|") { (ref, _) ->
+			"${ref.startBookId}:${ref.startChapter}:${ref.startVerse}-${ref.endBookId}:${ref.endChapter}:${ref.endVerse}"
+		}
+
+	private fun hasUnsavedContent(): Boolean {
+		return selectedYear != originalYear ||
+				noteEdit.text.toString() != originalNote ||
+				refsSignature() != originalRefsSignature
+	}
+
+	private fun handleBackPress() {
+		if (!hasUnsavedContent()) {
+			finish()
+			return
+		}
+		UnsavedChangesDialog.show(this, onDiscard = { finish() })
 	}
 
 	private fun save() {
@@ -264,12 +319,15 @@ class VerseOfYearEditActivity : AppCompatActivity() {
 		}
 	}
 
-	/** 연도/구절/메모를 저장한다. 이미 존재하는 신규 연도면 null을 반환한다 (호출부에서 그냥 return). */
+	/** 연도/구절/메모를 저장한다. 이미 존재하는(그리고 지금 편집 중인 항목이 아닌) 연도면
+	 * null을 반환한다(호출부에서 그냥 return). */
 	private suspend fun persistEntry(): Int? {
-		val year = if (isEditMode) editingYear else selectedYear
+		val year = selectedYear
 		val db = BibleDatabase.getInstance(applicationContext)
 
-		if (!isEditMode) {
+		// 신규 작성이거나, 수정 중에 연도 자체를 다른 해로 옮긴 경우 — 그 해에 이미 다른 기록이
+		// 있는지 확인한다(자기 자신은 제외).
+		if (!isEditMode || year != editingYear) {
 			val existing = db.verseOfYearDao().getByYear(year)
 			if (existing != null) {
 				Toast.makeText(
@@ -279,6 +337,13 @@ class VerseOfYearEditActivity : AppCompatActivity() {
 				).show()
 				return null
 			}
+		}
+
+		// 연도를 옮긴 경우, 예전 연도의 기록은 지우고 새 연도로 다시 써야 한다(연도가
+		// VerseOfYear의 기본 키라 그냥 update로는 옮길 수 없다).
+		if (isEditMode && year != editingYear) {
+			db.verseOfYearRefDao().deleteByYear(editingYear)
+			db.verseOfYearDao().delete(editingYear)
 		}
 
 		db.verseOfYearDao().upsert(VerseOfYear(year = year, note = noteEdit.text.toString()))
@@ -297,24 +362,14 @@ class VerseOfYearEditActivity : AppCompatActivity() {
 				)
 			}
 		)
+		// 이 화면에 계속 머무는 동안(자동 저장 등) 다음 저장부터는 지금 이 연도를 "원래 연도"로
+		// 본다 — 그래야 다시 저장할 때 방금 옮긴 연도와 또 충돌 처리를 하지 않는다.
+		isEditMode = true
+		editingYear = year
+		originalYear = year
+		originalNote = noteEdit.text.toString()
+		originalRefsSignature = refsSignature()
 		return year
-	}
-
-	private fun confirmDelete() {
-		MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_BNOTE_Dialog)
-			.setTitle("${editingYear}년 말씀 삭제")
-			.setMessage("삭제하면 되돌릴 수 없어요. 계속할까요?")
-			.setPositiveButton("삭제") { _, _ ->
-				lifecycleScope.launch {
-					val db = BibleDatabase.getInstance(applicationContext)
-					db.verseOfYearRefDao().deleteByYear(editingYear)
-					db.verseOfYearDao().delete(editingYear)
-					Toast.makeText(this@VerseOfYearEditActivity, "삭제됐어요", Toast.LENGTH_SHORT).show()
-					finish()
-				}
-			}
-			.setNegativeButton("취소", null)
-			.show()
 	}
 
 	private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()

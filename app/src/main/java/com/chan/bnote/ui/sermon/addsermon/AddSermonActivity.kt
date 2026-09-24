@@ -41,6 +41,7 @@ import com.chan.bnote.ui.bible.picker.BibleRangePickerBottomSheet
 import com.chan.bnote.ui.sermon.detail.SermonDetailActivity
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.withLock
 import java.io.File
 import java.util.Calendar
 
@@ -92,6 +93,15 @@ class AddSermonActivity : AppCompatActivity() {
 	// 타이핑하다가(또는 앱이 갑자기 죽는 등으로) 내용이 날아가는 걸 막기 위한 자동 저장.
 	// 입력이 멈추고 AUTO_SAVE_DELAY_MS만큼 지나면 조용히(화면 이동 없이) 저장한다.
 	private var autoSaveJob: kotlinx.coroutines.Job? = null
+
+	// persistSermon()은 "기존 설교가 없으면 새로 만들고, 있으면 수정한다"를 코루틴 시작 시점에
+	// 판단한다. 저장이 걸리는 경로가 셋(타이핑 후 디바운스 / 사진 추가 직후 / onPause 즉시 저장)이라,
+	// 겹치는 타이밍에 두 저장이 동시에 시작되면 둘 다 "기존 설교 없음"으로 보고 각자 새 설교를
+	// 하나씩 만들어버릴 수 있었다(사진 추가 버튼을 눌러 갤러리/카메라가 뜨는 순간 onPause가 불리는데,
+	// 그때 마침 디바운스 타이머도 끝나면 두 저장이 동시에 시작됨 — 설교와 사진이 두 벌 생기던 원인).
+	// 이 Mutex로 persistSermon() 전체를 감싸서, 실제 DB 판단·쓰기는 항상 한 번에 하나씩만
+	// 실행되게 한다.
+	private val persistMutex = kotlinx.coroutines.sync.Mutex()
 
 	private lateinit var flexboxRefs: com.google.android.flexbox.FlexboxLayout
 	private lateinit var btnPickPreacher: TextView
@@ -786,7 +796,10 @@ class AddSermonActivity : AppCompatActivity() {
 	/** 실제로 DB에 쓰는 부분만 따로 뗀 것. 자동 저장·Ctrl+S·저장 버튼이 전부 이 함수를 공유한다.
 	 * 저장이 끝나면 existingSermon과 "원본" 비교값들을 지금 상태로 갱신해서, 이 화면을 계속
 	 * 붙잡고 있는 동안 (1) 다음 저장은 새로 만들지 않고 이어서 수정하고 (2) hasUnsavedContent()가
-	 * "방금 자동 저장된 상태"를 기준으로 다시 비교하도록 한다. */
+	 * "방금 자동 저장된 상태"를 기준으로 다시 비교하도록 한다.
+	 *
+	 * persistMutex로 전체를 감싸는 이유는 위 persistMutex 필드 선언부 주석 참고 — 겹치는 저장
+	 * 요청이 동시에 "기존 설교 없음"으로 판단해 각자 insert해버리는 걸 막는다. */
 	private var isNewlyCreated = false
 
 	private suspend fun persistSermon(
@@ -794,8 +807,10 @@ class AddSermonActivity : AppCompatActivity() {
 		memo: CharSequence,
 		link: String,
 		preacherId: Long
-	): Long {
+	): Long = persistMutex.withLock {
 		val memoText = RichTextUtils.toStorageString(memo)
+		// 검색용 순수 텍스트. memo(CharSequence)는 서식(스팬)이 있어도 .toString()하면 글자만 남는다 — 아직 HTML로 저장되기 전이라 문자 참조로 안 바뀐, 진짜 글자 그대로다.
+		val memoSearchText = memo.toString()
 		val linkValue = link.trim().ifEmpty { null }
 		val db = BibleDatabase.getInstance(applicationContext)
 
@@ -805,7 +820,8 @@ class AddSermonActivity : AppCompatActivity() {
 			sermonId = db.sermonDao().insert(
 				Sermon(
 					title = title, preacherId = preacherId, sermonDate = selectedDateMillis,
-					categoryId = selectedCategoryId, memo = memoText, link = linkValue
+					categoryId = selectedCategoryId, memo = memoText,
+					memoSearchText = memoSearchText, link = linkValue
 				)
 			)
 			isNewlyCreated = true
@@ -814,7 +830,8 @@ class AddSermonActivity : AppCompatActivity() {
 			db.sermonDao().update(
 				current.copy(
 					title = title, preacherId = preacherId, sermonDate = selectedDateMillis,
-					categoryId = selectedCategoryId, memo = memoText, link = linkValue
+					categoryId = selectedCategoryId, memo = memoText,
+					memoSearchText = memoSearchText, link = linkValue
 				)
 			)
 			db.sermonBibleRefDao().deleteBySermon(sermonId)

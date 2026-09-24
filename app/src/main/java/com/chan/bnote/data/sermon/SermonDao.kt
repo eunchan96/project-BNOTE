@@ -45,7 +45,7 @@ interface SermonDao {
 	@Query(
 		"""
         SELECT * FROM sermons 
-        WHERE title LIKE '%' || :keyword || '%' OR memo LIKE '%' || :keyword || '%'
+        WHERE title LIKE '%' || :keyword || '%' OR memoSearchText LIKE '%' || :keyword || '%'
         ORDER BY sermonDate DESC
         """
 	)
