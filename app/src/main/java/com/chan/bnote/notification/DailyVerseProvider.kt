@@ -135,10 +135,10 @@ object DailyVerseProvider {
 			"${ref.startVerse}~${ref.endVerse}절"
 		}
 
-		// 절 중간에 소제목이 끼는 극소수 구절(예: 옵 1:1)은 앞부분(text)과 뒷부분(text2)으로 나뉘어
-		// 저장돼 있다. 뒷부분을 빼면 문장이 중간에서 끊기므로, 복사할 때와 같은 방식(공백으로
-		// 이어붙임)으로 합쳐서 보여준다.
-		val text = verses.joinToString("\n") { verse ->
+		// 절 중간에 소제목이 끼는 극소수 구절(예: 옵 1:1)은 앞부분(text)과 뒷부분(text2)으로 나뉘어 저장돼 있다.
+		// 뒷부분을 빼면 문장이 중간에서 끊기므로, 복사할 때와 같은 방식(공백으로 이어붙임)으로 합쳐서 보여준다.
+		// 절이 여러 개일 때도(알림으로 오늘 구절이 두 절 이상일 때) 줄바꿈 없이 공백으로 이어서, 알림 한 줄에 자연스럽게 흐르도록 한다.
+		val text = verses.joinToString(" ") { verse ->
 			if (!verse.text2.isNullOrBlank()) "${verse.text} ${verse.text2}" else verse.text
 		}
 
