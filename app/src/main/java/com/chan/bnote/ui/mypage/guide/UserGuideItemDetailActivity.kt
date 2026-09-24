@@ -91,6 +91,14 @@ class UserGuideItemDetailActivity : AppCompatActivity() {
 		val columns = if (resources.configuration.smallestScreenWidthDp < 360) 1 else 2
 		val resNames = validImages.map { it.resName }
 
+		// 칸 너비를 고정 픽셀로 미리 계산해서 모든 칸에 그대로 쓴다.
+		// weight로 나누면 한 줄에 사진이 하나뿐일 때 그 하나가 weight 몫(=줄 전체)을 다 차지해버려서 전체 너비로 커지는 문제가 있었다
+		// 고정 너비를 쓰면 사진이 하나여도 칸 하나 크기만 차지하고 나머지는 그냥 빈 공간으로 남는다.
+		val screenWidthPx = resources.displayMetrics.widthPixels
+		val containerPaddingPx = dp(20) * 2
+		val gapPx = dp(10) * (columns - 1)
+		val columnWidthPx = (screenWidthPx - containerPaddingPx - gapPx) / columns
+
 		var index = 0
 		while (index < validImages.size) {
 			val rowImages = validImages.subList(index, minOf(index + columns, validImages.size))
@@ -107,7 +115,7 @@ class UserGuideItemDetailActivity : AppCompatActivity() {
 				val globalIndex = index + offsetInRow
 				val cell = buildImageCell(image, resNames, globalIndex)
 				val cellParams =
-					LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+					LinearLayout.LayoutParams(columnWidthPx, LinearLayout.LayoutParams.WRAP_CONTENT)
 				if (offsetInRow > 0) cellParams.marginStart = dp(10)
 				cell.layoutParams = cellParams
 				row.addView(cell)

@@ -12,7 +12,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.updateLayoutParams
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
 import com.chan.bnote.R
@@ -74,18 +73,12 @@ class UserGuideImageViewerActivity : AppCompatActivity() {
 		val counter = findViewById<TextView>(R.id.text_guide_image_viewer_counter)
 		val closeButton = findViewById<ImageView>(R.id.btn_close_guide_image_viewer)
 
-		// 사진은 상태바 뒤까지 꽉 차게 두되(전체화면 뷰어라 오히려 몰입감이 좋다), 그 위에 뜨는
-		// 카운터·닫기 버튼만 상태바(와이파이·시계 아이콘 줄)와 안 겹치게 그만큼 밀어준다.
-		val counterBaseMarginTop = (counter.layoutParams as ViewGroup.MarginLayoutParams).topMargin
-		val closeBaseMargin = (closeButton.layoutParams as ViewGroup.MarginLayoutParams).topMargin
-		ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.guide_image_viewer_root)) { _, insets ->
+		// PhotoViewerActivity와 달리 여기서는 사진도 상태바 아래로 내려서, 상태바 자리는 항상
+		// 배경(검정)만 보이게 한다 — 사진 위에 아이콘이 겹쳐서 잘 안 보이던 문제까지 같이 없앤다.
+		// 화면 전체(루트)에 위쪽 패딩을 주면 그 안의 사진·카운터·닫기 버튼이 전부 같이 내려온다.
+		ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.guide_image_viewer_root)) { v, insets ->
 			val statusBarTop = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top
-			counter.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-				topMargin = counterBaseMarginTop + statusBarTop
-			}
-			closeButton.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-				topMargin = closeBaseMargin + statusBarTop
-			}
+			v.setPadding(v.paddingLeft, statusBarTop, v.paddingRight, v.paddingBottom)
 			insets
 		}
 
