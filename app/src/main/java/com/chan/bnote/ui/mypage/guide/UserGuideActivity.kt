@@ -1,5 +1,7 @@
 package com.chan.bnote.ui.mypage.guide
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -52,6 +54,22 @@ class UserGuideActivity : AppCompatActivity() {
 				}
 			}
 		})
+
+		findViewById<LinearLayout>(R.id.row_guide_pdf_link).setOnClickListener {
+			// 앱 안 가이드와 내용은 같지만, PDF 한 장에 다 펼쳐놓고 보는 걸 더 편하게 느끼는
+			// 사람들을 위한 대안 링크. 구글 드라이브 링크라 "링크가 있는 모든 사용자"로 공유돼
+			// 있어야 다른 사용자도 열 수 있다.
+			val url = "https://drive.google.com/file/d/19rb1-E2oYcyFjxcMbPL918pg1dISKdgD/view"
+			try {
+				startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+			} catch (e: Exception) {
+				android.widget.Toast.makeText(
+					this,
+					"링크를 열 수 없어요",
+					android.widget.Toast.LENGTH_SHORT
+				).show()
+			}
+		}
 	}
 
 	private fun showCategoryList() {
