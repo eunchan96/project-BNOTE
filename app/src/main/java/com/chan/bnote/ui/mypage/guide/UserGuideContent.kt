@@ -30,7 +30,7 @@ object UserGuideContent {
 				GuideItem(
 					"이전/다음 장 이동",
 					"화면 하단의 화살표 버튼을 누르면 지금 보는 장의 이전/다음 장으로 바로 넘어가요. 설정에서 \"스와이프로 장 이동\"을 켜두면, 화면을 좌우로 크게 스와이프해서도 이전/다음 장으로 넘어갈 수 있어요.",
-					images = listOf(GuideImage("guide_bible_prev_next_chapter"))
+					images = listOf(GuideImage("guide_bible_prev_next_chapter", "하단 화살표 버튼"))
 				),
 				GuideItem(
 					"번역본 · 대역본(함께보기) 바꾸기",
@@ -51,12 +51,12 @@ object UserGuideContent {
 				GuideItem(
 					"북마크 목록 보기",
 					"상단바의 책갈피 아이콘을 누르면 지금까지 북마크해둔 구절들을 모아서 볼 수 있어요.",
-					images = listOf(GuideImage("guide_bible_bookmark"))
+					images = listOf(GuideImage("guide_bible_bookmark", "북마크 목록"))
 				),
 				GuideItem(
 					"구절 선택하기",
 					"구절(본문 텍스트나 절 번호)을 손가락으로 탭하면 그 구절이 선택되고, 화면 아래에 툴바가 나타나요. 다른 절을 또 탭하면 선택이 추가돼서 여러 절을 한 번에 선택할 수 있어요. 다시 탭하면 선택이 풀려요. 툴바의 X를 누르면 선택이 전부 취소돼요.",
-					images = listOf(GuideImage("guide_bible_select_verse"))
+					images = listOf(GuideImage("guide_bible_select_verse", "구절 선택"))
 				),
 				GuideItem(
 					"형광펜(하이라이트) 칠하기 · 지우기",
@@ -69,17 +69,17 @@ object UserGuideContent {
 				GuideItem(
 					"단어만 부분적으로 형광펜 · 메모 남기기",
 					"절 전체가 아니라 특정 단어만 칠하거나 메모하고 싶으면, 본문 텍스트를 길게 눌러 드래그하면서 원하는 범위만 선택하세요(안드로이드 기본 텍스트 선택 방식이에요). 선택하면 그 위에 작은 메뉴가 뜨는데, 거기서 \"하이라이트\"나 \"메모\"를 바로 고를 수 있어요. 이건 절 전체를 탭해서 선택하는 것과는 별개의 방식이에요.",
-					images = listOf(GuideImage("guide_bible_word_highlight_menu"))
+					images = listOf(GuideImage("guide_bible_word_highlight_menu", "단어 선택 후 메뉴"))
 				),
 				GuideItem(
 					"북마크 · 스크랩 남기기",
 					"절을 선택한 뒤 아래 툴바에서 스크랩 아이콘을 누르면 저장돼요(여러 절 한 번에 가능). 북마크는 절을 하나만 선택했을 때만 툴바에 나타나요. 스크랩을 누르면 어느 그룹에 넣을지 고르는 창이 뜨는데, 그룹은 메뉴(≡) > 스크랩 화면에서 새로 만들거나 관리할 수 있어요.",
-					images = listOf(GuideImage("guide_bible_scrap_group_picker"))
+					images = listOf(GuideImage("guide_bible_scrap_group_picker", "스크랩 그룹 고르기"))
 				),
 				GuideItem(
 					"암송 구절로 추가하기",
 					"절을 선택한 뒤 아래 툴바의 \"암송\"을 누르면 어느 암송 그룹에 넣을지 고르는 창이 뜨고(그 자리에서 새 그룹도 만들 수 있어요), 그룹을 고르면 선택한 구절이 통째로 그 그룹에 추가되면서 바로 그 구절의 상세(메모) 화면으로 이동해요. 여러 절을 선택했으면 하나로 이어진 구간으로 추가돼요.",
-					images = listOf(GuideImage("guide_bible_memorize_group_picker"))
+					images = listOf(GuideImage("guide_bible_memorize_group_picker", "암송 그룹 고르기"))
 				),
 				GuideItem(
 					"구절 메모 남기기",
@@ -108,7 +108,7 @@ object UserGuideContent {
 				GuideItem(
 					"소제목",
 					"성경 본문 중간중간 <꺾쇠> 안에 있는 굵은 글자는 그 부분의 내용을 요약한 소제목이에요. 번역본마다 소제목이 다르거나 아예 없을 수 있어요. 아주 드물게(예: 창세기 35장 22절 등 11개 구절) 소제목이 절이 바뀌는 지점이 아니라 한 절 중간에 나오기도 하는데, 이런 경우도 절 번호는 그대로 하나예요.",
-					images = listOf(GuideImage("guide_bible_subtitle"))
+					images = listOf(GuideImage("guide_bible_subtitle", "소제목 예시"))
 				),
 				GuideItem(
 					"성경읽기표 체크",
@@ -124,16 +124,16 @@ object UserGuideContent {
 					"자동 스크롤",
 					"메뉴(≡)의 \"자동스크롤 활성화\" 줄을 탭해서 켜면 상단바에 재생 아이콘이 생겨요. 누르면 본문이 자동으로 천천히 내려가요. 스크롤 속도는 설정 화면에서 바꿀 수 있어요.",
 					images = listOf(
-						GuideImage("guide_bible_auto_scroll_toggle"),
-						GuideImage("guide_bible_auto_scroll_play")
+						GuideImage("guide_bible_auto_scroll_toggle", "자동스크롤 켜기"),
+						GuideImage("guide_bible_auto_scroll_play", "상단 재생 아이콘")
 					)
 				),
 				GuideItem(
 					"방해금지 모드",
 					"메뉴(≡) 맨 아래 \"방해금지 모드 활성화\" 스위치를 켜면 핸드폰의 방해금지 모드가 바로 켜지고, 끄면 꺼져요. 처음 켤 땐 안드로이드가 요구하는 \"방해금지 권한\"을 허용해야 하는데, 스위치를 켜면 설정 화면으로 자동으로 이동하니 거기서 BNOTE를 찾아 허용해주면 돼요. 한 번 허용해두면 다음부턴 앱 안에서 스위치만으로 바로 켜고 끌 수 있어요.",
 					images = listOf(
-						GuideImage("guide_bible_dnd_mode_toggle"),
-						GuideImage("guide_bible_dnd_mode_permission")
+						GuideImage("guide_bible_dnd_mode_toggle", "방해금지 모드 켜기"),
+						GuideImage("guide_bible_dnd_mode_permission", "방해금지 권한 허용")
 					)
 				)
 			)
@@ -145,7 +145,7 @@ object UserGuideContent {
 				GuideItem(
 					"메뉴(≡)에서 찬송 · 부록 열기",
 					"성경 탭 상단바 오른쪽의 메뉴 아이콘(≡)을 누르면 오른쪽에서 메뉴 패널이 열려요. 여기서 찬송, 부록, 성경 배경지식으로 이동할 수 있어요(스크랩/하이라이트/메모 목록이나 성경읽기표·자동스크롤 켜고 끄기는 \"성경 읽기\" 항목들에서 설명하고 있어요).",
-					images = listOf(GuideImage("guide_hymn_menu_panel"))
+					images = listOf(GuideImage("guide_hymn_menu_panel", "메뉴 패널"))
 				),
 				GuideItem(
 					"찬송 찾아보기",
@@ -158,12 +158,12 @@ object UserGuideContent {
 				GuideItem(
 					"찬송 상세 화면",
 					"찬송 목록에서 곡을 열면 악보 이미지와 함께, 있으면 유튜브 반주 영상이 재생 카드로 나와요. 곡 반주와 MR(반주만) 영상을 따로 볼 수 있어요.",
-					images = listOf(GuideImage("guide_hymn_detail"))
+					images = listOf(GuideImage("guide_hymn_detail", "찬송 상세 화면"))
 				),
 				GuideItem(
 					"부록 펼치기",
 					"메뉴에서 \"부록\"을 누르면 그 아래로 주기도문 · 사도신경 · 십계명 · 교독문 네 항목이 펼쳐져요(옆의 아래쪽 화살표 아이콘이 위쪽으로 뒤집혀요). 다시 누르면 접혀요.",
-					images = listOf(GuideImage("guide_hymn_menu_panel"))
+					images = listOf(GuideImage("guide_hymn_menu_panel", "메뉴 패널"))
 				),
 				GuideItem(
 					"주기도문 · 사도신경",
@@ -176,7 +176,7 @@ object UserGuideContent {
 				GuideItem(
 					"십계명",
 					"각 계명의 본문과, 그 계명이 무슨 뜻인지 요약한 설명을 같이 볼 수 있어요.",
-					images = listOf(GuideImage("guide_ten_commandments"))
+					images = listOf(GuideImage("guide_ten_commandments", "십계명"))
 				),
 				GuideItem(
 					"교독문",
@@ -189,12 +189,12 @@ object UserGuideContent {
 				GuideItem(
 					"성경 배경지식 열기",
 					"부록 목록 바로 아래에 있는 \"성경 배경지식\"을 누르면 인물사전 · 지명사전(지도) · 족보 · 연대표 · 당시 문화 · 성경의 단위들 · 예수님의 비유와 이적 · 상황에 따라 찾는 말씀, 8개 항목이 있는 화면이 열려요.",
-					images = listOf(GuideImage("guide_knowledge_menu_panel"))
+					images = listOf(GuideImage("guide_knowledge_menu_panel", "성경 배경지식 메뉴"))
 				),
 				GuideItem(
 					"인물사전 · 지명사전",
 					"목록 화면 위의 검색창에 이름을 입력하면 바로 필터링돼요. 항목을 열면 설명과 함께, 관련된 성경 구절로 바로 이동하는 버튼이 있어요.",
-					images = listOf(GuideImage("guide_knowledge_people_place"))
+					images = listOf(GuideImage("guide_knowledge_people_place", "인물사전 · 지명사전"))
 				),
 				GuideItem(
 					"족보 · 연대표",
@@ -229,67 +229,67 @@ object UserGuideContent {
 				GuideItem(
 					"설교자 · 카테고리 고르기",
 					"\"설교\" 옆의 두 박스에서 설교자와 카테고리를 각각 고를 수 있어요. 설교자나 카테고리가 목록에 없으면 그 선택 창 안에서 새로 추가할 수 있어요.",
-					images = listOf(GuideImage("guide_sermon_author_category"))
+					images = listOf(GuideImage("guide_sermon_author_category", "설교자·카테고리 선택"))
 				),
 				GuideItem(
 					"본문(성경 구절) 추가 · 수정하기",
 					"\"본문\" 옆의 빈 박스를 누르면 성경 구절을 고르는 창이 열려요. 구절을 고르면 그 박스에 \"창세기 1장 1절\"처럼 표시되고, 오른쪽에 작은 정사각형 \"+\" 버튼이 생겨요. 그걸 누르면 구절을 더 추가할 수 있어요. 이미 추가된 구절 박스를 다시 누르면 삭제되는 게 아니라, 그 구절을 다시 고를 수 있는 창이 열려요(성경 탭에서 장/절 고르는 것처럼요). 그 창 안의 \"삭제\" 버튼을 눌러야 그 본문이 지워져요.",
-					images = listOf(GuideImage("guide_sermon_bible_ref"))
+					images = listOf(GuideImage("guide_sermon_bible_ref", "본문(성경 구절) 선택"))
 				),
 				GuideItem(
 					"메모에 굵게 · 밑줄 · 색 넣기",
 					"메모 칸에 원하는 텍스트를 손가락으로 드래그해 선택한 다음, 메모 박스 오른쪽 아래에 있는 \"굵게\", \"밑줄\", \"색\" 버튼을 누르면 그 서식이 적용돼요. \"색\"을 누르면 몇 가지 색 중에서 고를 수 있는 작은 창이 떠요. 블루투스·물리 키보드를 연결했다면, 텍스트를 드래그해서 선택한 뒤 Ctrl+B(굵게)·Ctrl+U(밑줄)로도 바로 적용할 수 있어요.",
-					images = listOf(GuideImage("guide_sermon_memo_format"))
+					images = listOf(GuideImage("guide_sermon_memo_format", "메모 서식 적용"))
 				),
 				GuideItem(
 					"사진 첨부하기",
 					"\"+ 사진 추가\" 버튼을 누르면 갤러리에서 고르거나 카메라로 바로 촬영해서 첨부할 수 있어요. 최대 5장까지 가능하고, 첨부된 사진은 오른쪽 X 버튼으로 뺄 수 있어요.",
-					images = listOf(GuideImage("guide_sermon_photo_link"))
+					images = listOf(GuideImage("guide_sermon_photo_link", "사진 첨부"))
 				),
 				GuideItem(
 					"링크 추가하기",
 					"사진 추가 버튼 옆의 \"링크 추가\" 칸에 유튜브 등 링크를 넣고 저장하면, 설교 상세 화면 맨 아래에 그 영상이 바로 재생되도록 나와요. 유튜브 링크가 아니면 눌러서 여는 링크 버튼으로 나와요.",
-					images = listOf(GuideImage("guide_sermon_photo_link"))
+					images = listOf(GuideImage("guide_sermon_photo_link", "링크 첨부"))
 				),
 				GuideItem(
 					"설교 상세 화면 보기",
 					"목록에서 설교를 열면, 상단바엔 제목 대신 날짜와 카테고리가 \"2026년 7월 24일 [주일 낮예배]\"처럼 나와요. 그 아래엔 제목·본문·설교자가 순서대로 나오는데, 본문은 밑줄 쳐진 글자로 표시되고 누르면 그 구절(시작 절 기준)로 바로 이동해요. 본문이 여러 개면 콤마로 나열되고, 각각 따로 눌러서 이동할 수 있어요.",
-					images = listOf(GuideImage("guide_sermon_detail"))
+					images = listOf(GuideImage("guide_sermon_detail", "설교 상세 화면"))
 				),
 				GuideItem(
 					"메모 안 인용구절 미리보기",
 					"메모나 설교노트 안에 \"(창 1:1)\"처럼 성경 구절을 적어두면, 그 글자를 손가락으로 누르고 있는 동안 실제 본문이 말풍선으로 떠요. 설교노트에서는 등록해둔 본문(성경 구절)이 하나뿐일 때 두 가지를 더 쓸 수 있어요 — \"1절\"이나 \"1~5절\"처럼 절 번호만 쓰면 그 본문의 책/장 기준으로, \"(2:1)\"이나 \"(2:1~5)\"처럼 괄호 안에 책 표기 없이 장:절만 쓰면 그 본문의 책 기준으로 찾아줘요.",
-					images = listOf(GuideImage("guide_sermon_quote_preview"))
+					images = listOf(GuideImage("guide_sermon_quote_preview", "인용구절 미리보기"))
 				),
 				GuideItem(
 					"날짜별로 모아보기",
 					"설교 탭 안에서 캘린더 형태로 날짜별로 모아볼 수 있어요. 하단의 \"+\" 버튼을 누르면 골라 둔 날짜로 새 설교 기록 작성 화면이 바로 열려요. 상단의 \"오늘\" 버튼을 누르면 다른 달을 보고 있어도 바로 이번 달 오늘 날짜로 돌아와요. 요일·날짜 칸 부분을 좌우로 스와이프하면 이전/다음 달로 넘어가요(그 아래 목록 부분을 스와이프하면 캘린더/성경별/적용 서브탭이 넘어가요).",
-					images = listOf(GuideImage("guide_sermon_calendar"))
+					images = listOf(GuideImage("guide_sermon_calendar", "날짜별 캘린더"))
 				),
 				GuideItem(
 					"성경별로 모아보기",
 					"설교 탭 안에서 캘린더처럼 성경별로 모아볼 수 있어요. 상단바의 성경 이름을 누르면 책을 고르는 창이 열려서, 해당 책의 장들로 구성된 그리드가 나와요. 장을 누르면 그 장의 설교 목록이 하단에 표시돼요. 장을 고르지 않고 바로 설교 목록을 보고 싶으면, 상단바의 성경 이름 옆에 있는 작은 아래쪽 화살표를 눌러서 책만 선택하면 돼요.",
-					images = listOf(GuideImage("guide_sermon_by_book"))
+					images = listOf(GuideImage("guide_sermon_by_book", "성경별 모아보기"))
 				),
 				GuideItem(
 					"설교 목록 정렬 바꾸기",
 					"캘린더 · 성경별 화면 모두 상단바 메뉴(≡)를 열면 \"설교 카테고리 관리\" 아래에 \"설교 정렬\"이 있어요. 부록처럼 눌러야 펼쳐지고, 펼치면 지금 보고 있는 탭 이름과 함께(예: \"캘린더 정렬\") 그 화면에 맞는 정렬 옵션이 나와요. 캘린더는 성경순 · 카테고리순 · 추가순, 성경별은 성경순(시작절) · 날짜순 · 카테고리순 · 추가순 중에서 고를 수 있어요. 지금 선택된 정렬 옆에는 체크 표시가 붙어요. 이 정렬은 아래 목록뿐 아니라 위쪽 달력·장 그리드에 표시되는 색깔 막대 순서에도 똑같이 적용돼요.",
-					images = listOf(GuideImage("guide_sermon_sort"))
+					images = listOf(GuideImage("guide_sermon_sort", "설교 목록 정렬"))
 				),
 				GuideItem(
 					"카테고리별로 모아보기 · 카테고리 관리",
 					"설교 탭 상단바 메뉴(≡) > \"설교 카테고리 관리\"를 누르면 카테고리 목록(미분류 포함)이 보여요. 카테고리를 누르면 그 카테고리의 설교 목록으로 이동해요. 상단바의 \"관리\"를 누르면 \"완료\"로 바뀌면서 그 왼쪽에 \"추가\" 버튼이 나타나고, 각 카테고리에 수정(연필)·삭제(휴지통) 아이콘과 순서를 바꿀 수 있는 ≡ 손잡이가 나타나요(평소엔 색깔 동그라미로 보이던 게 관리 모드에선 ≡ 손잡이 자체가 그 색으로 바뀌어요). 손잡이를 누르면 바로 드래그가 시작돼서 위아래로 끌면 순서가 바뀌고, 이 순서가 다른 화면의 \"카테고리순\" 정렬에도 그대로 쓰여요. 수정하면 그 카테고리를 쓰는 설교에도 반영된다는 안내가, 삭제하면 그 카테고리를 쓰던 설교가 모두 미분류로 바뀐다는 안내가 떠요. 미분류도 순서를 옮길 수 있어요.",
-					images = listOf(GuideImage("guide_sermon_category_manage"))
+					images = listOf(GuideImage("guide_sermon_category_manage", "카테고리 관리"))
 				),
 				GuideItem(
 					"설교자별로 모아보기 · 설교자 관리",
 					"설교 탭 상단바 메뉴(≡) > \"설교자 관리\"를 누르면 설교자 목록이 보여요. 카테고리 관리와 똑같은 방식으로, 설교자를 누르면 그 설교자의 설교 목록으로 이동하고, \"관리\"를 누르면 이름 수정·삭제·≡ 손잡이로 순서 바꾸기가 가능해요. 정렬은 이름순 같은 옵션 없이 항상 직접 정한(드래그한) 순서를 써요.",
-					images = listOf(GuideImage("guide_sermon_preacher_manage"))
+					images = listOf(GuideImage("guide_sermon_preacher_manage", "설교자 관리"))
 				),
 				GuideItem(
 					"검색하기",
 					"설교 탭 상단의 검색으로 제목이나 본문 내용으로 설교노트를 찾을 수 있어요. 검색창이 비어있을 땐 최근 검색어가 보이고, 탭하면 그 검색어로 바로 검색돼요. 각 검색어 옆 X로 하나씩 지울 수 있고, \"전체 삭제\"로 한 번에 다 지울 수도 있어요(성경 검색과 마찬가지로, 검색 결과를 골라 이동했거나 키보드의 \"검색\" 버튼을 눌렀을 때만 기록돼요). 성경을 읽다가 그 장에 관련된 설교가 있으면 표시가 따로 나타나요.",
-					images = listOf(GuideImage("guide_sermon_search"))
+					images = listOf(GuideImage("guide_sermon_search", "검색 화면"))
 				)
 			)
 		),
