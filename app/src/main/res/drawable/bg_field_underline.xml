@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 채워진 박스 대신, 위·아래 1dp 검정 선만 그린다("밑줄" 스타일 입력칸용). -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:gravity="top">
+        <shape android:shape="rectangle">
+            <solid android:color="#000000" />
+            <size android:height="1dp" />
+        </shape>
+    </item>
+    <item android:gravity="bottom">
+        <shape android:shape="rectangle">
+            <solid android:color="#000000" />
+            <size android:height="1dp" />
+        </shape>
+    </item>
+</layer-list>

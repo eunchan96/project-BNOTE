@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 홈 화면 위젯 전용 색. 위젯은 앱의 다크모드 설정이 아니라 위젯별 설정(라이트/다크)을 따르므로
+         values-night와 무관하게 항상 같은 값을 쓴다. 따뜻한 갈색 계열로 맞췄다. -->
+    <color name="widget_light_bg_top">#FFFFFF</color>
+    <color name="widget_light_bg_bottom">#FBF2EC</color>
+    <color name="widget_light_border">#E8DCD5</color>
+    <color name="widget_light_text_primary">#2B2522</color>
+    <color name="widget_light_text_secondary">#8A7B73</color>
+    <color name="widget_light_accent">#795548</color>
+    <color name="widget_light_pill_fill">#14795548</color>
+    <color name="widget_light_pill_stroke">#66795548</color>
+
+    <color name="widget_dark_bg_top">#2B2725</color>
+    <color name="widget_dark_bg_bottom">#1D1B1A</color>
+    <color name="widget_dark_border">#3B3532</color>
+    <color name="widget_dark_text_primary">#F1EAE6</color>
+    <color name="widget_dark_text_secondary">#B3A7A0</color>
+    <color name="widget_dark_accent">#D2BDB3</color>
+    <color name="widget_dark_pill_fill">#1FD2BDB3</color>
+    <color name="widget_dark_pill_stroke">#66D2BDB3</color>
+
+    <!-- 위젯 설정 화면의 미리보기 뒤 배경. 투명도가 바뀌는 게 보이도록 라이트·다크 위젯 둘 다 구분되는
+         중간 밝기의 회색 계열을 깔았다(너무 튀지 않게 차분한 색). -->
+    <color name="widget_preview_backdrop_start">#8494A3</color>
+    <color name="widget_preview_backdrop_end">#A89F98</color>
+</resources>

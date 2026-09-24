@@ -23,6 +23,7 @@ import com.chan.bnote.data.bible.memo.VerseMemo
 import com.chan.bnote.data.bible.memo.WordMemo
 import com.chan.bnote.data.bible.partialhighlight.PartialHighlight
 import com.chan.bnote.ui.common.HighlightColors
+import kotlin.math.ceil
 
 class VerseAdapter(
 	private val verses: List<BibleVerse>,
@@ -50,6 +51,10 @@ class VerseAdapter(
 		private const val ID_HIGHLIGHT = 9001
 		private const val ID_MEMO = 9002
 
+		// 절 번호 칸 너비 = (그 자릿수만큼의 글자 폭) + 이 여유. 20dp(2자리)·26dp(3자리)로 고정해두던
+		// 예전 값과 기본 글자 크기에서 거의 같은 폭이 나오도록 잡았다.
+		private const val NUMBER_COLUMN_EXTRA_DP = 4
+
 		// 시편(bookId=19)은 전통적으로 5권으로 나뉜다: 1권 1~41편, 2권 42~72편, 3권 73~89편, 4권 90~106편, 5권 107~150편.
 		private fun psalmsBookPartLabel(bookId: Int, chapter: Int, verse: Int): String? {
 			if (bookId != 19 || verse != 1) return null
@@ -64,13 +69,32 @@ class VerseAdapter(
 		}
 	}
 
-	// 장의 최대 절 번호 자릿수에 따라 절 번호 칸 너비를 정한다 (1~2자리 장에서 괜히 넓지 않게).
-	private val numberColumnWidthDp: Int by lazy {
+	// 절 번호 칸에 들어갈 최대 자릿수. 1~2자리 장에서 괜히 넓지 않게 최소 2자리 폭으로 잡고,
+	// 100절 이상인 장(시편 119편 등)은 3자리 폭으로 잡는다.
+	private val numberColumnDigits: Int by lazy {
 		val maxVerse = verses.maxOfOrNull { it.verse } ?: 1
-		when {
-			maxVerse >= 100 -> 26
-			else -> 20
+		maxOf(2, maxVerse.toString().length)
+	}
+
+	private var cachedNumberColumnWidthPx = 0
+
+	/**
+	 * 절 번호 칸의 너비(px). 예전에는 20dp/26dp로 고정해뒀는데, 글자는 sp라서 기기의 "글꼴 크기"를
+	 * 키운 어르신 폰에서는 번호만 커지고 칸은 그대로라 두 자리 이상 번호가 잘렸다. 그래서 번호가 실제로
+	 * 그려질 글꼴·크기(글꼴 크기 설정 반영)로 가장 넓은 숫자의 폭을 재서, 자릿수만큼 곱해 칸 너비로 쓴다.
+	 * 같은 장 안에서는 모든 절이 같은 너비를 써야 본문 시작 위치가 나란하므로 한 번만 재서 둔다.
+	 */
+	private fun numberColumnWidthPx(number: TextView): Int {
+		if (cachedNumberColumnWidthPx == 0) {
+			val paint = number.paint
+			var widestDigit = 0f
+			for (digit in '0'..'9') {
+				widestDigit = maxOf(widestDigit, paint.measureText(digit.toString()))
+			}
+			val extraPx = NUMBER_COLUMN_EXTRA_DP * number.resources.displayMetrics.density
+			cachedNumberColumnWidthPx = ceil(widestDigit * numberColumnDigits + extraPx).toInt()
 		}
+		return cachedNumberColumnWidthPx
 	}
 
 	class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -127,7 +151,7 @@ class VerseAdapter(
 		)
 
 		// 절 번호 칸 너비를 장의 최대 절 번호 자릿수에 맞춘다. (아래 소제목 뒷부분 줄의 빈 칸도 같이 맞춘다)
-		val numberWidthPx = (numberColumnWidthDp * context.resources.displayMetrics.density).toInt()
+		val numberWidthPx = numberColumnWidthPx(holder.number)
 		if (holder.number.layoutParams.width != numberWidthPx) {
 			holder.number.layoutParams = holder.number.layoutParams.apply { width = numberWidthPx }
 		}

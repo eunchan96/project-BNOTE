@@ -128,8 +128,13 @@ class BibleMenuDialogFragment(
 		view.findViewById<Switch>(R.id.switch_reading_plan).apply {
 			isChecked = isReadingPlanEnabled
 			setOnCheckedChangeListener { _, checked ->
-				onReadingPlanToggled?.invoke(checked)
 				dismiss()
+				// dismiss()가 시트를 닫는 처리와 같은 프레임에서 상단바를 바로 갱신하면 가끔
+				// 반영이 안 된 채로 남아서(다른 화면에 갔다 와야만 그제야 적용됨) 한 프레임
+				// 미뤄서 호출한다 — 시트가 확실히 다 닫힌 뒤에 상단바 아이콘이 갱신되게 한다.
+				requireActivity().window.decorView.post {
+					onReadingPlanToggled?.invoke(checked)
+				}
 			}
 		}
 		view.findViewById<Switch>(R.id.switch_auto_scroll).apply {

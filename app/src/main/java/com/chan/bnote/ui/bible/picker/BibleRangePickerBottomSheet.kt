@@ -17,6 +17,7 @@ import com.chan.bnote.data.bible.BibleBookGroups
 import com.chan.bnote.data.bible.BibleBooks
 import com.chan.bnote.data.sermon.SermonBibleRef
 import com.chan.bnote.ui.FixedBottomSheetDialogFragment
+import com.chan.bnote.ui.common.BookGrid
 import com.chan.bnote.ui.common.GridNumberAdapter
 import com.google.android.material.checkbox.MaterialCheckBox
 import kotlinx.coroutines.launch
@@ -39,6 +40,10 @@ class BibleRangePickerBottomSheet : FixedBottomSheetDialogFragment() {
 	var existingRef: SermonBibleRef? = null
 	var onDeleteRequested: (() -> Unit)? = null
 
+	// "여러 구절 선택하기" 체크박스의 시작 상태. 대부분의 경우(설교 본문 등)는 여러 구절을 고르는 게 자연스러워서 켜진 채로 시작하지만,
+	// 약속의 말씀·암송 구절처럼 한 구절씩 정확히 고르는 화면에서는 호출하는 쪽에서 이 값을 false로 넘겨서 꺼진 채로 시작하게 한다.
+	var defaultMultiMode: Boolean = true
+
 	private lateinit var recyclerView: RecyclerView
 	private lateinit var scrollBookGrid: ScrollView
 	private lateinit var bookGridContainer: LinearLayout
@@ -49,7 +54,7 @@ class BibleRangePickerBottomSheet : FixedBottomSheetDialogFragment() {
 	private lateinit var tabBarContainer: LinearLayout
 	private lateinit var btnDelete: ImageView
 
-	// "여러 구절 선택하기" 체크 여부 — 기본으로 켜둔다.
+	// "여러 구절 선택하기" 체크 여부 — defaultMultiMode로 시작한다(onViewCreated에서 반영).
 	private var isMultiMode = true
 
 	// "다음 장까지 선택하기" 체크 여부 — 켜져 있을 때만 예전처럼 끝 장/절을 따로 고른다.
@@ -87,6 +92,7 @@ class BibleRangePickerBottomSheet : FixedBottomSheetDialogFragment() {
 		textSelectedStart = view.findViewById(R.id.text_selected_start)
 		tabBarContainer = view.findViewById(R.id.container_tab_bar)
 		btnDelete = view.findViewById(R.id.btn_delete_ref)
+		isMultiMode = defaultMultiMode
 
 		// 이미 추가된 본문을 다시 눌러서 연 경우: 그 정보로 미리 채워둔다. (여러 구절 범위였으면 끝 장까지만
 		// 미리 채우고, 끝 절은 다시 골라야 한다 — 상태 변수 구조상 끝 절만 별도로 들고 있지 않아서다.)
@@ -222,7 +228,9 @@ class BibleRangePickerBottomSheet : FixedBottomSheetDialogFragment() {
 		recyclerView.visibility = View.GONE
 
 		bookGridContainer.removeAllViews()
-		for (group in BibleBookGroups.groups) {
+		// 한 줄에 몇 권을 보여줄지(글꼴이 크거나 화면이 좁으면 3권)
+		val gridColumns = BookGrid.columns(requireContext())
+		for (group in BibleBookGroups.groupsOf(gridColumns)) {
 			val row = LinearLayout(requireContext()).apply {
 				orientation = LinearLayout.HORIZONTAL
 				layoutParams = LinearLayout.LayoutParams(
@@ -235,7 +243,7 @@ class BibleRangePickerBottomSheet : FixedBottomSheetDialogFragment() {
 					text = BibleBooks.gridDisplayName(id)
 					gravity = Gravity.CENTER
 					textSize = 13f
-					maxLines = 2
+					maxLines = 3
 					setPadding(dp(4), dp(16), dp(4), dp(16))
 					background = ContextCompat.getDrawable(
 						requireContext(),
@@ -264,8 +272,8 @@ class BibleRangePickerBottomSheet : FixedBottomSheetDialogFragment() {
 				}
 				row.addView(button)
 			}
-			// 행에 4개 미만이면(구약 마지막 줄 등) 남는 칸만큼 빈 스페이서를 넣어서 늘어나지 않게 한다.
-			repeat(4 - group.size) {
+			// 행이 다 안 차면(구약 마지막 줄 등) 남는 칸만큼 빈 스페이서를 넣어서 늘어나지 않게 한다.
+			repeat(gridColumns - group.size) {
 				row.addView(View(requireContext()).apply {
 					layoutParams =
 						LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f)

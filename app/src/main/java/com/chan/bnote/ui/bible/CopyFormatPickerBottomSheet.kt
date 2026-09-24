@@ -85,7 +85,7 @@ class CopyFormatPickerBottomSheet : FixedBottomSheetDialogFragment() {
 					.inflate(R.layout.item_copy_format_preset_row, presetsContainer, false)
 
 				val header = row.findViewById<LinearLayout>(R.id.row_preset_header)
-				val toggle = row.findViewById<TextView>(R.id.text_preset_toggle)
+				val toggle = row.findViewById<android.widget.ImageView>(R.id.img_preset_toggle)
 				val expanded = row.findViewById<LinearLayout>(R.id.container_preset_expanded)
 				val exampleText = row.findViewById<TextView>(R.id.text_preset_example)
 
@@ -95,7 +95,8 @@ class CopyFormatPickerBottomSheet : FixedBottomSheetDialogFragment() {
 
 				val isExpanded = expandedPresetId == preset.id
 				expanded.visibility = if (isExpanded) View.VISIBLE else View.GONE
-				toggle.text = if (isExpanded) "▴" else "▾"
+				// 부록 · 업데이트 내역과 같은 방식: 접혀있으면 ∨(0도), 펼쳐지면 ∧(180도)로 회전한다.
+				toggle.rotation = if (isExpanded) 180f else 0f
 				if (isExpanded) exampleText.text = buildExample(preset)
 
 				header.setOnClickListener {
@@ -141,41 +142,60 @@ class CopyFormatPickerBottomSheet : FixedBottomSheetDialogFragment() {
 			"copy_format_prefs",
 			android.content.Context.MODE_PRIVATE
 		)
-		if (prefs.getBoolean("default_presets_seeded", false)) return
 
-		val defaults = listOf(
-			"기본1" to CopyFormatConfig(
-				refVerseSeparator = CopyFormatConfig.Separator.NEWLINE,
-				multiVerseSeparator = CopyFormatConfig.Separator.NEWLINE,
-				refLength = CopyFormatConfig.RefLength.LONG,
-				refSpacing = true,
-				verseNumberStyle = CopyFormatConfig.VerseNumberStyle.PLAIN,
-				verseNumberSpacing = 2
-			),
-			"기본2" to CopyFormatConfig(
-				refVerseSeparator = CopyFormatConfig.Separator.SPACE,
-				multiVerseSeparator = CopyFormatConfig.Separator.SPACE,
-				refPosition = CopyFormatConfig.RefPosition.BEFORE,
-				refLength = CopyFormatConfig.RefLength.SHORT,
-				refSpacing = true,
-				refBracket = CopyFormatConfig.RefBracket.PAREN,
-				showVerseNumberWhenMulti = false
-			),
-			"기본3" to CopyFormatConfig(
-				refVerseSeparator = CopyFormatConfig.Separator.SPACE,
-				multiVerseSeparator = CopyFormatConfig.Separator.NEWLINE,
-				refPosition = CopyFormatConfig.RefPosition.AFTER,
-				refLength = CopyFormatConfig.RefLength.LONG,
-				refSpacing = true,
-				refBracket = CopyFormatConfig.RefBracket.PAREN,
-				showVerseNumberWhenMulti = false
-			)
-		)
-
-		for ((name, cfg) in defaults) {
-			db.copyFormatPresetDao()
-				.insert(CopyFormatPreset(name = name, configJson = cfg.toJson()))
+		if (!prefs.getBoolean("default_presets_seeded", false)) {
+			for ((name, cfg) in defaultPresetConfigs()) {
+				db.copyFormatPresetDao()
+					.insert(CopyFormatPreset(name = name, configJson = cfg.toJson()))
+			}
+			prefs.edit()
+				.putBoolean("default_presets_seeded", true)
+				.putBoolean("default_presets_renamed_v2", true)
+				.apply()
+			return
 		}
-		prefs.edit().putBoolean("default_presets_seeded", true).apply()
+
+		// 이미 예전에 "기본1/기본2/기본3"으로 한 번 심어졌던 기기라면, 이번 개편에 맞춰 이름과
+		// 설정을 딱 한 번만 새로 바꿔준다. 그 사이 사용자가 이름을 직접 바꿨거나 지운 프리셋은
+		// (이름이 더 이상 "기본1" 등이 아니므로) 건드리지 않는다.
+		if (prefs.getBoolean("default_presets_renamed_v2", false)) return
+		val renameMap = mapOf(
+			"기본1" to defaultPresetConfigs()[0],
+			"기본2" to defaultPresetConfigs()[1],
+			"기본3" to defaultPresetConfigs()[2]
+		)
+		for (preset in db.copyFormatPresetDao().getAll()) {
+			val replacement = renameMap[preset.name] ?: continue
+			db.copyFormatPresetDao().update(
+				preset.copy(name = replacement.first, configJson = replacement.second.toJson())
+			)
+		}
+		prefs.edit().putBoolean("default_presets_renamed_v2", true).apply()
 	}
+
+	/** "묵상용" / "짧게 (창 1:1)" / "길게 (창세기 1장 1절)" 세 기본 형식의 이름과 설정.
+	 * - 묵상용: 참조를 괄호 없이 구절 위에 얹고, 절 번호를 붙여 여러 절을 죽 읽기 좋게 만든다.
+	 * - 짧게: "(창 1:1) 본문"처럼 참조를 짧게 줄여 구절 앞에 붙인다.
+	 * - 길게: 짧게와 같은 모양이되, 참조만 "창세기 1장 1절"처럼 풀어 쓴다. */
+	private fun defaultPresetConfigs(): List<Pair<String, CopyFormatConfig>> = listOf(
+		"묵상용" to CopyFormatConfig.meditationDefault(),
+		"짧게 (창 1:1)" to CopyFormatConfig(
+			refVerseSeparator = CopyFormatConfig.Separator.SPACE,
+			multiVerseSeparator = CopyFormatConfig.Separator.SPACE,
+			refPosition = CopyFormatConfig.RefPosition.BEFORE,
+			refLength = CopyFormatConfig.RefLength.SHORT,
+			refSpacing = true,
+			refBracket = CopyFormatConfig.RefBracket.PAREN,
+			showVerseNumberWhenMulti = false
+		),
+		"길게 (창세기 1장 1절)" to CopyFormatConfig(
+			refVerseSeparator = CopyFormatConfig.Separator.SPACE,
+			multiVerseSeparator = CopyFormatConfig.Separator.SPACE,
+			refPosition = CopyFormatConfig.RefPosition.BEFORE,
+			refLength = CopyFormatConfig.RefLength.LONG,
+			refSpacing = true,
+			refBracket = CopyFormatConfig.RefBracket.PAREN,
+			showVerseNumberWhenMulti = false
+		)
+	)
 }

@@ -10,6 +10,7 @@ import com.chan.bnote.data.mypage.memorization.MemorizationVerse
 
 class MemorizationVerseAdapter(
 	private val items: List<MemorizationVerse>,
+	private val fontSize: Int,
 	private val onClick: (MemorizationVerse) -> Unit
 ) : RecyclerView.Adapter<MemorizationVerseAdapter.ViewHolder>() {
 
@@ -28,6 +29,7 @@ class MemorizationVerseAdapter(
 		val item = items[position]
 		holder.ref.text = item.toDisplayLabel()
 		holder.preview.text = item.verseText
+		holder.preview.textSize = fontSize.toFloat()
 		holder.itemView.setOnClickListener { onClick(item) }
 	}
 

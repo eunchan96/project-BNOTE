@@ -3,7 +3,6 @@ package com.chan.bnote.notification
 import android.content.Context
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.DateUtils
-import com.chan.bnote.data.bible.BibleBooks
 import java.util.Calendar
 
 /**
@@ -16,32 +15,18 @@ import java.util.Calendar
  */
 object NotificationTasks {
 
+	/** 오늘의 말씀은 [DailyVerseProvider]가 날짜 기준으로 정한다(같은 날엔 모든 사용자가 같은 구절). */
 	suspend fun showDailyVerse(context: Context) {
-		val db = BibleDatabase.getInstance(context)
-		val ref = CuratedVerses.load(context).random()
-		val chapterVerses = db.bibleDao().getVerses("NKRV", ref.bookId, ref.chapter)
-		val rangeVerses = chapterVerses.filter { it.verse in ref.startVerse..ref.endVerse }
-		if (rangeVerses.isEmpty()) return
-
-		val verse = rangeVerses.first()
-		val verseText = rangeVerses.joinToString("\n") { it.text }
-
-		val unit = BibleBooks.chapterUnit(ref.bookId)
-		val verseLabel = if (ref.startVerse == ref.endVerse) {
-			"${ref.startVerse}절"
-		} else {
-			"${ref.startVerse}~${ref.endVerse}절"
-		}
-		val label = "${BibleBooks.nameOf(ref.bookId)} ${ref.chapter}${unit} $verseLabel"
+		val daily = DailyVerseProvider.getToday(context) ?: return
 
 		NotificationHelper.show(
 			context = context,
 			notiId = NotificationHelper.NOTI_ID_DAILY_VERSE,
-			title = "오늘의 말씀 · $label",
-			content = verseText,
-			bookId = verse.bookId,
-			chapter = verse.chapter,
-			verse = verse.verse
+			title = "오늘의 말씀 · ${daily.label}",
+			content = daily.text,
+			bookId = daily.bookId,
+			chapter = daily.chapter,
+			verse = daily.startVerse
 		)
 	}
 

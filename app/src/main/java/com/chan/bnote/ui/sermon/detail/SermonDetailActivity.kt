@@ -29,6 +29,7 @@ import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.DateUtils
 import com.chan.bnote.data.sermon.CitationParser
 import com.chan.bnote.data.sermon.Sermon
+import com.chan.bnote.data.sermon.SermonView
 import com.chan.bnote.data.sermon.sermonphoto.SermonPhotoStorage
 import com.chan.bnote.ui.sermon.addsermon.AddSermonActivity
 import com.chan.bnote.ui.sermon.addsermon.PhotoViewerActivity
@@ -130,6 +131,8 @@ class SermonDetailActivity : AppCompatActivity() {
 				return@launch
 			}
 			sermon = loaded
+			// 마이페이지 "최근 활동"에 쓸 열람 기록. 만들거나 고칠 때가 아니라 "열어 볼 때마다" 남긴다.
+			db.sermonViewDao().upsert(SermonView(sermonId = sermon.id))
 			render(db)
 		}
 	}
@@ -277,7 +280,10 @@ class SermonDetailActivity : AppCompatActivity() {
 			val thumb = LayoutInflater.from(this)
 				.inflate(R.layout.item_sermon_detail_photo, photoContainer, false) as ImageView
 			thumb.load(photo.filePath)
-			thumb.setOnClickListener { PhotoViewerActivity.start(this, photo.filePath) }
+			// 이 사진부터 시작해서 좌우로 넘기며 나머지 사진도 볼 수 있도록 전체 목록과 인덱스를 넘긴다.
+			thumb.setOnClickListener {
+				PhotoViewerActivity.start(this, photos.map { it.filePath }, photos.indexOf(photo))
+			}
 			photoContainer.addView(thumb)
 		}
 

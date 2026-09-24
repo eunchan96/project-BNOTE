@@ -75,7 +75,7 @@
             android:layout_margin="20dp"
             android:gravity="center"
             android:text="+"
-            android:textSize="28sp"
+            android:textSize="28dp"
             android:textColor="@color/white"
             android:background="@drawable/bg_fab_brown"
             android:elevation="6dp"

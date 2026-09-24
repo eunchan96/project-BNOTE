@@ -19,6 +19,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.chan.bnote.MainActivity
 import com.chan.bnote.R
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.DateUtils
@@ -31,7 +32,6 @@ import com.chan.bnote.ui.bible.scrap.ScrapActivity
 import com.chan.bnote.ui.mypage.gratitude.GratitudeActivity
 import com.chan.bnote.ui.mypage.memorization.MemorizationVerseListActivity
 import com.chan.bnote.ui.mypage.prayer.PrayerRequestActivity
-import com.chan.bnote.ui.sermon.SermonSearchActivity
 import com.chan.bnote.ui.sermon.bycalendar.CalendarDayCell
 import com.chan.bnote.ui.sermon.bycalendar.CalendarGridAdapter
 import com.chan.bnote.ui.sermon.bycalendar.MonthYearPickerBottomSheet
@@ -181,18 +181,20 @@ class ProfileActivity : AppCompatActivity() {
 					},
 					StatItem("설교노트", "${sermonCount}개") {
 						startActivity(
-							Intent(
-								this@ProfileActivity,
-								SermonSearchActivity::class.java
-							)
+							Intent(this@ProfileActivity, MainActivity::class.java).apply {
+								putExtra(MainActivity.EXTRA_NAVIGATE_SERMON_SUBTAB, 0) // 캘린더
+								flags =
+									Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+							}
 						)
 					},
 					StatItem("적용", "${applicationCount}개") {
 						startActivity(
-							Intent(
-								this@ProfileActivity,
-								com.chan.bnote.ui.application.category.ApplicationCategoryManageActivity::class.java
-							)
+							Intent(this@ProfileActivity, MainActivity::class.java).apply {
+								putExtra(MainActivity.EXTRA_NAVIGATE_SERMON_SUBTAB, 2) // 적용
+								flags =
+									Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+							}
 						)
 					},
 					StatItem("감사노트", "${gratitudeCount}개") {

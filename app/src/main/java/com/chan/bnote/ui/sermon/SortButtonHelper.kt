@@ -7,13 +7,28 @@ import android.widget.PopupWindow
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import com.chan.bnote.R
+import kotlin.math.ceil
 
 /** 캘린더/성경별 탭 상단의 정렬 버튼(예: "카테고리순 ▾")을 눌렀을 때 작은 팝업으로 정렬을 고르게 한다. */
 object SortButtonHelper {
 
 	fun setup(button: TextView, target: SermonSortableFragment) {
+		reserveWidestLabelWidth(button, target)
 		updateLabel(button, target)
 		button.setOnClickListener { showPopup(button, target) }
+	}
+
+	/**
+	 * 정렬 옵션 중 가장 긴 이름("카테고리순 ▾" 등) 기준으로 버튼의 최소 폭을 잡아둔다. 그래야 정렬을 바꿀 때마다
+	 * 버튼 폭이 달라져서 머리줄(한 줄 ↔ 두 줄) 배치가 덜컥 바뀌는 일이 없다. 글꼴 크기 설정이 반영된
+	 * 실제 글자 폭으로 재기 때문에 큰 글꼴에서도 맞는다.
+	 */
+	private fun reserveWidestLabelWidth(button: TextView, target: SermonSortableFragment) {
+		val paint = button.paint
+		val widest =
+			target.getSortOptions().maxOfOrNull { paint.measureText("${it.second} ▾") } ?: 0f
+		button.minWidth = ceil(widest).toInt() + button.paddingLeft + button.paddingRight
+		button.gravity = Gravity.END or Gravity.CENTER_VERTICAL
 	}
 
 	private fun showPopup(anchor: TextView, target: SermonSortableFragment) {

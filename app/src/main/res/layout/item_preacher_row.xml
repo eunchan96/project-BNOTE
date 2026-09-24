@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="52dp"
+    android:layout_height="wrap_content"
+    android:minHeight="52dp"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="horizontal"
     android:gravity="center_vertical"
@@ -18,7 +19,7 @@
         android:layout_marginEnd="8dp"
         android:gravity="center"
         android:text="&#9776;"
-        android:textSize="22sp"
+        android:textSize="22dp"
         android:textColor="@color/text_hint"
         android:visibility="gone" />
 

@@ -153,7 +153,7 @@ class BibleSearchActivity : AppCompatActivity() {
 			emptyText.visibility = View.GONE
 			recyclerView.visibility = View.VISIBLE
 
-			val fontSize = AppSettings.getFontSize(this@BibleSearchActivity)
+			val fontSize = AppSettings.getListPreviewFontSize(this@BibleSearchActivity)
 			recyclerView.adapter = SearchResultAdapter(results, fontSize) { verse ->
 				// 실제로 결과를 골라 이동했을 때만 "완료된 검색"으로 보고 기록한다 — 타이핑
 				// 중간에 잠깐 멈췄을 때마다 뜨는 라이브 검색 결과 하나하나는 기록하지 않는다.

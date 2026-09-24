@@ -85,8 +85,14 @@ object BackupManager {
 
 						name.startsWith("$SERMON_PHOTOS_DIR/") || name.startsWith("$PROFILE_PHOTO_DIR/") -> {
 							val destFile = File(context.filesDir, name)
-							destFile.parentFile?.mkdirs()
-							destFile.outputStream().use { out -> zip.copyTo(out) }
+							// zip 안 파일 이름이 "../../..." 같은 상대 경로를 담고 있으면, 위에서 filesDir과 이어 붙여도 실제로는 filesDir 밖(예: 앱의 다른 저장소)을 가리킬 수 있다("Zip Slip").
+							// 실제로 쓰기 전에 결과 경로가 여전히 filesDir 안인지 확인하고, 벗어나면 그 항목만 조용히 건너뛴다 — 직접 만든 백업 파일에는 절대 나올 수 없는 모양이라, 건너뛰어도 정상적인 복원에는 영향이 없다.
+							val filesRoot = context.filesDir.canonicalFile
+							val resolved = destFile.canonicalFile
+							if (resolved == filesRoot || resolved.path.startsWith(filesRoot.path + File.separator)) {
+								destFile.parentFile?.mkdirs()
+								destFile.outputStream().use { out -> zip.copyTo(out) }
+							}
 						}
 					}
 					zip.closeEntry()
@@ -297,13 +303,17 @@ object BackupManager {
 			val oldId = obj.getLong("id")
 			val oldPreacherId = if (obj.has("preacherId")) obj.getLong("preacherId") else null
 			val oldCategoryId = if (obj.has("categoryId")) obj.getLong("categoryId") else null
+			val restoredMemo = obj.optString("memo", "")
 			val newId = db.sermonDao().insert(
 				Sermon(
 					title = obj.getString("title"),
 					preacherId = oldPreacherId?.let { preacherIdMap[it] },
 					sermonDate = obj.getLong("sermonDate"),
 					categoryId = oldCategoryId?.let { categoryIdMap[it] },
-					memo = obj.optString("memo", ""),
+					memo = restoredMemo,
+					// 백업 파일(구버전 포함)엔 memoSearchText가 없을 수 있으니, memo를 화면에 보여줄 때와 같은 방식으로 풀어서 순수 텍스트를 다시 만든다.
+					memoSearchText = com.chan.bnote.ui.sermon.addsermon.RichTextUtils
+						.toEditable(restoredMemo).toString(),
 					link = if (obj.has("link")) obj.getString("link") else null,
 					createdAt = obj.optLong("createdAt", System.currentTimeMillis())
 				)
