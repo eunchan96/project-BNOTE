@@ -74,6 +74,7 @@ class HymnDetailActivity : AppCompatActivity() {
 		container.removeAllViews()
 
 		val files = imageFileNames.split("|").filter { it.isNotBlank() }
+		val assetPaths = files.map { "file:///android_asset/hymns/images/$it" }
 		files.forEachIndexed { index, fileName ->
 			val imageView = ImageView(this).apply {
 				layoutParams = LinearLayout.LayoutParams(
@@ -84,8 +85,19 @@ class HymnDetailActivity : AppCompatActivity() {
 				adjustViewBounds = true
 				scaleType = ImageView.ScaleType.FIT_CENTER
 				contentDescription = "악보 ${index + 1}페이지"
+				isClickable = true
+				isFocusable = true
 			}
-			imageView.load("file:///android_asset/hymns/images/$fileName")
+			imageView.load(assetPaths[index])
+			// 사진 뷰어(PhotoViewerActivity)를 그대로 재사용한다 — 설교 사진 뷰어와 같은 화면이라
+			// 여러 장을 좌우로 넘겨보는 것도, 상태바를 안 가리는 것도 이미 검증돼 있다.
+			imageView.setOnClickListener {
+				com.chan.bnote.ui.sermon.addsermon.PhotoViewerActivity.start(
+					this,
+					assetPaths,
+					index
+				)
+			}
 			container.addView(imageView)
 		}
 	}

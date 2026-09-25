@@ -391,7 +391,7 @@ class AddSermonActivity : AppCompatActivity() {
 	}
 
 	private fun renderPhotoThumbnails() {
-		btnAddPhoto.text = "+ 사진 추가 (${photoPaths.size}/$MAX_PHOTOS)"
+		btnAddPhoto.text = "사진 추가 (${photoPaths.size}/$MAX_PHOTOS)"
 		photoContainer.removeAllViews()
 		scrollPhotos.visibility = if (photoPaths.isEmpty()) View.GONE else View.VISIBLE
 

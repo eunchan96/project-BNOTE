@@ -82,6 +82,18 @@
             android:orientation="vertical" />
     </LinearLayout>
 
+    <TextView
+        android:id="@+id/text_search_result_count"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="10dp"
+        android:paddingBottom="6dp"
+        android:textSize="13sp"
+        android:textColor="@color/text_hint"
+        android:visibility="gone" />
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler_search_results"
         android:layout_width="match_parent"
