@@ -162,11 +162,19 @@ val MIGRATIONS: Array<Migration> = arrayOf(
 	},
 	object : Migration(30, 31) {
 		override fun migrate(db: SupportSQLiteDatabase) {
-			// 마이페이지 "최근 활동"에서 설교·적용을 "만들거나 고친 것"이 아니라 "열어 본 것" 기준으로 보여주기 위한 열람 기록 테이블.
-			// 성경 장을 읽을 때 남기는 recent_chapter_views와 같은 구조다.
+			// 마이페이지 "최근 활동"에서 설교·적용을 "만들거나 고친 것"이 아니라 "열어 본 것"
+			// 기준으로 보여주기 위한 열람 기록 테이블. 성경 장을 읽을 때 남기는
+			// recent_chapter_views와 같은 구조다.
+			//
+			// CREATE TABLE IF NOT EXISTS를 쓰면, 혹시라도 그 이름의 테이블이 이미(불완전하게라도)
+			// 있을 때 아무 것도 안 하고 조용히 넘어가버려서 컬럼이 하나도 없는 "빈 테이블"이 그대로
+			// 남을 수 있다(실제로 이 문제로 앱이 열릴 때마다 죽는 사례가 있었다). 그래서 먼저 확실히
+			// 지우고 새로 만든다 — 이 두 테이블은 열람 "기록"일 뿐이라 지워져도 데이터 손실이 아니다.
+			db.execSQL("DROP TABLE IF EXISTS sermon_views")
+			db.execSQL("DROP TABLE IF EXISTS application_views")
 			db.execSQL(
 				"""
-				CREATE TABLE IF NOT EXISTS sermon_views (
+				CREATE TABLE sermon_views (
 					id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
 					sermonId INTEGER NOT NULL,
 					viewedAt INTEGER NOT NULL
@@ -178,7 +186,44 @@ val MIGRATIONS: Array<Migration> = arrayOf(
 			)
 			db.execSQL(
 				"""
-				CREATE TABLE IF NOT EXISTS application_views (
+				CREATE TABLE application_views (
+					id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+					applicationId INTEGER NOT NULL,
+					viewedAt INTEGER NOT NULL
+				)
+				""".trimIndent()
+			)
+			db.execSQL(
+				"CREATE UNIQUE INDEX IF NOT EXISTS index_application_views_applicationId ON application_views (applicationId)"
+			)
+		}
+	},
+	object : Migration(31, 32) {
+		override fun migrate(db: SupportSQLiteDatabase) {
+			// 1.9 최초 배포판의 Migration(30, 31)이 CREATE TABLE IF NOT EXISTS를 써서, 컬럼이 하나도
+			// 없는 빈 sermon_views/application_views 테이블이 생긴 채로 배포됐었다(그 폰들은 이미
+			// SQLite 파일에 "버전 31"이 찍혀 있어서, 그 마이그레이션 자체를 나중에 고쳐도 다시는
+			// 실행되지 않는다 — Room은 버전이 이미 같으면 마이그레이션을 건너뛴다). 그래서 새 버전
+			// 계단(32)을 하나 만들어서, 깨졌을 수 있는 이 두 테이블을 무조건 다시 만든다. 정상이던
+			// 기기에서도 그냥 한 번 더 만드는 것뿐이라 안전하다(둘 다 "열람 기록"일 뿐, 실제
+			// 설교·적용 데이터는 전혀 건드리지 않는다).
+			db.execSQL("DROP TABLE IF EXISTS sermon_views")
+			db.execSQL("DROP TABLE IF EXISTS application_views")
+			db.execSQL(
+				"""
+				CREATE TABLE sermon_views (
+					id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+					sermonId INTEGER NOT NULL,
+					viewedAt INTEGER NOT NULL
+				)
+				""".trimIndent()
+			)
+			db.execSQL(
+				"CREATE UNIQUE INDEX IF NOT EXISTS index_sermon_views_sermonId ON sermon_views (sermonId)"
+			)
+			db.execSQL(
+				"""
+				CREATE TABLE application_views (
 					id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
 					applicationId INTEGER NOT NULL,
 					viewedAt INTEGER NOT NULL
