@@ -94,6 +94,8 @@ class PreacherManageAdapter(
 
 	fun currentOrderIds(): List<Long> = rows.map { it.preacher.id }
 
+	fun currentPreachers(): List<Preacher> = rows.map { it.preacher }
+
 	private fun dp(context: android.content.Context, value: Int): Int =
 		(value * context.resources.displayMetrics.density).toInt()
 }

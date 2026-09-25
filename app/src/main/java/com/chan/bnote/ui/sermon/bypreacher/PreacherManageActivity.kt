@@ -13,7 +13,6 @@ import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.chan.bnote.R
-import com.chan.bnote.data.AppSettings
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.sermon.preacher.Preacher
 import com.chan.bnote.ui.common.DragReorderHelper
@@ -72,12 +71,9 @@ class PreacherManageActivity : AppCompatActivity() {
 	private fun loadPreachers() {
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(applicationContext)
-			val allPreachers = db.preacherDao().getAll()
-			val customOrderIds = AppSettings.getPreacherCustomOrderIds(this@PreacherManageActivity)
-			val byId = allPreachers.associateBy { it.id }
-			val ordered = customOrderIds.mapNotNull { byId[it] }
-			val rest = allPreachers.filter { it.id !in customOrderIds }
-			preachers = ordered + rest
+			// getAll()이 이미 sortOrder 컬럼 순서대로 준다 — 드래그로 바꾼 순서가 DB에 바로
+			// 저장되므로(아래 onDragFinished 참고) 여기서 따로 순서를 다시 합칠 필요가 없다.
+			preachers = db.preacherDao().getAll()
 
 			if (preachers.isEmpty()) {
 				isManageMode = false
@@ -118,13 +114,24 @@ class PreacherManageActivity : AppCompatActivity() {
 			recyclerView.adapter = adapter
 
 			if (isManageMode) {
+				// 드래그 중엔 목록을 다시 안 불러오고 어댑터 안에서만 옮기다가, 손을 뗀 순간에만
+				// DB의 sortOrder 컬럼에 실제로 저장한다. getAll()이 이 컬럼으로 정렬해서 돌려주기
+				// 때문에, 이렇게 저장해야 설교 작성 중 설교자 고르는 화면 등 다른 곳에도 반영된다
+				// (예전엔 이 화면 전용 SharedPreferences에만 저장해서 여기서만 보이고 다른 곳엔
+				// 반영이 안 됐다).
 				dragHelper = ItemTouchHelper(
 					DragReorderHelper(
 						onMove = { from, to -> adapter.moveItem(from, to) },
 						onDragFinished = {
-							AppSettings.setPreacherCustomOrderIds(
-								this@PreacherManageActivity, adapter.currentOrderIds()
-							)
+							lifecycleScope.launch {
+								val db2 = BibleDatabase.getInstance(applicationContext)
+								adapter.currentPreachers().forEachIndexed { index, preacher ->
+									if (preacher.sortOrder != index) {
+										db2.preacherDao().update(preacher.copy(sortOrder = index))
+									}
+								}
+								preachers = db2.preacherDao().getAll()
+							}
 						}
 					)
 				)

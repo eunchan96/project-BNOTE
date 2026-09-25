@@ -53,6 +53,10 @@ class AddSermonActivity : AppCompatActivity() {
 		private const val MAX_PHOTOS = 5
 		private const val AUTO_SAVE_DELAY_MS = 3000L
 
+		// 화면 회전이나 백그라운드에서 시스템이 메모리를 확보하려고 이 화면을 다시 만들 때도,
+		// "새로 쓰던 중 자동 저장으로 이미 DB에 생긴 설교"를 잊지 않도록 여기 같이 저장해둔다.
+		private const val KEY_SAVED_SERMON_ID = "saved_sermon_id"
+
 		/** 신규 등록용 Intent. */
 		fun createIntent(
 			context: Context,
@@ -94,13 +98,11 @@ class AddSermonActivity : AppCompatActivity() {
 	// 입력이 멈추고 AUTO_SAVE_DELAY_MS만큼 지나면 조용히(화면 이동 없이) 저장한다.
 	private var autoSaveJob: kotlinx.coroutines.Job? = null
 
-	// persistSermon()은 "기존 설교가 없으면 새로 만들고, 있으면 수정한다"를 코루틴 시작 시점에
-	// 판단한다. 저장이 걸리는 경로가 셋(타이핑 후 디바운스 / 사진 추가 직후 / onPause 즉시 저장)이라,
-	// 겹치는 타이밍에 두 저장이 동시에 시작되면 둘 다 "기존 설교 없음"으로 보고 각자 새 설교를
-	// 하나씩 만들어버릴 수 있었다(사진 추가 버튼을 눌러 갤러리/카메라가 뜨는 순간 onPause가 불리는데,
-	// 그때 마침 디바운스 타이머도 끝나면 두 저장이 동시에 시작됨 — 설교와 사진이 두 벌 생기던 원인).
-	// 이 Mutex로 persistSermon() 전체를 감싸서, 실제 DB 판단·쓰기는 항상 한 번에 하나씩만
-	// 실행되게 한다.
+	// persistSermon()은 "기존 설교가 없으면 새로 만들고, 있으면 수정한다"를 코루틴 시작 시점에 판단한다.
+	// 저장이 걸리는 경로가 셋(타이핑 후 디바운스 / 사진 추가 직후 / onPause 즉시 저장)이라,
+	// 겹치는 타이밍에 두 저장이 동시에 시작되면 둘 다 "기존 설교 없음"으로 보고 각자 새 설교를 하나씩 만들어버릴 수 있었다
+	// (사진 추가 버튼을 눌러 갤러리/카메라가 뜨는 순간 onPause가 불리는데, 그때 마침 디바운스 타이머도 끝나면 두 저장이 동시에 시작됨 — 설교와 사진이 두 벌 생기던 원인).
+	// 이 Mutex로 persistSermon() 전체를 감싸서, 실제 DB 판단·쓰기는 항상 한 번에 하나씩만 실행되게 한다.
 	private val persistMutex = kotlinx.coroutines.sync.Mutex()
 
 	private lateinit var flexboxRefs: com.google.android.flexbox.FlexboxLayout
@@ -183,7 +185,9 @@ class AddSermonActivity : AppCompatActivity() {
 			insets
 		}
 
-		val sermonId = intent.getLongExtra(EXTRA_SERMON_ID, -1L)
+		val sermonId = savedInstanceState?.getLong(KEY_SAVED_SERMON_ID, -1L)
+			?.takeIf { it != -1L }
+			?: intent.getLongExtra(EXTRA_SERMON_ID, -1L)
 		isEditMode = sermonId != -1L
 
 		if (intent.hasExtra(EXTRA_INITIAL_DATE_MILLIS)) {
@@ -339,6 +343,11 @@ class AddSermonActivity : AppCompatActivity() {
 				db.sermonCategoryDao().getById(id)?.let { btnPickCategory.text = it.name }
 			}
 		}
+	}
+
+	override fun onSaveInstanceState(outState: Bundle) {
+		super.onSaveInstanceState(outState)
+		existingSermon?.let { outState.putLong(KEY_SAVED_SERMON_ID, it.id) }
 	}
 
 	private fun showPhotoSourceMenu(anchor: View) {
