@@ -24,8 +24,8 @@ android {
 		applicationId = "com.chan.bnote"
 		minSdk = 24
 		targetSdk = 35
-		versionCode = 11
-		versionName = "1.10"
+		versionCode = 12
+		versionName = "1.11"
 
 		testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 	}
@@ -100,4 +100,5 @@ dependencies {
 	implementation(libs.flexbox)
 	implementation(libs.coil)
 	implementation(libs.androidx.work.runtime.ktx)
+	implementation(libs.photoview)
 }

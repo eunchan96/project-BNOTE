@@ -219,7 +219,7 @@ object AppSettings {
 
 	fun getScrollSpeed(context: Context): Int {
 		return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
-			.getInt(KEY_SCROLL_SPEED, 3)
+			.getInt(KEY_SCROLL_SPEED, 2)
 	}
 
 	fun setScrollSpeed(context: Context, speed: Int) {
