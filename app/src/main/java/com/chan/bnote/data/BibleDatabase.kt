@@ -85,7 +85,7 @@ import kotlinx.coroutines.launch
 		ApplicationSermonLink::class, GratitudeNote::class, GratitudeEntry::class,
 		SermonView::class, ApplicationView::class
 	],
-	version = 30, // 29 -> 30 (설교 memoSearchText 추가 — 서식 있는 메모도 검색되도록)
+	version = 32, // 31 -> 32 (sermon_views/application_views가 깨진 채로 남은 기기 복구용)
 	exportSchema = false
 )
 abstract class BibleDatabase : RoomDatabase() {
