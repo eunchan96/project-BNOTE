@@ -46,6 +46,7 @@ class BibleSearchActivity : AppCompatActivity() {
 	private lateinit var editSearch: EditText
 	private lateinit var recyclerView: RecyclerView
 	private lateinit var emptyText: TextView
+	private lateinit var resultCountText: TextView
 	private lateinit var historyContainer: View
 	private lateinit var historyItemsContainer: LinearLayout
 	private var searchJob: Job? = null
@@ -75,6 +76,7 @@ class BibleSearchActivity : AppCompatActivity() {
 		editSearch = findViewById(R.id.edit_search)
 		recyclerView = findViewById(R.id.recycler_search_results)
 		emptyText = findViewById(R.id.text_search_empty)
+		resultCountText = findViewById(R.id.text_search_result_count)
 		historyContainer = findViewById(R.id.container_search_history)
 		historyItemsContainer = findViewById(R.id.container_search_history_items)
 		recyclerView.layoutManager = LinearLayoutManager(this)
@@ -134,6 +136,7 @@ class BibleSearchActivity : AppCompatActivity() {
 			emptyText.text = "2글자 이상 입력해주세요"
 			emptyText.visibility = View.VISIBLE
 			recyclerView.visibility = View.GONE
+			resultCountText.visibility = View.GONE
 			return
 		}
 
@@ -147,11 +150,14 @@ class BibleSearchActivity : AppCompatActivity() {
 				emptyText.text = "검색 결과가 없어요"
 				emptyText.visibility = View.VISIBLE
 				recyclerView.visibility = View.GONE
+				resultCountText.visibility = View.GONE
 				return@launch
 			}
 
 			emptyText.visibility = View.GONE
 			recyclerView.visibility = View.VISIBLE
+			resultCountText.visibility = View.VISIBLE
+			resultCountText.text = "검색 결과 ${results.size}개"
 
 			val fontSize = AppSettings.getListPreviewFontSize(this@BibleSearchActivity)
 			recyclerView.adapter = SearchResultAdapter(results, fontSize) { verse ->
@@ -179,6 +185,7 @@ class BibleSearchActivity : AppCompatActivity() {
 	private fun showSearchHistory() {
 		searchJob?.cancel()
 		recyclerView.visibility = View.GONE
+		resultCountText.visibility = View.GONE
 
 		val history = AppSettings.getBibleSearchHistory(this)
 		if (history.isEmpty()) {
