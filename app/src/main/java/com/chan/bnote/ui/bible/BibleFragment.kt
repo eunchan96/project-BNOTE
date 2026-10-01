@@ -144,6 +144,8 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 	private var currentVerseMemos: Map<Int, VerseMemo> = emptyMap()
 	private var currentWordMemos: Map<Int, List<WordMemo>> = emptyMap()
 
+	private var audioController: BibleAudioController? = null
+
 	private val autoScrollHandler = android.os.Handler(android.os.Looper.getMainLooper())
 	private val autoScrollRunnable = object : Runnable {
 		override fun run() {
@@ -229,6 +231,21 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 
 		selectionToolbar = view.findViewById(R.id.container_selection_toolbar)
 		highlightColorToolbar = view.findViewById(R.id.scroll_highlight_toolbar)
+
+		audioController = BibleAudioController(
+			context = requireContext(),
+			scope = viewLifecycleOwner.lifecycleScope,
+			button = view.findViewById(R.id.btn_bible_audio),
+			currentChapter = { currentBookId to currentChapter },
+			onChapterFinished = {
+				// 한 장을 다 들으면 다음 장으로 넘긴다 — 페이지가 바뀌면 onBiblePageSettled에서 이어서 재생된다.
+				if (viewPager.currentItem < pageAdapter.itemCount - 1) {
+					viewPager.currentItem = viewPager.currentItem + 1
+				} else {
+					audioController?.stop()
+				}
+			}
+		).also { it.refreshAvailability() }
 
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(requireContext().applicationContext)
@@ -499,6 +516,7 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 			clearSelection()
 			stopAutoScroll()
 			isAutoScrolling = false
+			audioController?.onChapterChanged(bookId, chapter)
 		}
 		AppSettings.setLastRead(requireContext(), bookId, chapter)
 
@@ -766,6 +784,8 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 	 * 글자 크기, 성경읽기표 표시 방식/상태, 그리고 그 사이에 이 장에 설교노트가 추가/삭제됐을 수도 있으니
 	 * 설교 아이콘 표시 여부까지. */
 	private fun refreshOnReturnToTab() {
+		// 앱 정보에서 음성 폴더를 고르거나 해제하고 돌아왔을 수 있다(본문 로딩 여부와 무관하게 확인).
+		audioController?.refreshAvailability()
 		if (!::adapter.isInitialized) return
 		val newFontSize = AppSettings.getFontSize(requireContext())
 		if (newFontSize != currentFontSize) {
@@ -900,6 +920,8 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 	override fun onDestroyView() {
 		super.onDestroyView()
 		stopAutoScroll() // 화면 벗어나면 반드시 정지 (메모리 누수 방지)
+		audioController?.release()
+		audioController = null
 	}
 
 	private fun notifyTopBarChanged() {

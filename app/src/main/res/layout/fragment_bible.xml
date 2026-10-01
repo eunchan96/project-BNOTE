@@ -8,6 +8,25 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
+    <!-- 개인용 음성 재생 버튼(BibleAudioController). 음성 폴더를 고른 기기에서만 보인다.
+         절 선택 툴바(하단 가운데)와 겹치지 않도록 그 위쪽에 띄워둔다. -->
+    <ImageView
+        android:id="@+id/btn_bible_audio"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:layout_gravity="bottom|end"
+        android:layout_marginEnd="20dp"
+        android:layout_marginBottom="96dp"
+        android:padding="16dp"
+        android:scaleType="fitCenter"
+        android:src="@drawable/ic_play"
+        android:background="@drawable/bg_fab_brown"
+        android:elevation="6dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:contentDescription="음성 재생"
+        android:visibility="gone" />
+
     <include layout="@layout/include_selection_toolbar" />
 
     <include layout="@layout/include_highlight_color_toolbar" />
