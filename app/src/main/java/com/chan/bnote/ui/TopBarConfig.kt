@@ -15,7 +15,8 @@ data class TopBarConfig(
 	val showAutoScrollButton: Boolean = false,
 	val isAutoScrolling: Boolean = false,
 	val showSermonIcon: Boolean = false,
-	val showApplicationButton: Boolean = false
+	val showAudioButton: Boolean = false,
+	val isAudioPlaying: Boolean = false
 )
 
 interface TopBarActionHandler {
@@ -30,5 +31,6 @@ interface TopBarActionHandler {
 	fun onAutoScrollButtonClicked() {}
 	fun onReadingPlanCheckClicked() {}
 	fun onSermonIconClicked() {}
-	fun onApplicationButtonClicked() {}
+	fun onAudioButtonClicked() {}
+	fun onAudioButtonLongClicked() {}
 }

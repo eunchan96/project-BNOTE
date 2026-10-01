@@ -59,7 +59,7 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 	private lateinit var btnMenu: ImageView
 	private lateinit var btnPrevChapter: ImageView
 	private lateinit var btnNextChapter: ImageView
-	private lateinit var btnGoToApplication: ImageView
+	private lateinit var btnBibleAudio: ImageView
 
 	private lateinit var navBible: ImageView
 	private lateinit var navSermon: ImageView
@@ -290,7 +290,7 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 	private fun bindBottomNavViews() {
 		btnPrevChapter = findViewById(R.id.btn_prev_chapter)
 		btnNextChapter = findViewById(R.id.btn_next_chapter)
-		btnGoToApplication = findViewById(R.id.btn_go_to_application)
+		btnBibleAudio = findViewById(R.id.btn_bible_audio)
 		navSermon = findViewById(R.id.nav_sermon)
 		navBible = findViewById(R.id.nav_bible)
 		navMyPage = findViewById(R.id.nav_mypage)
@@ -310,7 +310,11 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 	private fun setupBottomNavActions() {
 		btnPrevChapter.setOnClickListener { currentHandler()?.onPrevChapterClicked() }
 		btnNextChapter.setOnClickListener { currentHandler()?.onNextChapterClicked() }
-		btnGoToApplication.setOnClickListener { currentHandler()?.onApplicationButtonClicked() }
+		btnBibleAudio.setOnClickListener { currentHandler()?.onAudioButtonClicked() }
+		btnBibleAudio.setOnLongClickListener {
+			currentHandler()?.onAudioButtonLongClicked()
+			true
+		}
 
 		navBible.setOnClickListener { switchToBible() }
 		navSermon.setOnClickListener { switchToSermon() }
@@ -377,7 +381,12 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 		btnMenu.setImageResource(config.menuIconRes)
 		btnPrevChapter.visibility = visible(config.showChapterNav)
 		btnNextChapter.visibility = visible(config.showChapterNav)
-		btnGoToApplication.visibility = visible(config.showApplicationButton)
+		btnBibleAudio.visibility = visible(config.showAudioButton)
+		// 오른쪽 탭 아이콘들(updateNavSelection)과 같은 색 규칙: 재생 중이면 갈색, 멈춰 있으면 회색.
+		btnBibleAudio.setColorFilter(
+			if (config.isAudioPlaying) getColor(R.color.bottom_nav_selected)
+			else getColor(R.color.bottom_nav_unselected)
+		)
 
 		iconReadingPlanCheck.visibility = visible(config.showReadingPlanCheck)
 		iconReadingPlanCheck.alpha = if (config.isChapterRead) 1f else 0.4f

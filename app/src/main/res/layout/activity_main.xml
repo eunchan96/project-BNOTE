@@ -160,7 +160,7 @@
             android:background="@color/divider_light" />
     </LinearLayout>
 
-    <!-- 하단바 콘텐츠: 좌측 이전/다음 장 + 우측 아이콘 3개 -->
+    <!-- 하단바 콘텐츠: 좌측 이전/다음 장 + 우측 헤드셋(개인용) + 탭 아이콘 3개 -->
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="52dp"
@@ -194,22 +194,26 @@
             android:clickable="true"
             android:focusable="true" />
 
-        <ImageView
-            android:id="@+id/btn_go_to_application"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:padding="8dp"
-            android:src="@drawable/ic_check"
-            android:visibility="gone"
-            android:contentDescription="적용하기"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:clickable="true"
-            android:focusable="true" />
-
         <View
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:layout_weight="1" />
+
+        <!-- 개인용 음성 재생 버튼(BibleAudioController). 음성 폴더를 고른 기기의 성경 탭에서만 보인다.
+             누르면 재생/일시정지(멈춤=회색, 재생 중=갈색 — 오른쪽 탭 아이콘들과 같은 색), 길게 누르면 재생바·배속 툴바가 열린다. -->
+        <ImageView
+            android:id="@+id/btn_bible_audio"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:padding="8dp"
+            android:layout_marginEnd="12dp"
+            android:src="@drawable/ic_headset"
+            android:visibility="gone"
+            android:contentDescription="음성 듣기"
+            app:tint="@color/bottom_nav_unselected"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:focusable="true" />
 
         <ImageView
             android:id="@+id/nav_bible"

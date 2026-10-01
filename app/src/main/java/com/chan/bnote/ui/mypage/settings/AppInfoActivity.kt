@@ -129,7 +129,7 @@ class AppInfoActivity : AppCompatActivity() {
 		if (folderUri == null || !BibleAudioLibrary.isConfigured(this)) {
 			MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_BNOTE_Dialog)
 				.setTitle("음성 성경")
-				.setMessage("기기에 넣어둔 음성 파일 폴더를 고르면 성경 탭에 재생 버튼이 생겨요.\n\n파일 이름은 \"책번호_장번호\" 형식이어야 해요.\n예) 01_001.mp3, 19_023.ogg")
+				.setMessage("기기에 넣어둔 음성 파일 폴더를 고르면 성경 탭 하단바에 헤드셋 버튼이 생겨요.\n\n파일 이름은 \"책번호_장번호\" 형식이어야 해요.\n예) 01_001.mp3, 19_023.ogg")
 				.setPositiveButton("폴더 선택") { _, _ -> audioFolderLauncher.launch(null) }
 				.setNegativeButton("닫기", null)
 				.show()

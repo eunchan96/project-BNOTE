@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?><!-- 음성 재생 툴바(개인용 숨김 기능). 하단바 헤드셋 버튼을 길게 누르면 뜬다.
+     절 선택 툴바·하이라이트 툴바와 같은 자리, 같은 모양이며 셋 중 하나만 보인다. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/container_audio_toolbar"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_gravity="bottom|center_horizontal"
+    android:layout_marginStart="20dp"
+    android:layout_marginEnd="20dp"
+    android:layout_marginBottom="24dp"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:paddingStart="4dp"
+    android:paddingEnd="4dp"
+    android:visibility="gone"
+    android:elevation="8dp"
+    android:background="@drawable/bg_selection_toolbar">
+
+    <TextView
+        android:id="@+id/btn_close_audio_toolbar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="14dp"
+        android:text="✕"
+        android:textSize="16sp"
+        android:maxLines="1"
+        android:textColor="@color/white"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:clickable="true"
+        android:focusable="true" />
+
+    <View
+        android:layout_width="1dp"
+        android:layout_height="24dp"
+        android:background="#555555" />
+
+    <SeekBar
+        android:id="@+id/seek_audio_position"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="14dp"
+        android:paddingBottom="14dp"
+        android:progressTint="@color/brown_light"
+        android:thumbTint="@color/brown_light"
+        android:progressBackgroundTint="#888888" />
+
+    <View
+        android:layout_width="1dp"
+        android:layout_height="24dp"
+        android:background="#555555" />
+
+    <TextView
+        android:id="@+id/btn_audio_speed"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:minWidth="56dp"
+        android:padding="14dp"
+        android:gravity="center"
+        android:text="1.0x"
+        android:textSize="14sp"
+        android:maxLines="1"
+        android:textColor="@color/white"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:clickable="true"
+        android:focusable="true" />
+
+</LinearLayout>

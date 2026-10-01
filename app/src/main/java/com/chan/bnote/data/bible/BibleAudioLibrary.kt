@@ -11,8 +11,7 @@ import kotlinx.coroutines.withContext
  * 개인용 숨김 기능: 기기에 직접 넣어둔 성경 음성 파일 폴더.
  *
  * 음성 파일은 앱(APK)에 들어있지 않고, 사용자가 자기 폰에 복사해둔 폴더를 앱 정보 화면의 숨김 메뉴
- * (버전 글자 7번 탭)에서 골라야만 쓸 수 있다. 폴더를 안 고른 기기에서는 성경 탭에 재생 버튼 자체가
- * 나타나지 않는다.
+ * (버전 글자 7번 탭)에서 골라야만 쓸 수 있다. 폴더를 안 고른 기기에서는 성경 탭 하단바에 헤드셋 버튼 자체가 나타나지 않는다.
  *
  * 폴더 안에는 "책번호_장번호.확장자" 형식의 파일을 하위 폴더 없이 바로 넣어둔다.
  * 예) 01_001.mp3(창세기 1장), 19_023.ogg(시편 23편), 66_022.mp3(요한계시록 22장)
@@ -25,6 +24,10 @@ object BibleAudioLibrary {
 
 	private const val PREF_NAME = "bible_audio"
 	private const val KEY_FOLDER_URI = "folder_uri"
+	private const val KEY_PLAYBACK_SPEED = "playback_speed"
+
+	/** 재생 툴바의 배속 버튼에서 고를 수 있는 값. */
+	val SPEED_OPTIONS = listOf(0.8f, 1.0f, 1.2f, 1.5f)
 
 	private val FILE_NAME_PATTERN =
 		Regex("""^(\d{1,2})_(\d{1,3})\.(mp3|ogg|opus|m4a)$""", RegexOption.IGNORE_CASE)
@@ -75,6 +78,19 @@ object BibleAudioLibrary {
 			.remove(KEY_FOLDER_URI)
 			.apply()
 		index = null
+	}
+
+	/** 마지막으로 고른 배속. 앱을 다시 켜도 유지된다. */
+	fun getPlaybackSpeed(context: Context): Float {
+		val saved = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.getFloat(KEY_PLAYBACK_SPEED, 1.0f)
+		return SPEED_OPTIONS.firstOrNull { it == saved } ?: 1.0f
+	}
+
+	fun setPlaybackSpeed(context: Context, speed: Float) {
+		context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE).edit()
+			.putFloat(KEY_PLAYBACK_SPEED, speed)
+			.apply()
 	}
 
 	/** 폴더에서 찾은 장 음성 파일 개수. 폴더를 고른 직후 제대로 들어있는지 확인시켜주는 용도. */

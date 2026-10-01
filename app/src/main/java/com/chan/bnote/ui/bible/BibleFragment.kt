@@ -146,6 +146,26 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 
 	private var audioController: BibleAudioController? = null
 
+	// 하단바 헤드셋 버튼을 길게 누르면 뜨는 재생 툴바(재생바 + 배속 버튼).
+	private lateinit var audioToolbar: View
+	private lateinit var audioSeekBar: android.widget.SeekBar
+	private lateinit var audioSpeedButton: TextView
+	private var isUserSeekingAudio = false
+
+	// 재생 툴바가 열려 있을 때만 켜져서, 뒤로가기를 누르면 앱을 나가는 대신 툴바를 닫는다.
+	private val audioToolbarBackCallback = object : androidx.activity.OnBackPressedCallback(false) {
+		override fun handleOnBackPressed() {
+			hideAudioToolbar()
+		}
+	}
+
+	private val audioProgressRunnable = object : Runnable {
+		override fun run() {
+			updateAudioToolbar()
+			autoScrollHandler.postDelayed(this, 500L)
+		}
+	}
+
 	private val autoScrollHandler = android.os.Handler(android.os.Looper.getMainLooper())
 	private val autoScrollRunnable = object : Runnable {
 		override fun run() {
@@ -235,17 +255,20 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		audioController = BibleAudioController(
 			context = requireContext(),
 			scope = viewLifecycleOwner.lifecycleScope,
-			button = view.findViewById(R.id.btn_bible_audio),
 			currentChapter = { currentBookId to currentChapter },
 			onChapterFinished = {
 				// 한 장을 다 들으면 다음 장으로 넘긴다 — 페이지가 바뀌면 onBiblePageSettled에서 이어서 재생된다.
 				if (viewPager.currentItem < pageAdapter.itemCount - 1) {
 					viewPager.currentItem = viewPager.currentItem + 1
 				} else {
-					audioController?.stop()
+					audioController?.release()
+					onAudioStateChanged()
 				}
-			}
-		).also { it.refreshAvailability() }
+			},
+			onStateChanged = { onAudioStateChanged() }
+		)
+		setupAudioToolbar(view)
+		audioController?.refreshAvailability()
 
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(requireContext().applicationContext)
@@ -316,7 +339,9 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		isChapterRead = isChapterRead,
 		showAutoScrollButton = isAutoScrollEnabled,
 		isAutoScrolling = isAutoScrolling,
-		showSermonIcon = hasSermonForChapter
+		showSermonIcon = hasSermonForChapter,
+		showAudioButton = audioController?.isAvailable == true,
+		isAudioPlaying = audioController?.isListening == true
 	)
 
 	override fun onLocationClicked() {
@@ -772,6 +797,7 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 	 * 여기서 다시 확인해서 반영한다. hide()/show() 방식의 탭 전환은 onResume이 아니라 이 콜백을 탄다. */
 	override fun onHiddenChanged(hidden: Boolean) {
 		super.onHiddenChanged(hidden)
+		if (hidden) hideAudioToolbar()
 		if (!hidden) refreshOnReturnToTab()
 	}
 
@@ -920,9 +946,126 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 	override fun onDestroyView() {
 		super.onDestroyView()
 		stopAutoScroll() // 화면 벗어나면 반드시 정지 (메모리 누수 방지)
+		autoScrollHandler.removeCallbacks(audioProgressRunnable)
 		audioController?.release()
 		audioController = null
 	}
+
+	// --- 음성 재생(개인용 숨김 기능) ---
+
+	override fun onAudioButtonClicked() {
+		audioController?.toggle()
+	}
+
+	override fun onAudioButtonLongClicked() {
+		if (audioController?.isAvailable != true) return
+		if (audioToolbar.visibility == View.VISIBLE) hideAudioToolbar() else showAudioToolbar()
+	}
+
+	/** 재생/일시정지·장 변경·배속 변경 등 재생 상태가 바뀔 때마다 BibleAudioController가 불러준다. */
+	private fun onAudioStateChanged() {
+		notifyTopBarChanged()
+		if (audioController?.isAvailable != true) {
+			hideAudioToolbar()
+		} else if (audioToolbar.visibility == View.VISIBLE) {
+			updateAudioToolbar()
+		}
+	}
+
+	private fun setupAudioToolbar(view: View) {
+		audioToolbar = view.findViewById(R.id.container_audio_toolbar)
+		audioSeekBar = view.findViewById(R.id.seek_audio_position)
+		audioSpeedButton = view.findViewById(R.id.btn_audio_speed)
+
+		view.findViewById<TextView>(R.id.btn_close_audio_toolbar).setOnClickListener {
+			hideAudioToolbar()
+		}
+		audioSeekBar.setOnSeekBarChangeListener(object :
+			android.widget.SeekBar.OnSeekBarChangeListener {
+			override fun onProgressChanged(
+				seekBar: android.widget.SeekBar,
+				progress: Int,
+				fromUser: Boolean
+			) = Unit
+
+			override fun onStartTrackingTouch(seekBar: android.widget.SeekBar) {
+				// 손가락으로 끌어서 옮기는 동안에는 0.5초마다 하는 위치 갱신이 손가락 위치를 덮어쓰지 않게 한다.
+				isUserSeekingAudio = true
+			}
+
+			override fun onStopTrackingTouch(seekBar: android.widget.SeekBar) {
+				isUserSeekingAudio = false
+				audioController?.seekTo(seekBar.progress)
+			}
+		})
+		audioSpeedButton.setOnClickListener { showAudioSpeedPicker() }
+
+		// 툴바 바깥(본문 등)을 누르면 닫는다. 누른 동작(스크롤·절 탭)은 그대로 실행된다.
+		(view as? TouchObservingFrameLayout)?.onTouchDown = { event ->
+			if (audioToolbar.visibility == View.VISIBLE && !isInsideAudioToolbar(event)) {
+				hideAudioToolbar()
+			}
+		}
+		requireActivity().onBackPressedDispatcher.addCallback(
+			viewLifecycleOwner,
+			audioToolbarBackCallback
+		)
+	}
+
+	/** 툴바는 최상위 레이아웃의 바로 아래 자식이라, 터치 좌표와 툴바의 left/top/right/bottom이
+	 * 같은 좌표계다. */
+	private fun isInsideAudioToolbar(event: android.view.MotionEvent): Boolean =
+		event.x >= audioToolbar.left && event.x <= audioToolbar.right &&
+				event.y >= audioToolbar.top && event.y <= audioToolbar.bottom
+
+	private fun showAudioToolbar() {
+		// 절 선택 툴바·하이라이트 툴바와 같은 자리에 뜨므로, 열려 있던 것은 닫는다.
+		clearSelection()
+		audioToolbar.visibility = View.VISIBLE
+		audioToolbarBackCallback.isEnabled = true
+		updateAudioToolbar()
+		autoScrollHandler.removeCallbacks(audioProgressRunnable)
+		autoScrollHandler.post(audioProgressRunnable)
+	}
+
+	private fun hideAudioToolbar() {
+		if (!::audioToolbar.isInitialized) return
+		audioToolbar.visibility = View.GONE
+		audioToolbarBackCallback.isEnabled = false
+		autoScrollHandler.removeCallbacks(audioProgressRunnable)
+	}
+
+	private fun updateAudioToolbar() {
+		val controller = audioController ?: return
+		val duration = controller.durationMs()
+		// 아직 재생을 시작하지 않았거나 파일을 준비하는 중이면 옮길 위치가 없으므로 재생바를 잠근다.
+		audioSeekBar.isEnabled = duration > 0
+		audioSeekBar.max = duration.coerceAtLeast(1)
+		if (!isUserSeekingAudio) audioSeekBar.progress = controller.positionMs()
+		audioSpeedButton.text = formatAudioSpeed(controller.speed)
+	}
+
+	private fun showAudioSpeedPicker() {
+		val controller = audioController ?: return
+		val options = com.chan.bnote.data.bible.BibleAudioLibrary.SPEED_OPTIONS
+		val labels = options.map { formatAudioSpeed(it) }.toTypedArray()
+		val currentIndex = options.indexOf(controller.speed).coerceAtLeast(0)
+
+		com.google.android.material.dialog.MaterialAlertDialogBuilder(
+			requireContext(),
+			R.style.ThemeOverlay_BNOTE_Dialog
+		)
+			.setTitle("재생 속도")
+			.setSingleChoiceItems(labels, currentIndex) { dialog, which ->
+				controller.changeSpeed(options[which])
+				dialog.dismiss()
+			}
+			.setNegativeButton("취소", null)
+			.show()
+	}
+
+	private fun formatAudioSpeed(speed: Float): String =
+		String.format(java.util.Locale.US, "%.1fx", speed)
 
 	private fun notifyTopBarChanged() {
 		if (isHidden) return // 숨겨진(다른 탭이 보이는) 상태에서는 상단바를 건드리면 안 된다
@@ -1024,6 +1167,7 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 			return
 		}
 		selectionToolbar.visibility = View.VISIBLE
+		hideAudioToolbar()
 		val singleSelected = selectedVerses.size == 1
 		view?.findViewById<TextView>(R.id.btn_toolbar_bookmark)?.visibility =
 			if (singleSelected) View.VISIBLE else View.GONE
@@ -1235,6 +1379,7 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 
 	private fun showHighlightColorToolbar() {
 		selectionToolbar.visibility = View.GONE
+		hideAudioToolbar()
 		populateHighlightSwatches()
 		view?.findViewById<TextView>(R.id.btn_remove_highlight)?.visibility =
 			if (hasExistingHighlightForPending()) View.VISIBLE else View.GONE
