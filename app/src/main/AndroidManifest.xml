@@ -219,6 +219,9 @@
             android:name=".ui.sermon.category.CategorySermonListActivity"
             android:exported="false" />
         <activity
+            android:name=".ui.sermon.bybook.SermonByBookActivity"
+            android:exported="false" />
+        <activity
             android:name=".ui.bible.BibleSearchActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />

@@ -182,16 +182,22 @@ class ProfileActivity : AppCompatActivity() {
 					StatItem("설교노트", "${sermonCount}개") {
 						startActivity(
 							Intent(this@ProfileActivity, MainActivity::class.java).apply {
-								putExtra(MainActivity.EXTRA_NAVIGATE_SERMON_SUBTAB, 0) // 캘린더
+								putExtra(
+									MainActivity.EXTRA_NAVIGATE_SERMON_SUBTAB,
+									com.chan.bnote.ui.sermon.SermonFragment.SUBTAB_SERMON
+								)
 								flags =
 									Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
 							}
 						)
 					},
-					StatItem("적용", "${applicationCount}개") {
+					StatItem("적용노트", "${applicationCount}개") {
 						startActivity(
 							Intent(this@ProfileActivity, MainActivity::class.java).apply {
-								putExtra(MainActivity.EXTRA_NAVIGATE_SERMON_SUBTAB, 2) // 적용
+								putExtra(
+									MainActivity.EXTRA_NAVIGATE_SERMON_SUBTAB,
+									com.chan.bnote.ui.sermon.SermonFragment.SUBTAB_APPLICATION
+								)
 								flags =
 									Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
 							}

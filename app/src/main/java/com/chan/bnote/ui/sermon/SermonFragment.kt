@@ -13,16 +13,22 @@ import com.chan.bnote.ui.FabAddHandler
 import com.chan.bnote.ui.SubtabRefreshable
 import com.chan.bnote.ui.TopBarActionHandler
 import com.chan.bnote.ui.TopBarConfig
+import com.chan.bnote.ui.sermon.bybook.SermonByBookActivity
 import com.chan.bnote.ui.sermon.category.CategoryManageActivity
 
 class SermonFragment : Fragment(), TopBarActionHandler {
 
-	private lateinit var subtabCalendar: TextView
-	private lateinit var subtabByBook: TextView
+	companion object {
+		/** 서브탭 순서(SermonSubPagerAdapter와 같음). selectSubtab()·MainActivity.EXTRA_NAVIGATE_SERMON_SUBTAB에 쓴다. */
+		const val SUBTAB_SERMON = 0
+		const val SUBTAB_APPLICATION = 1
+	}
+
+	private lateinit var subtabSermon: TextView
 	private lateinit var subtabApplication: TextView
 	private lateinit var viewPager: ViewPager2
 
-	private val subtabs get() = listOf(subtabCalendar, subtabByBook, subtabApplication)
+	private val subtabs get() = listOf(subtabSermon, subtabApplication)
 
 	override fun onCreateView(
 		inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -33,10 +39,8 @@ class SermonFragment : Fragment(), TopBarActionHandler {
 	override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 		super.onViewCreated(view, savedInstanceState)
 
-		subtabCalendar = view.findViewById(R.id.subtab_calendar)
-		subtabByBook = view.findViewById(R.id.subtab_by_book)
-		subtabApplication = view.findViewById(R.id.subtab_by_preacher)
-		subtabApplication.text = "적용하기"
+		subtabSermon = view.findViewById(R.id.subtab_sermon)
+		subtabApplication = view.findViewById(R.id.subtab_application)
 
 		viewPager = view.findViewById(R.id.sermon_view_pager)
 		val pagerAdapter = SermonSubPagerAdapter(this)
@@ -55,9 +59,8 @@ class SermonFragment : Fragment(), TopBarActionHandler {
 			(currentFragment as? FabAddHandler)?.onFabAddClicked()
 		}
 
-		subtabCalendar.setOnClickListener { viewPager.setCurrentItem(0, true) }
-		subtabByBook.setOnClickListener { viewPager.setCurrentItem(1, true) }
-		subtabApplication.setOnClickListener { viewPager.setCurrentItem(2, true) }
+		subtabSermon.setOnClickListener { viewPager.setCurrentItem(SUBTAB_SERMON, true) }
+		subtabApplication.setOnClickListener { viewPager.setCurrentItem(SUBTAB_APPLICATION, true) }
 
 		viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
 			override fun onPageSelected(position: Int) {
@@ -68,7 +71,7 @@ class SermonFragment : Fragment(), TopBarActionHandler {
 			}
 		})
 
-		updateSelectedTab(0)
+		updateSelectedTab(SUBTAB_SERMON)
 	}
 
 	/** 하단 탭은 hide()/show() 방식이라, 다른 탭(성경·마이페이지)에 갔다가 이 탭으로 돌아와도
@@ -79,6 +82,13 @@ class SermonFragment : Fragment(), TopBarActionHandler {
 		if (!hidden) refreshCurrentSubtab()
 	}
 
+	/** 메뉴(≡)의 "성경별로 보기"처럼 별도 화면(Activity)에서 설교를 추가·수정·삭제하고 돌아왔을 때도
+	 * 지금 보이는 서브탭에 반영되도록 다시 불러온다. */
+	override fun onResume() {
+		super.onResume()
+		refreshCurrentSubtab()
+	}
+
 	private fun refreshCurrentSubtab() {
 		if (!::viewPager.isInitialized) return
 		val currentFragment =
@@ -86,8 +96,8 @@ class SermonFragment : Fragment(), TopBarActionHandler {
 		(currentFragment as? SubtabRefreshable)?.onSubtabBecameVisible()
 	}
 
-	/** 내 정보 화면의 "설교노트"/"적용" 기록 카드처럼, 다른 화면에서 이 탭으로 이동하면서
-	 * 특정 서브탭(캘린더=0, 성경별=1, 적용=2)까지 바로 보여주고 싶을 때 MainActivity가 부른다.
+	/** 내 정보 화면의 "설교노트"/"적용노트" 기록 카드처럼, 다른 화면에서 이 탭으로 이동하면서
+	 * 특정 서브탭(SUBTAB_SERMON / SUBTAB_APPLICATION)까지 바로 보여주고 싶을 때 MainActivity가 부른다.
 	 * onViewCreated가 아직 안 끝났으면(뷰페이저가 없으면) 조용히 무시한다 — switchTo(...)가
 	 * commitNow()를 쓰므로 실제로는 이 프래그먼트가 막 add()된 경우에도 항상 뷰가 준비된 뒤에
 	 * 불린다. */
@@ -115,6 +125,9 @@ class SermonFragment : Fragment(), TopBarActionHandler {
 
 	override fun onMenuClicked() {
 		val dialog = SermonMenuDialogFragment()
+		dialog.onByBookClicked = {
+			startActivity(Intent(requireContext(), SermonByBookActivity::class.java))
+		}
 		dialog.onCategoryManageClicked = {
 			startActivity(Intent(requireContext(), CategoryManageActivity::class.java))
 		}

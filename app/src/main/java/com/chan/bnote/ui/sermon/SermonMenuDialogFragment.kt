@@ -14,6 +14,7 @@ import com.chan.bnote.R
 
 class SermonMenuDialogFragment : DialogFragment() {
 
+	var onByBookClicked: (() -> Unit)? = null
 	var onCategoryManageClicked: (() -> Unit)? = null
 	var onPreacherManageClicked: (() -> Unit)? = null
 	var onApplicationCategoryManageClicked: (() -> Unit)? = null
@@ -45,6 +46,11 @@ class SermonMenuDialogFragment : DialogFragment() {
 			setGravity(Gravity.END)
 			setLayout(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.MATCH_PARENT)
 			setDimAmount(0.4f)
+		}
+
+		view.findViewById<TextView>(R.id.menu_by_book).setOnClickListener {
+			onByBookClicked?.invoke()
+			dismiss()
 		}
 
 		view.findViewById<TextView>(R.id.menu_category_manage).setOnClickListener {

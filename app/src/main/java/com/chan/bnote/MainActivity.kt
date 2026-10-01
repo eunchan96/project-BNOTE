@@ -42,9 +42,8 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 		const val EXTRA_NAVIGATE_WORD_END = "extra_navigate_word_end"
 		const val EXTRA_NAVIGATE_WORD_SEGMENT = "extra_navigate_word_segment"
 
-		// 내 정보 화면의 "설교노트"/"적용" 기록 카드에서, 설교·적용 탭으로 이동하면서 그 안의
-		// 특정 서브탭(캘린더=0, 성경별=1, 적용=2 — SermonSubPagerAdapter 순서와 동일)까지
-		// 바로 골라서 보여주기 위한 요청.
+		// 내 정보 화면의 "설교노트"/"적용노트" 기록 카드에서, 설교·적용 탭으로 이동하면서 그 안의
+		// 특정 서브탭(SermonFragment.SUBTAB_SERMON / SUBTAB_APPLICATION — SermonSubPagerAdapter 순서와 동일)까지 바로 골라서 보여주기 위한 요청.
 		const val EXTRA_NAVIGATE_SERMON_SUBTAB = "extra_navigate_sermon_subtab"
 
 		private const val TAG_BIBLE = "tab_bible"
