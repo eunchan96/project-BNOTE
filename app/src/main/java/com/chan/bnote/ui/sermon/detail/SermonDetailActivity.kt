@@ -56,6 +56,9 @@ class SermonDetailActivity : AppCompatActivity() {
 	private var changed = false
 	private lateinit var sermon: Sermon
 
+	/** 화면에 보이는 본문 표기들("창세기 1장 1~3절" 등). 복사 버튼이 그대로 쓴다. */
+	private var bibleRefLabels: List<String> = emptyList()
+
 	private val editSermonLauncher = registerForActivityResult(
 		ActivityResultContracts.StartActivityForResult()
 	) { result ->
@@ -83,6 +86,8 @@ class SermonDetailActivity : AppCompatActivity() {
 		}
 
 		findViewById<ImageView>(R.id.btn_top_bar_back).setOnClickListener { finishWithResult() }
+
+		findViewById<ImageView>(R.id.btn_copy_sermon).setOnClickListener { copySermon() }
 
 		findViewById<ImageView>(R.id.btn_edit_sermon).setOnClickListener {
 			editSermonLauncher.launch(AddSermonActivity.editIntent(this, sermon.id))
@@ -155,6 +160,7 @@ class SermonDetailActivity : AppCompatActivity() {
 		}
 
 		val refs = db.sermonBibleRefDao().getBySermon(sermon.id)
+		bibleRefLabels = refs.map { it.toDisplayLabel() }
 
 		// 본문 정보: "제목 : ~ / 본문 : ~(밑줄, 누르면 이동) / 설교 : ~"
 		val infoView = findViewById<TextView>(R.id.text_sermon_info)
@@ -337,6 +343,28 @@ class SermonDetailActivity : AppCompatActivity() {
 				)
 			}
 		}
+	}
+
+	/**
+	 * "제목\n본문\n\n메모" 형식으로 클립보드에 복사한다(본문이 여러 개면 화면과 같이 ", "로 이어 붙인다).
+	 * 제목·본문·메모 중 비어 있는 건 그 줄(과 앞뒤 빈 줄)을 통째로 빼서, 어색한 빈 줄이 남지 않게 한다.
+	 * 메모는 굵게·밑줄 등 서식이 HTML로 저장돼 있으므로, 적용 상세의 복사와 같이 RichTextUtils로
+	 * 화면에 보이는 글자만 뽑는다.
+	 */
+	private fun copySermon() {
+		if (!::sermon.isInitialized) return
+
+		val header = listOfNotNull(
+			sermon.title.takeIf { it.isNotBlank() },
+			bibleRefLabels.takeIf { it.isNotEmpty() }?.joinToString(", ")
+		).joinToString("\n")
+		val memo = RichTextUtils.toEditable(sermon.memo).toString().trimEnd()
+		val text = listOf(header, memo).filter { it.isNotBlank() }.joinToString("\n\n")
+
+		val clipboard =
+			getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+		clipboard.setPrimaryClip(android.content.ClipData.newPlainText("sermon", text))
+		android.widget.Toast.makeText(this, "복사했어요", android.widget.Toast.LENGTH_SHORT).show()
 	}
 
 	/** youtube.com/watch?v=ID, youtu.be/ID, youtube.com/live/ID, youtube.com/shorts/ID 형식 모두 지원. */
