@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?><!-- 음성 재생 툴바(개인용 숨김 기능). 하단바의 성경 탭 아이콘을 길게 누르면 뜬다.
      절 선택 툴바·하이라이트 툴바와 같은 자리, 같은 모양이며 셋 중 하나만 보인다.
-     왼쪽부터 [3초 뒤로][재생/일시정지][3초 앞으로] | 재생바 | 배속. -->
+     왼쪽부터 [3초 뒤로][재생/일시정지][3초 앞으로] | 재생바 | 설정(재생 속도·취침 타이머). -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/container_audio_toolbar"
     android:layout_width="match_parent"
@@ -83,17 +83,14 @@
         android:layout_height="24dp"
         android:background="#555555" />
 
-    <TextView
-        android:id="@+id/btn_audio_speed"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:minWidth="52dp"
-        android:padding="12dp"
-        android:gravity="center"
-        android:text="1.0x"
-        android:textSize="14sp"
-        android:maxLines="1"
-        android:textColor="@color/white"
+    <!-- 재생 속도 · 취침 타이머를 함께 고르는 설정 창을 연다. 타이머가 켜져 있으면 아이콘이 갈색으로 바뀐다. -->
+    <ImageView
+        android:id="@+id/btn_audio_settings"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:padding="11dp"
+        android:src="@drawable/ic_tune"
+        android:contentDescription="재생 설정"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:clickable="true"
         android:focusable="true" />

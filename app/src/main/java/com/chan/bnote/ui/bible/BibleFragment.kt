@@ -149,13 +149,13 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 
 	private var audioController: BibleAudioController? = null
 
-	// 하단바의 성경 탭 아이콘을 길게 누르면 뜨는 재생 툴바(3초 뒤로·재생/일시정지·3초 앞으로 + 재생바 + 배속).
+	// 하단바의 성경 탭 아이콘을 길게 누르면 뜨는 재생 툴바(3초 뒤로·재생/일시정지·3초 앞으로 + 재생바 + 설정).
 	private lateinit var audioToolbar: View
 	private lateinit var audioPlayPauseButton: android.widget.ImageView
 	private lateinit var audioRewindButton: View
 	private lateinit var audioForwardButton: View
 	private lateinit var audioSeekBar: android.widget.SeekBar
-	private lateinit var audioSpeedButton: TextView
+	private lateinit var audioSettingsButton: android.widget.ImageView
 	private var isUserSeekingAudio = false
 
 	// 재생 툴바가 열려 있을 때만 켜져서, 뒤로가기를 누르면 앱을 나가는 대신 툴바를 닫는다.
@@ -980,7 +980,7 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		audioRewindButton = view.findViewById(R.id.btn_audio_rewind)
 		audioForwardButton = view.findViewById(R.id.btn_audio_forward)
 		audioSeekBar = view.findViewById(R.id.seek_audio_position)
-		audioSpeedButton = view.findViewById(R.id.btn_audio_speed)
+		audioSettingsButton = view.findViewById(R.id.btn_audio_settings)
 
 		audioPlayPauseButton.setOnClickListener { audioController?.toggle() }
 		audioRewindButton.setOnClickListener {
@@ -1009,7 +1009,7 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 				audioController?.seekTo(seekBar.progress)
 			}
 		})
-		audioSpeedButton.setOnClickListener { showAudioSpeedPicker() }
+		audioSettingsButton.setOnClickListener { showAudioSettingsDialog() }
 
 		// 툴바 바깥(본문 등)을 누르면 닫는다. 누른 동작(스크롤·절 탭)은 그대로 실행된다.
 		(view as? TouchObservingFrameLayout)?.onTouchDown = { event ->
@@ -1063,26 +1063,108 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		}
 		audioSeekBar.max = duration.coerceAtLeast(1)
 		if (!isUserSeekingAudio) audioSeekBar.progress = controller.positionMs()
-		audioSpeedButton.text = formatAudioSpeed(controller.speed)
+
+		// 취침 타이머가 켜져 있으면 설정 아이콘을 갈색으로 — 창을 열지 않아도 켜져 있는 걸 알 수 있게.
+		if (controller.isSleepTimerOn) {
+			audioSettingsButton.setColorFilter(
+				androidx.core.content.ContextCompat.getColor(requireContext(), R.color.brown_light)
+			)
+		} else {
+			audioSettingsButton.clearColorFilter()
+		}
 	}
 
-	private fun showAudioSpeedPicker() {
+	/** 재생 속도와 취침 타이머를 한 창에서 고른다. 칩을 누르면 바로 적용되고(선택 표시도 그 자리에서
+	 * 다시 그린다), 창은 "닫기"로 닫는다. */
+	private fun showAudioSettingsDialog() {
 		val controller = audioController ?: return
-		val options = com.chan.bnote.data.bible.BibleAudioLibrary.SPEED_OPTIONS
-		val labels = options.map { formatAudioSpeed(it) }.toTypedArray()
-		val currentIndex = options.indexOf(controller.speed).coerceAtLeast(0)
+		val content = layoutInflater.inflate(R.layout.dialog_audio_settings, null)
+		val speedRow = content.findViewById<android.widget.LinearLayout>(R.id.row_audio_speed)
+		val timerRow = content.findViewById<android.widget.LinearLayout>(R.id.row_sleep_timer)
+		val timerStatus = content.findViewById<TextView>(R.id.text_sleep_timer_status)
+
+		// (보이는 이름, 값) — 값: null = 끄기, 0 = 이 장이 끝나면, 양수 = 분.
+		val timerOptions = listOf<Pair<String, Int?>>(
+			"끄기" to null,
+			"이 장 끝나면" to 0,
+			"15분" to 15,
+			"30분" to 30,
+			"60분" to 60
+		)
+
+		fun render() {
+			speedRow.removeAllViews()
+			for (speed in com.chan.bnote.data.bible.BibleAudioLibrary.SPEED_OPTIONS) {
+				speedRow.addView(
+					buildAudioSettingChip(
+						speedRow,
+						formatAudioSpeed(speed),
+						controller.speed == speed
+					) {
+						controller.changeSpeed(speed)
+						render()
+					}
+				)
+			}
+
+			timerRow.removeAllViews()
+			for ((label, minutes) in timerOptions) {
+				timerRow.addView(
+					buildAudioSettingChip(
+						timerRow,
+						label,
+						controller.sleepTimerMinutes == minutes
+					) {
+						controller.setSleepTimer(minutes)
+						render()
+					}
+				)
+			}
+
+			val remaining = controller.sleepTimerRemainingMinutes()
+			timerStatus.text = when {
+				!controller.isSleepTimerOn -> "끝까지 이어서 재생해요"
+				remaining != null -> "${remaining}분 뒤, 그때 듣던 장이 끝나면 멈춰요"
+				else -> "지금 듣는 장이 끝나면 멈춰요"
+			}
+		}
+
+		render()
 
 		com.google.android.material.dialog.MaterialAlertDialogBuilder(
 			requireContext(),
 			R.style.ThemeOverlay_BNOTE_Dialog
 		)
-			.setTitle("재생 속도")
-			.setSingleChoiceItems(labels, currentIndex) { dialog, which ->
-				controller.changeSpeed(options[which])
-				dialog.dismiss()
-			}
-			.setNegativeButton("취소", null)
+			.setTitle("재생 설정")
+			.setView(content)
+			.setPositiveButton("닫기", null)
 			.show()
+	}
+
+	/** 복사 형식 수정 화면과 같은 모양의 칩. 선택된 칩은 갈색 배경·흰 글자. */
+	private fun buildAudioSettingChip(
+		parent: android.view.ViewGroup,
+		label: String,
+		selected: Boolean,
+		onSelect: () -> Unit
+	): TextView {
+		val chip = layoutInflater.inflate(R.layout.item_copy_format_chip, parent, false) as TextView
+		chip.text = label
+		chip.maxLines = 1
+		chip.setBackgroundResource(
+			if (selected) R.drawable.bg_book_button_selected else R.drawable.bg_book_button
+		)
+		chip.setTextColor(
+			androidx.core.content.ContextCompat.getColor(
+				requireContext(),
+				if (selected) R.color.white else R.color.text_primary
+			)
+		)
+		chip.setOnClickListener {
+			onSelect()
+			if (audioToolbar.visibility == View.VISIBLE) updateAudioToolbar()
+		}
+		return chip
 	}
 
 	private fun formatAudioSpeed(speed: Float): String =

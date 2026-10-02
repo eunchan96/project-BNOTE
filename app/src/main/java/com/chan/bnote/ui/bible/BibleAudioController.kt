@@ -4,6 +4,8 @@ import android.content.Context
 import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.media.PlaybackParams
+import android.os.Handler
+import android.os.Looper
 import android.widget.Toast
 import com.chan.bnote.data.bible.BibleAudioLibrary
 import kotlinx.coroutines.CoroutineScope
@@ -17,6 +19,9 @@ import kotlinx.coroutines.launch
  * - 재생 중에 다른 장으로 넘기면 그 장의 음성으로 바로 바뀐다.
  * - 한 장이 끝나면 다음 장으로 넘어가면서 이어서 재생한다(onChapterFinished).
  * - 일시정지한 뒤 다른 장으로 넘기면, 다음에 누를 때 새 장의 처음부터 재생한다.
+ * - 취침 타이머(setSleepTimer)를 걸어두면, 정한 시간이 지난 뒤 그때 듣던 장이 끝날 때 멈춘다.
+ *   틀어둔 채 잠들어도 요한계시록까지 계속 넘어가지 않게 하려는 것. 장 중간에서 뚝 끊지 않아서,
+ *   다음에 들을 때 그 다음 장 처음부터 자연스럽게 이어 들을 수 있다.
  */
 class BibleAudioController(
 	private val context: Context,
@@ -46,6 +51,29 @@ class BibleAudioController(
 
 	/** 파일 찾기/준비가 비동기라서, 그 사이에 다른 장 요청이 들어오면 앞의 요청은 버리기 위한 번호. */
 	private var requestToken = 0
+
+	/**
+	 * 지금 고른 취침 타이머. null = 끄기, 0 = 이 장이 끝나면, 양수 = 그 분만큼 지난 뒤 듣던 장이 끝나면.
+	 * 앱을 다시 켜면 꺼진 상태로 시작한다(그날 그때만 쓰는 설정이라 저장하지 않는다).
+	 */
+	var sleepTimerMinutes: Int? = null
+		private set
+
+	/** 정한 시간이 다 돼서(또는 "이 장이 끝나면"을 골라서) 지금 장이 끝나면 멈춰야 하는 상태. */
+	private var stopAtChapterEnd = false
+	private var sleepTimerEndAt = 0L
+	private val sleepTimerHandler = Handler(Looper.getMainLooper())
+	private val sleepTimerRunnable = Runnable {
+		if (isListening) {
+			stopAtChapterEnd = true
+		} else {
+			// 이미 멈춰 있으면 기다릴 장이 없으니 그냥 끈다.
+			clearSleepTimer()
+		}
+		onStateChanged()
+	}
+
+	val isSleepTimerOn: Boolean get() = sleepTimerMinutes != null
 
 	/** 앱 정보에서 폴더를 고르거나 해제하고 돌아왔을 때 사용 가능 여부를 다시 맞춘다. */
 	fun refreshAvailability() {
@@ -118,7 +146,35 @@ class BibleAudioController(
 		onStateChanged()
 	}
 
+	/** 취침 타이머를 새로 건다(null이면 끈다). 고를 때마다 처음부터 다시 잰다. */
+	fun setSleepTimer(minutes: Int?) {
+		sleepTimerHandler.removeCallbacks(sleepTimerRunnable)
+		sleepTimerMinutes = minutes
+		stopAtChapterEnd = minutes == 0
+		if (minutes != null && minutes > 0) {
+			val delayMs = minutes * 60_000L
+			sleepTimerEndAt = System.currentTimeMillis() + delayMs
+			sleepTimerHandler.postDelayed(sleepTimerRunnable, delayMs)
+		}
+		onStateChanged()
+	}
+
+	/** 시간을 정해둔 타이머가 아직 도는 중이면 남은 분(올림). 그 외(꺼짐·이 장이 끝나면·시간 다 됨)는 null. */
+	fun sleepTimerRemainingMinutes(): Int? {
+		val minutes = sleepTimerMinutes ?: return null
+		if (minutes <= 0 || stopAtChapterEnd) return null
+		val remainingMs = (sleepTimerEndAt - System.currentTimeMillis()).coerceAtLeast(0L)
+		return ((remainingMs + 59_999L) / 60_000L).toInt()
+	}
+
+	private fun clearSleepTimer() {
+		sleepTimerHandler.removeCallbacks(sleepTimerRunnable)
+		sleepTimerMinutes = null
+		stopAtChapterEnd = false
+	}
+
 	fun release() {
+		clearSleepTimer()
 		stopInternal()
 	}
 
@@ -160,8 +216,15 @@ class BibleAudioController(
 					setOnCompletionListener {
 						if (token != requestToken) return@setOnCompletionListener
 						releasePlayer()
-						// isListening은 그대로 둔다 — 다음 장으로 넘어가면 onChapterChanged에서 이어서 재생된다.
-						onChapterFinished()
+						if (stopAtChapterEnd) {
+							// 취침 타이머: 다음 장으로 넘어가지 않고 여기서 멈춘다. 타이머도 다 쓴 것으로 끈다.
+							clearSleepTimer()
+							isListening = false
+							onStateChanged()
+						} else {
+							// isListening은 그대로 둔다 — 다음 장으로 넘어가면 onChapterChanged에서 이어서 재생된다.
+							onChapterFinished()
+						}
 					}
 					setOnErrorListener { _, _, _ ->
 						if (token == requestToken) {
