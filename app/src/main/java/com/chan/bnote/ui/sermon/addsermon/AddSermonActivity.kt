@@ -53,6 +53,10 @@ class AddSermonActivity : AppCompatActivity() {
 		private const val MAX_PHOTOS = 5
 		private const val AUTO_SAVE_DELAY_MS = 3000L
 
+		// 메모에서 텍스트를 길게 눌러 선택하면 뜨는 메뉴에 추가하는 항목들(적용 작성 화면의 "굵게"와 같은 방식).
+		private const val ID_MENU_BOLD = 2001
+		private const val ID_MENU_UNDERLINE = 2002
+
 		// 화면 회전이나 백그라운드에서 시스템이 메모리를 확보하려고 이 화면을 다시 만들 때도,
 		// "새로 쓰던 중 자동 저장으로 이미 DB에 생긴 설교"를 잊지 않도록 여기 같이 저장해둔다.
 		private const val KEY_SAVED_SERMON_ID = "saved_sermon_id"
@@ -228,6 +232,39 @@ class AddSermonActivity : AppCompatActivity() {
 			} else {
 				false
 			}
+		}
+		// 메모에서 텍스트를 길게 눌러 선택하면 뜨는 메뉴(복사·붙여넣기 등)에 "굵게"·"밑줄"을 추가한다.
+		// 적용 작성 화면의 묵상하기 메모와 같은 방식이며, 메모 박스 아래 굵게/밑줄 버튼과 똑같이 동작한다.
+		editMemo.customSelectionActionModeCallback = object : android.view.ActionMode.Callback {
+			override fun onCreateActionMode(
+				mode: android.view.ActionMode?,
+				menu: android.view.Menu?
+			): Boolean {
+				menu?.add(0, ID_MENU_BOLD, 0, "굵게")
+				menu?.add(0, ID_MENU_UNDERLINE, 1, "밑줄")
+				return true
+			}
+
+			override fun onPrepareActionMode(
+				mode: android.view.ActionMode?,
+				menu: android.view.Menu?
+			): Boolean = false
+
+			override fun onActionItemClicked(
+				mode: android.view.ActionMode?,
+				item: android.view.MenuItem?
+			): Boolean {
+				val bold = when (item?.itemId) {
+					ID_MENU_BOLD -> true
+					ID_MENU_UNDERLINE -> false
+					else -> return false
+				}
+				applyFormatting(bold = bold)
+				mode?.finish()
+				return true
+			}
+
+			override fun onDestroyActionMode(mode: android.view.ActionMode?) {}
 		}
 		editLink = findViewById(R.id.edit_sermon_link)
 
