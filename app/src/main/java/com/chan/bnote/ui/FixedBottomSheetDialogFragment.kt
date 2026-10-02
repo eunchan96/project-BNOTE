@@ -16,6 +16,14 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment
  */
 abstract class FixedBottomSheetDialogFragment : BottomSheetDialogFragment() {
 
+	/**
+	 * 시트가 화면 높이의 몇 배까지 커질 수 있는지(예: 0.6f = 화면의 60%). null이면 제한 없음(기본).
+	 * 목록이 길어질 수 있는 시트(설교자·카테고리 선택 등)에서 덮어쓰면, 항목이 많아져도 시트가 화면
+	 * 위쪽까지 올라오지 않고 그 높이에서 멈춘 채 안의 목록만 스크롤된다. 항목이 적을 땐 지금처럼
+	 * 내용만큼만 차지한다.
+	 */
+	protected open val maxHeightRatio: Float? = null
+
 	override fun onStart() {
 		super.onStart()
 		val bottomSheet = dialog?.findViewById<View>(
@@ -25,6 +33,10 @@ abstract class FixedBottomSheetDialogFragment : BottomSheetDialogFragment() {
 		val behavior = BottomSheetBehavior.from(bottomSheet)
 		behavior.isDraggable = false
 		behavior.skipCollapsed = true
+		maxHeightRatio?.let { ratio ->
+			behavior.maxHeight = (resources.displayMetrics.heightPixels * ratio).toInt()
+			bottomSheet.requestLayout()
+		}
 		behavior.state = BottomSheetBehavior.STATE_EXPANDED
 	}
 }
