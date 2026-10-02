@@ -14,8 +14,8 @@ class TodayVerseWidgetProvider : AsyncWidgetProvider()
  */
 object TodayVerseWidget {
 
-	// 위젯 안에서 본문 말고 세로로 차지하는 부분(제목·위치 표기가 한 줄 + 본문 위 간격)
-	private const val RESERVED_HEIGHT_DP = 22
+	// 위젯 안에서 본문 말고 세로로 차지하는 부분(맨 위 구절 위치 한 줄 + 본문 위 간격)
+	private const val RESERVED_HEIGHT_DP = 24
 
 	/**
 	 * [spec]을 안 주면 저장된 설정과 실제 크기로 그린다(홈 화면 위젯). 위젯 설정 화면의 미리보기는
