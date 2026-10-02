@@ -59,6 +59,13 @@ class SermonDetailActivity : AppCompatActivity() {
 	/** 화면에 보이는 본문 표기들("창세기 1장 1~3절" 등). 복사 버튼이 그대로 쓴다. */
 	private var bibleRefLabels: List<String> = emptyList()
 
+	/**
+	 * 지금 진행 중인 불러오기. 수정 화면에서 저장하고 돌아오면 editSermonLauncher 콜백과 onResume이
+	 * 거의 동시에 loadSermon()을 부르는데, 둘이 같이 돌면 사진 목록을 두 번 붙여서 사진이 두 장씩
+	 * 보였다(다시 들어가면 한 장으로 보이던 문제). 새로 부를 때 앞의 것을 취소해서 항상 하나만 돌게 한다.
+	 */
+	private var loadJob: kotlinx.coroutines.Job? = null
+
 	private val editSermonLauncher = registerForActivityResult(
 		ActivityResultContracts.StartActivityForResult()
 	) { result ->
@@ -128,7 +135,8 @@ class SermonDetailActivity : AppCompatActivity() {
 
 	private fun loadSermon() {
 		val sermonId = intent.getLongExtra(EXTRA_SERMON_ID, -1L)
-		lifecycleScope.launch {
+		loadJob?.cancel()
+		loadJob = lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(applicationContext)
 			val loaded = db.sermonDao().getById(sermonId)
 			if (loaded == null) {
@@ -276,11 +284,13 @@ class SermonDetailActivity : AppCompatActivity() {
 			com.chan.bnote.ui.common.LinkifyHelper.applySmartLinks(memoView)
 		}
 
-		// 첨부 사진
+		// 첨부 사진. DB에서 먼저 다 읽어온 뒤에 비우고 채운다 — 비우기와 채우기 사이에 DB 조회(코루틴이
+		// 잠깐 멈추는 지점)가 끼어 있으면, 그 사이 다른 불러오기가 끼어들었을 때 양쪽이 각각 사진을
+		// 붙여서 두 장씩 보일 수 있다(loadJob 설명 참고). 비우고 채우는 동안엔 멈추는 곳이 없게 한다.
 		val photoScroll = findViewById<View>(R.id.scroll_detail_photos)
 		val photoContainer = findViewById<LinearLayout>(R.id.container_detail_photos)
-		photoContainer.removeAllViews()
 		val photos = db.sermonPhotoDao().getBySermon(sermon.id)
+		photoContainer.removeAllViews()
 		photoScroll.visibility = if (photos.isEmpty()) View.GONE else View.VISIBLE
 		for (photo in photos) {
 			val thumb = LayoutInflater.from(this)
