@@ -14,9 +14,7 @@ data class TopBarConfig(
 	val isChapterRead: Boolean = false,
 	val showAutoScrollButton: Boolean = false,
 	val isAutoScrolling: Boolean = false,
-	val showSermonIcon: Boolean = false,
-	val showAudioButton: Boolean = false,
-	val isAudioPlaying: Boolean = false
+	val showSermonIcon: Boolean = false
 )
 
 interface TopBarActionHandler {
@@ -31,6 +29,7 @@ interface TopBarActionHandler {
 	fun onAutoScrollButtonClicked() {}
 	fun onReadingPlanCheckClicked() {}
 	fun onSermonIconClicked() {}
-	fun onAudioButtonClicked() {}
-	fun onAudioButtonLongClicked() {}
+
+	/** 하단바에서 지금 보고 있는 탭 아이콘을 길게 눌렀을 때. 처리했으면 true(탭 전환 클릭은 안 일어남). */
+	fun onNavTabLongClicked(): Boolean = false
 }

@@ -72,6 +72,9 @@ class BiblePageData(
 class BibleFragment : Fragment(), TopBarActionHandler {
 
 	companion object {
+		/** 재생 툴바의 3초 뒤로/앞으로 버튼이 한 번에 옮기는 길이. */
+		private const val AUDIO_SKIP_MS = 3000
+
 		private const val ARG_BOOK_ID = "bookId"
 		private const val ARG_CHAPTER = "chapter"
 		private const val ARG_VERSE = "verse"
@@ -146,8 +149,11 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 
 	private var audioController: BibleAudioController? = null
 
-	// 하단바 헤드셋 버튼을 길게 누르면 뜨는 재생 툴바(재생바 + 배속 버튼).
+	// 하단바의 성경 탭 아이콘을 길게 누르면 뜨는 재생 툴바(3초 뒤로·재생/일시정지·3초 앞으로 + 재생바 + 배속).
 	private lateinit var audioToolbar: View
+	private lateinit var audioPlayPauseButton: android.widget.ImageView
+	private lateinit var audioRewindButton: View
+	private lateinit var audioForwardButton: View
 	private lateinit var audioSeekBar: android.widget.SeekBar
 	private lateinit var audioSpeedButton: TextView
 	private var isUserSeekingAudio = false
@@ -339,9 +345,7 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		isChapterRead = isChapterRead,
 		showAutoScrollButton = isAutoScrollEnabled,
 		isAutoScrolling = isAutoScrolling,
-		showSermonIcon = hasSermonForChapter,
-		showAudioButton = audioController?.isAvailable == true,
-		isAudioPlaying = audioController?.isListening == true
+		showSermonIcon = hasSermonForChapter
 	)
 
 	override fun onLocationClicked() {
@@ -953,18 +957,16 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 
 	// --- 음성 재생(개인용 숨김 기능) ---
 
-	override fun onAudioButtonClicked() {
-		audioController?.toggle()
-	}
-
-	override fun onAudioButtonLongClicked() {
-		if (audioController?.isAvailable != true) return
+	/** 하단바의 성경 탭 아이콘을 길게 눌렀을 때. 음성 폴더를 고른 기기에서만 재생 툴바를 열고 닫는다.
+	 * 그 외엔 false를 돌려줘서 평소처럼 탭 전환(클릭)만 일어나게 한다. */
+	override fun onNavTabLongClicked(): Boolean {
+		if (audioController?.isAvailable != true) return false
 		if (audioToolbar.visibility == View.VISIBLE) hideAudioToolbar() else showAudioToolbar()
+		return true
 	}
 
 	/** 재생/일시정지·장 변경·배속 변경 등 재생 상태가 바뀔 때마다 BibleAudioController가 불러준다. */
 	private fun onAudioStateChanged() {
-		notifyTopBarChanged()
 		if (audioController?.isAvailable != true) {
 			hideAudioToolbar()
 		} else if (audioToolbar.visibility == View.VISIBLE) {
@@ -974,11 +976,20 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 
 	private fun setupAudioToolbar(view: View) {
 		audioToolbar = view.findViewById(R.id.container_audio_toolbar)
+		audioPlayPauseButton = view.findViewById(R.id.btn_audio_play_pause)
+		audioRewindButton = view.findViewById(R.id.btn_audio_rewind)
+		audioForwardButton = view.findViewById(R.id.btn_audio_forward)
 		audioSeekBar = view.findViewById(R.id.seek_audio_position)
 		audioSpeedButton = view.findViewById(R.id.btn_audio_speed)
 
-		view.findViewById<TextView>(R.id.btn_close_audio_toolbar).setOnClickListener {
-			hideAudioToolbar()
+		audioPlayPauseButton.setOnClickListener { audioController?.toggle() }
+		audioRewindButton.setOnClickListener {
+			audioController?.seekBy(-AUDIO_SKIP_MS)
+			updateAudioToolbar()
+		}
+		audioForwardButton.setOnClickListener {
+			audioController?.seekBy(AUDIO_SKIP_MS)
+			updateAudioToolbar()
 		}
 		audioSeekBar.setOnSeekBarChangeListener(object :
 			android.widget.SeekBar.OnSeekBarChangeListener {
@@ -1037,9 +1048,19 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 
 	private fun updateAudioToolbar() {
 		val controller = audioController ?: return
+		val listening = controller.isListening
+		audioPlayPauseButton.setImageResource(if (listening) R.drawable.ic_pause else R.drawable.ic_play)
+		audioPlayPauseButton.contentDescription = if (listening) "음성 일시정지" else "음성 재생"
+
 		val duration = controller.durationMs()
-		// 아직 재생을 시작하지 않았거나 파일을 준비하는 중이면 옮길 위치가 없으므로 재생바를 잠근다.
-		audioSeekBar.isEnabled = duration > 0
+		// 아직 재생을 시작하지 않았거나 파일을 준비하는 중이면 옮길 위치가 없으므로 재생바와
+		// 3초 앞/뒤 버튼을 잠근다(살짝 흐리게 보여서 지금은 못 쓴다는 걸 알 수 있게).
+		val seekable = duration > 0
+		audioSeekBar.isEnabled = seekable
+		listOf(audioRewindButton, audioForwardButton).forEach {
+			it.isEnabled = seekable
+			it.alpha = if (seekable) 1f else 0.4f
+		}
 		audioSeekBar.max = duration.coerceAtLeast(1)
 		if (!isUserSeekingAudio) audioSeekBar.progress = controller.positionMs()
 		audioSpeedButton.text = formatAudioSpeed(controller.speed)

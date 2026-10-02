@@ -42,8 +42,9 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 		const val EXTRA_NAVIGATE_WORD_END = "extra_navigate_word_end"
 		const val EXTRA_NAVIGATE_WORD_SEGMENT = "extra_navigate_word_segment"
 
-		// 내 정보 화면의 "설교노트"/"적용노트" 기록 카드에서, 설교·적용 탭으로 이동하면서 그 안의
-		// 특정 서브탭(SermonFragment.SUBTAB_SERMON / SUBTAB_APPLICATION — SermonSubPagerAdapter 순서와 동일)까지 바로 골라서 보여주기 위한 요청.
+		// 내 정보 화면의 "설교노트"/"적용" 기록 카드에서, 설교·적용 탭으로 이동하면서 그 안의
+		// 특정 서브탭(SermonFragment.SUBTAB_SERMON / SUBTAB_APPLICATION — SermonSubPagerAdapter
+		// 순서와 동일)까지 바로 골라서 보여주기 위한 요청.
 		const val EXTRA_NAVIGATE_SERMON_SUBTAB = "extra_navigate_sermon_subtab"
 
 		private const val TAG_BIBLE = "tab_bible"
@@ -58,7 +59,6 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 	private lateinit var btnMenu: ImageView
 	private lateinit var btnPrevChapter: ImageView
 	private lateinit var btnNextChapter: ImageView
-	private lateinit var btnBibleAudio: ImageView
 
 	private lateinit var navBible: ImageView
 	private lateinit var navSermon: ImageView
@@ -289,7 +289,6 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 	private fun bindBottomNavViews() {
 		btnPrevChapter = findViewById(R.id.btn_prev_chapter)
 		btnNextChapter = findViewById(R.id.btn_next_chapter)
-		btnBibleAudio = findViewById(R.id.btn_bible_audio)
 		navSermon = findViewById(R.id.nav_sermon)
 		navBible = findViewById(R.id.nav_bible)
 		navMyPage = findViewById(R.id.nav_mypage)
@@ -309,13 +308,11 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 	private fun setupBottomNavActions() {
 		btnPrevChapter.setOnClickListener { currentHandler()?.onPrevChapterClicked() }
 		btnNextChapter.setOnClickListener { currentHandler()?.onNextChapterClicked() }
-		btnBibleAudio.setOnClickListener { currentHandler()?.onAudioButtonClicked() }
-		btnBibleAudio.setOnLongClickListener {
-			currentHandler()?.onAudioButtonLongClicked()
-			true
-		}
 
 		navBible.setOnClickListener { switchToBible() }
+		// 지금 보이는 탭이 길게 누르기를 처리하면(성경 탭의 개인용 음성 재생 툴바 등) 거기서 끝나고,
+		// 처리하지 않으면(false) 평소처럼 손을 뗄 때 탭 전환(클릭)이 이어진다.
+		navBible.setOnLongClickListener { currentHandler()?.onNavTabLongClicked() == true }
 		navSermon.setOnClickListener { switchToSermon() }
 		navMyPage.setOnClickListener { switchToMyPage() }
 	}
@@ -380,12 +377,6 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 		btnMenu.setImageResource(config.menuIconRes)
 		btnPrevChapter.visibility = visible(config.showChapterNav)
 		btnNextChapter.visibility = visible(config.showChapterNav)
-		btnBibleAudio.visibility = visible(config.showAudioButton)
-		// 오른쪽 탭 아이콘들(updateNavSelection)과 같은 색 규칙: 재생 중이면 갈색, 멈춰 있으면 회색.
-		btnBibleAudio.setColorFilter(
-			if (config.isAudioPlaying) getColor(R.color.bottom_nav_selected)
-			else getColor(R.color.bottom_nav_unselected)
-		)
 
 		iconReadingPlanCheck.visibility = visible(config.showReadingPlanCheck)
 		iconReadingPlanCheck.alpha = if (config.isChapterRead) 1f else 0.4f

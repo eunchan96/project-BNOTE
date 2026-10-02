@@ -10,8 +10,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 /**
- * 성경 탭의 음성 재생(개인용 숨김 기능, BibleAudioLibrary 참고). 화면(버튼·툴바)은 갖지 않고
- * 재생 상태만 관리한다 — 하단바 헤드셋 버튼과 재생 툴바는 BibleFragment가 이 상태를 보고 그린다.
+ * 성경 탭의 음성 재생(개인용 숨김 기능, BibleAudioLibrary 참고). 화면(툴바)은 갖지 않고
+ * 재생 상태만 관리한다 — 재생 툴바(하단바 성경 탭 아이콘 길게 누르기)는 BibleFragment가 이 상태를 보고 그린다.
  *
  * - toggle(): 지금 보는 장을 재생하거나, 재생 중이면 일시정지한다(같은 장이면 멈춘 위치부터 이어서).
  * - 재생 중에 다른 장으로 넘기면 그 장의 음성으로 바로 바뀐다.
@@ -32,12 +32,12 @@ class BibleAudioController(
 	/** prepareAsync가 끝나기 전에는 start/pause/seekTo를 부르면 안 되므로 따로 기억한다. */
 	private var isPrepared = false
 
-	/** 사용자가 "듣는 중" 상태로 둔 것인지. 하단바 버튼 색과, 장이 바뀌거나 끝났을 때 이어서
-	 * 재생할지의 기준이다. */
+	/** 사용자가 "듣는 중" 상태로 둔 것인지. 툴바의 재생/일시정지 아이콘과, 장이 바뀌거나 끝났을 때
+	 * 이어서 재생할지의 기준이다. */
 	var isListening = false
 		private set
 
-	/** 음성 폴더가 골라져 있어서 이 기능을 쓸 수 있는지(하단바 버튼 표시 기준). */
+	/** 음성 폴더가 골라져 있어서 이 기능을 쓸 수 있는지(재생 툴바를 열 수 있는지의 기준). */
 	var isAvailable = false
 		private set
 
@@ -98,6 +98,14 @@ class BibleAudioController(
 		val current = player ?: return
 		if (!isPrepared) return
 		current.seekTo(positionMs.coerceIn(0, current.duration.coerceAtLeast(0)))
+	}
+
+	/** 지금 위치에서 deltaMs만큼 앞(+)/뒤(-)로 옮긴다(툴바의 3초 앞으로/뒤로 버튼). 끝을 넘기면
+	 * 끝으로 가서 그 장이 끝난 것으로 처리되고(다음 장으로 넘어감), 처음보다 앞이면 처음으로 간다. */
+	fun seekBy(deltaMs: Int) {
+		val current = player ?: return
+		if (!isPrepared) return
+		seekTo(current.currentPosition + deltaMs)
 	}
 
 	fun changeSpeed(newSpeed: Float) {
