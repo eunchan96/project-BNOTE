@@ -382,6 +382,16 @@ class AddSermonActivity : AppCompatActivity() {
 		}
 	}
 
+	/**
+	 * 이 화면은 키보드 연결/해제·화면 회전·창 크기 변경에도 다시 만들어지지 않는다(매니페스트의
+	 * configChanges — 다시 만들어지면 쓰던 내용이 날아가던 문제 때문). 대신 화면 폭이 바뀌면, 본문 박스들은
+	 * 예전 폭에 맞춰 직접 늘려둔 너비(fillRefBoxLinesCompletely)를 그대로 갖고 있으므로 새 폭에 맞게 다시 그린다.
+	 */
+	override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
+		super.onConfigurationChanged(newConfig)
+		if (::flexboxRefs.isInitialized) renderBibleRefBoxes()
+	}
+
 	override fun onSaveInstanceState(outState: Bundle) {
 		super.onSaveInstanceState(outState)
 		existingSermon?.let { outState.putLong(KEY_SAVED_SERMON_ID, it.id) }
