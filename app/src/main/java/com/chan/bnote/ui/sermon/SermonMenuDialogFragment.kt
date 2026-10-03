@@ -2,15 +2,14 @@ package com.chan.bnote.ui.sermon
 
 import android.app.Dialog
 import android.os.Bundle
-import android.view.Gravity
 import android.view.LayoutInflater
-import android.view.ViewGroup
 import android.widget.TextView
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import androidx.fragment.app.DialogFragment
 import com.chan.bnote.R
+import com.chan.bnote.ui.common.RightPanelSize
 
 class SermonMenuDialogFragment : DialogFragment() {
 
@@ -22,13 +21,8 @@ class SermonMenuDialogFragment : DialogFragment() {
 	override fun onStart() {
 		super.onStart()
 
-		dialog?.window?.apply {
-			setGravity(Gravity.END)
-			setLayout(
-				ViewGroup.LayoutParams.WRAP_CONTENT,
-				ViewGroup.LayoutParams.MATCH_PARENT
-			)
-		}
+		// 폭은 화면 폭의 일정 비율(기기마다 같은 비율로 보이게), 높이는 화면 전체.
+		dialog?.window?.let { RightPanelSize.apply(it, requireContext()) }
 	}
 
 	override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
@@ -43,8 +37,7 @@ class SermonMenuDialogFragment : DialogFragment() {
 		}
 
 		dialog.window?.apply {
-			setGravity(Gravity.END)
-			setLayout(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.MATCH_PARENT)
+			RightPanelSize.apply(this, requireContext())
 			setDimAmount(0.4f)
 		}
 
