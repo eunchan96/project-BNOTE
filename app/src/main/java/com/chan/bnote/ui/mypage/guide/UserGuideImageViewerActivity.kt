@@ -17,7 +17,8 @@ import androidx.viewpager2.widget.ViewPager2
 import com.chan.bnote.R
 
 /** 가이드 항목의 사진을 전체화면으로 보여준다. PhotoViewerActivity와 같은 구조지만, 파일 경로가
- * 아니라 앱에 번들된 drawable 리소스 이름(예: "guide_bible_search")을 받는다는 점만 다르다. */
+ * 아니라 앱에 번들된 drawable 리소스 이름(예: "guide_bible_search")을 받는다는 점만 다르다.
+ * 사진을 한 번 탭하면 뒤로가기 버튼·카운터가 숨고, 다시 탭하면 나타나는 것도 같다. */
 class UserGuideImageViewerActivity : AppCompatActivity() {
 
 	companion object {
@@ -32,7 +33,10 @@ class UserGuideImageViewerActivity : AppCompatActivity() {
 		}
 	}
 
-	private inner class ImagePagerAdapter(private val resIds: List<Int>) :
+	private inner class ImagePagerAdapter(
+		private val resIds: List<Int>,
+		private val onTap: () -> Unit
+	) :
 		RecyclerView.Adapter<ImagePagerAdapter.ViewHolder>() {
 
 		inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -47,6 +51,8 @@ class UserGuideImageViewerActivity : AppCompatActivity() {
 
 		override fun onBindViewHolder(holder: ViewHolder, position: Int) {
 			holder.image.setImageResource(resIds[position])
+			(holder.image as? com.github.chrisbanes.photoview.PhotoView)
+				?.setOnViewTapListener { _, _, _ -> onTap() }
 		}
 
 		override fun getItemCount(): Int = resIds.size
@@ -82,10 +88,14 @@ class UserGuideImageViewerActivity : AppCompatActivity() {
 			insets
 		}
 
-		pager.adapter = ImagePagerAdapter(resIds)
+		counter.visibility = if (resIds.size > 1) View.VISIBLE else View.GONE
+		val controlsToggle = com.chan.bnote.ui.common.ViewerControlsToggle(
+			if (resIds.size > 1) listOf(closeButton, counter) else listOf(closeButton)
+		)
+
+		pager.adapter = ImagePagerAdapter(resIds) { controlsToggle.toggle() }
 		pager.setCurrentItem(startIndex, false)
 
-		counter.visibility = if (resIds.size > 1) View.VISIBLE else View.GONE
 		fun updateCounter(position: Int) {
 			counter.text = "${position + 1} / ${resIds.size}"
 		}
@@ -96,7 +106,6 @@ class UserGuideImageViewerActivity : AppCompatActivity() {
 			}
 		})
 
-		findViewById<ImageView>(R.id.btn_close_guide_image_viewer).setOnClickListener { finish() }
 		closeButton.setOnClickListener { finish() }
 	}
 }

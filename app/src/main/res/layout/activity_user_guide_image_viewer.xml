@@ -1,4 +1,5 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?><!-- 위에 떠 있는 뒤로가기 버튼과 카운터는 불투명한 흰 배경 + 갈색 아이콘/글자로 통일해서 어떤 사진
+     위에서도 잘 보이게 한다. 사진을 탭하면 둘 다 숨고, 다시 탭하면 나타난다(ViewerControlsToggle). -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/guide_image_viewer_root"
@@ -16,28 +17,31 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="top|center_horizontal"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="17dp"
         android:paddingStart="14dp"
         android:paddingEnd="14dp"
         android:paddingTop="6dp"
         android:paddingBottom="6dp"
         android:text="1 / 1"
-        android:textColor="@color/white"
+        android:textColor="@color/brown_primary"
         android:textSize="14sp"
-        android:background="@drawable/bg_book_progress_done"
+        android:textStyle="bold"
+        android:background="@drawable/bg_viewer_control_pill"
+        android:elevation="2dp"
         android:visibility="gone" />
 
     <ImageView
         android:id="@+id/btn_close_guide_image_viewer"
-        android:layout_width="44dp"
-        android:layout_height="44dp"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
         android:layout_gravity="top|start"
-        android:layout_margin="8dp"
-        android:padding="10dp"
+        android:layout_margin="12dp"
+        android:padding="8dp"
         android:src="@drawable/ic_chevron_left"
-        app:tint="@color/white"
+        app:tint="@color/brown_primary"
         android:contentDescription="닫기"
-        android:background="?attr/selectableItemBackgroundBorderless"
+        android:background="@drawable/bg_viewer_control_circle"
+        android:elevation="2dp"
         android:clickable="true"
         android:focusable="true" />
 

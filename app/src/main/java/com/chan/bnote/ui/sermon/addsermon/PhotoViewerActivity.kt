@@ -20,7 +20,7 @@ import com.chan.bnote.R
 
 /** 사진을 전체화면으로 보여준다. 여러 장이면(설교 상세에서 진입) 좌우로 스와이프해서 다음/이전
  * 사진으로 넘길 수 있고, 위쪽에 "2 / 5"처럼 몇 번째인지 보여준다. 사진 한 장만 볼 때(기존 호출부
- * 호환용)도 그대로 동작한다. */
+ * 호환용)도 그대로 동작한다. 사진을 한 번 탭하면 뒤로가기 버튼·카운터가 숨고, 다시 탭하면 나타난다. */
 class PhotoViewerActivity : AppCompatActivity() {
 
 	companion object {
@@ -41,7 +41,10 @@ class PhotoViewerActivity : AppCompatActivity() {
 		}
 	}
 
-	private class PhotoPagerAdapter(private val paths: List<String>) :
+	private class PhotoPagerAdapter(
+		private val paths: List<String>,
+		private val onTap: () -> Unit
+	) :
 		RecyclerView.Adapter<PhotoPagerAdapter.ViewHolder>() {
 
 		class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -56,6 +59,9 @@ class PhotoViewerActivity : AppCompatActivity() {
 
 		override fun onBindViewHolder(holder: ViewHolder, position: Int) {
 			holder.image.load(paths[position])
+			// 사진 위든 바깥 검은 여백이든, 한 번 탭하면 위쪽 버튼들을 숨기거나 보인다(확대/축소 제스처와는 별개).
+			(holder.image as? com.github.chrisbanes.photoview.PhotoView)
+				?.setOnViewTapListener { _, _, _ -> onTap() }
 		}
 
 		override fun getItemCount(): Int = paths.size
@@ -77,7 +83,7 @@ class PhotoViewerActivity : AppCompatActivity() {
 		// enableEdgeToEdge()로 사진이 상태바 뒤까지 꽉 차게 보이는 건 그대로 두되(사진 뷰어라
 		// 오히려 몰입감이 좋다), 그 위에 떠 있는 카운터·닫기 버튼은 상태바(와이파이·시계 아이콘
 		// 줄)와 겹치지 않도록 상태바 높이만큼 위쪽 여백을 더해준다. 두 뷰 모두 xml에 이미 기본
-		// 여백(16dp/8dp)이 있으므로, 거기에 상태바 높이를 더하는 방식으로 처리한다.
+		// 여백(카운터 17dp, 닫기 버튼 12dp)이 있으므로, 거기에 상태바 높이를 더하는 방식으로 처리한다.
 		val counterBaseMarginTop = (counter.layoutParams as ViewGroup.MarginLayoutParams).topMargin
 		val closeBaseMargin = (closeButton.layoutParams as ViewGroup.MarginLayoutParams).topMargin
 		ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.photo_viewer_root)) { _, insets ->
@@ -91,10 +97,15 @@ class PhotoViewerActivity : AppCompatActivity() {
 			insets
 		}
 
-		pager.adapter = PhotoPagerAdapter(paths)
+		counter.visibility = if (paths.size > 1) View.VISIBLE else View.GONE
+		// 사진이 한 장이면 카운터는 원래 안 보이므로, 탭으로 숨기고 보일 대상에서도 뺀다.
+		val controlsToggle = com.chan.bnote.ui.common.ViewerControlsToggle(
+			if (paths.size > 1) listOf(closeButton, counter) else listOf(closeButton)
+		)
+
+		pager.adapter = PhotoPagerAdapter(paths) { controlsToggle.toggle() }
 		pager.setCurrentItem(startIndex, false)
 
-		counter.visibility = if (paths.size > 1) View.VISIBLE else View.GONE
 		fun updateCounter(position: Int) {
 			counter.text = "${position + 1} / ${paths.size}"
 		}

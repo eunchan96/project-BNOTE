@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 사진 뷰어 위에 떠 있는 뒤로가기 버튼의 배경. 사진이 살짝 비쳐 보이는 반투명한 흰 원(불투명도 약 80%).
+     더 진하게/연하게 하려면 앞 두 자리(알파값, 00=완전 투명 ~ FF=불투명)만 바꾸면 된다. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="oval">
+    <solid android:color="#CCFFFFFF" />
+</shape>
