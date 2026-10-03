@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?><!-- 오늘의 말씀 위젯. RemoteViews로 그려지므로 LinearLayout/TextView/ImageView 같은 기본 뷰만 쓸 수 있다.
-     색·배경은 위젯 설정(라이트/다크)에 따라 코드(WidgetViews.applyTheme)에서 다시 넣는다. -->
+     색·배경은 위젯 설정(라이트/다크)에 따라 코드(WidgetViews.applyTheme)에서 다시 넣는다.
+     맨 위 한 줄은 책 아이콘과 구절 위치(예: 시편 23편 1절)만, 그 아래 바로 본문. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/widget_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
@@ -34,33 +36,22 @@
                 android:id="@+id/widget_icon"
                 android:layout_width="14dp"
                 android:layout_height="14dp"
+                android:layout_marginEnd="6dp"
                 android:scaleType="fitCenter"
                 android:importantForAccessibility="no"
                 android:src="@drawable/ic_book_open"
-                android:tint="@color/widget_light_accent" />
-
-            <TextView
-                android:id="@+id/widget_title"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="6dp"
-                android:text="오늘의 말씀"
-                android:textSize="11sp"
-                android:textStyle="bold"
-                android:letterSpacing="0.04"
-                android:textColor="@color/widget_light_accent" />
+                app:tint="@color/widget_light_accent" />
 
             <TextView
                 android:id="@+id/widget_label"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginStart="8dp"
-                android:gravity="end"
                 android:maxLines="1"
                 android:ellipsize="end"
-                android:textSize="11sp"
-                android:textColor="@color/widget_light_text_secondary" />
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:textColor="@color/widget_light_accent" />
         </LinearLayout>
 
         <TextView
@@ -68,7 +59,7 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:layout_marginTop="6dp"
+            android:layout_marginTop="4dp"
             android:gravity="center_vertical"
             android:fontFamily="serif"
             android:text="불러오는 중이에요"

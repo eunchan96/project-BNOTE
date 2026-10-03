@@ -38,7 +38,8 @@ interface ApplicationDao {
 
 	@Query(
 		"""
-        SELECT a.applicationDate as applicationDate, c.colorHex as colorHex
+        SELECT a.applicationDate as applicationDate, c.colorHex as colorHex,
+               a.id as id, a.categoryId as categoryId
         FROM applications a
         LEFT JOIN application_categories c ON a.categoryId = c.id
         WHERE a.applicationDate >= :startMillis AND a.applicationDate < :endMillis
@@ -59,4 +60,11 @@ interface ApplicationDao {
 	suspend fun getFirstBySermonId(sermonId: Long): Application?
 }
 
-data class ApplicationMarker(val applicationDate: Long, val colorHex: String?)
+/** 캘린더 날짜 칸의 색깔 막대 하나. id·categoryId는 막대 순서를 아래 목록의 정렬(카테고리순·추가순)과
+ * 맞추는 데 쓴다(CalendarApplicationFragment). */
+data class ApplicationMarker(
+	val applicationDate: Long,
+	val colorHex: String?,
+	val id: Long,
+	val categoryId: Long?
+)

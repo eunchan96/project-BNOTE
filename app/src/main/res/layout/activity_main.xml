@@ -160,12 +160,16 @@
             android:background="@color/divider_light" />
     </LinearLayout>
 
-    <!-- 하단바 콘텐츠: 좌측 이전/다음 장 + 우측 아이콘 3개 -->
+    <!-- 하단바 콘텐츠: 좌측 이전/다음 장 + 우측 아이콘 3개.
+         투명 배경을 꼭 둬야 한다: 아이콘들의 눌림 효과는 "배경이 있는 가장 가까운 부모"의 배경 자리에 그려지는데,
+         이 줄에 배경이 없으면 루트 ConstraintLayout까지 올라가서 그 배경(맨 아래 층)에 그려지고, 그 위를 하단바 배경(bottom_nav)이 덮어버려서 눌림 효과가 안 보였다.
+         투명 배경을 주면 이 줄이 효과를 받아서 하단바 배경 위에 그려지고, 색이 없으니 아래 구분선도 그대로 보인다. -->
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="52dp"
         android:orientation="horizontal"
         android:gravity="center_vertical"
+        android:background="@android:color/transparent"
         android:paddingStart="4dp"
         android:paddingEnd="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -190,18 +194,6 @@
             android:padding="8dp"
             android:src="@drawable/ic_chevron_right"
             android:contentDescription="다음 장"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:clickable="true"
-            android:focusable="true" />
-
-        <ImageView
-            android:id="@+id/btn_go_to_application"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:padding="8dp"
-            android:src="@drawable/ic_check"
-            android:visibility="gone"
-            android:contentDescription="적용하기"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:clickable="true"
             android:focusable="true" />

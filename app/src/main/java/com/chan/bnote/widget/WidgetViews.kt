@@ -35,8 +35,11 @@ data class WidgetRenderSpec(
 /**
  * 두 위젯이 함께 쓰는 RemoteViews 도구 모음(테마 적용, 빈 상태 표시, 글자 크기, 탭 동작).
  *
- * 두 위젯의 레이아웃은 widget_root / widget_bg / widget_icon / widget_title / widget_text /
- * widget_label / widget_message 일곱 개의 id를 똑같이 갖고 있어서, 여기 함수들은 어느 위젯이든 그대로 쓸 수 있다.
+ * 두 위젯의 레이아웃은 widget_root / widget_bg / widget_icon / widget_text / widget_label /
+ * widget_message 여섯 개의 id를 똑같이 갖고 있어서, 여기 함수들은 어느 위젯이든 그대로 쓸 수 있다.
+ * 위젯 맨 위 한 줄은 책 아이콘(widget_icon)과 구절 위치(widget_label)만 보여준다 — 어떤 위젯인지는
+ * "다음"(›) 버튼이 있는지로 구분되고, 따로 제목("오늘의 말씀"/"암송 구절")을 둘 만큼 자리가 넉넉하지
+ * 않아서 본문에 양보했다.
  */
 object WidgetViews {
 
@@ -96,12 +99,9 @@ object WidgetViews {
 		views.setImageViewResource(R.id.widget_bg, theme.backgroundRes)
 		views.setInt(R.id.widget_bg, "setImageAlpha", opacityPercent * 255 / 100)
 		views.setInt(R.id.widget_icon, "setColorFilter", accent)
-		views.setTextColor(R.id.widget_title, accent)
 		views.setTextColor(R.id.widget_text, ContextCompat.getColor(context, theme.primaryTextRes))
-		views.setTextColor(
-			R.id.widget_label,
-			ContextCompat.getColor(context, theme.secondaryTextRes)
-		)
+		// 맨 위 구절 위치는 강조색으로 — 본문과 구분되면서, 예전 제목 줄이 하던 "어디 구절인지" 역할을 한다.
+		views.setTextColor(R.id.widget_label, accent)
 		views.setTextColor(
 			R.id.widget_message,
 			ContextCompat.getColor(context, theme.secondaryTextRes)
@@ -177,7 +177,7 @@ object WidgetViews {
 	 * [MIN_TEXT_SP]에서도 다 안 들어가면 그 크기로 고정하고, 실제로 보이는 줄 수만큼만 maxLines로 줘서
 	 * 마지막 줄이 말줄임(…)으로 끝나게 한다(글자가 줄 중간에서 뚝 잘리지 않도록).
 	 *
-	 * [reserveDp]는 본문 말고 위젯이 세로로 차지하는 공간(제목·위치 표기 줄)이다.
+	 * [reserveDp]는 본문 말고 위젯이 세로로 차지하는 공간(맨 위 구절 위치 줄 + 본문 위 간격)이다.
 	 */
 	private fun fitText(
 		context: Context,

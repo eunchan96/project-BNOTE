@@ -86,7 +86,7 @@ class ApplicationDetailActivity : AppCompatActivity() {
 			setResult(if (changed) Activity.RESULT_OK else Activity.RESULT_CANCELED)
 			finish()
 		}
-		findViewById<ImageView>(R.id.btn_share_application).setOnClickListener { shareApplication() }
+		findViewById<ImageView>(R.id.btn_copy_application).setOnClickListener { copyApplication() }
 		findViewById<ImageView>(R.id.btn_edit_application).setOnClickListener {
 			editLauncher.launch(AddApplicationActivity.editIntent(this, applicationId))
 		}
@@ -292,7 +292,7 @@ class ApplicationDetailActivity : AppCompatActivity() {
 	/** 묵상하기 / 기도하기 / 적용하기 메모를 정해진 형식으로 묶어서 클립보드에 복사한다.
 	 * 리치텍스트(굵게 등) 서식이 적용된 메모는 HTML로 저장되므로, RichTextUtils로 화면에 보이는
 	 * 텍스트만 뽑아서(태그 없이) 복사한다. */
-	private fun shareApplication() {
+	private fun copyApplication() {
 		val application = currentApplication ?: return
 
 		val meditation =

@@ -19,7 +19,6 @@ import com.chan.bnote.data.bible.BibleBooks
 import com.chan.bnote.data.sermon.ChapterMarker
 import com.chan.bnote.data.sermon.Sermon
 import com.chan.bnote.ui.FabAddHandler
-import com.chan.bnote.ui.SubtabRefreshable
 import com.chan.bnote.ui.bible.picker.BookOnlyPickerBottomSheet
 import com.chan.bnote.ui.sermon.SermonRowAdapter
 import com.chan.bnote.ui.sermon.SermonRowBuilder
@@ -29,7 +28,14 @@ import com.chan.bnote.ui.sermon.addsermon.AddSermonActivity
 import com.chan.bnote.ui.sermon.detail.SermonDetailActivity
 import kotlinx.coroutines.launch
 
-class SermonByBookFragment : Fragment(), SermonSortableFragment, FabAddHandler, SubtabRefreshable {
+/**
+ * 설교를 성경 책·장별로 모아보는 화면의 내용. 설교 탭 상단바 메뉴(≡) > "성경별로 보기"로 여는
+ * SermonByBookActivity가 담아서 보여준다(예전엔 설교 탭의 서브탭이었다).
+ *
+ * 설교를 추가하거나(+ 버튼 → onFabAddClicked) 상세 화면에서 고치고 돌아오면, 아래 두 launcher가
+ * 결과를 받아 그리드와 목록을 다시 불러온다.
+ */
+class SermonByBookFragment : Fragment(), SermonSortableFragment, FabAddHandler {
 
 	private lateinit var bookTitleText: TextView
 	private lateinit var chapterGridRecycler: RecyclerView
@@ -113,16 +119,9 @@ class SermonByBookFragment : Fragment(), SermonSortableFragment, FabAddHandler, 
 		}
 	}
 
+	/** SermonByBookActivity의 "+" 버튼. 날짜는 따로 고른 게 없으니 오늘 날짜로 작성 화면을 연다. */
 	override fun onFabAddClicked() {
 		addSermonLauncher.launch(AddSermonActivity.createIntent(requireContext()))
-	}
-
-	/** 다른 서브탭(캘린더)에서 설교를 추가·수정·삭제하고 스와이프로 이 탭에 돌아왔을 때,
-	 * 또는 다른 하단 탭(마이페이지 등)에 갔다가 이 탭으로 돌아왔을 때 다시 불러온다. */
-	override fun onSubtabBecameVisible() {
-		if (!::bookTitleText.isInitialized) return
-		loadChapterGrid()
-		loadSermonsForSelectedChapter()
 	}
 
 	private fun loadChapterGrid() {

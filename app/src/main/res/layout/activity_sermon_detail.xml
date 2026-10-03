@@ -42,6 +42,18 @@
             android:ellipsize="end" />
 
         <ImageView
+            android:id="@+id/btn_copy_sermon"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:padding="9dp"
+            android:src="@drawable/ic_copy"
+            app:tint="@color/white"
+            android:contentDescription="복사"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:focusable="true" />
+
+        <ImageView
             android:id="@+id/btn_edit_sermon"
             android:layout_width="40dp"
             android:layout_height="40dp"

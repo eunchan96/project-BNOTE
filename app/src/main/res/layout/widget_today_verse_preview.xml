@@ -2,7 +2,8 @@
      모양에 예시 구절을 넣어둔 것으로, 실제 위젯 레이아웃(widget_today_verse)을 바꾸면 여기도 맞춰준다. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <ImageView
         android:layout_width="match_parent"
@@ -29,39 +30,29 @@
             <ImageView
                 android:layout_width="14dp"
                 android:layout_height="14dp"
+                android:layout_marginEnd="6dp"
                 android:scaleType="fitCenter"
                 android:importantForAccessibility="no"
                 android:src="@drawable/ic_book_open"
-                android:tint="@color/widget_light_accent" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="6dp"
-                android:text="오늘의 말씀"
-                android:textSize="11sp"
-                android:textStyle="bold"
-                android:letterSpacing="0.04"
-                android:textColor="@color/widget_light_accent" />
+                app:tint="@color/widget_light_accent" />
 
             <TextView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginStart="8dp"
-                android:gravity="end"
                 android:maxLines="1"
                 android:ellipsize="end"
                 android:text="시편 23편 1절"
-                android:textSize="11sp"
-                android:textColor="@color/widget_light_text_secondary" />
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:textColor="@color/widget_light_accent" />
         </LinearLayout>
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:layout_marginTop="6dp"
+            android:layout_marginTop="4dp"
             android:gravity="center_vertical"
             android:fontFamily="serif"
             android:text="여호와는 나의 목자시니 내가 부족함이 없으리로다"
