@@ -309,7 +309,14 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 		btnPrevChapter.setOnClickListener { currentHandler()?.onPrevChapterClicked() }
 		btnNextChapter.setOnClickListener { currentHandler()?.onNextChapterClicked() }
 
-		navBible.setOnClickListener { switchToBible() }
+		navBible.setOnClickListener {
+			// 이미 성경 탭을 보고 있는데 또 누르면, 성경 탭에게 먼저 맡긴다(음성 재생 중이면 일시정지 등).
+			// 처리할 게 없으면 원래대로 탭 전환(이미 성경 탭이라 사실상 그대로).
+			val bible = bibleFragment
+			val handled = bible != null && bible.isAdded && !bible.isHidden &&
+					bible.onNavTabReselected()
+			if (!handled) switchToBible()
+		}
 		// 지금 보이는 탭이 길게 누르기를 처리하면(성경 탭의 개인용 음성 재생 툴바 등) 거기서 끝나고,
 		// 처리하지 않으면(false) 평소처럼 손을 뗄 때 탭 전환(클릭)이 이어진다.
 		navBible.setOnLongClickListener { currentHandler()?.onNavTabLongClicked() == true }

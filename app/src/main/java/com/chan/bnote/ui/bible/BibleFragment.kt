@@ -965,6 +965,16 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		return true
 	}
 
+	/** 성경 탭을 보고 있을 때 하단바의 성경 탭 아이콘을 (짧게) 눌렀을 때. 음성이 재생 중이면 일시정지하고
+	 * 재생 툴바를 연다 — 다시 재생은 툴바의 재생 버튼으로. 재생 중이 아니면 false를 돌려줘서 평소대로
+	 * 아무 일도 없게 한다(재생 툴바는 지금처럼 길게 눌러야 열린다). */
+	override fun onNavTabReselected(): Boolean {
+		val controller = audioController ?: return false
+		if (!controller.pauseIfListening()) return false
+		if (audioToolbar.visibility != View.VISIBLE) showAudioToolbar() else updateAudioToolbar()
+		return true
+	}
+
 	/** 재생/일시정지·장 변경·배속 변경 등 재생 상태가 바뀔 때마다 BibleAudioController가 불러준다. */
 	private fun onAudioStateChanged() {
 		if (audioController?.isAvailable != true) {
@@ -1121,11 +1131,14 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 				)
 			}
 
+			val minutes = controller.sleepTimerMinutes
 			val remaining = controller.sleepTimerRemainingMinutes()
 			timerStatus.text = when {
-				!controller.isSleepTimerOn -> "끝까지 이어서 재생해요"
+				minutes == null -> "끝까지 이어서 재생해요"
+				controller.isWaitingForChapterEnd -> "지금 듣는 장이 끝나면 멈춰요"
+				minutes == 0 -> "재생하면 그 장이 끝날 때 멈춰요"
 				remaining != null -> "${remaining}분 뒤, 그때 듣던 장이 끝나면 멈춰요"
-				else -> "지금 듣는 장이 끝나면 멈춰요"
+				else -> "재생을 시작하면 ${minutes}분 뒤, 그때 듣던 장이 끝나면 멈춰요"
 			}
 		}
 

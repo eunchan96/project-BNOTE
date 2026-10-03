@@ -32,4 +32,7 @@ interface TopBarActionHandler {
 
 	/** 하단바에서 지금 보고 있는 탭 아이콘을 길게 눌렀을 때. 처리했으면 true(탭 전환 클릭은 안 일어남). */
 	fun onNavTabLongClicked(): Boolean = false
+
+	/** 하단바에서 지금 이미 보고 있는 탭의 아이콘을 (짧게) 다시 눌렀을 때. 처리했으면 true. */
+	fun onNavTabReselected(): Boolean = false
 }

@@ -26,6 +26,10 @@ object BibleAudioLibrary {
 	private const val PREF_NAME = "bible_audio"
 	private const val KEY_FOLDER_URI = "folder_uri"
 	private const val KEY_PLAYBACK_SPEED = "playback_speed"
+	private const val KEY_SLEEP_TIMER_MINUTES = "sleep_timer_minutes"
+
+	/** 재생 설정의 취침 타이머에서 고를 수 있는 값(0 = 이 장이 끝나면, 나머지는 분). 끄기는 null. */
+	val SLEEP_TIMER_OPTIONS = listOf(0, 15, 30, 60)
 
 	/** 재생 툴바의 배속 버튼에서 고를 수 있는 값. */
 	val SPEED_OPTIONS = listOf(0.8f, 1.0f, 1.2f, 1.5f)
@@ -91,6 +95,19 @@ object BibleAudioLibrary {
 	fun setPlaybackSpeed(context: Context, speed: Float) {
 		context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE).edit()
 			.putFloat(KEY_PLAYBACK_SPEED, speed)
+			.apply()
+	}
+
+	/** 마지막으로 고른 취침 타이머(null = 끄기). 재생 속도처럼 앱을 다시 켜도 유지된다. */
+	fun getSleepTimerMinutes(context: Context): Int? {
+		val saved = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.getInt(KEY_SLEEP_TIMER_MINUTES, -1)
+		return saved.takeIf { it in SLEEP_TIMER_OPTIONS }
+	}
+
+	fun setSleepTimerMinutes(context: Context, minutes: Int?) {
+		context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE).edit()
+			.putInt(KEY_SLEEP_TIMER_MINUTES, minutes ?: -1)
 			.apply()
 	}
 
