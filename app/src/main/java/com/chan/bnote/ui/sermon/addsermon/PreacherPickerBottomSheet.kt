@@ -21,6 +21,9 @@ class PreacherPickerBottomSheet : FixedBottomSheetDialogFragment() {
 
 	var onPreacherSelected: ((Preacher) -> Unit)? = null
 
+	// 항목이 많아져도 시트가 화면의 60%보다 높아지지 않게 하고, 넘치는 목록은 안에서 스크롤한다.
+	override val maxHeightRatio = 0.6f
+
 	private lateinit var recyclerView: RecyclerView
 	private var preachers: List<Preacher> = emptyList()
 

@@ -40,13 +40,13 @@ class MemorizationWidgetProvider : AsyncWidgetProvider() {
 
 /**
  * 암송 구절 위젯 화면. 고른 그룹(없으면 전체)의 구절 중 하나를 보여주고, 날짜가 바뀔 때마다
- * 다음 구절로 넘어간다. "다음" 버튼으로 그 자리에서 다음 구절로 넘길 수도 있고, 위젯을 탭하면
- * 그 구절의 암송 연습 화면이 열린다.
+ * 다음 구절로 넘어간다. 오른쪽 위 "다음"(›) 버튼으로 그 자리에서 다음 구절로 넘길 수도 있고, 위젯을
+ * 탭하면 그 구절의 암송 연습 화면이 열린다. 그룹 이름·순번은 위젯에 표시하지 않는다(위젯 설정에서 확인).
  */
 object MemorizationWidget {
 
-	// 위젯 안에서 본문 말고 세로로 차지하는 부분(제목 줄 + 구절 위치 줄 + 간격)
-	private const val RESERVED_HEIGHT_DP = 46
+	// 위젯 안에서 본문 말고 세로로 차지하는 부분(구절 위치·다음 버튼 한 줄 + 본문 위 간격)
+	private const val RESERVED_HEIGHT_DP = 30
 
 	/**
 	 * [spec]을 안 주면 저장된 설정과 실제 크기로 그린다(홈 화면 위젯). 위젯 설정 화면의 미리보기는
@@ -60,14 +60,12 @@ object MemorizationWidget {
 	): RemoteViews {
 		val views = RemoteViews(context.packageName, R.layout.widget_memorization)
 		val theme = WidgetViews.applyTheme(context, views, spec.style)
-		views.setTextColor(
-			R.id.widget_group,
-			ContextCompat.getColor(context, theme.secondaryTextRes)
+		views.setInt(
+			R.id.widget_next,
+			"setColorFilter",
+			ContextCompat.getColor(context, theme.accentRes)
 		)
-		views.setTextColor(R.id.widget_next, ContextCompat.getColor(context, theme.accentRes))
 		views.setInt(R.id.widget_next, "setBackgroundResource", theme.pillRes)
-		// 이 위젯에서는 위치 표기가 제목 바로 아래 있어서 본문색으로 또렷하게 보인다.
-		views.setTextColor(R.id.widget_label, ContextCompat.getColor(context, theme.primaryTextRes))
 
 		val dao = BibleDatabase.getInstance(context.applicationContext).memorizationVerseDao()
 
@@ -89,10 +87,8 @@ object MemorizationWidget {
 		// 구절을 추가한 순서대로 고정해서, 넘길 때마다 순서가 뒤섞이지 않게 한다.
 		val verses = (if (group != null) dao.getByGroup(group.id) else dao.getAll())
 			.sortedWith(compareBy({ it.createdAt }, { it.id }))
-		val groupName = group?.name ?: "전체"
 
 		if (verses.isEmpty()) {
-			views.setTextViewText(R.id.widget_group, groupName)
 			views.setViewVisibility(R.id.widget_next, View.GONE)
 			WidgetViews.showMessage(
 				views,
@@ -118,7 +114,6 @@ object MemorizationWidget {
 		val index = (DailyVerseProvider.epochDay() + offset).mod(verses.size.toLong()).toInt()
 		val verse = verses[index]
 
-		views.setTextViewText(R.id.widget_group, "$groupName · ${index + 1}/${verses.size}")
 		views.setTextViewText(R.id.widget_label, verse.toDisplayLabel())
 		WidgetViews.setBodyText(
 			context, views, verse.verseText, spec.widthDp, spec.heightDp, RESERVED_HEIGHT_DP

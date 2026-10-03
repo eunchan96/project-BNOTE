@@ -13,19 +13,23 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.chan.bnote.R
+import com.chan.bnote.data.AppSettings
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.DateUtils
 import com.chan.bnote.data.application.Application
 import com.chan.bnote.ui.FabAddHandler
 import com.chan.bnote.ui.SubtabRefreshable
 import com.chan.bnote.ui.application.addapplication.AddApplicationActivity
+import com.chan.bnote.ui.sermon.SermonSortableFragment
+import com.chan.bnote.ui.sermon.SortButtonHelper
 import com.chan.bnote.ui.sermon.bycalendar.CalendarDayCell
 import com.chan.bnote.ui.sermon.bycalendar.CalendarGridAdapter
 import com.chan.bnote.ui.sermon.bycalendar.MonthYearPickerBottomSheet
 import kotlinx.coroutines.launch
 import java.util.Calendar
 
-class CalendarApplicationFragment : Fragment(), FabAddHandler, SubtabRefreshable {
+class CalendarApplicationFragment : Fragment(), FabAddHandler, SubtabRefreshable,
+	SermonSortableFragment {
 
 	private lateinit var monthYearText: TextView
 	private lateinit var gridRecycler: RecyclerView
@@ -51,6 +55,7 @@ class CalendarApplicationFragment : Fragment(), FabAddHandler, SubtabRefreshable
 	private var currentYear: Int
 	private var currentMonth0: Int
 	private var selectedDate: Long
+	private var sortMode = "ADDED"
 
 	init {
 		val cal = Calendar.getInstance()
@@ -71,6 +76,8 @@ class CalendarApplicationFragment : Fragment(), FabAddHandler, SubtabRefreshable
 		monthYearText = view.findViewById(R.id.text_month_year)
 		gridRecycler = view.findViewById(R.id.recycler_calendar_grid)
 		gridRecycler.layoutManager = GridLayoutManager(requireContext(), 7)
+
+		sortMode = AppSettings.getApplicationSortMode(requireContext())
 
 		monthYearText.setOnClickListener {
 			val picker = MonthYearPickerBottomSheet(currentYear, currentMonth0)
@@ -99,6 +106,8 @@ class CalendarApplicationFragment : Fragment(), FabAddHandler, SubtabRefreshable
 			)
 		swipeIntercept.onSwipeRight = { goToPrevMonth() }
 		swipeIntercept.onSwipeLeft = { goToNextMonth() }
+
+		SortButtonHelper.setup(view.findViewById(R.id.btn_application_sort), this)
 
 		loadCalendarGrid()
 		loadApplicationsForSelectedDate()
@@ -146,7 +155,15 @@ class CalendarApplicationFragment : Fragment(), FabAddHandler, SubtabRefreshable
 				currentYear,
 				currentMonth0
 			)
-			val markers = db.applicationDao().getMarkersInRange(startMillis, endMillis)
+			// 날짜 칸의 색깔 막대 순서도 아래 목록의 정렬과 맞춘다(설교노트 캘린더와 같은 방식).
+			// 쿼리 결과가 이미 추가순(createdAt)이라, 카테고리순일 때만 안정 정렬로 다시 줄 세운다.
+			val rawMarkers = db.applicationDao().getMarkersInRange(startMillis, endMillis)
+			val markers = if (sortMode == "CATEGORY") {
+				val categoryOrder = loadCategoryOrderMap(db)
+				rawMarkers.sortedBy { categoryOrder[it.categoryId] ?: Int.MAX_VALUE }
+			} else {
+				rawMarkers
+			}
 
 			val fallbackColorHex = String.format(
 				"#%06X", 0xFFFFFF and androidx.core.content.ContextCompat.getColor(
@@ -240,9 +257,45 @@ class CalendarApplicationFragment : Fragment(), FabAddHandler, SubtabRefreshable
 	private fun loadApplicationsForSelectedDate() {
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(requireContext().applicationContext)
+			// getByDate는 추가순(createdAt)으로 오므로, 카테고리순일 때만 안정 정렬로 다시 줄 세운다
+			// (같은 카테고리 안에서는 추가순 유지).
 			val applications = db.applicationDao().getByDate(selectedDate)
-			renderList(applications)
+			val sorted = if (sortMode == "CATEGORY") {
+				val categoryOrder = loadCategoryOrderMap(db)
+				applications.sortedBy { categoryOrder[it.categoryId] ?: Int.MAX_VALUE }
+			} else {
+				applications
+			}
+			renderList(sorted)
 		}
+	}
+
+	/** categoryId -> 적용 카테고리 관리 화면에서 보이는 순서(0부터). 미분류(null)도 관리 화면에서 옮겨둔
+	 * 자리(AppSettings.getApplicationUncategorizedPosition, 기본은 맨 끝)를 그대로 따른다. */
+	private suspend fun loadCategoryOrderMap(db: BibleDatabase): Map<Long?, Int> {
+		val orderedIds: MutableList<Long?> = db.applicationCategoryDao().getAll()
+			.sortedBy { it.sortOrder }
+			.map { it.id as Long? }
+			.toMutableList()
+		val uncategorizedPosition =
+			AppSettings.getApplicationUncategorizedPosition(requireContext())
+				.coerceIn(0, orderedIds.size)
+		orderedIds.add(uncategorizedPosition, null)
+		return orderedIds.withIndex().associate { (index, id) -> id to index }
+	}
+
+	override fun getSortOptions() = listOf(
+		"CATEGORY" to "카테고리순",
+		"ADDED" to "추가순"
+	)
+
+	override fun getCurrentSortMode() = sortMode
+
+	override fun setSortMode(mode: String) {
+		sortMode = mode
+		AppSettings.setApplicationSortMode(requireContext(), mode)
+		loadCalendarGrid()
+		loadApplicationsForSelectedDate()
 	}
 
 	private fun renderList(applications: List<Application>) {

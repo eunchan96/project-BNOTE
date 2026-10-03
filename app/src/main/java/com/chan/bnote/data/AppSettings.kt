@@ -19,6 +19,8 @@ object AppSettings {
 		"sermon_calendar_sort_mode" // "BIBLE"|"CATEGORY"|"ADDED"
 	private const val KEY_BY_BOOK_SORT_MODE =
 		"sermon_by_book_sort_mode" // "BIBLE"|"DATE"|"CATEGORY"|"ADDED"
+	private const val KEY_APPLICATION_SORT_MODE =
+		"application_calendar_sort_mode" // "CATEGORY"|"ADDED"
 	private const val KEY_BIBLE_SEARCH_HISTORY = "bible_search_history" // 구분자로 이어붙인 문자열, 최신순
 	private const val KEY_SERMON_SEARCH_HISTORY = "sermon_search_history" // 구분자로 이어붙인 문자열, 최신순
 	private const val SEARCH_HISTORY_DELIMITER = "\u001E"
@@ -215,6 +217,16 @@ object AppSettings {
 	fun setByBookSortMode(context: Context, mode: String) {
 		context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
 			.edit().putString(KEY_BY_BOOK_SORT_MODE, mode).apply()
+	}
+
+	fun getApplicationSortMode(context: Context): String {
+		return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.getString(KEY_APPLICATION_SORT_MODE, "ADDED") ?: "ADDED"
+	}
+
+	fun setApplicationSortMode(context: Context, mode: String) {
+		context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.edit().putString(KEY_APPLICATION_SORT_MODE, mode).apply()
 	}
 
 	fun getScrollSpeed(context: Context): Int {

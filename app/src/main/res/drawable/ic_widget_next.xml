@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 암송 구절 위젯의 "다음" 버튼(›). 위젯은 런처가 그려서 테마 속성(?attr)을 쓸 수 없으므로 tint 없이
+     두고, 색은 위젯 테마에 맞춰 코드(MemorizationWidget)에서 setColorFilter로 넣는다. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#000000"
+        android:pathData="M8.59,16.59L10,18l6,-6 -6,-6 -1.41,1.41L13.17,12z" />
+</vector>

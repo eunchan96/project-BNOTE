@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/sermon_by_book_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/surface_background">
+
+    <include layout="@layout/include_activity_top_bar" />
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <FrameLayout
+            android:id="@+id/sermon_by_book_container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <!-- 설교 탭의 "+" 버튼과 같은 모양·위치. 누르면 새 설교 작성 화면이 열린다. -->
+        <TextView
+            android:id="@+id/fab_add_sermon_by_book"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:layout_gravity="bottom|end"
+            android:layout_margin="20dp"
+            android:gravity="center"
+            android:text="+"
+            android:textSize="28dp"
+            android:textColor="@color/white"
+            android:background="@drawable/bg_fab_brown"
+            android:elevation="6dp"
+            android:clickable="true"
+            android:focusable="true" />
+    </FrameLayout>
+
+</LinearLayout>

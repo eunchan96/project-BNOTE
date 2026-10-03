@@ -8,13 +8,18 @@ import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.lifecycleScope
 import com.chan.bnote.R
 import com.chan.bnote.data.CrashLogger
+import com.chan.bnote.data.backup.AutoBackupManager
+import com.chan.bnote.data.bible.BibleAudioLibrary
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import kotlinx.coroutines.launch
 
 class AppInfoActivity : AppCompatActivity() {
 
@@ -22,6 +27,29 @@ class AppInfoActivity : AppCompatActivity() {
 		private const val CONTACT_EMAIL = "taegwon02@gmail.com"
 		private const val KAKAO_OPEN_CHAT_URL = "https://open.kakao.com/o/sfqUXEEi"
 		private const val GITHUB_URL = "https://github.com/eunchan96/project-BNOTE"
+
+		/** 버전 글자를 이 횟수만큼 연달아 누르면 음성 성경(개인용) 메뉴가 열린다. */
+		private const val AUDIO_MENU_TAP_COUNT = 7
+		private const val AUDIO_MENU_TAP_INTERVAL_MS = 1500L
+	}
+
+	private var versionTapCount = 0
+	private var lastVersionTapAt = 0L
+
+	private val audioFolderLauncher = registerForActivityResult(
+		ActivityResultContracts.OpenDocumentTree()
+	) { uri ->
+		if (uri == null) return@registerForActivityResult
+		BibleAudioLibrary.saveFolderUri(this, uri)
+		lifecycleScope.launch {
+			val count = BibleAudioLibrary.countChapters(this@AppInfoActivity)
+			val message = if (count > 0) {
+				"음성 ${count}개 장을 찾았어요"
+			} else {
+				"이름 규칙(예: 01_001.mp3)에 맞는 파일을 찾지 못했어요"
+			}
+			Toast.makeText(this@AppInfoActivity, message, Toast.LENGTH_LONG).show()
+		}
 	}
 
 	override fun onCreate(savedInstanceState: Bundle?) {
@@ -38,7 +66,10 @@ class AppInfoActivity : AppCompatActivity() {
 		findViewById<TextView>(R.id.text_top_bar_title).text = "앱 정보"
 		findViewById<ImageView>(R.id.btn_top_bar_back).setOnClickListener { finish() }
 
-		findViewById<TextView>(R.id.text_version).text = buildVersionLabel()
+		findViewById<TextView>(R.id.text_version).apply {
+			text = buildVersionLabel()
+			setOnClickListener { onVersionTapped() }
+		}
 
 		findViewById<TextView>(R.id.menu_version_history).setOnClickListener {
 			startActivity(Intent(this, VersionHistoryActivity::class.java))
@@ -78,6 +109,45 @@ class AppInfoActivity : AppCompatActivity() {
 			"버전 ${packageInfo.versionName} ($versionCode)"
 		} catch (e: Exception) {
 			""
+		}
+	}
+
+	/** 숨김 메뉴: 버전 글자를 짧은 간격으로 연달아 누르면 음성 성경 폴더 설정을 연다. */
+	private fun onVersionTapped() {
+		val now = System.currentTimeMillis()
+		versionTapCount =
+			if (now - lastVersionTapAt <= AUDIO_MENU_TAP_INTERVAL_MS) versionTapCount + 1 else 1
+		lastVersionTapAt = now
+		if (versionTapCount >= AUDIO_MENU_TAP_COUNT) {
+			versionTapCount = 0
+			showBibleAudioDialog()
+		}
+	}
+
+	private fun showBibleAudioDialog() {
+		val folderUri = BibleAudioLibrary.getFolderUri(this)
+		if (folderUri == null || !BibleAudioLibrary.isConfigured(this)) {
+			MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_BNOTE_Dialog)
+				.setTitle("음성 성경")
+				.setMessage("기기에 넣어둔 음성 파일 폴더를 고르면, 하단바의 성경 탭 아이콘을 길게 눌러 재생 툴바를 열 수 있어요.\n\n파일 이름은 \"책번호_장번호\" 형식이어야 해요.\n예) 01_001.mp3, 19_023.ogg")
+				.setPositiveButton("폴더 선택") { _, _ -> audioFolderLauncher.launch(null) }
+				.setNegativeButton("닫기", null)
+				.show()
+			return
+		}
+
+		lifecycleScope.launch {
+			val count = BibleAudioLibrary.countChapters(this@AppInfoActivity)
+			MaterialAlertDialogBuilder(this@AppInfoActivity, R.style.ThemeOverlay_BNOTE_Dialog)
+				.setTitle("음성 성경")
+				.setMessage("폴더: ${AutoBackupManager.displayNameFor(folderUri)}\n찾은 음성: ${count}개 장")
+				.setPositiveButton("폴더 바꾸기") { _, _ -> audioFolderLauncher.launch(null) }
+				.setNeutralButton("끄기") { _, _ ->
+					BibleAudioLibrary.clearFolder(this@AppInfoActivity)
+					Toast.makeText(this@AppInfoActivity, "음성 성경을 껐어요", Toast.LENGTH_SHORT).show()
+				}
+				.setNegativeButton("닫기", null)
+				.show()
 		}
 	}
 
