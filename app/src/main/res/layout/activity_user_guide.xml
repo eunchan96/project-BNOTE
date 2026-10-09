@@ -38,7 +38,7 @@
             android:layout_width="20dp"
             android:layout_height="20dp"
             android:src="@drawable/ic_share"
-            app:tint="@color/brown_primary"
+            app:tint="@color/brown_text"
             android:contentDescription="PDF로 보기" />
 
         <TextView
@@ -48,7 +48,7 @@
             android:layout_marginStart="10dp"
             android:text="PDF로 전체 가이드 보기"
             android:textSize="14sp"
-            android:textColor="@color/brown_primary" />
+            android:textColor="@color/brown_text" />
 
         <ImageView
             android:layout_width="18dp"

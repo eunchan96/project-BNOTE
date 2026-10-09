@@ -80,7 +80,7 @@
                 android:padding="8dp"
                 android:text="+ 항목 추가"
                 android:textSize="14sp"
-                android:textColor="@color/brown_primary"
+                android:textColor="@color/brown_text"
                 android:clickable="true"
                 android:focusable="true" />
 

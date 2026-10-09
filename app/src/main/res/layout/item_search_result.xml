@@ -15,7 +15,7 @@
         android:maxWidth="110dp"
         android:layout_height="wrap_content"
         android:textStyle="bold"
-        android:textColor="@color/brown_primary"
+        android:textColor="@color/brown_text"
         android:textSize="14sp" />
 
     <TextView

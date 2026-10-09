@@ -17,7 +17,7 @@
         android:layout_height="wrap_content"
         android:textSize="13sp"
         android:textStyle="bold"
-        android:textColor="@color/brown_primary" />
+        android:textColor="@color/brown_text" />
 
     <TextView
         android:id="@+id/text_verse_preview"

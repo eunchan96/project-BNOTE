@@ -89,7 +89,7 @@
             android:visibility="gone"
             android:textSize="14sp"
             android:textStyle="bold"
-            android:textColor="@color/brown_primary"
+            android:textColor="@color/brown_text"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:clickable="true"
             android:focusable="true"

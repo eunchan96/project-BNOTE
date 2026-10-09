@@ -100,7 +100,7 @@ class AppendixTextActivity : AppCompatActivity() {
 		for (i in 0 until tabContainer.childCount) {
 			val tab = tabContainer.getChildAt(i) as TextView
 			if (i == selectedIndex) {
-				tab.setTextColor(ContextCompat.getColor(this, R.color.brown_primary))
+				tab.setTextColor(ContextCompat.getColor(this, R.color.brown_text))
 				tab.setTypeface(null, android.graphics.Typeface.BOLD)
 			} else {
 				tab.setTextColor(ContextCompat.getColor(this, R.color.bottom_nav_unselected))

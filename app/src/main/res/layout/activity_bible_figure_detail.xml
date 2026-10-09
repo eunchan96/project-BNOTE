@@ -24,7 +24,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textSize="13sp"
-                android:textColor="@color/brown_primary"
+                android:textColor="@color/brown_text"
                 android:textStyle="bold"
                 tools:text="족장 · 족장 시대 (주전 약 2000년경)" />
 
@@ -76,7 +76,7 @@
                 android:gravity="center"
                 android:textSize="15sp"
                 android:textStyle="bold"
-                android:textColor="@color/brown_primary"
+                android:textColor="@color/brown_text"
                 android:background="@drawable/bg_book_button"
                 android:clickable="true"
                 android:focusable="true"

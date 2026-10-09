@@ -40,7 +40,7 @@ object GratitudeRowBuilder {
 	 * 한다. */
 	private fun buildPreview(context: Context, texts: List<String>): CharSequence {
 		val builder = SpannableStringBuilder()
-		val iconColor = ContextCompat.getColor(context, R.color.brown_primary)
+		val iconColor = ContextCompat.getColor(context, R.color.brown_text)
 		val density = context.resources.displayMetrics.density
 		val textSizePx = 14 * context.resources.displayMetrics.scaledDensity
 		val iconSizePx = (14 * density).toInt()

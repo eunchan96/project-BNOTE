@@ -22,4 +22,15 @@
     <!-- 다이얼로그(카테고리/설교자 추가 등) 배경 - 갈색 베이스 -->
     <color name="dialog_background">#3A2F2A</color>
     <color name="dialog_title_text">#EFE0D2</color>
+
+    <!-- 검은 바탕에서도 잘 보이는 밝은 갈색(글자·아이콘·선택된 하단 탭) -->
+    <color name="brown_text">#BCAAA4</color>
+    <color name="bottom_nav_selected">#BCAAA4</color>
+    <!-- 밝은 물결은 어두운 화면에서 번쩍여 보여서, 어두운 갈색으로 -->
+    <color name="ripple_brown">#4E423D</color>
+    <!-- 바탕(#121212)과 거의 같아서 떠 있는 툴바 경계가 안 보이던 것을 조금 밝게 -->
+    <color name="floating_toolbar_background">#424242</color>
+    <!-- 절 선택(드래그) 배경. 밝은 회색이면 다크모드의 밝은 글자가 묻혀서 어두운 회색으로 -->
+    <color name="verse_selection_background">#5A5A5A</color>
+    <color name="field_underline">#AAAAAA</color>
 </resources>

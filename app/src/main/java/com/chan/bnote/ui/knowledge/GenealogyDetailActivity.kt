@@ -98,7 +98,7 @@ class GenealogyDetailActivity : AppCompatActivity() {
 			setTextColor(
 				ContextCompat.getColor(
 					this@GenealogyDetailActivity,
-					R.color.brown_primary
+					R.color.brown_text
 				)
 			)
 		}

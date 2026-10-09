@@ -215,7 +215,7 @@ class SermonDetailActivity : AppCompatActivity() {
 					override fun updateDrawState(ds: android.text.TextPaint) {
 						super.updateDrawState(ds)
 						ds.color = androidx.core.content.ContextCompat.getColor(
-							this@SermonDetailActivity, R.color.brown_primary
+							this@SermonDetailActivity, R.color.brown_text
 						)
 						ds.isUnderlineText = true
 					}
@@ -269,7 +269,7 @@ class SermonDetailActivity : AppCompatActivity() {
 					ForegroundColorSpan(
 						androidx.core.content.ContextCompat.getColor(
 							this,
-							R.color.brown_primary
+							R.color.brown_text
 						)
 					),
 					citation.range.first, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE

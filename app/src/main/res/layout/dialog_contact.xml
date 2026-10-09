@@ -1,100 +1,161 @@
 <?xml version="1.0" encoding="utf-8"?><!-- 앱 정보 > 문의하기 창의 내용. 문의 방법마다 어떤 용도인지 한 줄 설명을 같이 보여준다
-     (AppInfoActivity.showContactDialog). -->
+     (AppInfoActivity.showContactDialog). 각 항목은 눌러서 들어가는 버튼이라는 게 보이도록
+     테두리 박스(bg_book_button) + 오른쪽 › 화살표 모양이다. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:paddingTop="4dp"
+    android:paddingStart="20dp"
+    android:paddingEnd="20dp"
+    android:paddingTop="8dp"
     android:paddingBottom="4dp">
 
     <LinearLayout
         android:id="@+id/option_contact_email"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:paddingStart="24dp"
-        android:paddingEnd="24dp"
-        android:paddingTop="12dp"
-        android:paddingBottom="12dp"
-        android:background="?attr/selectableItemBackground"
+        android:layout_marginTop="5dp"
+        android:layout_marginBottom="5dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="16dp"
+        android:paddingEnd="10dp"
+        android:paddingTop="14dp"
+        android:paddingBottom="14dp"
+        android:background="@drawable/bg_book_button"
         android:clickable="true"
         android:focusable="true">
 
-        <TextView
-            android:layout_width="match_parent"
+        <LinearLayout
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="이메일로 문의하기"
-            android:textSize="16sp"
-            android:textColor="@color/text_primary" />
+            android:layout_weight="1"
+            android:orientation="vertical">
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="3dp"
-            android:text="오류가 났을 때 추천해요. 최근 오류 기록이 자동으로 함께 첨부돼요."
-            android:textSize="13sp"
-            android:lineSpacingExtra="2dp"
-            android:textColor="@color/text_secondary" />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="이메일로 문의하기"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="오류가 났을 때 추천해요. 최근 오류 기록이 자동으로 함께 첨부돼요."
+                android:textSize="13sp"
+                android:lineSpacingExtra="2dp"
+                android:textColor="@color/text_secondary" />
+        </LinearLayout>
+
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginStart="8dp"
+            android:src="@drawable/ic_chevron_right"
+            app:tint="@color/text_hint"
+            android:importantForAccessibility="no" />
     </LinearLayout>
 
     <LinearLayout
         android:id="@+id/option_contact_private_chat"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:paddingStart="24dp"
-        android:paddingEnd="24dp"
-        android:paddingTop="12dp"
-        android:paddingBottom="12dp"
-        android:background="?attr/selectableItemBackground"
+        android:layout_marginTop="5dp"
+        android:layout_marginBottom="5dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="16dp"
+        android:paddingEnd="10dp"
+        android:paddingTop="14dp"
+        android:paddingBottom="14dp"
+        android:background="@drawable/bg_book_button"
         android:clickable="true"
         android:focusable="true">
 
-        <TextView
-            android:layout_width="match_parent"
+        <LinearLayout
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="1:1 오픈채팅으로 문의하기"
-            android:textSize="16sp"
-            android:textColor="@color/text_primary" />
+            android:layout_weight="1"
+            android:orientation="vertical">
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="3dp"
-            android:text="개발자에게 따로 조용히 물어보고 싶을 때 이용해요."
-            android:textSize="13sp"
-            android:lineSpacingExtra="2dp"
-            android:textColor="@color/text_secondary" />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="1:1 오픈채팅으로 문의하기"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="개발자에게 따로 조용히 물어보고 싶을 때 이용해요."
+                android:textSize="13sp"
+                android:lineSpacingExtra="2dp"
+                android:textColor="@color/text_secondary" />
+        </LinearLayout>
+
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginStart="8dp"
+            android:src="@drawable/ic_chevron_right"
+            app:tint="@color/text_hint"
+            android:importantForAccessibility="no" />
     </LinearLayout>
 
     <LinearLayout
         android:id="@+id/option_contact_notice_chat"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:paddingStart="24dp"
-        android:paddingEnd="24dp"
-        android:paddingTop="12dp"
-        android:paddingBottom="12dp"
-        android:background="?attr/selectableItemBackground"
+        android:layout_marginTop="5dp"
+        android:layout_marginBottom="5dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="16dp"
+        android:paddingEnd="10dp"
+        android:paddingTop="14dp"
+        android:paddingBottom="14dp"
+        android:background="@drawable/bg_book_button"
         android:clickable="true"
         android:focusable="true">
 
-        <TextView
-            android:layout_width="match_parent"
+        <LinearLayout
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="업데이트 소식 오픈채팅방"
-            android:textSize="16sp"
-            android:textColor="@color/text_primary" />
+            android:layout_weight="1"
+            android:orientation="vertical">
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="3dp"
-            android:text="새 버전 소식과 설치 파일을 받을 수 있는 단체방이에요. 다른 사용자들과 함께 자유롭게 질문해도 돼요."
-            android:textSize="13sp"
-            android:lineSpacingExtra="2dp"
-            android:textColor="@color/text_secondary" />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="업데이트 소식 오픈채팅방"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="새 버전 소식과 설치 파일을 받을 수 있는 단체방이에요. 다른 사용자들과 함께 자유롭게 질문해도 돼요."
+                android:textSize="13sp"
+                android:lineSpacingExtra="2dp"
+                android:textColor="@color/text_secondary" />
+        </LinearLayout>
+
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginStart="8dp"
+            android:src="@drawable/ic_chevron_right"
+            app:tint="@color/text_hint"
+            android:importantForAccessibility="no" />
     </LinearLayout>
 
 </LinearLayout>

@@ -117,7 +117,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="6dp"
                     android:layout_marginTop="8dp"
-                    android:progressTint="@color/brown_primary"
+                    android:progressTint="@color/brown_text"
                     android:max="100" />
 
                 <TextView
@@ -127,7 +127,7 @@
                     android:layout_marginTop="12dp"
                     android:textSize="15sp"
                     android:textStyle="bold"
-                    android:textColor="@color/brown_primary"
+                    android:textColor="@color/brown_text"
                     tools:text="🔥 연속 5일째 읽는 중 (최고 기록 12일)" />
 
             </LinearLayout>
@@ -239,7 +239,7 @@
                     android:paddingBottom="10dp"
                     android:textSize="13sp"
                     android:text="오늘"
-                    android:textColor="@color/brown_primary"
+                    android:textColor="@color/brown_text"
                     android:background="?attr/selectableItemBackground"
                     android:clickable="true"
                     android:focusable="true" />

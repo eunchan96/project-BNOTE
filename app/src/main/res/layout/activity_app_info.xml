@@ -22,7 +22,7 @@
             android:layout_width="64dp"
             android:layout_height="64dp"
             android:src="@drawable/ic_book_open"
-            app:tint="@color/brown_primary"
+            app:tint="@color/brown_text"
             android:contentDescription="앱 아이콘" />
 
         <TextView

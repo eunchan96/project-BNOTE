@@ -40,7 +40,7 @@
                 android:text="위젯 테마"
                 android:textSize="14sp"
                 android:textStyle="bold"
-                android:textColor="@color/brown_primary" />
+                android:textColor="@color/brown_text" />
 
             <RadioGroup
                 android:id="@+id/radio_theme"
@@ -91,7 +91,7 @@
                     android:text="배경 투명도"
                     android:textSize="14sp"
                     android:textStyle="bold"
-                    android:textColor="@color/brown_primary" />
+                    android:textColor="@color/brown_text" />
 
                 <TextView
                     android:id="@+id/text_transparency_value"
@@ -152,7 +152,7 @@
                     android:text="암송 그룹"
                     android:textSize="14sp"
                     android:textStyle="bold"
-                    android:textColor="@color/brown_primary" />
+                    android:textColor="@color/brown_text" />
 
                 <RadioGroup
                     android:id="@+id/radio_groups"

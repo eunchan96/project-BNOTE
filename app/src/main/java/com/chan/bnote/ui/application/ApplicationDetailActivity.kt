@@ -170,7 +170,7 @@ class ApplicationDetailActivity : AppCompatActivity() {
 								super.updateDrawState(ds)
 								ds.color = ContextCompat.getColor(
 									this@ApplicationDetailActivity,
-									R.color.brown_primary
+									R.color.brown_text
 								)
 								ds.isUnderlineText = true
 							}
@@ -208,7 +208,7 @@ class ApplicationDetailActivity : AppCompatActivity() {
 								super.updateDrawState(ds)
 								ds.color = ContextCompat.getColor(
 									this@ApplicationDetailActivity,
-									R.color.brown_primary
+									R.color.brown_text
 								)
 								ds.isUnderlineText = true
 							}

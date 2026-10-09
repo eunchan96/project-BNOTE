@@ -293,7 +293,7 @@ class MyPageFragment : Fragment(), TopBarActionHandler {
 				textSize = 13f
 				maxLines = 1
 				maxWidth = maxWidthPx // 아래서 폭에 맞춰 미리 잘라 넣지만, 혹시 몰라 안전장치로 둔다.
-				setTextColor(ContextCompat.getColor(requireContext(), R.color.brown_primary))
+				setTextColor(ContextCompat.getColor(requireContext(), R.color.brown_text))
 				setPadding(dp(14), dp(10), dp(14), dp(10))
 				background = ContextCompat.getDrawable(requireContext(), R.drawable.bg_chip_outline)
 				isClickable = true

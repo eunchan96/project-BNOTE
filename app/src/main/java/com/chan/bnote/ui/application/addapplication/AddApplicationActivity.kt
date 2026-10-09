@@ -406,7 +406,7 @@ class AddApplicationActivity : AppCompatActivity() {
 			text = "+"
 			textSize = 18f
 			gravity = Gravity.CENTER
-			setTextColor(ContextCompat.getColor(this@AddApplicationActivity, R.color.brown_primary))
+			setTextColor(ContextCompat.getColor(this@AddApplicationActivity, R.color.brown_text))
 			background =
 				ContextCompat.getDrawable(this@AddApplicationActivity, R.drawable.bg_book_button)
 			isClickable = true

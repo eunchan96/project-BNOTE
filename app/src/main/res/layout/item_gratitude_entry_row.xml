@@ -14,7 +14,7 @@
         android:layout_gravity="top"
         android:layout_marginTop="10dp"
         android:src="@drawable/ic_check_circle"
-        app:tint="@color/brown_primary"
+        app:tint="@color/brown_text"
         android:contentDescription="@null" />
 
     <EditText

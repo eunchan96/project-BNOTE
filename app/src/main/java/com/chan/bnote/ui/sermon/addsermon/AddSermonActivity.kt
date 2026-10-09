@@ -682,7 +682,7 @@ class AddSermonActivity : AppCompatActivity() {
 			text = "+"
 			textSize = 18f
 			gravity = Gravity.CENTER
-			setTextColor(ContextCompat.getColor(this@AddSermonActivity, R.color.brown_primary))
+			setTextColor(ContextCompat.getColor(this@AddSermonActivity, R.color.brown_text))
 			background =
 				ContextCompat.getDrawable(this@AddSermonActivity, R.drawable.bg_book_button)
 			isClickable = true
