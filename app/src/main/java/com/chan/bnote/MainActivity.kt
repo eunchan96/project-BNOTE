@@ -42,10 +42,12 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 		const val EXTRA_NAVIGATE_WORD_END = "extra_navigate_word_end"
 		const val EXTRA_NAVIGATE_WORD_SEGMENT = "extra_navigate_word_segment"
 
-		// 내 정보 화면의 "설교노트"/"적용" 기록 카드에서, 설교·적용 탭으로 이동하면서 그 안의
-		// 특정 서브탭(SermonFragment.SUBTAB_SERMON / SUBTAB_APPLICATION — SermonSubPagerAdapter
-		// 순서와 동일)까지 바로 골라서 보여주기 위한 요청.
+		// 내 정보 화면의 "설교노트"/"적용" 기록 카드에서, 설교·적용 탭으로 이동하면서 그 안의 특정 서브탭
+		// (SermonFragment.SUBTAB_SERMON / SUBTAB_APPLICATION — SermonSubPagerAdapter 순서와 동일)까지 바로 골라서 보여주기 위한 요청.
 		const val EXTRA_NAVIGATE_SERMON_SUBTAB = "extra_navigate_sermon_subtab"
+
+		// 백그라운드 새 버전 알림(UpdateCheckWorker)을 눌러서 열렸을 때, 바로 새 버전 안내 창을 띄우라는 표시.
+		const val EXTRA_SHOW_UPDATE = "extra_show_update"
 
 		private const val TAG_BIBLE = "tab_bible"
 		private const val TAG_SERMON = "tab_sermon"
@@ -133,6 +135,7 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 				// (성경 탭 자체는 BibleFragment가 마지막으로 읽던 책/장을 스스로 복원한다.)
 				switchToBible()
 			}
+			showUpdateIfRequested(intent)
 		}
 	}
 
@@ -140,6 +143,7 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 		super.onNewIntent(intent)
 		setIntent(intent)
 		handleNavigationIntent(intent)
+		showUpdateIfRequested(intent)
 	}
 
 	override fun onResume() {
@@ -173,6 +177,22 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 			if (!checker.isNewer(this@MainActivity, release)) return@launch
 			if (checker.isSnoozed(this@MainActivity, release)) return@launch
 			// 확인하는 사이 다른 화면으로 넘어갔으면 다음에 앱을 열 때 다시 확인한다.
+			if (isFinishing || isDestroyed) return@launch
+			com.chan.bnote.ui.mypage.settings.UpdateDialog.show(this@MainActivity, release)
+		}
+	}
+
+	/** 새 버전 알림을 눌러서 열렸으면, 하루 한 번 제한·"나중에" 미루기와 상관없이 바로 확인해서 안내 창을 띄운다.
+	 * 화면이 다시 만들어질 때 또 뜨지 않도록 표시는 한 번 쓰고 지운다. */
+	private fun showUpdateIfRequested(intent: android.content.Intent) {
+		if (!intent.getBooleanExtra(EXTRA_SHOW_UPDATE, false)) return
+		intent.removeExtra(EXTRA_SHOW_UPDATE)
+		updateCheckStarted = true // 같은 시점의 자동 확인과 겹쳐서 창이 두 번 뜨지 않게
+
+		lifecycleScope.launch {
+			val checker = com.chan.bnote.data.update.UpdateChecker
+			val release = checker.fetchLatest(this@MainActivity) ?: return@launch
+			if (!checker.isNewer(this@MainActivity, release)) return@launch
 			if (isFinishing || isDestroyed) return@launch
 			com.chan.bnote.ui.mypage.settings.UpdateDialog.show(this@MainActivity, release)
 		}

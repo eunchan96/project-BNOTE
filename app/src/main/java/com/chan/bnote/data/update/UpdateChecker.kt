@@ -13,6 +13,7 @@ import java.net.URL
  *
  * - 앱을 열 때 자동으로 확인하는 건 하루에 한 번까지만(shouldAutoCheck).
  * - 새 버전 안내 창에서 "나중에"를 누르면 그 버전은 며칠 동안 다시 묻지 않는다(snooze).
+ * - 앱을 열지 않아도 하루에 한 번 백그라운드에서 확인해서, 새 버전마다 한 번씩 알림을 보낸다(UpdateCheckWorker).
  * - 인터넷이 안 되거나 GitHub에 접속하지 못하면 조용히 넘어간다(null).
  *
  * 설정 값은 기기마다의 기록이라 데이터 내보내기(백업)와 상관없는 별도 SharedPreferences에 둔다.
@@ -29,6 +30,7 @@ object UpdateChecker {
 	private const val KEY_LAST_CHECK_AT = "last_check_at"
 	private const val KEY_SNOOZED_TAG = "snoozed_tag"
 	private const val KEY_SNOOZED_UNTIL = "snoozed_until"
+	private const val KEY_NOTIFIED_TAG = "notified_tag"
 
 	private const val AUTO_CHECK_INTERVAL_MS = 24 * 60 * 60 * 1000L
 	private const val SNOOZE_MS = 3 * 24 * 60 * 60 * 1000L
@@ -51,8 +53,12 @@ object UpdateChecker {
 		return System.currentTimeMillis() - last >= AUTO_CHECK_INTERVAL_MS
 	}
 
-	/** GitHub에서 최신 릴리스를 가져온다. 실패하면 null. 성공하면 마지막 확인 시각을 기록한다. */
-	suspend fun fetchLatest(context: Context): Release? = withContext(Dispatchers.IO) {
+	/** GitHub에서 최신 릴리스를 가져온다. 실패하면 null. [recordCheck]이면 성공했을 때 마지막 확인
+	 * 시각을 기록한다(앱을 열 때의 하루 한 번 자동 확인용 — 백그라운드 확인은 기록하지 않는다). */
+	suspend fun fetchLatest(
+		context: Context,
+		recordCheck: Boolean = true
+	): Release? = withContext(Dispatchers.IO) {
 		try {
 			val connection = (URL(LATEST_RELEASE_API).openConnection() as HttpURLConnection).apply {
 				connectTimeout = TIMEOUT_MS
@@ -66,9 +72,11 @@ object UpdateChecker {
 				val json = JSONObject(body)
 				val tag = json.optString("tag_name").takeIf { it.isNotBlank() }
 					?: return@withContext null
-				prefs(context).edit()
-					.putLong(KEY_LAST_CHECK_AT, System.currentTimeMillis())
-					.apply()
+				if (recordCheck) {
+					prefs(context).edit()
+						.putLong(KEY_LAST_CHECK_AT, System.currentTimeMillis())
+						.apply()
+				}
 				Release(
 					tag = tag,
 					versionName = tag.removePrefix("v").removePrefix("V"),
@@ -98,6 +106,14 @@ object UpdateChecker {
 			.putString(KEY_SNOOZED_TAG, release.tag)
 			.putLong(KEY_SNOOZED_UNTIL, System.currentTimeMillis() + SNOOZE_MS)
 			.apply()
+	}
+
+	/** 이 버전으로 이미 백그라운드 알림을 보냈는지(새 버전 하나당 알림은 한 번만). */
+	fun wasNotified(context: Context, release: Release): Boolean =
+		prefs(context).getString(KEY_NOTIFIED_TAG, null) == release.tag
+
+	fun markNotified(context: Context, release: Release) {
+		prefs(context).edit().putString(KEY_NOTIFIED_TAG, release.tag).apply()
 	}
 
 	private fun compareVersions(a: String, b: String): Int {

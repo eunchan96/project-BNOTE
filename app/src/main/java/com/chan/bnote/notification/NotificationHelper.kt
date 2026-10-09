@@ -17,6 +17,10 @@ object NotificationHelper {
 
 	const val NOTI_ID_DAILY_VERSE = 1001
 	const val NOTI_ID_READING_REMINDER = 1002
+	const val NOTI_ID_UPDATE = 1003
+
+	// 새 버전 알림은 말씀 알림과 따로 끌 수 있도록 채널을 나눈다.
+	private const val UPDATE_CHANNEL_ID = "bnote_updates"
 
 	fun ensureChannel(context: Context) {
 		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
@@ -29,6 +33,46 @@ object NotificationHelper {
 			description = "매일 말씀 알림, 통독 리마인더"
 		}
 		manager.createNotificationChannel(channel)
+	}
+
+	private fun ensureUpdateChannel(context: Context) {
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
+		val manager = context.getSystemService(NotificationManager::class.java)
+		if (manager.getNotificationChannel(UPDATE_CHANNEL_ID) != null) return
+
+		val channel = NotificationChannel(
+			UPDATE_CHANNEL_ID, "업데이트 알림", NotificationManager.IMPORTANCE_DEFAULT
+		).apply {
+			description = "BNOTE 새 버전이 나왔을 때 알려줘요"
+		}
+		manager.createNotificationChannel(channel)
+	}
+
+	/** 새 버전 알림. 누르면 앱이 열리면서 새 버전 안내 창이 뜬다(MainActivity.EXTRA_SHOW_UPDATE). */
+	fun showUpdate(context: Context, versionName: String) {
+		ensureUpdateChannel(context)
+
+		val openIntent = Intent(context, MainActivity::class.java).apply {
+			flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+			putExtra(MainActivity.EXTRA_SHOW_UPDATE, true)
+		}
+		val pendingIntent = PendingIntent.getActivity(
+			context, NOTI_ID_UPDATE, openIntent,
+			PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+		)
+		val content = "BNOTE $versionName 버전이 나왔어요. 눌러서 업데이트 내역을 확인해 보세요."
+		val notification = NotificationCompat.Builder(context, UPDATE_CHANNEL_ID)
+			.setSmallIcon(R.drawable.ic_book_open)
+			.setContentTitle("새 버전이 나왔어요")
+			.setContentText(content)
+			.setStyle(NotificationCompat.BigTextStyle().bigText(content))
+			.setContentIntent(pendingIntent)
+			.setAutoCancel(true)
+			.build()
+
+		if (NotificationManagerCompat.from(context).areNotificationsEnabled()) {
+			NotificationManagerCompat.from(context).notify(NOTI_ID_UPDATE, notification)
+		}
 	}
 
 	/** [bookId]/[chapter]가 있으면 탭했을 때 해당 장으로(가능하면 [verse] 절까지), 없으면 그냥 앱을 연다. */
