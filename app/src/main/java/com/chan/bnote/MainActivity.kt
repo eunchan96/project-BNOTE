@@ -150,7 +150,32 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 		} else {
 			window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 		}
-		checkAutoBackupPrompt()
+		// 백업 확인 창이 이번에 떴으면 새 버전 안내는 다음 기회로 미룬다(창 두 개가 겹치지 않게).
+		val backupPromptShown = checkAutoBackupPrompt()
+		if (!backupPromptShown) checkForUpdate()
+	}
+
+	// --- 새 버전 확인 ---
+
+	/** 이 화면이 살아있는 동안 한 번만 확인한다(onResume이 여러 번 불려도). */
+	private var updateCheckStarted = false
+
+	/** 하루에 한 번까지만 GitHub의 최신 릴리스를 확인해서, 새 버전이 있으면 안내 창을 띄운다.
+	 * 인터넷이 안 되면 조용히 넘어간다. 자세한 규칙은 UpdateChecker 참고. */
+	private fun checkForUpdate() {
+		if (updateCheckStarted) return
+		if (!com.chan.bnote.data.update.UpdateChecker.shouldAutoCheck(this)) return
+		updateCheckStarted = true
+
+		lifecycleScope.launch {
+			val checker = com.chan.bnote.data.update.UpdateChecker
+			val release = checker.fetchLatest(this@MainActivity) ?: return@launch
+			if (!checker.isNewer(this@MainActivity, release)) return@launch
+			if (checker.isSnoozed(this@MainActivity, release)) return@launch
+			// 확인하는 사이 다른 화면으로 넘어갔으면 다음에 앱을 열 때 다시 확인한다.
+			if (isFinishing || isDestroyed) return@launch
+			com.chan.bnote.ui.mypage.settings.UpdateDialog.show(this@MainActivity, release)
+		}
 	}
 
 	// --- 자동 데이터 내보내기 ---
@@ -167,10 +192,10 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 
 	/** onResume마다 불리지만, 주기가 안 지났으면 바로 빠져나가고(shouldPromptNow), 이미 이번에
 	 * 창을 띄웠으면(autoBackupDialogShown) 또 안 띄운다 — 설정 화면 갔다 오는 것처럼 onResume이
-	 * 여러 번 불려도 중복으로 뜨지 않는다. */
-	private fun checkAutoBackupPrompt() {
-		if (autoBackupDialogShown) return
-		if (!AutoBackupManager.shouldPromptNow(this)) return
+	 * 여러 번 불려도 중복으로 뜨지 않는다. 이번 호출에서 실제로 창을 띄웠으면 true. */
+	private fun checkAutoBackupPrompt(): Boolean {
+		if (autoBackupDialogShown) return false
+		if (!AutoBackupManager.shouldPromptNow(this)) return false
 		autoBackupDialogShown = true
 
 		MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_BNOTE_Dialog)
@@ -185,6 +210,7 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 			}
 			.setCancelable(false)
 			.show()
+		return true
 	}
 
 	private fun startAutoBackup() {
