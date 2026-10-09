@@ -35,3 +35,5 @@ google-services.json
 
 # Custom
 app/src/main/assets/
+app/release/baselineProfiles/*/*.dm
+.idea/deploymentTargetSelector.xml
