@@ -35,7 +35,9 @@ object NotificationHelper {
 		manager.createNotificationChannel(channel)
 	}
 
-	private fun ensureUpdateChannel(context: Context) {
+	/** 앱이 시작될 때 불러서, 알림을 한 번도 안 보냈어도 핸드폰 설정의 알림 목록에 "업데이트 알림"이
+	 * 미리 보이게 한다(채널은 만들어져야 설정 화면에 나타난다). */
+	fun ensureUpdateChannel(context: Context) {
 		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
 		val manager = context.getSystemService(NotificationManager::class.java)
 		if (manager.getNotificationChannel(UPDATE_CHANNEL_ID) != null) return

@@ -122,7 +122,7 @@ object UserGuideContent {
 				),
 				GuideItem(
 					"자동 스크롤",
-					"메뉴(≡)의 \"자동스크롤 활성화\" 줄을 탭해서 켜면 상단바에 재생 아이콘이 생겨요. 누르면 본문이 자동으로 천천히 내려가요. 스크롤 속도는 설정 화면에서 바꿀 수 있어요.",
+					"메뉴(≡)의 \"자동스크롤 활성화\" 줄을 탭해서 켜면 상단바에 재생 아이콘이 생겨요. 누르면 본문이 자동으로 천천히 내려가고, 장의 끝까지 내려가면 저절로 멈춰요. 스크롤 속도는 설정 화면에서 바꿀 수 있어요.",
 					images = listOf(
 						GuideImage("guide_bible_auto_scroll_toggle", "자동스크롤 켜기"),
 						GuideImage("guide_bible_auto_scroll_play", "상단 재생 아이콘")

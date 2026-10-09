@@ -175,6 +175,12 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 	private val autoScrollHandler = android.os.Handler(android.os.Looper.getMainLooper())
 	private val autoScrollRunnable = object : Runnable {
 		override fun run() {
+			// 장의 맨 끝(하단 여백까지)에 닿으면 더 내려갈 곳이 없으니 자동 스크롤을 멈추고, 상단바 버튼도 재생 아이콘으로 되돌린다.
+			if (!recyclerView.canScrollVertically(1)) {
+				isAutoScrolling = false
+				notifyTopBarChanged()
+				return
+			}
 			recyclerView.smoothScrollBy(0, 2 + scrollSpeed) // 속도 1~5 -> 3~7px씩
 			autoScrollHandler.postDelayed(this, 60L - (scrollSpeed * 8)) // 속도 1~5 -> 52~20ms 간격
 		}
