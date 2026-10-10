@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="utf-8"?><!-- 키보드가 올라와 있을 때만 키보드 바로 위에 보이는 편집 바.
+     왼쪽: 실행 취소 / 다시 실행(모든 입력칸), 오른쪽: 굵게 · 밑줄 · 색(서식을 지원하는 칸 — 설교 노트 메모,
+     적용 노트 묵상하기 · 기도하기 · 적용하기 — 에 커서가 있을 때만), 맨 오른쪽: 접기(˅).
+     접으면 바 대신 오른쪽에 작은 "편집 도구 ˄" 탭만 남고, 누르면 다시 펼쳐진다(접힘 상태는 기억해 둔다).
+     화면 루트의 맨 아래에 두면, 루트가 키보드 높이만큼 하단 패딩을 주고 있어서 자연스럽게 키보드 위에 붙는다.
+     보이기/숨기기는 KeyboardBar가 키보드 표시 여부와 커서 위치를 보고 처리한다. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/keyboard_bar"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:visibility="gone">
+
+    <!-- 접었을 때만 보이는 "펼치기" 탭 -->
+    <LinearLayout
+        android:id="@+id/btn_keyboard_bar_expand"
+        android:layout_width="wrap_content"
+        android:layout_height="26dp"
+        android:layout_gravity="end"
+        android:layout_marginEnd="12dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="12dp"
+        android:paddingEnd="8dp"
+        android:background="@drawable/bg_keyboard_bar_tab"
+        android:clickable="true"
+        android:contentDescription="편집 도구 펼치기"
+        android:visibility="gone">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="편집 도구"
+            android:textSize="12sp"
+            android:textColor="@color/text_secondary" />
+
+        <ImageView
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:layout_marginStart="2dp"
+            android:rotation="180"
+            android:src="@drawable/ic_chevron_down"
+            app:tint="@color/text_secondary"
+            android:contentDescription="@null" />
+    </LinearLayout>
+
+    <!-- 펼쳤을 때의 편집 바 본체 -->
+    <LinearLayout
+        android:id="@+id/keyboard_bar_body"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@color/surface_elevated">
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/divider_light" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="4dp"
+            android:paddingEnd="4dp">
+
+            <LinearLayout
+                android:id="@+id/btn_keyboard_undo"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:contentDescription="실행 취소">
+
+                <ImageView
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:src="@drawable/ic_undo"
+                    app:tint="@color/text_secondary"
+                    android:contentDescription="@null" />
+
+                <TextView
+                    android:id="@+id/text_keyboard_undo"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:text="실행 취소"
+                    android:textSize="13sp"
+                    android:textColor="@color/text_secondary" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/btn_keyboard_redo"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:contentDescription="다시 실행">
+
+                <ImageView
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:src="@drawable/ic_redo"
+                    app:tint="@color/text_secondary"
+                    android:contentDescription="@null" />
+
+                <TextView
+                    android:id="@+id/text_keyboard_redo"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:text="다시 실행"
+                    android:textSize="13sp"
+                    android:textColor="@color/text_secondary" />
+            </LinearLayout>
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+
+            <!-- 서식 버튼: 드래그로 글자를 선택한 뒤 누르면 그 부분에 적용된다 -->
+            <LinearLayout
+                android:id="@+id/group_keyboard_format"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:visibility="gone">
+
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="20dp"
+                    android:layout_marginEnd="4dp"
+                    android:background="@color/divider_light" />
+
+                <TextView
+                    android:id="@+id/btn_keyboard_bold"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:text="굵게"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_secondary"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true" />
+
+                <TextView
+                    android:id="@+id/btn_keyboard_underline"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:text="밑줄"
+                    android:textSize="14sp"
+                    android:textColor="@color/text_secondary"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true" />
+
+                <TextView
+                    android:id="@+id/btn_keyboard_color"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:text="색"
+                    android:textSize="14sp"
+                    android:textColor="@color/text_secondary"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true" />
+            </LinearLayout>
+
+            <!-- 편집 바 접기 -->
+            <ImageView
+                android:id="@+id/btn_keyboard_bar_collapse"
+                android:layout_width="36dp"
+                android:layout_height="match_parent"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                android:src="@drawable/ic_chevron_down"
+                app:tint="@color/text_hint"
+                android:contentDescription="편집 도구 접기"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true" />
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>

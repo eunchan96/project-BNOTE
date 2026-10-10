@@ -29,8 +29,11 @@ import com.chan.bnote.data.application.ApplicationSermonLink
 import com.chan.bnote.data.bible.BibleBooks
 import com.chan.bnote.data.sermon.Sermon
 import com.chan.bnote.ui.application.ApplicationDetailActivity
-import com.chan.bnote.ui.common.KeyboardUndoBar
+import com.chan.bnote.ui.common.KeyboardBar
+import com.chan.bnote.ui.common.KeyboardFormatHandler
 import com.chan.bnote.ui.common.UnsavedChangesDialog
+import com.chan.bnote.ui.sermon.addsermon.RichTextColorPicker
+import com.chan.bnote.ui.sermon.addsermon.RichTextUtils
 import kotlinx.coroutines.launch
 
 class AddApplicationActivity : AppCompatActivity() {
@@ -39,7 +42,8 @@ class AddApplicationActivity : AppCompatActivity() {
 		private const val EXTRA_APPLICATION_ID = "extra_application_id"
 		private const val EXTRA_INITIAL_DATE_MILLIS = "extra_initial_date_millis"
 		private const val EXTRA_PRELINK_SERMON_ID = "extra_prelink_sermon_id"
-		private const val ID_BOLD_MEDITATION = 1001
+		private const val ID_MENU_BOLD = 1001
+		private const val ID_MENU_UNDERLINE = 1002
 
 		fun createIntent(
 			context: Context,
@@ -56,13 +60,15 @@ class AddApplicationActivity : AppCompatActivity() {
 			}
 		}
 
-		/** 설교 detail 화면의 "적용하러 가기"에서 호출 — 그 설교가 칩으로 미리 추가된 채로 열린다. */
-		fun createIntentForSermon(context: Context, sermonId: Long): Intent {
+		/** 설교 detail 화면의 "적용하러 가기"에서 호출 — 그 설교가 칩으로 미리 추가된 채로 열린다.
+		 * 날짜도 오늘이 아니라 그 설교의 날짜로 시작한다(필요하면 작성 화면에서 바꿀 수 있다). */
+		fun createIntentForSermon(
+			context: Context,
+			sermonId: Long,
+			sermonDateMillis: Long
+		): Intent {
 			return Intent(context, AddApplicationActivity::class.java).apply {
-				putExtra(
-					EXTRA_INITIAL_DATE_MILLIS,
-					DateUtils.normalizeToDayStart(System.currentTimeMillis())
-				)
+				putExtra(EXTRA_INITIAL_DATE_MILLIS, DateUtils.normalizeToDayStart(sermonDateMillis))
 				putExtra(EXTRA_PRELINK_SERMON_ID, sermonId)
 			}
 		}
@@ -99,7 +105,20 @@ class AddApplicationActivity : AppCompatActivity() {
 		enableEdgeToEdge()
 		setContentView(R.layout.activity_add_application)
 
-		val keyboardUndoBar = KeyboardUndoBar(this, findViewById(R.id.keyboard_undo_bar))
+		// 키보드 위 편집 바: 실행 취소/다시 실행은 모든 칸, 굵게 · 밑줄 · 색은 묵상하기 · 기도하기 · 적용하기 칸에서만
+		// (제목 칸에선 서식 버튼이 사라진다). 세 칸은 아래에서 찾지만, 이 콜백들은 화면이 다 만들어진 뒤에야 불린다.
+		val keyboardBar = KeyboardBar(
+			this,
+			findViewById(R.id.keyboard_bar),
+			object : KeyboardFormatHandler {
+				override fun supportsFormatting(editText: EditText) =
+					formattableFields().any { it === editText }
+
+				override fun onBold() = applyFormatting(bold = true)
+				override fun onUnderline() = applyFormatting(bold = false)
+				override fun onColor() = showColorPicker()
+			}
+		)
 
 		ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.add_application_root)) { v, insets ->
 			val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
@@ -110,7 +129,7 @@ class AddApplicationActivity : AppCompatActivity() {
 				systemBars.right,
 				maxOf(systemBars.bottom, ime.bottom)
 			)
-			keyboardUndoBar.onInsetsChanged(insets)
+			keyboardBar.onInsetsChanged(insets)
 			insets
 		}
 
@@ -152,41 +171,11 @@ class AddApplicationActivity : AppCompatActivity() {
 		editPrayer = findViewById(R.id.edit_prayer)
 		editObedience = findViewById(R.id.edit_obedience)
 
-		// 묵상하기 메모에서 텍스트를 길게 눌러 선택하면 뜨는 메뉴에 "굵게"를 추가한다.
-		editMeditation.customSelectionActionModeCallback =
-			object : android.view.ActionMode.Callback {
-				override fun onCreateActionMode(
-					mode: android.view.ActionMode?,
-					menu: android.view.Menu?
-				): Boolean {
-					menu?.add(0, ID_BOLD_MEDITATION, 0, "굵게")
-					return true
-				}
-
-				override fun onPrepareActionMode(
-					mode: android.view.ActionMode?,
-					menu: android.view.Menu?
-				): Boolean = false
-
-				override fun onActionItemClicked(
-					mode: android.view.ActionMode?,
-					item: android.view.MenuItem?
-				): Boolean {
-					if (item?.itemId == ID_BOLD_MEDITATION) {
-						val start = editMeditation.selectionStart
-						val end = editMeditation.selectionEnd
-						if (start in 0 until end) {
-							com.chan.bnote.ui.sermon.addsermon.RichTextUtils
-								.toggleStyle(editMeditation.text, start, end, bold = true)
-						}
-						mode?.finish()
-						return true
-					}
-					return false
-				}
-
-				override fun onDestroyActionMode(mode: android.view.ActionMode?) {}
-			}
+		// 묵상하기 · 기도하기 · 적용하기에서 텍스트를 길게 눌러 선택하면 뜨는 메뉴에 "굵게" · "밑줄"을 추가한다
+		// (설교 노트 메모와 같은 방식). 색은 키보드 위 편집 바의 "색" 버튼으로.
+		for (field in formattableFields()) {
+			field.customSelectionActionModeCallback = selectionFormatCallback(field)
+		}
 
 		findViewById<ImageView>(R.id.btn_prayer_info).setOnClickListener { showPrayerInfoDialog() }
 		findViewById<ImageView>(R.id.btn_obedience_info).setOnClickListener { showObedienceInfoDialog() }
@@ -233,11 +222,9 @@ class AddApplicationActivity : AppCompatActivity() {
 				existingApplication = application
 				if (application != null) {
 					editTitle.setText(application.title)
-					editMeditation.setText(
-						com.chan.bnote.ui.sermon.addsermon.RichTextUtils.toEditable(application.meditationMemo)
-					)
-					editPrayer.setText(application.prayerMemo)
-					editObedience.setText(application.obedienceMemo)
+					editMeditation.setText(RichTextUtils.toEditable(application.meditationMemo))
+					editPrayer.setText(RichTextUtils.toEditable(application.prayerMemo))
+					editObedience.setText(RichTextUtils.toEditable(application.obedienceMemo))
 					selectedDateMillis = application.applicationDate
 					updateDateText()
 
@@ -539,13 +526,80 @@ class AddApplicationActivity : AppCompatActivity() {
 					selectedCategory != null
 		}
 		return editTitle.text.toString().trim() != originalTitle ||
-				com.chan.bnote.ui.sermon.addsermon.RichTextUtils.toStorageString(editMeditation.text) != originalMeditation ||
-				editPrayer.text.toString() != originalPrayer ||
-				editObedience.text.toString() != originalObedience ||
+				RichTextUtils.toStorageString(editMeditation.text) != originalMeditation ||
+				RichTextUtils.toStorageString(editPrayer.text) != originalPrayer ||
+				RichTextUtils.toStorageString(editObedience.text) != originalObedience ||
 				selectedDateMillis != originalDateMillis ||
 				selectedCategory?.id != originalCategoryId ||
 				refsSignature(bibleRefs) != originalRefsSignature ||
 				linkedSermons.map { it.id } != originalSermonIds
+	}
+
+	/** 굵게 · 밑줄 · 색을 넣을 수 있는 칸들(제목은 제외). */
+	private fun formattableFields(): List<EditText> =
+		listOf(editMeditation, editPrayer, editObedience)
+
+	private fun selectionFormatCallback(field: EditText) =
+		object : android.view.ActionMode.Callback {
+			override fun onCreateActionMode(
+				mode: android.view.ActionMode?,
+				menu: android.view.Menu?
+			): Boolean {
+				menu?.add(0, ID_MENU_BOLD, 0, "굵게")
+				menu?.add(0, ID_MENU_UNDERLINE, 1, "밑줄")
+				return true
+			}
+
+			override fun onPrepareActionMode(
+				mode: android.view.ActionMode?,
+				menu: android.view.Menu?
+			) = false
+
+			override fun onActionItemClicked(
+				mode: android.view.ActionMode?,
+				item: android.view.MenuItem?
+			): Boolean {
+				val bold = when (item?.itemId) {
+					ID_MENU_BOLD -> true
+					ID_MENU_UNDERLINE -> false
+					else -> return false
+				}
+				val start = minOf(field.selectionStart, field.selectionEnd)
+				val end = maxOf(field.selectionStart, field.selectionEnd)
+				if (start in 0 until end) RichTextUtils.toggleStyle(field.text, start, end, bold)
+				mode?.finish()
+				return true
+			}
+
+			override fun onDestroyActionMode(mode: android.view.ActionMode?) {}
+		}
+
+	/** 지금 커서가 있는 서식 칸과 드래그로 선택한 구간. 선택이 없으면 안내 토스트를 띄우고 null. */
+	private fun requireFormatSelection(): Pair<EditText, Pair<Int, Int>>? {
+		val field = formattableFields().firstOrNull { it === currentFocus } ?: return null
+		val start = field.selectionStart
+		val end = field.selectionEnd
+		if (start == end || start < 0 || end < 0) {
+			android.widget.Toast.makeText(
+				this,
+				"서식을 적용할 텍스트를 먼저 선택해주세요",
+				android.widget.Toast.LENGTH_SHORT
+			).show()
+			return null
+		}
+		return field to (minOf(start, end) to maxOf(start, end))
+	}
+
+	private fun applyFormatting(bold: Boolean) {
+		val (field, range) = requireFormatSelection() ?: return
+		RichTextUtils.toggleStyle(field.text, range.first, range.second, bold)
+	}
+
+	private fun showColorPicker() {
+		val (field, range) = requireFormatSelection() ?: return
+		RichTextColorPicker.show(this) { color ->
+			RichTextUtils.applyColor(field.text, range.first, range.second, color)
+		}
 	}
 
 	private fun handleBackPress() {
@@ -564,10 +618,10 @@ class AddApplicationActivity : AppCompatActivity() {
 
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(applicationContext)
-			val meditation =
-				com.chan.bnote.ui.sermon.addsermon.RichTextUtils.toStorageString(editMeditation.text)
-			val prayer = editPrayer.text.toString()
-			val obedience = editObedience.text.toString()
+			// 세 칸 모두 굵게 · 밑줄 · 색이 있으면 HTML로, 없으면 예전처럼 일반 텍스트로 저장된다(RichTextUtils).
+			val meditation = RichTextUtils.toStorageString(editMeditation.text)
+			val prayer = RichTextUtils.toStorageString(editPrayer.text)
+			val obedience = RichTextUtils.toStorageString(editObedience.text)
 
 			val applicationId: Long
 			val current = existingApplication

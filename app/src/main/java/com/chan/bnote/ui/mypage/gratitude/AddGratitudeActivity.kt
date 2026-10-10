@@ -21,7 +21,7 @@ import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.DateUtils
 import com.chan.bnote.data.mypage.gratitude.GratitudeEntry
 import com.chan.bnote.data.mypage.gratitude.GratitudeNote
-import com.chan.bnote.ui.common.KeyboardUndoBar
+import com.chan.bnote.ui.common.KeyboardBar
 import com.chan.bnote.ui.common.UnsavedChangesDialog
 import kotlinx.coroutines.launch
 import java.util.Calendar
@@ -63,7 +63,7 @@ class AddGratitudeActivity : AppCompatActivity() {
 		enableEdgeToEdge()
 		setContentView(R.layout.activity_add_gratitude)
 
-		val keyboardUndoBar = KeyboardUndoBar(this, findViewById(R.id.keyboard_undo_bar))
+		val keyboardBar = KeyboardBar(this, findViewById(R.id.keyboard_bar))
 
 		ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.add_gratitude_root)) { v, insets ->
 			val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
@@ -74,7 +74,7 @@ class AddGratitudeActivity : AppCompatActivity() {
 				systemBars.right,
 				maxOf(systemBars.bottom, ime.bottom)
 			)
-			keyboardUndoBar.onInsetsChanged(insets)
+			keyboardBar.onInsetsChanged(insets)
 			insets
 		}
 

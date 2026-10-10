@@ -6,7 +6,6 @@ import android.app.DatePickerDialog
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.Color
 import android.os.Bundle
 import android.text.Spannable
 import android.text.SpannableString
@@ -38,10 +37,9 @@ import com.chan.bnote.data.sermon.SermonBibleRef
 import com.chan.bnote.data.sermon.sermonphoto.SermonPhoto
 import com.chan.bnote.data.sermon.sermonphoto.SermonPhotoStorage
 import com.chan.bnote.ui.bible.picker.BibleRangePickerBottomSheet
-import com.chan.bnote.ui.common.KeyboardUndoBar
-import com.chan.bnote.ui.common.TextUndo
+import com.chan.bnote.ui.common.KeyboardBar
+import com.chan.bnote.ui.common.KeyboardFormatHandler
 import com.chan.bnote.ui.sermon.detail.SermonDetailActivity
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.withLock
 import java.io.File
@@ -121,7 +119,7 @@ class AddSermonActivity : AppCompatActivity() {
 	private lateinit var editMemo: EditText
 	private lateinit var editTitle: EditText
 	private lateinit var editLink: EditText
-	private lateinit var keyboardUndoBar: KeyboardUndoBar
+	private lateinit var keyboardBar: KeyboardBar
 
 	private val pickPhotosLauncher = registerForActivityResult(
 		ActivityResultContracts.PickMultipleVisualMedia(MAX_PHOTOS)
@@ -177,7 +175,18 @@ class AddSermonActivity : AppCompatActivity() {
 		enableEdgeToEdge()
 		setContentView(R.layout.activity_add_sermon)
 
-		keyboardUndoBar = KeyboardUndoBar(this, findViewById(R.id.keyboard_undo_bar))
+		// 키보드 위 편집 바: 실행 취소/다시 실행은 모든 칸, 굵게 · 밑줄 · 색은 메모 칸에 커서가 있을 때만.
+		// (editMemo는 아래에서 찾지만, 이 콜백들은 화면이 다 만들어진 뒤 커서가 옮겨가거나 버튼을 누를 때에야 불리므로 괜찮다.)
+		keyboardBar = KeyboardBar(
+			this,
+			findViewById(R.id.keyboard_bar),
+			object : KeyboardFormatHandler {
+				override fun supportsFormatting(editText: EditText) = editText === editMemo
+				override fun onBold() = applyFormatting(bold = true)
+				override fun onUnderline() = applyFormatting(bold = false)
+				override fun onColor() = showColorPicker()
+			}
+		)
 
 		ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.add_sermon_root)) { v, insets ->
 			val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
@@ -191,7 +200,7 @@ class AddSermonActivity : AppCompatActivity() {
 				systemBars.right,
 				maxOf(systemBars.bottom, ime.bottom)
 			)
-			keyboardUndoBar.onInsetsChanged(insets)
+			keyboardBar.onInsetsChanged(insets)
 			insets
 		}
 
@@ -295,17 +304,6 @@ class AddSermonActivity : AppCompatActivity() {
 		updateDateText()
 		renderPhotoThumbnails()
 		renderBibleRefBoxes()
-
-		findViewById<TextView>(R.id.btn_format_bold).setOnClickListener {
-			applyFormatting(bold = true)
-		}
-		findViewById<TextView>(R.id.btn_format_underline).setOnClickListener {
-			applyFormatting(bold = false)
-		}
-		findViewById<TextView>(R.id.btn_format_color).setOnClickListener { showColorPicker() }
-		// 메모 박스 안의 실행 취소/다시 실행(키보드 위 바와 같은 동작이지만, 이 버튼은 항상 메모에 적용된다).
-		findViewById<ImageView>(R.id.btn_memo_undo).setOnClickListener { TextUndo.undo(editMemo) }
-		findViewById<ImageView>(R.id.btn_memo_redo).setOnClickListener { TextUndo.redo(editMemo) }
 
 		btnDate.setOnClickListener {
 			val cal = Calendar.getInstance().apply { timeInMillis = selectedDateMillis }
@@ -715,48 +713,10 @@ class AddSermonActivity : AppCompatActivity() {
 
 	private fun showColorPicker() {
 		val range = requireSelection() ?: return
-
-		val colors = listOf(
-			"#000000" to "검정", "#795548" to "브라운", "#E53935" to "빨강",
-			"#1E88E5" to "파랑", "#43A047" to "초록", "#FB8C00" to "주황"
-		)
-
-		val row = LinearLayout(this).apply {
-			orientation = LinearLayout.HORIZONTAL
-			setPadding(dp(16), dp(8), dp(16), dp(8))
+		RichTextColorPicker.show(this) { color ->
+			RichTextUtils.applyColor(editMemo.text, range.first, range.second, color)
+			scheduleAutoSave()
 		}
-		lateinit var dialog: androidx.appcompat.app.AlertDialog
-		for ((hex, name) in colors) {
-			val swatch = View(this).apply {
-				contentDescription = name
-				background = android.graphics.drawable.GradientDrawable().apply {
-					shape = android.graphics.drawable.GradientDrawable.OVAL
-					setColor(android.graphics.Color.parseColor(hex))
-				}
-				layoutParams = LinearLayout.LayoutParams(dp(36), dp(36)).apply {
-					marginEnd = dp(12)
-				}
-				isClickable = true
-				isFocusable = true
-				setOnClickListener {
-					RichTextUtils.applyColor(
-						editMemo.text,
-						range.first,
-						range.second,
-						Color.parseColor(hex)
-					)
-					scheduleAutoSave()
-					dialog.dismiss()
-				}
-			}
-			row.addView(swatch)
-		}
-
-		dialog = MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_BNOTE_Dialog)
-			.setTitle("글자 색")
-			.setView(row)
-			.setNegativeButton("취소", null)
-			.show()
 	}
 
 	/** 서식을 적용할 선택 영역을 확인한다. 선택이 없으면 안내 토스트를 띄우고 null을 반환한다. */
