@@ -8,6 +8,14 @@ import java.util.Locale
 object NoticeFormatter {
 
 	private val MARKDOWN_LINK = Regex("\\[([^\\]]+)]\\((https?://[^)\\s]+)\\)")
+	private val HTML_COMMENT = Regex("<!--.*?-->", RegexOption.DOT_MATCHES_ALL)
+
+	/**
+	 * 이슈 템플릿에 들어 있는 작성 안내(<!-- ... -->, 여러 줄 가능)를 지운다. GitHub 화면에서도 안 보이는
+	 * 부분이라 앱에서도 빼고, 줄바꿈은 "\n"으로 통일한다.
+	 */
+	fun stripHtmlComments(text: String): String =
+		text.replace("\r\n", "\n").replace(HTML_COMMENT, "")
 
 	/**
 	 * 마크다운을 읽기 좋은 일반 텍스트로: "## 제목" → "제목", "- 항목" → "・ 항목", "**굵게**" → "굵게",

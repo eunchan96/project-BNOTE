@@ -85,7 +85,7 @@ object NoticeRepository {
 				val obj = array.getJSONObject(i)
 				if (obj.optString("author_association") !in TRUSTED_AUTHORS) return@mapNotNull null
 				NoticeComment(
-					body = obj.optString("body"),
+					body = NoticeFormatter.stripHtmlComments(obj.optString("body")),
 					createdAt = parseIsoTime(obj.optString("created_at"))
 				)
 			}
@@ -125,7 +125,9 @@ object NoticeRepository {
 		var minVersion: String? = null
 		var maxVersion: String? = null
 		val bodyLines = mutableListOf<String>()
-		for (line in obj.optString("body").replace("\r\n", "\n").lines()) {
+		// 이슈 템플릿의 작성 안내(<!-- -->)는 GitHub에서도 안 보이므로 앱에서도 뺀다.
+		val rawBody = NoticeFormatter.stripHtmlComments(obj.optString("body"))
+		for (line in rawBody.lines()) {
 			val match = TARGET_LINE.find(line)
 			if (match != null && minVersion == null && maxVersion == null) {
 				val (min, max) = parseTarget(match.groupValues[1])
