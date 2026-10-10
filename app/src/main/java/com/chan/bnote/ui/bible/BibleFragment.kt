@@ -971,14 +971,23 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		return true
 	}
 
-	/** 성경 탭을 보고 있을 때 하단바의 성경 탭 아이콘을 (짧게) 눌렀을 때. 음성이 재생 중이면 일시정지하고
-	 * 재생 툴바를 연다 — 다시 재생은 툴바의 재생 버튼으로. 재생 중이 아니면 false를 돌려줘서 평소대로
-	 * 아무 일도 없게 한다(재생 툴바는 지금처럼 길게 눌러야 열린다). */
+	/**
+	 * 성경 탭을 보고 있을 때 하단바 성경 아이콘을 다시 누른 경우.
+	 * - 재생 중이면: 일시정지하고 재생 툴바를 띄운다.
+	 * - 재생 툴바가 떠 있고 멈춰 있으면: 다시 재생한다(툴바의 재생 버튼과 같은 동작 — 다른 장으로 넘어가 있으면 그 장부터).
+	 * - 그 밖에는 처리하지 않는다(false → 평소대로 탭 전환).
+	 */
 	override fun onNavTabReselected(): Boolean {
 		val controller = audioController ?: return false
-		if (!controller.pauseIfListening()) return false
-		if (audioToolbar.visibility != View.VISIBLE) showAudioToolbar() else updateAudioToolbar()
-		return true
+		if (controller.pauseIfListening()) {
+			if (audioToolbar.visibility != View.VISIBLE) showAudioToolbar() else updateAudioToolbar()
+			return true
+		}
+		if (audioToolbar.visibility == View.VISIBLE && controller.isAvailable) {
+			controller.toggle()
+			return true
+		}
+		return false
 	}
 
 	/** 재생/일시정지·장 변경·배속 변경 등 재생 상태가 바뀔 때마다 BibleAudioController가 불러준다. */
