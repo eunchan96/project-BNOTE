@@ -7,7 +7,6 @@ import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -84,10 +83,7 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 		installSplashScreen()
 		super.onCreate(savedInstanceState)
 
-		val darkMode = AppSettings.isDarkMode(this)
-		AppCompatDelegate.setDefaultNightMode(
-			if (darkMode) AppCompatDelegate.MODE_NIGHT_YES else AppCompatDelegate.MODE_NIGHT_NO
-		)
+		// 다크모드는 BnoteApplication.onCreate()에서 앱이 뜰 때 한 번 정한다(어떤 화면으로 다시 시작되든 적용되도록).
 		if (AppSettings.isKeepScreenOn(this)) {
 			window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 		}
