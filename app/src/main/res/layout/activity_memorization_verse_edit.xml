@@ -61,7 +61,7 @@
                 android:gravity="center"
                 android:textSize="16sp"
                 android:textStyle="bold"
-                android:textColor="@color/brown_primary"
+                android:textColor="@color/brown_text"
                 android:background="@drawable/bg_field_underline"
                 android:backgroundTint="@color/field_underline"
                 android:drawableEnd="@drawable/ic_chevron_down"
@@ -88,7 +88,7 @@
                     android:layout_height="wrap_content"
                     android:textSize="14sp"
                     android:textStyle="bold"
-                    android:textColor="@color/brown_primary" />
+                    android:textColor="@color/brown_text" />
 
                 <TextView
                     android:id="@+id/text_range_verse"
@@ -108,7 +108,7 @@
                 android:padding="14dp"
                 android:text="성경 구절 추가"
                 android:textSize="15sp"
-                android:textColor="@color/brown_primary"
+                android:textColor="@color/brown_text"
                 android:drawableStart="@drawable/ic_add"
                 android:drawablePadding="6dp"
                 android:background="@drawable/bg_book_button"

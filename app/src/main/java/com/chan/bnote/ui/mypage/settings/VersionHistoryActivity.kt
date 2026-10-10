@@ -79,7 +79,7 @@ class VersionHistoryActivity : AppCompatActivity() {
 			text = "v${entry.version}"
 			textSize = 16f
 			setTypeface(typeface, Typeface.BOLD)
-			setTextColor(ContextCompat.getColor(this@VersionHistoryActivity, R.color.brown_primary))
+			setTextColor(ContextCompat.getColor(this@VersionHistoryActivity, R.color.brown_text))
 			layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
 		}
 		// 부록 펼침 아이콘과 똑같은 방식: 접혀있으면 ∨(0도), 펼쳐지면 ∧(180도)로 회전한다.

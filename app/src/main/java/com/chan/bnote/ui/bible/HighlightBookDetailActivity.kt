@@ -169,7 +169,7 @@ class HighlightBookDetailActivity : AppCompatActivity() {
 			setTextColor(
 				ContextCompat.getColor(
 					this@HighlightBookDetailActivity,
-					R.color.brown_primary
+					R.color.brown_text
 				)
 			)
 			layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)

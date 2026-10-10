@@ -7,14 +7,19 @@
     android:gravity="center_vertical"
     android:layout_marginBottom="4dp">
 
+    <!-- 평소엔 체크 아이콘, "순서 변경" 중엔 같은 자리에 ≡ 손잡이로 바뀐다(잡고 끌어서 순서 변경).
+     손잡이를 잡기 쉽게 터치 영역은 26dp로 두고 안쪽 여백 4dp로 아이콘 크기(18dp)와 글자 시작 위치는 예전 그대로 맞춘다. -->
     <ImageView
-        android:layout_width="18dp"
-        android:layout_height="18dp"
-        android:layout_marginEnd="8dp"
+        android:id="@+id/icon_gratitude_entry"
+        android:layout_width="26dp"
+        android:layout_height="26dp"
+        android:padding="4dp"
+        android:layout_marginStart="-4dp"
+        android:layout_marginEnd="4dp"
         android:layout_gravity="top"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="6dp"
         android:src="@drawable/ic_check_circle"
-        app:tint="@color/brown_primary"
+        app:tint="@color/brown_text"
         android:contentDescription="@null" />
 
     <EditText

@@ -158,7 +158,7 @@ class GratitudeActivity : AppCompatActivity() {
 
 			val fallbackColorHex = String.format(
 				"#%06X", 0xFFFFFF and androidx.core.content.ContextCompat.getColor(
-					this@GratitudeActivity, R.color.brown_primary
+					this@GratitudeActivity, R.color.brown_text
 				)
 			)
 			val colorsByDate = datesWithNotes.associateWith { listOf(fallbackColorHex) }

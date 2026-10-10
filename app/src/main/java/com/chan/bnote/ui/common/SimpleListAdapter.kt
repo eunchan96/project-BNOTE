@@ -28,7 +28,7 @@ class SimpleListAdapter(
 		holder.textView.setTextColor(
 			androidx.core.content.ContextCompat.getColor(
 				holder.itemView.context,
-				if (isSelected) R.color.brown_primary else R.color.text_primary
+				if (isSelected) R.color.brown_text else R.color.text_primary
 			)
 		)
 		holder.textView.setTypeface(

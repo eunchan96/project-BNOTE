@@ -22,6 +22,7 @@ import com.chan.bnote.data.mypage.memorization.MemorizationVerse
 import com.chan.bnote.data.mypage.memorization.VerseMemorizationProgress
 import com.chan.bnote.data.mypage.prayer.PrayerRequest
 import com.chan.bnote.data.mypage.profile.UserProfile
+import com.chan.bnote.data.mypage.readingplan.ReadingGoalStore
 import com.chan.bnote.data.mypage.readingplan.ReadingProgress
 import com.chan.bnote.data.mypage.verseofyear.VerseOfYear
 import com.chan.bnote.data.mypage.verseofyear.VerseOfYearRef
@@ -55,7 +56,7 @@ object BackupManager {
 
 	suspend fun export(context: Context, destination: Uri) = withContext(Dispatchers.IO) {
 		val db = BibleDatabase.getInstance(context.applicationContext)
-		val json = buildBackupJson(db)
+		val json = buildBackupJson(context, db)
 
 		context.contentResolver.openOutputStream(destination)?.use { out ->
 			ZipOutputStream(out).use { zip ->
@@ -107,7 +108,7 @@ object BackupManager {
 
 	// --- 내보내기 ---
 
-	private suspend fun buildBackupJson(db: BibleDatabase): JSONObject {
+	private suspend fun buildBackupJson(context: Context, db: BibleDatabase): JSONObject {
 		val root = JSONObject()
 		root.put("exportedAt", System.currentTimeMillis())
 
@@ -161,6 +162,8 @@ object BackupManager {
 		)
 		db.userProfileDao().get()?.let { root.put("userProfile", it.toJson()) }
 		root.put("readingProgress", JSONArray(db.readingProgressDao().getAll().map { it.toJson() }))
+		// 성경읽기표의 읽기 목표(범위·기간). DB가 아니라 SharedPreferences에 있어서 따로 넣는다.
+		root.put("readingGoal", ReadingGoalStore.toBackupJson(context))
 		root.put("verseOfYears", JSONArray(db.verseOfYearDao().getAll().map { it.toJson() }))
 		root.put(
 			"verseOfYearRefs",
@@ -496,6 +499,8 @@ object BackupManager {
 				)
 			)
 		}
+		// 읽기 목표가 없는 예전 백업이면 지금 설정을 그대로 둔다.
+		ReadingGoalStore.restoreFromBackupJson(context, root.optJSONObject("readingGoal"))
 
 		for (i in 0 until root.optJSONArray("verseOfYears")?.length().orZero()) {
 			val obj = root.getJSONArray("verseOfYears").getJSONObject(i)

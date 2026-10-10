@@ -144,7 +144,7 @@ class WordMemoEditorBottomSheet : FixedBottomSheetDialogFragment() {
 			setTextColor(
 				androidx.core.content.ContextCompat.getColor(
 					requireContext(),
-					R.color.brown_primary
+					R.color.brown_text
 				)
 			)
 			setPadding(0, dp(4), 0, dp(8))

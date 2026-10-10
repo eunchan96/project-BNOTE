@@ -1,0 +1,19 @@
+<!-- 기도하는 손 — 마이페이지 "기도제목" 아이콘. 맞댄 두 손과 소매 끝(양쪽 아래 사선 막대). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M11.65,1.8C10,2.9 8.7,5.4 8.3,8.4L7.7,12.2C7.5,13.3 6.9,14.3 6.1,15.1L4.3,16.9L8.3,20.9L10.6,18.6C11.3,17.9 11.65,17 11.65,16Z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M12.35,1.8C14,2.9 15.3,5.4 15.7,8.4L16.3,12.2C16.5,13.3 17.1,14.3 17.9,15.1L19.7,16.9L15.7,20.9L13.4,18.6C12.7,17.9 12.35,17 12.35,16Z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M3.5,17.7L7.5,21.7L6.1,23.1L2.1,19.1Z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M20.5,17.7L16.5,21.7L17.9,23.1L21.9,19.1Z" />
+</vector>

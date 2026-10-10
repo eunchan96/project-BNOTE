@@ -142,7 +142,7 @@
                 android:padding="12dp"
                 android:text="🔗 링크 열기"
                 android:textSize="14sp"
-                android:textColor="@color/brown_primary"
+                android:textColor="@color/brown_text"
                 android:background="@drawable/bg_book_button"
                 android:visibility="gone"
                 android:clickable="true"

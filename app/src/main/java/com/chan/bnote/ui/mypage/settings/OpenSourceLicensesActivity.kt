@@ -28,8 +28,10 @@ class OpenSourceLicensesActivity : AppCompatActivity() {
 		LibraryLicense("AndroidX ViewPager2", "Apache License 2.0"),
 		LibraryLicense("AndroidX Lifecycle", "Apache License 2.0"),
 		LibraryLicense("AndroidX WorkManager", "Apache License 2.0"),
+		LibraryLicense("AndroidX SwipeRefreshLayout", "Apache License 2.0"),
 		LibraryLicense("Flexbox for Android (google/flexbox-layout)", "Apache License 2.0"),
-		LibraryLicense("Coil", "Apache License 2.0")
+		LibraryLicense("Coil", "Apache License 2.0"),
+		LibraryLicense("PhotoView (Baseflow/PhotoView)", "Apache License 2.0")
 	)
 
 	override fun onCreate(savedInstanceState: Bundle?) {

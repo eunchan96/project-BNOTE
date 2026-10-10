@@ -3,6 +3,8 @@ package com.chan.bnote
 import android.app.Activity
 import android.app.Application
 import android.os.Bundle
+import androidx.appcompat.app.AppCompatDelegate
+import com.chan.bnote.data.AppSettings
 import com.chan.bnote.data.CrashLogger
 import com.chan.bnote.widget.WidgetUpdater
 
@@ -14,7 +16,18 @@ class BnoteApplication : Application() {
 	override fun onCreate() {
 		super.onCreate()
 		CrashLogger.install(this)
+		// 다크모드는 어떤 화면보다도 먼저 정해져야 한다.
+		AppCompatDelegate.setDefaultNightMode(
+			if (AppSettings.isDarkMode(this)) AppCompatDelegate.MODE_NIGHT_YES
+			else AppCompatDelegate.MODE_NIGHT_NO
+		)
 		refreshWidgetsWhenAppGoesBackground()
+		// 하루 한 번 백그라운드에서 새 버전을 확인해 알림을 보낸다(이미 예약돼 있으면 그대로 둔다).
+		com.chan.bnote.data.update.UpdateCheckWorker.schedule(this)
+		// 알림 채널은 만들어져야 핸드폰 설정의 알림 목록에 보인다. 알림을 아직 한 번도 안 보냈어도
+		// 사용자가 미리 켜고 끌 수 있도록 앱이 시작될 때 두 채널을 만들어 둔다(이미 있으면 그대로).
+		com.chan.bnote.notification.NotificationHelper.ensureChannel(this)
+		com.chan.bnote.notification.NotificationHelper.ensureUpdateChannel(this)
 	}
 
 	/**
