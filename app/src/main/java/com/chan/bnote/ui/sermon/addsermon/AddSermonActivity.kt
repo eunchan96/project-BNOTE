@@ -40,6 +40,7 @@ import com.chan.bnote.ui.bible.picker.BibleRangePickerBottomSheet
 import com.chan.bnote.ui.common.KeyboardBar
 import com.chan.bnote.ui.common.KeyboardFormatHandler
 import com.chan.bnote.ui.sermon.detail.SermonDetailActivity
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.withLock
 import java.io.File
@@ -453,10 +454,18 @@ class AddSermonActivity : AppCompatActivity() {
 			val thumb = LayoutInflater.from(this)
 				.inflate(R.layout.item_sermon_photo_thumbnail, photoContainer, false)
 			thumb.findViewById<ImageView>(R.id.image_photo_thumbnail).load(File(path))
+			// 빼는 즉시 자동 저장으로 반영되니, 잘못 눌러서 사진이 사라지지 않게 한 번 확인한다.
 			thumb.findViewById<ImageView>(R.id.btn_remove_photo).setOnClickListener {
-				photoPaths.remove(path)
-				renderPhotoThumbnails()
-				scheduleAutoSave()
+				MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_BNOTE_Dialog)
+					.setTitle("사진 삭제")
+					.setMessage("이 사진을 설교 노트에서 뺄까요?")
+					.setPositiveButton("삭제") { _, _ ->
+						photoPaths.remove(path)
+						renderPhotoThumbnails()
+						scheduleAutoSave()
+					}
+					.setNegativeButton("취소", null)
+					.show()
 			}
 			photoContainer.addView(thumb)
 		}

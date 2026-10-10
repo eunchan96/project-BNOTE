@@ -61,6 +61,7 @@ object ReadingPace {
 	 *   (그래야 목표를 중간에 새로 정해도 처음부터 "앞서 있어요"로 크게 틀어지지 않는다).
 	 *   오늘 분량은 아직 하루가 안 끝났으니 기준에 넣지 않는다 — 아침에 열자마자 "뒤처져 있어요"가 뜨지 않게.
 	 * - 범위를 직접 정했으면 전체 성경 기준 진행률도 한 줄 덧붙인다.
+	 * 	 (전체 성경 기준 진행률은 읽기 목표 화면에서 보여준다 — wholeBibleLine)
 	 */
 	fun guideText(
 		goal: ReadingGoal,
@@ -114,17 +115,15 @@ object ReadingPace {
 			}
 		}
 
-		if (!goal.isAllBooks) {
-			val allTotal = maxChapterByBook.values.sum()
-			val allRead = readList.size
-			val allPercent = if (allTotal > 0) allRead * 100.0 / allTotal else 0.0
-			lines.add(
-				String.format(
-					Locale.KOREA, "전체 성경 기준 %,d / %,d장 (%s%%)",
-					allRead, allTotal, oneDecimal(allPercent)
-				)
-			)
-		}
 		return lines.joinToString("\n")
+	}
+
+	/** 목표와 상관없이 66권 전체 기준 진행률 한 줄(읽기 목표 화면 위쪽에 보여준다). */
+	fun wholeBibleLine(maxChapterByBook: Map<Int, Int>, readCount: Int): String {
+		val total = maxChapterByBook.values.sum()
+		val percent = if (total > 0) readCount * 100.0 / total else 0.0
+		return String.format(
+			Locale.KOREA, "전체 성경 기준 %,d / %,d장 읽음 (%s%%)", readCount, total, oneDecimal(percent)
+		)
 	}
 }

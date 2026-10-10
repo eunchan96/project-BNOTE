@@ -55,19 +55,19 @@ class MyPageFragment : Fragment(), TopBarActionHandler {
 			startActivity(Intent(requireContext(), ProfileActivity::class.java))
 		}
 		view.findViewById<ImageView>(R.id.img_profile_photo).loadProfilePhoto(null)
-		view.findViewById<TextView>(R.id.menu_reading_plan).setOnClickListener {
+		view.findViewById<View>(R.id.menu_reading_plan).setOnClickListener {
 			startActivity(Intent(requireContext(), ReadingPlanActivity::class.java))
 		}
-		view.findViewById<TextView>(R.id.menu_verse_of_year).setOnClickListener {
+		view.findViewById<View>(R.id.menu_verse_of_year).setOnClickListener {
 			startActivity(Intent(requireContext(), VerseOfYearActivity::class.java))
 		}
-		view.findViewById<TextView>(R.id.menu_prayer_request).setOnClickListener {
+		view.findViewById<View>(R.id.menu_prayer_request).setOnClickListener {
 			startActivity(Intent(requireContext(), PrayerRequestActivity::class.java))
 		}
-		view.findViewById<TextView>(R.id.menu_memorization).setOnClickListener {
+		view.findViewById<View>(R.id.menu_memorization).setOnClickListener {
 			startActivity(Intent(requireContext(), MemorizationVerseListActivity::class.java))
 		}
-		view.findViewById<TextView>(R.id.menu_gratitude).setOnClickListener {
+		view.findViewById<View>(R.id.menu_gratitude).setOnClickListener {
 			startActivity(
 				Intent(
 					requireContext(),
