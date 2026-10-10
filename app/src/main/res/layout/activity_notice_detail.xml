@@ -105,9 +105,9 @@
                 android:lineSpacingMultiplier="1.4"
                 android:textColor="@color/text_primary" />
 
-            <!-- 업데이트 알림일 때만: 새 버전 설치 파일이 올라오는 오픈채팅방 열기 -->
+            <!-- 업데이트 알림일 때만: 새 버전 설치 파일(APK)이 있는 구글 드라이브 링크 열기 -->
             <LinearLayout
-                android:id="@+id/btn_notice_open_chat"
+                android:id="@+id/btn_notice_download"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
@@ -123,7 +123,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="업데이트 소식방에서 새 버전 받기"
+                    android:text="새 버전 받기"
                     android:textSize="15sp"
                     android:textStyle="bold"
                     android:textColor="@color/text_primary" />

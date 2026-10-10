@@ -85,7 +85,6 @@ class AppInfoActivity : AppCompatActivity() {
 		}
 		findViewById<TextView>(R.id.menu_contact).setOnClickListener { showContactDialog() }
 		findViewById<TextView>(R.id.menu_check_update).setOnClickListener { checkForUpdateNow() }
-		findViewById<TextView>(R.id.menu_contact).setOnClickListener { showContactDialog() }
 	}
 
 	/** 앱 정보의 "새 버전 확인". 앱을 열 때의 자동 확인과 달리 하루 한 번 제한·"나중에" 미루기와
@@ -178,7 +177,7 @@ class AppInfoActivity : AppCompatActivity() {
 		}
 	}
 
-	/** 문의 방법 세 가지를 각각 어떤 용도인지 설명과 함께 보여준다(dialog_contact). */
+	/** 문의 방법 두 가지(이메일, 1:1 오픈채팅)를 각각 어떤 용도인지 설명과 함께 보여준다(dialog_contact). */
 	private fun showContactDialog() {
 		val content = layoutInflater.inflate(R.layout.dialog_contact, null)
 		val dialog = MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_BNOTE_Dialog)
@@ -195,7 +194,6 @@ class AppInfoActivity : AppCompatActivity() {
 		}
 		option(R.id.option_contact_email) { openContactEmail() }
 		option(R.id.option_contact_private_chat) { openKakaoOpenChat() }
-		option(R.id.option_contact_notice_chat) { UpdateDialog.openNoticeChat(this) }
 	}
 
 	private fun openContactEmail() {

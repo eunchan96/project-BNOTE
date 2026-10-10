@@ -32,7 +32,7 @@ import kotlinx.coroutines.launch
 /**
  * 알림(공지사항) 목록. 마이페이지 상단바의 알림 아이콘으로 들어온다.
  *
- * - 위쪽 칩으로 전체 / 안 읽음 / 종류별로 걸러 볼 수 있다.
+ * - 위쪽 칩으로 전체 / 안 읽음 / 종류별로 걸러 볼 수 있다. 종류 칩은 업데이트만 항상 보이고, 나머지 종류는 그 종류의 알림이 하나라도 있을 때만 보인다.
  * - 항목을 누르면 상세 화면(읽음 처리됨), 길게 누르거나 "편집"을 누르면 선택 모드.
  * - 선택 모드: 전체 선택, 고른 것 읽음 처리, 고른 것 삭제(이 기기에서만).
  * - "모두 읽음"으로 한 번에 읽음 처리, 아래로 당기면 새로고침.
@@ -47,8 +47,9 @@ class NoticeListActivity : AppCompatActivity() {
 		class Type(val type: NoticeType) : Filter(type.displayName)
 	}
 
-	private val filters: List<Filter> =
-		listOf(Filter.All, Filter.Unread) + NoticeType.entries.map { Filter.Type(it) }
+	/** 알림이 없어도 항상 보여줄 종류 칩. 나머지 종류는 알림이 있을 때만 보인다. */
+	private val alwaysShownTypes = setOf(NoticeType.UPDATE)
+
 	private var currentFilter: Filter = Filter.All
 
 	private var allNotices: List<Notice> = emptyList()
@@ -126,7 +127,6 @@ class NoticeListActivity : AppCompatActivity() {
 			confirmDeleteSelected()
 		}
 
-		renderFilters()
 		reloadFromCache()
 		refreshFromServer(showFailure = false)
 	}
@@ -144,8 +144,21 @@ class NoticeListActivity : AppCompatActivity() {
 	private fun reloadFromCache() {
 		allNotices = NoticeRepository.visibleNotices(this)
 		selectedIds.retainAll(allNotices.map { it.id }.toSet())
+		// 보고 있던 종류의 알림이 다 없어져서 그 칩이 사라지면 "전체"로 돌아간다.
+		val current = currentFilter
+		if (current is Filter.Type && current.type !in visibleTypes()) currentFilter = Filter.All
+		renderFilters()
 		render()
 	}
+
+	/** 칩으로 보여줄 종류: 항상 보이는 종류 + 알림이 하나라도 있는 종류(정의된 순서대로). */
+	private fun visibleTypes(): List<NoticeType> {
+		val present = allNotices.map { it.type }.toSet()
+		return NoticeType.entries.filter { it in alwaysShownTypes || it in present }
+	}
+
+	private fun visibleFilters(): List<Filter> =
+		listOf(Filter.All, Filter.Unread) + visibleTypes().map { Filter.Type(it) }
 
 	private fun refreshFromServer(showFailure: Boolean) {
 		swipeRefresh.isRefreshing = true
@@ -213,7 +226,7 @@ class NoticeListActivity : AppCompatActivity() {
 	private fun renderFilters() {
 		filterContainer.removeAllViews()
 		val density = resources.displayMetrics.density
-		for (filter in filters) {
+		for (filter in visibleFilters()) {
 			val chip = TextView(this).apply {
 				text = filter.label
 				textSize = 13f

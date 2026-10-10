@@ -15,7 +15,7 @@ object UpdateDialog {
 		val current = UpdateChecker.currentVersionName(context)
 		val message = buildString {
 			append("지금 버전: $current → 새 버전: ${release.versionName}\n")
-			append("새 버전은 업데이트 소식 오픈채팅방에서 받을 수 있어요.")
+			append("\"새 버전 받기\"를 누르면 설치 파일(APK)을 내려받을 수 있어요. 다 받은 뒤 파일을 열어 설치하면 돼요.")
 			if (release.notes.isNotBlank()) {
 				append("\n\n[업데이트 내역]\n")
 				append(release.notes)
@@ -24,16 +24,17 @@ object UpdateDialog {
 		MaterialAlertDialogBuilder(context, R.style.ThemeOverlay_BNOTE_Dialog)
 			.setTitle("새 버전이 나왔어요")
 			.setMessage(message)
-			.setPositiveButton("오픈채팅방 열기") { _, _ -> openNoticeChat(context) }
+			.setPositiveButton("새 버전 받기") { _, _ -> openDownload(context) }
 			.setNegativeButton("나중에") { _, _ -> UpdateChecker.snooze(context, release) }
 			.setCancelable(false)
 			.show()
 	}
 
-	fun openNoticeChat(context: Context) {
+	/** 새 버전 설치 파일(APK)이 있는 구글 드라이브 링크를 연다. */
+	fun openDownload(context: Context) {
 		try {
 			context.startActivity(
-				Intent(Intent.ACTION_VIEW, Uri.parse(UpdateChecker.NOTICE_OPEN_CHAT_URL))
+				Intent(Intent.ACTION_VIEW, Uri.parse(UpdateChecker.APK_DOWNLOAD_URL))
 			)
 		} catch (e: Exception) {
 			Toast.makeText(context, "링크를 열 수 없어요", Toast.LENGTH_SHORT).show()

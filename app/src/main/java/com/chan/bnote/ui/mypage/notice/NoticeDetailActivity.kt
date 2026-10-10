@@ -27,7 +27,7 @@ import kotlinx.coroutines.launch
 /**
  * 알림(공지사항) 상세. 열면 읽음 처리된다.
  * - 본문의 링크는 눌러서 열 수 있다.
- * - 업데이트 알림이면 아래에 "업데이트 소식방에서 새 버전 받기" 버튼.
+ * - 업데이트 알림이면 아래에 "새 버전 받기" 버튼(설치 파일이 있는 구글 드라이브로 연결).
  * - 개발자가 이 공지(GitHub 이슈)에 댓글을 달았으면 "추가 안내"로 아래에 보여준다(인터넷이 필요).
  * - 상단 삭제 버튼: 이 기기에서만 지운다.
  */
@@ -83,9 +83,9 @@ class NoticeDetailActivity : AppCompatActivity() {
 		body.text = NoticeFormatter.toDisplayText(notice.body)
 		LinkifyHelper.applySmartLinks(body)
 
-		val openChat = findViewById<View>(R.id.btn_notice_open_chat)
-		openChat.visibility = if (notice.type == NoticeType.UPDATE) View.VISIBLE else View.GONE
-		openChat.setOnClickListener { UpdateDialog.openNoticeChat(this) }
+		val download = findViewById<View>(R.id.btn_notice_download)
+		download.visibility = if (notice.type == NoticeType.UPDATE) View.VISIBLE else View.GONE
+		download.setOnClickListener { UpdateDialog.openDownload(this) }
 	}
 
 	private fun loadComments(notice: Notice) {

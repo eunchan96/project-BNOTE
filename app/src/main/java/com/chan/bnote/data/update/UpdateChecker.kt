@@ -23,8 +23,9 @@ object UpdateChecker {
 	private const val LATEST_RELEASE_API =
 		"https://api.github.com/repos/eunchan96/project-BNOTE/releases/latest"
 
-	/** 업데이트 소식을 알리는 공지용 오픈채팅방(자유 문의도 가능). 새 버전 APK도 여기서 안내한다. */
-	const val NOTICE_OPEN_CHAT_URL = "https://open.kakao.com/o/gvthTBRi"
+	/** 새 버전 설치 파일(APK)을 받는 구글 드라이브 링크. 새 버전을 올릴 때도 같은 파일에 덮어써서(버전 관리) 링크를 유지한다. */
+	const val APK_DOWNLOAD_URL =
+		"https://drive.google.com/file/d/18cpDQ6KiQZdj1vrAVSzzrSZ03TRE4Jfi/view?usp=drive_link"
 
 	private const val PREF_NAME = "update_check"
 	private const val KEY_LAST_CHECK_AT = "last_check_at"
@@ -125,6 +126,18 @@ object UpdateChecker {
 			if (diff != 0) return diff
 		}
 		return 0
+	}
+
+	/** 릴리스에 첨부된 파일 중 .apk의 다운로드 링크. 없으면 null. */
+	private fun findApkUrl(json: JSONObject): String? {
+		val assets = json.optJSONArray("assets") ?: return null
+		for (i in 0 until assets.length()) {
+			val asset = assets.optJSONObject(i) ?: continue
+			if (asset.optString("name").endsWith(".apk", ignoreCase = true)) {
+				return asset.optString("browser_download_url").takeIf { it.isNotBlank() }
+			}
+		}
+		return null
 	}
 
 	/** 릴리스 노트(마크다운)에서 "## 업데이트 내역" 같은 제목 줄은 빼고, "- " 목록은 "・ "로 바꾼다. */
