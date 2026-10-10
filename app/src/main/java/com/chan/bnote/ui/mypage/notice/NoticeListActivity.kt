@@ -329,7 +329,8 @@ class NoticeListActivity : AppCompatActivity() {
 			val preview = NoticeFormatter.preview(notice.body)
 			holder.preview.text = preview
 			holder.preview.visibility = if (preview.isBlank()) View.GONE else View.VISIBLE
-			holder.unreadDot.visibility = if (unread) View.VISIBLE else View.INVISIBLE
+			// 읽은 알림은 점 자리를 아예 비워서(GONE) 날짜가 오른쪽 끝에 붙게 한다.
+			holder.unreadDot.visibility = if (unread) View.VISIBLE else View.GONE
 			holder.content.setBackgroundColor(
 				if (unread) ContextCompat.getColor(context, R.color.notice_unread_background)
 				else android.graphics.Color.TRANSPARENT

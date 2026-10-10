@@ -35,5 +35,6 @@ google-services.json
 
 # Custom
 app/src/main/assets/
+app/src/main/res/drawable-nodpi/
 app/release/baselineProfiles/*/*.dm
 .idea/deploymentTargetSelector.xml

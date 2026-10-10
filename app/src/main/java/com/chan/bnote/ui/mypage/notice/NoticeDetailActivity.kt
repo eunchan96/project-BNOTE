@@ -3,6 +3,9 @@ package com.chan.bnote.ui.mypage.notice
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.text.Spannable
+import android.text.SpannableString
+import android.text.style.LeadingMarginSpan
 import android.view.View
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -43,6 +46,9 @@ class NoticeDetailActivity : AppCompatActivity() {
 
 		fun createIntent(context: Context, noticeId: Long): Intent =
 			Intent(context, NoticeDetailActivity::class.java).putExtra(EXTRA_NOTICE_ID, noticeId)
+
+		/** 목록 줄의 앞부분: (들여쓰기) + "・ " 또는 "1. " 같은 번호. */
+		private val LIST_PREFIX = Regex("^\\s*(・|\\d+\\.)\\s+")
 	}
 
 	override fun onCreate(savedInstanceState: Bundle?) {
@@ -56,6 +62,16 @@ class NoticeDetailActivity : AppCompatActivity() {
 			insets
 		}
 		findViewById<ImageView>(R.id.btn_top_bar_back).setOnClickListener { finish() }
+
+		// 끝까지 내렸을 때 마지막 글이 화면 맨 아래에 붙지 않도록, 성경 탭처럼 화면 높이의 30%만큼 여백을 둔다.
+		findViewById<View>(R.id.container_notice_scroll_content).apply {
+			setPadding(
+				paddingLeft,
+				paddingTop,
+				paddingRight,
+				(resources.displayMetrics.heightPixels * 0.3f).toInt()
+			)
+		}
 
 		val notice = NoticeRepository.find(this, intent.getLongExtra(EXTRA_NOTICE_ID, -1L))
 		if (notice == null) {
@@ -170,7 +186,6 @@ class NoticeDetailActivity : AppCompatActivity() {
 			when (block) {
 				is NoticeBlock.Text -> {
 					val textView = TextView(this).apply {
-						text = block.text
 						textSize = textSizeSp
 						setLineSpacing(0f, lineSpacing)
 						setTextColor(
@@ -181,6 +196,8 @@ class NoticeDetailActivity : AppCompatActivity() {
 							LinearLayout.LayoutParams.WRAP_CONTENT
 						).apply { this.topMargin = topMargin }
 					}
+					// textSize를 먼저 정해야 paint로 "・ " 폭을 정확히 잴 수 있다.
+					textView.text = withHangingIndent(block.text, textView)
 					LinkifyHelper.applySmartLinks(textView)
 					container.addView(textView)
 				}
@@ -192,6 +209,29 @@ class NoticeDetailActivity : AppCompatActivity() {
 				)
 			}
 		}
+	}
+
+	/**
+	 * "・ 항목"이나 "1. 항목"처럼 시작하는 줄이 길어서 두 줄 이상이 되면, 둘째 줄부터 기호가 아니라
+	 * 글자 시작 위치에 맞춰 들여쓴다(업데이트 내역과 같은 방식). 앞에 들여쓰기 공백이 있으면 그것까지 포함한다.
+	 */
+	private fun withHangingIndent(text: String, textView: TextView): CharSequence {
+		val spannable = SpannableString(text)
+		var lineStart = 0
+		for (line in text.split('\n')) {
+			val prefix = LIST_PREFIX.find(line)?.value
+			if (prefix != null) {
+				val margin = textView.paint.measureText(prefix).toInt()
+				val end = (lineStart + line.length + 1).coerceAtMost(text.length)
+				spannable.setSpan(
+					LeadingMarginSpan.Standard(0, margin),
+					lineStart, end,
+					Spannable.SPAN_INCLUSIVE_EXCLUSIVE
+				)
+			}
+			lineStart += line.length + 1
+		}
+		return spannable
 	}
 
 	/** 본문 속 사진 한 장. 불러오는 동안은 회색 자리만 잡아두고, 다 불러오면 원래 비율대로 보여준다. */

@@ -60,7 +60,9 @@
         android:layout_height="0dp"
         android:layout_weight="1">
 
+        <!-- 아래 여백은 성경 탭처럼 화면 높이의 30%를 코드에서 준다(NoticeDetailActivity) -->
         <LinearLayout
+            android:id="@+id/container_notice_scroll_content"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
