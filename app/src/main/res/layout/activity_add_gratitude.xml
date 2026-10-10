@@ -72,46 +72,38 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical" />
 
-            <!-- "순서 변경" 모드에서만 보이는 목록. 위의 입력칸들 대신 보이고, ≡ 손잡이로 끌어서 순서를 바꾼다. -->
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/recycler_gratitude_reorder"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:nestedScrollingEnabled="false"
-                android:overScrollMode="never"
-                android:visibility="gone" />
-
+            <!-- 항목 추가 · 순서 변경: 같은 크기의 버튼 두 개를 나란히. 순서 변경 중엔 오른쪽이 "완료"가 되고 왼쪽은 잠긴다. -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:orientation="horizontal"
-                android:gravity="center_vertical">
+                android:layout_marginTop="12dp"
+                android:orientation="horizontal">
 
                 <TextView
                     android:id="@+id/btn_add_gratitude_entry"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:padding="8dp"
+                    android:layout_width="0dp"
+                    android:layout_height="44dp"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="4dp"
+                    android:gravity="center"
                     android:text="항목 추가"
                     android:textSize="14sp"
                     android:textColor="@color/brown_text"
+                    android:background="@drawable/bg_book_button"
                     android:clickable="true"
                     android:focusable="true" />
 
-                <Space
-                    android:layout_width="0dp"
-                    android:layout_height="0dp"
-                    android:layout_weight="1" />
-
                 <TextView
                     android:id="@+id/btn_reorder_gratitude"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:padding="8dp"
+                    android:layout_width="0dp"
+                    android:layout_height="44dp"
+                    android:layout_weight="1"
+                    android:layout_marginStart="4dp"
+                    android:gravity="center"
                     android:text="순서 변경"
                     android:textSize="14sp"
                     android:textColor="@color/brown_text"
+                    android:background="@drawable/bg_book_button"
                     android:clickable="true"
                     android:focusable="true" />
             </LinearLayout>
