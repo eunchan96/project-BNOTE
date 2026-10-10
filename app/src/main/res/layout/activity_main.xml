@@ -121,6 +121,35 @@
                 android:clickable="true"
                 android:focusable="true" />
 
+            <!-- 알림(공지사항) — 마이페이지 탭에서만 보인다. 안 읽은 알림이 있으면 오른쪽 위에 빨간 점. -->
+            <FrameLayout
+                android:id="@+id/btn_notice_container"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:visibility="gone">
+
+                <ImageView
+                    android:id="@+id/btn_notice"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:padding="8dp"
+                    android:src="@drawable/ic_notifications"
+                    android:contentDescription="알림"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:clickable="true"
+                    android:focusable="true" />
+
+                <View
+                    android:id="@+id/dot_notice_top_bar"
+                    android:layout_width="8dp"
+                    android:layout_height="8dp"
+                    android:layout_gravity="top|end"
+                    android:layout_marginTop="7dp"
+                    android:layout_marginEnd="7dp"
+                    android:background="@drawable/bg_notice_dot"
+                    android:visibility="gone" />
+            </FrameLayout>
+
             <ImageView
                 android:id="@+id/btn_menu"
                 android:layout_width="40dp"
@@ -229,17 +258,33 @@
             android:clickable="true"
             android:focusable="true" />
 
-        <ImageView
-            android:id="@+id/nav_mypage"
+        <!-- 마이페이지 탭 아이콘 + 안 읽은 알림 빨간 점. 점은 아이콘의 선택 색(tint)과 상관없이 항상 빨간색. -->
+        <FrameLayout
             android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:padding="8dp"
-            android:src="@drawable/ic_person"
-            android:contentDescription="마이페이지"
-            app:tint="@color/bottom_nav_unselected"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:clickable="true"
-            android:focusable="true" />
+            android:layout_height="40dp">
+
+            <ImageView
+                android:id="@+id/nav_mypage"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:padding="8dp"
+                android:src="@drawable/ic_person"
+                android:contentDescription="마이페이지"
+                app:tint="@color/bottom_nav_unselected"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true" />
+
+            <View
+                android:id="@+id/dot_notice_nav_mypage"
+                android:layout_width="8dp"
+                android:layout_height="8dp"
+                android:layout_gravity="top|end"
+                android:layout_marginTop="6dp"
+                android:layout_marginEnd="6dp"
+                android:background="@drawable/bg_notice_dot"
+                android:visibility="gone" />
+        </FrameLayout>
 
     </LinearLayout>
 

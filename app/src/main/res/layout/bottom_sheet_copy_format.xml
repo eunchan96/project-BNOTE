@@ -91,7 +91,7 @@
                     android:gravity="center"
                     android:text="새 이름으로 저장"
                     android:textSize="14sp"
-                    android:textColor="@color/brown_primary"
+                    android:textColor="@color/brown_text"
                     android:background="@drawable/bg_book_button"
                     android:clickable="true"
                     android:focusable="true" />

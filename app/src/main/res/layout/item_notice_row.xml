@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?><!-- 알림 목록 한 줄. 안 읽은 알림은 배경색이 살짝 다르고 날짜 오른쪽에 빨간 점, 제목이 굵게 보인다(배경·굵기는 코드에서).
+     빨간 점은 맨 위 줄(배지 · 날짜) 안에 있어서, 제목과 미리보기는 오른쪽 끝까지 넓게 쓴다. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:id="@+id/row_notice_content"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="14dp"
+        android:paddingBottom="14dp"
+        android:foreground="?attr/selectableItemBackground">
+
+        <!-- 선택 모드 체크박스. Material 기본 최소 크기(48dp)를 없애서 옆 여백을 줄인다
+             (행 전체가 눌리는 영역이라 체크박스 자체의 터치 영역은 작아도 된다). -->
+        <CheckBox
+            android:id="@+id/check_notice"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="-6dp"
+            android:layout_marginEnd="4dp"
+            android:minWidth="0dp"
+            android:minHeight="0dp"
+            android:clickable="false"
+            android:focusable="false"
+            app:buttonTint="@color/brown_text"
+            android:visibility="gone" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:id="@+id/container_notice_row_badges"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <LinearLayout
+                    android:id="@+id/container_notice_badges"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical" />
+
+                <TextView
+                    android:id="@+id/text_notice_date"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:textSize="12sp"
+                    android:textColor="@color/text_hint" />
+
+                <View
+                    android:id="@+id/dot_notice_unread"
+                    android:layout_width="7dp"
+                    android:layout_height="7dp"
+                    android:layout_marginStart="6dp"
+                    android:background="@drawable/bg_notice_dot"
+                    android:visibility="gone" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/text_notice_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:maxLines="2"
+                android:ellipsize="end"
+                android:textSize="15sp"
+                android:textColor="@color/text_primary" />
+
+            <TextView
+                android:id="@+id/text_notice_preview"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:maxLines="2"
+                android:ellipsize="end"
+                android:textSize="13sp"
+                android:textColor="@color/text_secondary" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/divider_light" />
+</LinearLayout>

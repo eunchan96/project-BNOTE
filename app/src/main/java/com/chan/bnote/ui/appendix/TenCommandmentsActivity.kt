@@ -126,7 +126,7 @@ class TenCommandmentsActivity : AppCompatActivity() {
 				ForegroundColorSpan(
 					ContextCompat.getColor(
 						this@TenCommandmentsActivity,
-						R.color.brown_primary
+						R.color.brown_text
 					)
 				),
 				0,

@@ -101,7 +101,7 @@ class TopicDetailActivity : AppCompatActivity() {
 			text = label
 			textSize = 13f
 			setTypeface(typeface, Typeface.BOLD)
-			setTextColor(ContextCompat.getColor(this@TopicDetailActivity, R.color.brown_primary))
+			setTextColor(ContextCompat.getColor(this@TopicDetailActivity, R.color.brown_text))
 		}
 		val textView = TextView(this).apply {
 			text = verseText

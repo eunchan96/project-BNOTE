@@ -84,6 +84,32 @@ class AppInfoActivity : AppCompatActivity() {
 			startActivity(Intent(Intent.ACTION_VIEW, android.net.Uri.parse(GITHUB_URL)))
 		}
 		findViewById<TextView>(R.id.menu_contact).setOnClickListener { showContactDialog() }
+		findViewById<TextView>(R.id.menu_check_update).setOnClickListener { checkForUpdateNow() }
+	}
+
+	/** 앱 정보의 "새 버전 확인". 앱을 열 때의 자동 확인과 달리 하루 한 번 제한·"나중에" 미루기와
+	 * 상관없이 바로 확인하고, 결과를 항상 알려준다. */
+	private fun checkForUpdateNow() {
+		Toast.makeText(this, "새 버전을 확인하고 있어요", Toast.LENGTH_SHORT).show()
+		lifecycleScope.launch {
+			val release = com.chan.bnote.data.update.UpdateChecker.fetchLatest(this@AppInfoActivity)
+			when {
+				release == null -> Toast.makeText(
+					this@AppInfoActivity,
+					"확인하지 못했어요. 인터넷 연결을 확인해 주세요",
+					Toast.LENGTH_LONG
+				).show()
+
+				com.chan.bnote.data.update.UpdateChecker.isNewer(this@AppInfoActivity, release) ->
+					UpdateDialog.show(this@AppInfoActivity, release)
+
+				else -> Toast.makeText(
+					this@AppInfoActivity,
+					"최신 버전을 쓰고 있어요",
+					Toast.LENGTH_SHORT
+				).show()
+			}
+		}
 	}
 
 	override fun onResume() {
@@ -151,15 +177,23 @@ class AppInfoActivity : AppCompatActivity() {
 		}
 	}
 
+	/** 문의 방법 두 가지(이메일, 1:1 오픈채팅)를 각각 어떤 용도인지 설명과 함께 보여준다(dialog_contact). */
 	private fun showContactDialog() {
-		val options = arrayOf("이메일로 문의하기", "카카오톡 오픈채팅으로 문의하기")
-		MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_BNOTE_Dialog)
+		val content = layoutInflater.inflate(R.layout.dialog_contact, null)
+		val dialog = MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_BNOTE_Dialog)
 			.setTitle("문의하기")
-			.setItems(options) { _, which ->
-				if (which == 0) openContactEmail() else openKakaoOpenChat()
-			}
+			.setView(content)
 			.setNegativeButton("취소", null)
 			.show()
+
+		fun option(id: Int, action: () -> Unit) {
+			content.findViewById<android.view.View>(id).setOnClickListener {
+				dialog.dismiss()
+				action()
+			}
+		}
+		option(R.id.option_contact_email) { openContactEmail() }
+		option(R.id.option_contact_private_chat) { openKakaoOpenChat() }
 	}
 
 	private fun openContactEmail() {

@@ -40,7 +40,7 @@ class ChapterGridAdapter(
 		holder.number.setTextColor(
 			if (isSelected) androidx.core.content.ContextCompat.getColor(
 				holder.itemView.context,
-				R.color.brown_primary
+				R.color.brown_text
 			)
 			else androidx.core.content.ContextCompat.getColor(
 				holder.itemView.context,

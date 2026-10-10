@@ -97,7 +97,7 @@ class BiblePlaceListActivity : AppCompatActivity() {
 			text = category
 			textSize = 13f
 			setTypeface(typeface, Typeface.BOLD)
-			setTextColor(ContextCompat.getColor(this@BiblePlaceListActivity, R.color.brown_primary))
+			setTextColor(ContextCompat.getColor(this@BiblePlaceListActivity, R.color.brown_text))
 			setPadding(dp(16), dp(16), dp(16), dp(6))
 		}
 		container.addView(header)

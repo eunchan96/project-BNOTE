@@ -60,7 +60,7 @@ object SortButtonHelper {
 				setTextColor(
 					ContextCompat.getColor(
 						context,
-						if (code == target.getCurrentSortMode()) R.color.brown_primary else R.color.text_primary
+						if (code == target.getCurrentSortMode()) R.color.brown_text else R.color.text_primary
 					)
 				)
 				background =

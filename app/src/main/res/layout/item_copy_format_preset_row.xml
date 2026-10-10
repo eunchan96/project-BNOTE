@@ -40,7 +40,7 @@
                 android:text="사용 중"
                 android:textSize="12sp"
                 android:textStyle="bold"
-                android:textColor="@color/brown_primary"
+                android:textColor="@color/brown_text"
                 android:visibility="gone" />
         </LinearLayout>
 
@@ -89,7 +89,7 @@
                 android:gravity="center"
                 android:text="수정"
                 android:textSize="14sp"
-                android:textColor="@color/brown_primary"
+                android:textColor="@color/brown_text"
                 android:background="@drawable/bg_book_button"
                 android:clickable="true"
                 android:focusable="true" />

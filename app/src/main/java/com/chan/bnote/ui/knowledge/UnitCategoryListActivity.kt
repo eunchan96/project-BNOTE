@@ -118,7 +118,7 @@ class UnitCategoryListActivity : AppCompatActivity() {
 			setTextColor(
 				ContextCompat.getColor(
 					this@UnitCategoryListActivity,
-					R.color.brown_primary
+					R.color.brown_text
 				)
 			)
 			setPadding(dp(16), dp(16), dp(16), dp(6))

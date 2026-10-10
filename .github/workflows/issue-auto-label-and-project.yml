@@ -63,7 +63,9 @@ jobs:
 
       # === GitHub Project 자동 추가 ===
       # project-url은 Team-MyPik의 실제 프로젝트 보드 URL로 바꿔주세요
+      # 앱 알림용 공지 이슈("공지" 라벨)는 작업이 아니므로 프로젝트 보드에 넣지 않는다.
       - name: 이슈를 프로젝트의 Backlog 컬럼에 추가
+        if: "!contains(github.event.issue.labels.*.name, '공지')"
         uses: actions/add-to-project@v1.0.2
         with:
           project-url: "https://github.com/users/eunchan96/projects/5"

@@ -175,6 +175,12 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 	private val autoScrollHandler = android.os.Handler(android.os.Looper.getMainLooper())
 	private val autoScrollRunnable = object : Runnable {
 		override fun run() {
+			// 장의 맨 끝(하단 여백까지)에 닿으면 더 내려갈 곳이 없으니 자동 스크롤을 멈추고, 상단바 버튼도 재생 아이콘으로 되돌린다.
+			if (!recyclerView.canScrollVertically(1)) {
+				isAutoScrolling = false
+				notifyTopBarChanged()
+				return
+			}
 			recyclerView.smoothScrollBy(0, 2 + scrollSpeed) // 속도 1~5 -> 3~7px씩
 			autoScrollHandler.postDelayed(this, 60L - (scrollSpeed * 8)) // 속도 1~5 -> 52~20ms 간격
 		}
@@ -965,14 +971,23 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		return true
 	}
 
-	/** 성경 탭을 보고 있을 때 하단바의 성경 탭 아이콘을 (짧게) 눌렀을 때. 음성이 재생 중이면 일시정지하고
-	 * 재생 툴바를 연다 — 다시 재생은 툴바의 재생 버튼으로. 재생 중이 아니면 false를 돌려줘서 평소대로
-	 * 아무 일도 없게 한다(재생 툴바는 지금처럼 길게 눌러야 열린다). */
+	/**
+	 * 성경 탭을 보고 있을 때 하단바 성경 아이콘을 다시 누른 경우.
+	 * - 재생 중이면: 일시정지하고 재생 툴바를 띄운다.
+	 * - 재생 툴바가 떠 있고 멈춰 있으면: 다시 재생한다(툴바의 재생 버튼과 같은 동작 — 다른 장으로 넘어가 있으면 그 장부터).
+	 * - 그 밖에는 처리하지 않는다(false → 평소대로 탭 전환).
+	 */
 	override fun onNavTabReselected(): Boolean {
 		val controller = audioController ?: return false
-		if (!controller.pauseIfListening()) return false
-		if (audioToolbar.visibility != View.VISIBLE) showAudioToolbar() else updateAudioToolbar()
-		return true
+		if (controller.pauseIfListening()) {
+			if (audioToolbar.visibility != View.VISIBLE) showAudioToolbar() else updateAudioToolbar()
+			return true
+		}
+		if (audioToolbar.visibility == View.VISIBLE && controller.isAvailable) {
+			controller.toggle()
+			return true
+		}
+		return false
 	}
 
 	/** 재생/일시정지·장 변경·배속 변경 등 재생 상태가 바뀔 때마다 BibleAudioController가 불러준다. */
@@ -1229,6 +1244,18 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 			selectedVerses.add(verseNum)
 		}
 		resolveCurrentVerseAdapter()?.updateSelection(selectedVerses.toSet())
+
+		// 절을 골라 "하이라이트"를 눌러 색 툴바가 떠 있는 상태에서도 절을 더 고르거나 뺄 수 있다.
+		if (highlightColorToolbar.visibility == View.VISIBLE && pendingHighlightVerses != null) {
+			if (selectedVerses.isEmpty()) {
+				clearSelection()
+			} else {
+				pendingHighlightVerses = selectedVerses.toList()
+				view?.findViewById<TextView>(R.id.btn_remove_highlight)?.visibility =
+					if (hasExistingHighlightForPending()) View.VISIBLE else View.GONE
+			}
+			return
+		}
 		updateToolbarVisibility()
 	}
 
@@ -1291,29 +1318,67 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 			if (singleSelected) View.VISIBLE else View.GONE
 	}
 
+	/**
+	 * 선택 툴바의 북마크 버튼. 스크랩·암송과 달리 고르는 단계 없이 바로 바뀌어서, 잘못 눌러도 알아챌 수 있게
+	 * 추가/해제 전에 한 번 확인한다. 취소하면 선택은 그대로 둬서 다른 동작을 이어서 할 수 있다.
+	 */
 	private fun onBookmarkButtonClicked() {
 		val verseNum = selectedVerses.firstOrNull() ?: return
+		val bookId = currentBookId
+		val chapter = currentChapter
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(requireContext().applicationContext)
-			val current = db.bookmarkDao().getBookmarksForChapter(currentBookId, currentChapter)
+			val current = db.bookmarkDao().getBookmarksForChapter(bookId, chapter)
 				.firstOrNull { it.verse == verseNum }
+			val willBookmark = !(current?.isBookmarked ?: false)
+			val ref =
+				"${BibleBooks.nameOf(bookId)} $chapter${BibleBooks.chapterUnit(bookId)} ${verseNum}절"
 
+			com.google.android.material.dialog.MaterialAlertDialogBuilder(
+				requireContext(), R.style.ThemeOverlay_BNOTE_Dialog
+			)
+				.setTitle(if (willBookmark) "북마크 추가" else "북마크 해제")
+				.setMessage(
+					if (willBookmark) "${ref}을 북마크에 추가할까요?"
+					else "${ref}을 북마크에서 해제할까요?"
+				)
+				.setPositiveButton(if (willBookmark) "추가" else "해제") { _, _ ->
+					applyBookmark(bookId, chapter, verseNum, current, willBookmark)
+				}
+				.setNegativeButton("취소", null)
+				.show()
+		}
+	}
+
+	private fun applyBookmark(
+		bookId: Int,
+		chapter: Int,
+		verseNum: Int,
+		current: BibleBookmark?,
+		bookmarked: Boolean
+	) {
+		lifecycleScope.launch {
+			val db = BibleDatabase.getInstance(requireContext().applicationContext)
 			val updated = (current ?: BibleBookmark(
-				bookId = currentBookId,
-				chapter = currentChapter,
+				bookId = bookId,
+				chapter = chapter,
 				verse = verseNum
 			))
 				.copy(
-					isBookmarked = !(current?.isBookmarked ?: false),
+					isBookmarked = bookmarked,
 					updatedAt = System.currentTimeMillis()
 				)
 			db.bookmarkDao().upsert(updated)
 
-			val refreshed = db.bookmarkDao().getBookmarksForChapter(currentBookId, currentChapter)
-				.associateBy { it.verse }.toMutableMap()
-			adapter.updateBookmarks(refreshed)
+			// 확인 창이 떠 있는 사이 다른 장으로 넘어갔을 수 있으니, 지금 보고 있는 장일 때만 화면을 갱신한다.
+			if (bookId == currentBookId && chapter == currentChapter) {
+				val refreshed =
+					db.bookmarkDao().getBookmarksForChapter(currentBookId, currentChapter)
+						.associateBy { it.verse }.toMutableMap()
+				adapter.updateBookmarks(refreshed)
+			}
 
-			val message = if (updated.isBookmarked) "북마크에 추가했어요" else "북마크를 해제했어요"
+			val message = if (bookmarked) "북마크에 추가했어요" else "북마크를 해제했어요"
 			Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
 			clearSelection()
 		}

@@ -72,17 +72,46 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical" />
 
-            <TextView
-                android:id="@+id/btn_add_gratitude_entry"
-                android:layout_width="wrap_content"
+            <!-- 항목 추가 · 순서 변경: 글자 크기만큼의 작은 버튼 두 개를 가운데에 나란히. 순서 변경 중엔 오른쪽이 "완료"가 되고 왼쪽은 잠긴다. -->
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:padding="8dp"
-                android:text="+ 항목 추가"
-                android:textSize="14sp"
-                android:textColor="@color/brown_primary"
-                android:clickable="true"
-                android:focusable="true" />
+                android:layout_marginTop="12dp"
+                android:orientation="horizontal"
+                android:gravity="start">
+
+                <TextView
+                    android:id="@+id/btn_add_gratitude_entry"
+                    android:layout_width="wrap_content"
+                    android:layout_height="34dp"
+                    android:minWidth="88dp"
+                    android:layout_marginEnd="4dp"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:gravity="center"
+                    android:text="항목 추가"
+                    android:textSize="13sp"
+                    android:textColor="@color/brown_text"
+                    android:background="@drawable/bg_book_button"
+                    android:clickable="true"
+                    android:focusable="true" />
+
+                <TextView
+                    android:id="@+id/btn_reorder_gratitude"
+                    android:layout_width="wrap_content"
+                    android:layout_height="34dp"
+                    android:minWidth="88dp"
+                    android:layout_marginStart="4dp"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:gravity="center"
+                    android:text="순서 변경"
+                    android:textSize="13sp"
+                    android:textColor="@color/brown_text"
+                    android:background="@drawable/bg_book_button"
+                    android:clickable="true"
+                    android:focusable="true" />
+            </LinearLayout>
 
             <TextView
                 android:id="@+id/btn_save_gratitude"
@@ -101,5 +130,8 @@
 
         </LinearLayout>
     </com.chan.bnote.ui.common.NoAutoScrollScrollView>
+
+    <!-- 키보드가 올라와 있을 때만 키보드 바로 위에 보이는 편집 바(실행 취소 · 다시 실행 · 서식) -->
+    <include layout="@layout/include_keyboard_bar" />
 
 </LinearLayout>

@@ -40,6 +40,31 @@
     <color name="dialog_background">#F7EFEA</color>
     <color name="dialog_title_text">#5D4037</color>
 
+    <!-- 화면 바탕(흰색/검정) 위에 쓰는 갈색 글자·아이콘. 배경용 brown_primary와 나눠둔 이유: 다크모드에서
+     brown_primary(#795548)를 글자색으로 쓰면 검은 바탕에서 거의 안 보여서, 다크모드에서만 밝은 갈색으로
+     바꾼다(values-night). 상단바처럼 갈색 "배경"에는 계속 brown_primary를 쓴다. -->
+    <color name="brown_text">#795548</color>
+    <!-- 박스형 버튼(bg_book_button 등)을 눌렀을 때 퍼지는 물결 색 -->
+    <color name="ripple_brown">#D7CCC8</color>
+    <!-- 화면 위에 떠 있는 둥근 툴바(절 선택·하이라이트·음성 재생)의 배경 -->
+    <color name="floating_toolbar_background">#333333</color>
+
     <!-- bg_field_underline 에서 사용되는 색상. 다크모드에서 흰색으로 전환 -->
     <color name="field_underline">#757575</color>
+
+    <!-- 알림(공지사항): 안 읽은 알림 빨간 점, 안 읽은 항목 배경 -->
+    <color name="notice_dot">#E53935</color>
+    <color name="notice_unread_background">#FBF6F2</color>
+
+    <!-- 알림 종류 표시(파스텔): 배경 / 글자 -->
+    <color name="notice_type_update_bg">#EFE7E1</color>
+    <color name="notice_type_update_text">#6D4C41</color>
+    <color name="notice_type_bible_bg">#F8E1E1</color>
+    <color name="notice_type_bible_text">#B5524F</color>
+    <color name="notice_type_bug_bg">#FBEBD9</color>
+    <color name="notice_type_bug_text">#B26A2E</color>
+    <color name="notice_type_tip_bg">#E3F0E3</color>
+    <color name="notice_type_tip_text">#4E7D52</color>
+    <color name="notice_type_general_bg">#E6EBEF</color>
+    <color name="notice_type_general_text">#57656F</color>
 </resources>

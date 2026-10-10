@@ -100,7 +100,7 @@ class BibleFigureListActivity : AppCompatActivity() {
 			setTextColor(
 				ContextCompat.getColor(
 					this@BibleFigureListActivity,
-					R.color.brown_primary
+					R.color.brown_text
 				)
 			)
 			setPadding(dp(16), dp(16), dp(16), dp(6))

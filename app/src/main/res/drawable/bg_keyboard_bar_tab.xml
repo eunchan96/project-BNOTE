@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 편집 바를 접었을 때 키보드 위 오른쪽에 남는 작은 "펼치기" 탭(위쪽만 둥근 모서리) -->
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="@color/ripple_brown">
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/surface_elevated" />
+            <stroke android:width="1dp" android:color="@color/divider_light" />
+            <corners
+                android:topLeftRadius="10dp"
+                android:topRightRadius="10dp"
+                android:bottomLeftRadius="0dp"
+                android:bottomRightRadius="0dp" />
+        </shape>
+    </item>
+</ripple>

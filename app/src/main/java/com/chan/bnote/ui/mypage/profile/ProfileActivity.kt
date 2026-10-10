@@ -297,7 +297,7 @@ class ProfileActivity : AppCompatActivity() {
 			text = item.value
 			textSize = 20f
 			setTypeface(typeface, Typeface.BOLD)
-			setTextColor(ContextCompat.getColor(this@ProfileActivity, R.color.brown_primary))
+			setTextColor(ContextCompat.getColor(this@ProfileActivity, R.color.brown_text))
 		}
 		val labelView = TextView(this).apply {
 			text = item.label

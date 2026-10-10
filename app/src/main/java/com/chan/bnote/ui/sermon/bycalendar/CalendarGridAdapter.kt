@@ -52,7 +52,7 @@ class CalendarGridAdapter(
 				cell.isToday -> Color.parseColor("#1E88E5")
 				isSelected -> androidx.core.content.ContextCompat.getColor(
 					context,
-					R.color.brown_primary
+					R.color.brown_text
 				)
 
 				else -> androidx.core.content.ContextCompat.getColor(context, R.color.text_primary)

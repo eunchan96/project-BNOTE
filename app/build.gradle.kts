@@ -24,8 +24,8 @@ android {
 		applicationId = "com.chan.bnote"
 		minSdk = 24
 		targetSdk = 35
-		versionCode = 13
-		versionName = "1.12"
+		versionCode = 14
+		versionName = "1.13"
 
 		testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 	}
@@ -101,4 +101,5 @@ dependencies {
 	implementation(libs.coil)
 	implementation(libs.androidx.work.runtime.ktx)
 	implementation(libs.photoview)
+	implementation(libs.androidx.swiperefreshlayout)
 }

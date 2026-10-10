@@ -110,7 +110,7 @@ class SermonFragment : Fragment(), TopBarActionHandler {
 		subtabs.forEachIndexed { index, tab ->
 			tab.setTextColor(
 				resources.getColor(
-					if (index == position) R.color.brown_primary else R.color.bottom_nav_unselected,
+					if (index == position) R.color.brown_text else R.color.bottom_nav_unselected,
 					null
 				)
 			)

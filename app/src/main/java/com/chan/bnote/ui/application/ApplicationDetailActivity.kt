@@ -21,6 +21,7 @@ import com.chan.bnote.data.DateUtils
 import com.chan.bnote.data.application.ApplicationView
 import com.chan.bnote.data.sermon.Sermon
 import com.chan.bnote.ui.application.addapplication.AddApplicationActivity
+import com.chan.bnote.ui.sermon.addsermon.RichTextUtils
 import com.chan.bnote.ui.sermon.detail.SermonDetailActivity
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
@@ -170,7 +171,7 @@ class ApplicationDetailActivity : AppCompatActivity() {
 								super.updateDrawState(ds)
 								ds.color = ContextCompat.getColor(
 									this@ApplicationDetailActivity,
-									R.color.brown_primary
+									R.color.brown_text
 								)
 								ds.isUnderlineText = true
 							}
@@ -208,7 +209,7 @@ class ApplicationDetailActivity : AppCompatActivity() {
 								super.updateDrawState(ds)
 								ds.color = ContextCompat.getColor(
 									this@ApplicationDetailActivity,
-									R.color.brown_primary
+									R.color.brown_text
 								)
 								ds.isUnderlineText = true
 							}
@@ -224,12 +225,12 @@ class ApplicationDetailActivity : AppCompatActivity() {
 			infoView.movementMethod = android.text.method.LinkMovementMethod.getInstance()
 
 			val textHintColor =
-				androidx.core.content.ContextCompat.getColor(
+				ContextCompat.getColor(
 					this@ApplicationDetailActivity,
 					R.color.text_hint
 				)
 			val textPrimaryColor =
-				androidx.core.content.ContextCompat.getColor(
+				ContextCompat.getColor(
 					this@ApplicationDetailActivity,
 					R.color.text_primary
 				)
@@ -240,7 +241,7 @@ class ApplicationDetailActivity : AppCompatActivity() {
 					setTextColor(textHintColor)
 				} else {
 					text =
-						com.chan.bnote.ui.sermon.addsermon.RichTextUtils.toEditable(application.meditationMemo)
+						RichTextUtils.toEditable(application.meditationMemo)
 					setTextColor(textPrimaryColor)
 				}
 			}
@@ -249,7 +250,7 @@ class ApplicationDetailActivity : AppCompatActivity() {
 					text = "기도 내용이 없어요"
 					setTextColor(textHintColor)
 				} else {
-					text = application.prayerMemo
+					text = RichTextUtils.toEditable(application.prayerMemo)
 					setTextColor(textPrimaryColor)
 				}
 			}
@@ -258,7 +259,7 @@ class ApplicationDetailActivity : AppCompatActivity() {
 					text = "적용 내용이 없어요"
 					setTextColor(textHintColor)
 				} else {
-					text = application.obedienceMemo
+					text = RichTextUtils.toEditable(application.obedienceMemo)
 					setTextColor(textPrimaryColor)
 				}
 			}
@@ -295,15 +296,9 @@ class ApplicationDetailActivity : AppCompatActivity() {
 	private fun copyApplication() {
 		val application = currentApplication ?: return
 
-		val meditation =
-			com.chan.bnote.ui.sermon.addsermon.RichTextUtils.toEditable(application.meditationMemo)
-				.toString()
-		val prayer =
-			com.chan.bnote.ui.sermon.addsermon.RichTextUtils.toEditable(application.prayerMemo)
-				.toString()
-		val obedience =
-			com.chan.bnote.ui.sermon.addsermon.RichTextUtils.toEditable(application.obedienceMemo)
-				.toString()
+		val meditation = RichTextUtils.toEditable(application.meditationMemo).toString()
+		val prayer = RichTextUtils.toEditable(application.prayerMemo).toString()
+		val obedience = RichTextUtils.toEditable(application.obedienceMemo).toString()
 
 		val text = "$meditation\n\n$prayer\n\n※ $obedience"
 

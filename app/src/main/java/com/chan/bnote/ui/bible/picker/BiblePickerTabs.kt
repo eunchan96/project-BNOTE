@@ -40,7 +40,7 @@ fun renderPickerTabs(context: Context, container: LinearLayout, tabs: List<Picke
 
 			when {
 				tab.selected -> {
-					setTextColor(ContextCompat.getColor(context, R.color.brown_primary))
+					setTextColor(ContextCompat.getColor(context, R.color.brown_text))
 					setTypeface(typeface, Typeface.BOLD)
 					background = ContextCompat.getDrawable(context, R.drawable.bg_tab_selected)
 				}

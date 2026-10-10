@@ -202,7 +202,7 @@ class MemoListActivity : AppCompatActivity() {
 			text = bookName
 			textSize = 14f
 			setTypeface(typeface, Typeface.BOLD)
-			setTextColor(ContextCompat.getColor(this@MemoListActivity, R.color.brown_primary))
+			setTextColor(ContextCompat.getColor(this@MemoListActivity, R.color.brown_text))
 			setPadding(dp(16), dp(16), dp(16), dp(6))
 		}
 		container.addView(header)

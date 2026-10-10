@@ -23,6 +23,7 @@ import com.chan.bnote.ui.BibleNavigationHost
 import com.chan.bnote.ui.TopBarActionHandler
 import com.chan.bnote.ui.TopBarConfig
 import com.chan.bnote.ui.mypage.memorization.MemorizationVerseListActivity
+import com.chan.bnote.ui.mypage.notice.NoticeListActivity
 import com.chan.bnote.ui.mypage.prayer.PrayerRequestActivity
 import com.chan.bnote.ui.mypage.profile.ProfileActivity
 import com.chan.bnote.ui.mypage.profile.loadProfilePhoto
@@ -55,19 +56,19 @@ class MyPageFragment : Fragment(), TopBarActionHandler {
 			startActivity(Intent(requireContext(), ProfileActivity::class.java))
 		}
 		view.findViewById<ImageView>(R.id.img_profile_photo).loadProfilePhoto(null)
-		view.findViewById<TextView>(R.id.menu_reading_plan).setOnClickListener {
+		view.findViewById<View>(R.id.menu_reading_plan).setOnClickListener {
 			startActivity(Intent(requireContext(), ReadingPlanActivity::class.java))
 		}
-		view.findViewById<TextView>(R.id.menu_verse_of_year).setOnClickListener {
+		view.findViewById<View>(R.id.menu_verse_of_year).setOnClickListener {
 			startActivity(Intent(requireContext(), VerseOfYearActivity::class.java))
 		}
-		view.findViewById<TextView>(R.id.menu_prayer_request).setOnClickListener {
+		view.findViewById<View>(R.id.menu_prayer_request).setOnClickListener {
 			startActivity(Intent(requireContext(), PrayerRequestActivity::class.java))
 		}
-		view.findViewById<TextView>(R.id.menu_memorization).setOnClickListener {
+		view.findViewById<View>(R.id.menu_memorization).setOnClickListener {
 			startActivity(Intent(requireContext(), MemorizationVerseListActivity::class.java))
 		}
-		view.findViewById<TextView>(R.id.menu_gratitude).setOnClickListener {
+		view.findViewById<View>(R.id.menu_gratitude).setOnClickListener {
 			startActivity(
 				Intent(
 					requireContext(),
@@ -293,7 +294,7 @@ class MyPageFragment : Fragment(), TopBarActionHandler {
 				textSize = 13f
 				maxLines = 1
 				maxWidth = maxWidthPx // 아래서 폭에 맞춰 미리 잘라 넣지만, 혹시 몰라 안전장치로 둔다.
-				setTextColor(ContextCompat.getColor(requireContext(), R.color.brown_primary))
+				setTextColor(ContextCompat.getColor(requireContext(), R.color.brown_text))
 				setPadding(dp(14), dp(10), dp(14), dp(10))
 				background = ContextCompat.getDrawable(requireContext(), R.drawable.bg_chip_outline)
 				isClickable = true
@@ -318,10 +319,15 @@ class MyPageFragment : Fragment(), TopBarActionHandler {
 	override fun getTopBarConfig() = TopBarConfig(
 		title = "마이페이지",
 		showMenu = true,
-		menuIconRes = R.drawable.ic_settings
+		menuIconRes = R.drawable.ic_settings,
+		showNotice = true
 	)
 
 	override fun onMenuClicked() {
 		startActivity(Intent(requireContext(), SettingsActivity::class.java))
+	}
+
+	override fun onNoticeClicked() {
+		startActivity(Intent(requireContext(), NoticeListActivity::class.java))
 	}
 }

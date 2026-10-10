@@ -117,85 +117,207 @@
                     android:background="@color/divider_light" />
             </LinearLayout>
 
-            <TextView
-                android:id="@+id/menu_reading_plan"
+            <!-- 성경읽기표 · 약속의 말씀 · 기도제목 · 암송 구절 · 감사 노트: 한 줄에 3칸씩, 아이콘 + 이름 카드. 칸 폭을 항상 같게 하려고 마지막 줄의 빈 칸은 빈 View로 채운다. -->
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:padding="18dp"
-                android:text="성경읽기표"
-                android:textSize="16sp"
-                android:background="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true" />
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="8dp"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:orientation="horizontal">
 
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:background="@color/divider_light" />
+                <com.chan.bnote.ui.common.SquareLinearLayout
+                    android:id="@+id/menu_reading_plan"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginEnd="4dp"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:paddingStart="4dp"
+                    android:paddingEnd="4dp"
+                    android:paddingTop="16dp"
+                    android:paddingBottom="14dp"
+                    android:background="@drawable/bg_book_button"
+                    android:clickable="true"
+                    android:focusable="true">
 
-            <TextView
-                android:id="@+id/menu_verse_of_year"
+                    <ImageView
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:src="@drawable/ic_reading_plan"
+                        app:tint="@color/brown_text"
+                        android:contentDescription="@null" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="성경읽기표"
+                        android:textSize="14sp"
+                        android:textColor="@color/text_primary"
+                        android:gravity="center"
+                        android:maxLines="2" />
+                </com.chan.bnote.ui.common.SquareLinearLayout>
+
+                <com.chan.bnote.ui.common.SquareLinearLayout
+                    android:id="@+id/menu_verse_of_year"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginEnd="4dp"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:paddingStart="4dp"
+                    android:paddingEnd="4dp"
+                    android:paddingTop="16dp"
+                    android:paddingBottom="14dp"
+                    android:background="@drawable/bg_book_button"
+                    android:clickable="true"
+                    android:focusable="true">
+
+                    <ImageView
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:src="@drawable/ic_promise"
+                        app:tint="@color/brown_text"
+                        android:contentDescription="@null" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="약속의 말씀"
+                        android:textSize="14sp"
+                        android:textColor="@color/text_primary"
+                        android:gravity="center"
+                        android:maxLines="2" />
+                </com.chan.bnote.ui.common.SquareLinearLayout>
+
+                <com.chan.bnote.ui.common.SquareLinearLayout
+                    android:id="@+id/menu_prayer_request"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginEnd="4dp"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:paddingStart="4dp"
+                    android:paddingEnd="4dp"
+                    android:paddingTop="16dp"
+                    android:paddingBottom="14dp"
+                    android:background="@drawable/bg_book_button"
+                    android:clickable="true"
+                    android:focusable="true">
+
+                    <ImageView
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:src="@drawable/ic_prayer"
+                        app:tint="@color/brown_text"
+                        android:contentDescription="@null" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="기도제목"
+                        android:textSize="14sp"
+                        android:textColor="@color/text_primary"
+                        android:gravity="center"
+                        android:maxLines="2" />
+                </com.chan.bnote.ui.common.SquareLinearLayout>
+            </LinearLayout>
+
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:padding="18dp"
-                android:text="올해 약속의 말씀"
-                android:textSize="16sp"
-                android:background="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true" />
+                android:layout_marginBottom="8dp"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:orientation="horizontal">
 
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:background="@color/divider_light" />
+                <com.chan.bnote.ui.common.SquareLinearLayout
+                    android:id="@+id/menu_memorization"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginEnd="4dp"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:paddingStart="4dp"
+                    android:paddingEnd="4dp"
+                    android:paddingTop="16dp"
+                    android:paddingBottom="14dp"
+                    android:background="@drawable/bg_book_button"
+                    android:clickable="true"
+                    android:focusable="true">
 
-            <TextView
-                android:id="@+id/menu_prayer_request"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:padding="18dp"
-                android:text="기도제목 노트"
-                android:textSize="16sp"
-                android:background="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true" />
+                    <ImageView
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:src="@drawable/ic_lightbulb"
+                        app:tint="@color/brown_text"
+                        android:contentDescription="@null" />
 
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:background="@color/divider_light" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="암송 구절"
+                        android:textSize="14sp"
+                        android:textColor="@color/text_primary"
+                        android:gravity="center"
+                        android:maxLines="2" />
+                </com.chan.bnote.ui.common.SquareLinearLayout>
 
-            <TextView
-                android:id="@+id/menu_memorization"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:padding="18dp"
-                android:text="암송 구절"
-                android:textSize="16sp"
-                android:background="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true" />
+                <com.chan.bnote.ui.common.SquareLinearLayout
+                    android:id="@+id/menu_gratitude"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginEnd="4dp"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:paddingStart="4dp"
+                    android:paddingEnd="4dp"
+                    android:paddingTop="16dp"
+                    android:paddingBottom="14dp"
+                    android:background="@drawable/bg_book_button"
+                    android:clickable="true"
+                    android:focusable="true">
 
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:background="@color/divider_light" />
+                    <ImageView
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:src="@drawable/ic_favorite"
+                        app:tint="@color/brown_text"
+                        android:contentDescription="@null" />
 
-            <TextView
-                android:id="@+id/menu_gratitude"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:padding="18dp"
-                android:text="감사 노트"
-                android:textSize="16sp"
-                android:background="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="감사 노트"
+                        android:textSize="14sp"
+                        android:textColor="@color/text_primary"
+                        android:gravity="center"
+                        android:maxLines="2" />
+                </com.chan.bnote.ui.common.SquareLinearLayout>
 
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:background="@color/divider_light" />
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginEnd="4dp" />
+            </LinearLayout>
 
         </LinearLayout>
     </ScrollView>

@@ -25,7 +25,7 @@
                 android:paddingBottom="10dp"
                 android:textSize="13sp"
                 android:text="오늘"
-                android:textColor="@color/brown_primary"
+                android:textColor="@color/brown_text"
                 android:background="?attr/selectableItemBackground"
                 android:clickable="true"
                 android:focusable="true" />
@@ -82,7 +82,7 @@
                 android:paddingTop="10dp"
                 android:paddingBottom="10dp"
                 android:textSize="13sp"
-                android:textColor="@color/brown_primary"
+                android:textColor="@color/brown_text"
                 android:background="?attr/selectableItemBackground"
                 android:clickable="true"
                 android:focusable="true"

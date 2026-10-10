@@ -7,7 +7,6 @@ import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -42,10 +41,12 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 		const val EXTRA_NAVIGATE_WORD_END = "extra_navigate_word_end"
 		const val EXTRA_NAVIGATE_WORD_SEGMENT = "extra_navigate_word_segment"
 
-		// 내 정보 화면의 "설교노트"/"적용" 기록 카드에서, 설교·적용 탭으로 이동하면서 그 안의
-		// 특정 서브탭(SermonFragment.SUBTAB_SERMON / SUBTAB_APPLICATION — SermonSubPagerAdapter
-		// 순서와 동일)까지 바로 골라서 보여주기 위한 요청.
+		// 내 정보 화면의 "설교노트"/"적용" 기록 카드에서, 설교·적용 탭으로 이동하면서 그 안의 특정 서브탭
+		// (SermonFragment.SUBTAB_SERMON / SUBTAB_APPLICATION — SermonSubPagerAdapter 순서와 동일)까지 바로 골라서 보여주기 위한 요청.
 		const val EXTRA_NAVIGATE_SERMON_SUBTAB = "extra_navigate_sermon_subtab"
+
+		// 백그라운드 새 버전 알림(UpdateCheckWorker)을 눌러서 열렸을 때, 바로 새 버전 안내 창을 띄우라는 표시.
+		const val EXTRA_SHOW_UPDATE = "extra_show_update"
 
 		private const val TAG_BIBLE = "tab_bible"
 		private const val TAG_SERMON = "tab_sermon"
@@ -57,6 +58,10 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 	private lateinit var btnSearch: ImageView
 	private lateinit var btnBookmarks: ImageView
 	private lateinit var btnMenu: ImageView
+	private lateinit var btnNoticeContainer: android.view.View
+	private lateinit var btnNotice: ImageView
+	private lateinit var dotNoticeTopBar: android.view.View
+	private lateinit var dotNoticeNavMyPage: android.view.View
 	private lateinit var btnPrevChapter: ImageView
 	private lateinit var btnNextChapter: ImageView
 
@@ -82,10 +87,7 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 		installSplashScreen()
 		super.onCreate(savedInstanceState)
 
-		val darkMode = AppSettings.isDarkMode(this)
-		AppCompatDelegate.setDefaultNightMode(
-			if (darkMode) AppCompatDelegate.MODE_NIGHT_YES else AppCompatDelegate.MODE_NIGHT_NO
-		)
+		// 다크모드는 BnoteApplication.onCreate()에서 앱이 뜰 때 한 번 정한다(어떤 화면으로 다시 시작되든 적용되도록).
 		if (AppSettings.isKeepScreenOn(this)) {
 			window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 		}
@@ -133,6 +135,7 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 				// (성경 탭 자체는 BibleFragment가 마지막으로 읽던 책/장을 스스로 복원한다.)
 				switchToBible()
 			}
+			showUpdateIfRequested(intent)
 		}
 	}
 
@@ -140,6 +143,7 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 		super.onNewIntent(intent)
 		setIntent(intent)
 		handleNavigationIntent(intent)
+		showUpdateIfRequested(intent)
 	}
 
 	override fun onResume() {
@@ -150,7 +154,71 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 		} else {
 			window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 		}
-		checkAutoBackupPrompt()
+		// 백업 확인 창이 이번에 떴으면 새 버전 안내는 다음 기회로 미룬다(창 두 개가 겹치지 않게).
+		val backupPromptShown = checkAutoBackupPrompt()
+		if (!backupPromptShown) checkForUpdate()
+
+		// 알림 화면에서 읽고 돌아왔을 수도 있으니 빨간 점을 다시 맞추고, 30분이 지났으면 새 알림도 확인한다.
+		refreshNoticeDots()
+		refreshNoticesIfDue()
+	}
+
+	// --- 알림(공지사항) ---
+
+	/** 안 읽은 알림이 있으면 마이페이지 상단바 알림 아이콘과 하단바 마이페이지 아이콘에 빨간 점을 띄운다. */
+	private fun refreshNoticeDots() {
+		if (!::dotNoticeTopBar.isInitialized || !::dotNoticeNavMyPage.isInitialized) return
+		val hasUnread = com.chan.bnote.data.notice.NoticeRepository.hasUnread(this)
+		dotNoticeTopBar.visibility = visible(hasUnread)
+		dotNoticeNavMyPage.visibility = visible(hasUnread)
+	}
+
+	/** 앱을 열 때 GitHub에서 새 알림을 가져온다(30분에 한 번까지). 인터넷이 안 되면 조용히 넘어간다. */
+	private fun refreshNoticesIfDue() {
+		val repository = com.chan.bnote.data.notice.NoticeRepository
+		if (!repository.shouldAutoFetch(this)) return
+		lifecycleScope.launch {
+			if (repository.refresh(this@MainActivity)) refreshNoticeDots()
+		}
+	}
+
+	// --- 새 버전 확인 ---
+
+	/** 이 화면이 살아있는 동안 한 번만 확인한다(onResume이 여러 번 불려도). */
+	private var updateCheckStarted = false
+
+	/** 하루에 한 번까지만 GitHub의 최신 릴리스를 확인해서, 새 버전이 있으면 안내 창을 띄운다.
+	 * 인터넷이 안 되면 조용히 넘어간다. 자세한 규칙은 UpdateChecker 참고. */
+	private fun checkForUpdate() {
+		if (updateCheckStarted) return
+		if (!com.chan.bnote.data.update.UpdateChecker.shouldAutoCheck(this)) return
+		updateCheckStarted = true
+
+		lifecycleScope.launch {
+			val checker = com.chan.bnote.data.update.UpdateChecker
+			val release = checker.fetchLatest(this@MainActivity) ?: return@launch
+			if (!checker.isNewer(this@MainActivity, release)) return@launch
+			if (checker.isSnoozed(this@MainActivity, release)) return@launch
+			// 확인하는 사이 다른 화면으로 넘어갔으면 다음에 앱을 열 때 다시 확인한다.
+			if (isFinishing || isDestroyed) return@launch
+			com.chan.bnote.ui.mypage.settings.UpdateDialog.show(this@MainActivity, release)
+		}
+	}
+
+	/** 새 버전 알림을 눌러서 열렸으면, 하루 한 번 제한·"나중에" 미루기와 상관없이 바로 확인해서 안내 창을 띄운다.
+	 * 화면이 다시 만들어질 때 또 뜨지 않도록 표시는 한 번 쓰고 지운다. */
+	private fun showUpdateIfRequested(intent: android.content.Intent) {
+		if (!intent.getBooleanExtra(EXTRA_SHOW_UPDATE, false)) return
+		intent.removeExtra(EXTRA_SHOW_UPDATE)
+		updateCheckStarted = true // 같은 시점의 자동 확인과 겹쳐서 창이 두 번 뜨지 않게
+
+		lifecycleScope.launch {
+			val checker = com.chan.bnote.data.update.UpdateChecker
+			val release = checker.fetchLatest(this@MainActivity) ?: return@launch
+			if (!checker.isNewer(this@MainActivity, release)) return@launch
+			if (isFinishing || isDestroyed) return@launch
+			com.chan.bnote.ui.mypage.settings.UpdateDialog.show(this@MainActivity, release)
+		}
 	}
 
 	// --- 자동 데이터 내보내기 ---
@@ -167,10 +235,10 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 
 	/** onResume마다 불리지만, 주기가 안 지났으면 바로 빠져나가고(shouldPromptNow), 이미 이번에
 	 * 창을 띄웠으면(autoBackupDialogShown) 또 안 띄운다 — 설정 화면 갔다 오는 것처럼 onResume이
-	 * 여러 번 불려도 중복으로 뜨지 않는다. */
-	private fun checkAutoBackupPrompt() {
-		if (autoBackupDialogShown) return
-		if (!AutoBackupManager.shouldPromptNow(this)) return
+	 * 여러 번 불려도 중복으로 뜨지 않는다. 이번 호출에서 실제로 창을 띄웠으면 true. */
+	private fun checkAutoBackupPrompt(): Boolean {
+		if (autoBackupDialogShown) return false
+		if (!AutoBackupManager.shouldPromptNow(this)) return false
 		autoBackupDialogShown = true
 
 		MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_BNOTE_Dialog)
@@ -185,6 +253,7 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 			}
 			.setCancelable(false)
 			.show()
+		return true
 	}
 
 	private fun startAutoBackup() {
@@ -271,6 +340,9 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 		btnSearch = findViewById(R.id.btn_search)
 		btnBookmarks = findViewById(R.id.btn_bookmarks)
 		btnMenu = findViewById(R.id.btn_menu)
+		btnNoticeContainer = findViewById(R.id.btn_notice_container)
+		btnNotice = findViewById(R.id.btn_notice)
+		dotNoticeTopBar = findViewById(R.id.dot_notice_top_bar)
 		btnAutoScroll = findViewById(R.id.btn_auto_scroll)
 		iconReadingPlanCheck = findViewById(R.id.icon_reading_plan_check)
 		iconSermonIndicator = findViewById(R.id.icon_sermon_indicator)
@@ -292,6 +364,7 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 		navSermon = findViewById(R.id.nav_sermon)
 		navBible = findViewById(R.id.nav_bible)
 		navMyPage = findViewById(R.id.nav_mypage)
+		dotNoticeNavMyPage = findViewById(R.id.dot_notice_nav_mypage)
 	}
 
 	private fun setupTopBarActions() {
@@ -300,6 +373,7 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 		btnSearch.setOnClickListener { currentHandler()?.onSearchClicked() }
 		btnBookmarks.setOnClickListener { currentHandler()?.onBookmarksClicked() }
 		btnMenu.setOnClickListener { currentHandler()?.onMenuClicked() }
+		btnNotice.setOnClickListener { currentHandler()?.onNoticeClicked() }
 		btnAutoScroll.setOnClickListener { currentHandler()?.onAutoScrollButtonClicked() }
 		iconReadingPlanCheck.setOnClickListener { currentHandler()?.onReadingPlanCheckClicked() }
 		iconSermonIndicator.setOnClickListener { currentHandler()?.onSermonIconClicked() }
@@ -392,6 +466,9 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 		btnAutoScroll.setImageResource(if (config.isAutoScrolling) R.drawable.ic_pause else R.drawable.ic_play)
 
 		iconSermonIndicator.visibility = visible(config.showSermonIcon)
+
+		btnNoticeContainer.visibility = visible(config.showNotice)
+		refreshNoticeDots()
 
 		adjustTopBarSpacer()
 	}

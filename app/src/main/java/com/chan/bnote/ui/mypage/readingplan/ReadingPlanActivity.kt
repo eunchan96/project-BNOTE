@@ -8,6 +8,7 @@ import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
@@ -17,12 +18,20 @@ import com.chan.bnote.R
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.bible.BibleBookGroups
 import com.chan.bnote.data.bible.BibleBooks
+import com.chan.bnote.data.mypage.readingplan.ReadingGoalStore
 import com.chan.bnote.data.mypage.readingplan.ReadingProgress
 import com.chan.bnote.ui.common.BookGrid
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 
 class ReadingPlanActivity : AppCompatActivity() {
+
+	// 읽기 목표 화면에서 저장하고 돌아오면 진행률·하루 분량·그리드를 새 목표 기준으로 다시 그린다.
+	private val goalLauncher = registerForActivityResult(
+		ActivityResultContracts.StartActivityForResult()
+	) { result ->
+		if (result.resultCode == RESULT_OK) loadProgress()
+	}
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
@@ -37,6 +46,9 @@ class ReadingPlanActivity : AppCompatActivity() {
 
 		findViewById<TextView>(R.id.text_top_bar_title).text = "성경읽기표"
 		findViewById<ImageView>(R.id.btn_top_bar_back).setOnClickListener { finish() }
+		findViewById<TextView>(R.id.btn_reading_goal).setOnClickListener {
+			goalLauncher.launch(android.content.Intent(this, ReadingGoalActivity::class.java))
+		}
 		findViewById<TextView>(R.id.btn_reset_reading_progress).setOnClickListener {
 			MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_BNOTE_Dialog)
 				.setTitle("성경읽기표 기록 초기화")
@@ -63,47 +75,28 @@ class ReadingPlanActivity : AppCompatActivity() {
 			val maxChapterByBook = (1..66).associateWith { bookId ->
 				db.bibleDao().getMaxChapter("NKRV", bookId)
 			}
-			val totalChapters = maxChapterByBook.values.sum()
 
 			val readList = db.readingProgressDao().getAll()
 			val readByBook = readList.groupBy { it.bookId }
-			val totalRead = readList.size
 
-			val overallText = findViewById<TextView>(R.id.text_overall_progress)
-			val progressBar = findViewById<ProgressBar>(R.id.progress_overall)
-			val percentValue = if (totalChapters > 0) (totalRead * 100.0 / totalChapters) else 0.0
-			val percentText = String.format(java.util.Locale.KOREA, "%.1f", percentValue)
-			overallText.text = "전체 $totalRead / $totalChapters 장 읽음 (${percentText}%)"
-			progressBar.progress = percentValue.toInt()
+			// 진행률·하루 분량·계획 대비는 "읽기 목표"(범위·기간) 기준으로 계산한다.
+			// 목표를 안 바꿨으면 66권 전체 · 올해 1월 1일~12월 31일이라 예전과 같다.
+			val goal = ReadingGoalStore.load(this@ReadingPlanActivity)
+			val (progressText, progressPercent) =
+				ReadingPace.progressLine(goal, maxChapterByBook, readList)
+			findViewById<TextView>(R.id.text_overall_progress).text = progressText
+			findViewById<ProgressBar>(R.id.progress_overall).progress = progressPercent
+			findViewById<TextView>(R.id.text_pace_guide).text =
+				ReadingPace.guideText(goal, maxChapterByBook, readList)
 
-			renderPaceGuide(totalChapters, totalRead)
-			renderBookGrid(maxChapterByBook, readByBook)
+			renderBookGrid(maxChapterByBook, readByBook, goal.bookIds)
 		}
-	}
-
-	/** 올해 남은 날짜와, 그 안에 완독하려면 하루 몇 장씩 읽어야 하는지 보여준다. */
-	private fun renderPaceGuide(totalChapters: Int, totalRead: Int) {
-		val paceText = findViewById<TextView>(R.id.text_pace_guide)
-		val remaining = totalChapters - totalRead
-
-		if (remaining <= 0) {
-			paceText.text = "축하해요, 전체 성경을 다 읽으셨어요!"
-			return
-		}
-
-		val today = java.util.Calendar.getInstance()
-		val dayOfYear = today.get(java.util.Calendar.DAY_OF_YEAR)
-		val daysInYear = today.getActualMaximum(java.util.Calendar.DAY_OF_YEAR)
-		val daysLeft = (daysInYear - dayOfYear + 1).coerceAtLeast(1) // 오늘 포함
-
-		val dailyPace = remaining.toDouble() / daysLeft
-		val dailyPaceText = String.format(java.util.Locale.KOREA, "%.1f", dailyPace)
-		paceText.text = "올해 남은 날짜 ${daysLeft}일 · 다 읽으려면 하루 ${dailyPaceText}장씩"
 	}
 
 	private fun renderBookGrid(
 		maxChapterByBook: Map<Int, Int>,
-		readByBook: Map<Int, List<ReadingProgress>>
+		readByBook: Map<Int, List<ReadingProgress>>,
+		goalBookIds: Set<Int>
 	) {
 		val gridContainer = findViewById<LinearLayout>(R.id.container_book_progress_grid)
 		gridContainer.removeAllViews()
@@ -143,6 +136,8 @@ class ReadingPlanActivity : AppCompatActivity() {
 					layoutParams =
 						LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f)
 							.apply { marginStart = dp(4); marginEnd = dp(4) }
+					// 읽기 목표 범위 밖의 책은 흐리게 보여준다(눌러서 체크하는 건 그대로 가능).
+					alpha = if (bookId in goalBookIds) 1f else 0.35f
 					setOnClickListener {
 						val sheet = ReadingPlanChapterBottomSheet(bookId)
 						sheet.onDismissed = { loadProgress() }

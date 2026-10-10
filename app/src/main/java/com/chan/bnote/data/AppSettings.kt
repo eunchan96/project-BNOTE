@@ -32,6 +32,7 @@ object AppSettings {
 
 	private const val KEY_SCROLL_SPEED = "scroll_speed" // 1(느림)~5(빠름)
 	private const val KEY_KEEP_SCREEN_ON = "keep_screen_on"
+	private const val KEY_KEYBOARD_BAR_COLLAPSED = "keyboard_bar_collapsed"
 	private const val KEY_CHAPTER_SWIPE_ENABLED = "chapter_swipe_enabled"
 	private const val KEY_BIBLE_SCROLLBAR_ENABLED = "bible_scrollbar_enabled"
 	private const val KEY_READING_CHECK_BOTTOM_BUTTON = "reading_check_bottom_button"
@@ -247,6 +248,17 @@ object AppSettings {
 	fun setKeepScreenOn(context: Context, enabled: Boolean) {
 		context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
 			.edit().putBoolean(KEY_KEEP_SCREEN_ON, enabled).apply()
+	}
+
+	/** 작성 화면 키보드 위 편집 바를 접어 뒀는지. 한 화면에서 접으면 다른 작성 화면에서도 접힌 채로 뜬다. */
+	fun isKeyboardBarCollapsed(context: Context): Boolean {
+		return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.getBoolean(KEY_KEYBOARD_BAR_COLLAPSED, false)
+	}
+
+	fun setKeyboardBarCollapsed(context: Context, collapsed: Boolean) {
+		context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.edit().putBoolean(KEY_KEYBOARD_BAR_COLLAPSED, collapsed).apply()
 	}
 
 	fun isChapterSwipeEnabled(context: Context): Boolean {
