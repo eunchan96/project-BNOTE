@@ -1297,29 +1297,67 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 			if (singleSelected) View.VISIBLE else View.GONE
 	}
 
+	/**
+	 * 선택 툴바의 북마크 버튼. 스크랩·암송과 달리 고르는 단계 없이 바로 바뀌어서, 잘못 눌러도 알아챌 수 있게
+	 * 추가/해제 전에 한 번 확인한다. 취소하면 선택은 그대로 둬서 다른 동작을 이어서 할 수 있다.
+	 */
 	private fun onBookmarkButtonClicked() {
 		val verseNum = selectedVerses.firstOrNull() ?: return
+		val bookId = currentBookId
+		val chapter = currentChapter
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(requireContext().applicationContext)
-			val current = db.bookmarkDao().getBookmarksForChapter(currentBookId, currentChapter)
+			val current = db.bookmarkDao().getBookmarksForChapter(bookId, chapter)
 				.firstOrNull { it.verse == verseNum }
+			val willBookmark = !(current?.isBookmarked ?: false)
+			val ref =
+				"${BibleBooks.nameOf(bookId)} $chapter${BibleBooks.chapterUnit(bookId)} ${verseNum}절"
 
+			com.google.android.material.dialog.MaterialAlertDialogBuilder(
+				requireContext(), R.style.ThemeOverlay_BNOTE_Dialog
+			)
+				.setTitle(if (willBookmark) "북마크 추가" else "북마크 해제")
+				.setMessage(
+					if (willBookmark) "${ref}을 북마크에 추가할까요?"
+					else "${ref}을 북마크에서 해제할까요?"
+				)
+				.setPositiveButton(if (willBookmark) "추가" else "해제") { _, _ ->
+					applyBookmark(bookId, chapter, verseNum, current, willBookmark)
+				}
+				.setNegativeButton("취소", null)
+				.show()
+		}
+	}
+
+	private fun applyBookmark(
+		bookId: Int,
+		chapter: Int,
+		verseNum: Int,
+		current: BibleBookmark?,
+		bookmarked: Boolean
+	) {
+		lifecycleScope.launch {
+			val db = BibleDatabase.getInstance(requireContext().applicationContext)
 			val updated = (current ?: BibleBookmark(
-				bookId = currentBookId,
-				chapter = currentChapter,
+				bookId = bookId,
+				chapter = chapter,
 				verse = verseNum
 			))
 				.copy(
-					isBookmarked = !(current?.isBookmarked ?: false),
+					isBookmarked = bookmarked,
 					updatedAt = System.currentTimeMillis()
 				)
 			db.bookmarkDao().upsert(updated)
 
-			val refreshed = db.bookmarkDao().getBookmarksForChapter(currentBookId, currentChapter)
-				.associateBy { it.verse }.toMutableMap()
-			adapter.updateBookmarks(refreshed)
+			// 확인 창이 떠 있는 사이 다른 장으로 넘어갔을 수 있으니, 지금 보고 있는 장일 때만 화면을 갱신한다.
+			if (bookId == currentBookId && chapter == currentChapter) {
+				val refreshed =
+					db.bookmarkDao().getBookmarksForChapter(currentBookId, currentChapter)
+						.associateBy { it.verse }.toMutableMap()
+				adapter.updateBookmarks(refreshed)
+			}
 
-			val message = if (updated.isBookmarked) "북마크에 추가했어요" else "북마크를 해제했어요"
+			val message = if (bookmarked) "북마크에 추가했어요" else "북마크를 해제했어요"
 			Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
 			clearSelection()
 		}

@@ -1,6 +1,5 @@
 package com.chan.bnote.ui.bible
 
-import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
@@ -21,6 +20,7 @@ import com.chan.bnote.data.AppSettings
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.bible.BibleBooks
 import com.chan.bnote.data.bible.bookmark.BookmarkedVerseRow
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 
 class BookmarkListActivity : AppCompatActivity() {
@@ -96,17 +96,28 @@ class BookmarkListActivity : AppCompatActivity() {
 					.putExtra(EXTRA_RESULT_BOOK_ID, row.bookId)
 					.putExtra(EXTRA_RESULT_CHAPTER, row.chapter)
 					.putExtra(EXTRA_RESULT_VERSE, row.verse)
-				setResult(Activity.RESULT_OK, result)
+				setResult(RESULT_OK, result)
 				finish()
 			},
-			onDelete = { row ->
+			onDelete = { row -> confirmDelete(row) }
+		)
+	}
+
+	private fun confirmDelete(row: BookmarkedVerseRow) {
+		val ref =
+			"${BibleBooks.nameOf(row.bookId)} ${row.chapter}${BibleBooks.chapterUnit(row.bookId)} ${row.verse}절"
+		MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_BNOTE_Dialog)
+			.setTitle("북마크 삭제")
+			.setMessage("${ref}을 북마크에서 삭제할까요?")
+			.setPositiveButton("삭제") { _, _ ->
 				lifecycleScope.launch {
 					val db = BibleDatabase.getInstance(applicationContext)
 					db.bookmarkDao().removeBookmark(row.bookId, row.chapter, row.verse)
 					loadBookmarks()
 				}
 			}
-		)
+			.setNegativeButton("취소", null)
+			.show()
 	}
 }
 
