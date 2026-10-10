@@ -67,19 +67,6 @@
             android:paddingTop="16dp"
             android:paddingBottom="16dp">
 
-            <!-- 목표와 상관없이 66권 전체 기준으로 지금까지 얼마나 읽었는지 -->
-            <TextView
-                android:id="@+id/text_goal_whole_bible"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
-                android:layout_marginEnd="16dp"
-                android:layout_marginBottom="16dp"
-                android:padding="12dp"
-                android:background="@drawable/bg_book_button"
-                android:textSize="13sp"
-                android:textColor="@color/text_secondary" />
-
             <!-- 기간 -->
             <TextView
                 android:layout_width="wrap_content"

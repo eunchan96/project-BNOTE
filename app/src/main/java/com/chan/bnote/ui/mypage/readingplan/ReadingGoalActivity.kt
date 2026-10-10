@@ -118,8 +118,6 @@ class ReadingGoalActivity : AppCompatActivity() {
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(applicationContext)
 			maxChapterByBook = (1..66).associateWith { db.bibleDao().getMaxChapter("NKRV", it) }
-			findViewById<TextView>(R.id.text_goal_whole_bible).text =
-				ReadingPace.wholeBibleLine(maxChapterByBook, db.readingProgressDao().getAll().size)
 			renderBookGrid()
 			renderBooksSummary()
 		}
