@@ -38,6 +38,8 @@ import com.chan.bnote.data.sermon.SermonBibleRef
 import com.chan.bnote.data.sermon.sermonphoto.SermonPhoto
 import com.chan.bnote.data.sermon.sermonphoto.SermonPhotoStorage
 import com.chan.bnote.ui.bible.picker.BibleRangePickerBottomSheet
+import com.chan.bnote.ui.common.KeyboardUndoBar
+import com.chan.bnote.ui.common.TextUndo
 import com.chan.bnote.ui.sermon.detail.SermonDetailActivity
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
@@ -119,6 +121,7 @@ class AddSermonActivity : AppCompatActivity() {
 	private lateinit var editMemo: EditText
 	private lateinit var editTitle: EditText
 	private lateinit var editLink: EditText
+	private lateinit var keyboardUndoBar: KeyboardUndoBar
 
 	private val pickPhotosLauncher = registerForActivityResult(
 		ActivityResultContracts.PickMultipleVisualMedia(MAX_PHOTOS)
@@ -174,6 +177,8 @@ class AddSermonActivity : AppCompatActivity() {
 		enableEdgeToEdge()
 		setContentView(R.layout.activity_add_sermon)
 
+		keyboardUndoBar = KeyboardUndoBar(this, findViewById(R.id.keyboard_undo_bar))
+
 		ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.add_sermon_root)) { v, insets ->
 			val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
 			val ime = insets.getInsets(WindowInsetsCompat.Type.ime())
@@ -186,6 +191,7 @@ class AddSermonActivity : AppCompatActivity() {
 				systemBars.right,
 				maxOf(systemBars.bottom, ime.bottom)
 			)
+			keyboardUndoBar.onInsetsChanged(insets)
 			insets
 		}
 
@@ -297,6 +303,9 @@ class AddSermonActivity : AppCompatActivity() {
 			applyFormatting(bold = false)
 		}
 		findViewById<TextView>(R.id.btn_format_color).setOnClickListener { showColorPicker() }
+		// 메모 박스 안의 실행 취소/다시 실행(키보드 위 바와 같은 동작이지만, 이 버튼은 항상 메모에 적용된다).
+		findViewById<ImageView>(R.id.btn_memo_undo).setOnClickListener { TextUndo.undo(editMemo) }
+		findViewById<ImageView>(R.id.btn_memo_redo).setOnClickListener { TextUndo.redo(editMemo) }
 
 		btnDate.setOnClickListener {
 			val cal = Calendar.getInstance().apply { timeInMillis = selectedDateMillis }

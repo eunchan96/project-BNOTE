@@ -350,4 +350,7 @@
         </LinearLayout>
     </com.chan.bnote.ui.common.NoAutoScrollScrollView>
 
+    <!-- 키보드가 올라와 있을 때만 키보드 바로 위에 보이는 실행 취소 / 다시 실행 바 -->
+    <include layout="@layout/include_keyboard_undo_bar" />
+
 </LinearLayout>

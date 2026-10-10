@@ -29,6 +29,7 @@ import com.chan.bnote.data.application.ApplicationSermonLink
 import com.chan.bnote.data.bible.BibleBooks
 import com.chan.bnote.data.sermon.Sermon
 import com.chan.bnote.ui.application.ApplicationDetailActivity
+import com.chan.bnote.ui.common.KeyboardUndoBar
 import com.chan.bnote.ui.common.UnsavedChangesDialog
 import kotlinx.coroutines.launch
 
@@ -98,6 +99,8 @@ class AddApplicationActivity : AppCompatActivity() {
 		enableEdgeToEdge()
 		setContentView(R.layout.activity_add_application)
 
+		val keyboardUndoBar = KeyboardUndoBar(this, findViewById(R.id.keyboard_undo_bar))
+
 		ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.add_application_root)) { v, insets ->
 			val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
 			val ime = insets.getInsets(WindowInsetsCompat.Type.ime())
@@ -107,6 +110,7 @@ class AddApplicationActivity : AppCompatActivity() {
 				systemBars.right,
 				maxOf(systemBars.bottom, ime.bottom)
 			)
+			keyboardUndoBar.onInsetsChanged(insets)
 			insets
 		}
 

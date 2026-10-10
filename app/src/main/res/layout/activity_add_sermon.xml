@@ -218,6 +218,30 @@
                     android:orientation="horizontal"
                     android:background="@drawable/bg_stat_card">
 
+                    <ImageView
+                        android:id="@+id/btn_memo_undo"
+                        android:layout_width="34dp"
+                        android:layout_height="match_parent"
+                        android:padding="8dp"
+                        android:scaleType="centerInside"
+                        android:src="@drawable/ic_undo"
+                        app:tint="@color/text_secondary"
+                        android:contentDescription="실행 취소"
+                        android:background="?attr/selectableItemBackground"
+                        android:clickable="true" />
+
+                    <ImageView
+                        android:id="@+id/btn_memo_redo"
+                        android:layout_width="34dp"
+                        android:layout_height="match_parent"
+                        android:padding="8dp"
+                        android:scaleType="centerInside"
+                        android:src="@drawable/ic_redo"
+                        app:tint="@color/text_secondary"
+                        android:contentDescription="다시 실행"
+                        android:background="?attr/selectableItemBackground"
+                        android:clickable="true" />
+
                     <TextView
                         android:id="@+id/btn_format_bold"
                         android:layout_width="wrap_content"
@@ -328,5 +352,8 @@
 
         </LinearLayout>
     </com.chan.bnote.ui.common.NoAutoScrollScrollView>
+
+    <!-- 키보드가 올라와 있을 때만 키보드 바로 위에 보이는 실행 취소 / 다시 실행 바 -->
+    <include layout="@layout/include_keyboard_undo_bar" />
 
 </LinearLayout>
