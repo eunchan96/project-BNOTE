@@ -73,6 +73,9 @@
             android:name=".ui.mypage.readingplan.ReadingPlanActivity"
             android:exported="false" />
         <activity
+            android:name=".ui.mypage.readingplan.ReadingGoalActivity"
+            android:exported="false" />
+        <activity
             android:name=".ui.mypage.profile.ProfileActivity"
             android:exported="false" />
         <activity
