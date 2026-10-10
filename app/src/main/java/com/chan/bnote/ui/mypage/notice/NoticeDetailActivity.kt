@@ -17,7 +17,6 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import coil.load
-import coil.transform.RoundedCornersTransformation
 import com.chan.bnote.R
 import com.chan.bnote.data.notice.Notice
 import com.chan.bnote.data.notice.NoticeBlock
@@ -100,11 +99,13 @@ class NoticeDetailActivity : AppCompatActivity() {
 		}
 		findViewById<TextView>(R.id.text_notice_date).text = dateText
 
+		// 본문은 화면 양옆 16dp씩 여백 안에 있다.
 		renderBlocks(
 			findViewById(R.id.container_notice_body),
 			notice.body,
 			textSizeSp = 15f,
-			lineSpacing = 1.4f
+			lineSpacing = 1.4f,
+			horizontalInsetDp = 32
 		)
 
 		val download = findViewById<View>(R.id.btn_notice_download)
@@ -161,29 +162,53 @@ class NoticeDetailActivity : AppCompatActivity() {
 				LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
 			).apply { topMargin = (4 * density).toInt() }
 		}
-		renderBlocks(body, comment.body, textSizeSp = 14f, lineSpacing = 1.35f)
+		// 추가 안내는 화면 여백(16dp × 2)에 박스 안쪽 여백(12dp × 2)과 테두리가 더해진다.
+		renderBlocks(
+			body,
+			comment.body,
+			textSizeSp = 14f,
+			lineSpacing = 1.35f,
+			horizontalInsetDp = 58
+		)
 		box.addView(body)
 		return box
 	}
 
 	/**
-	 * [markdown]을 글 · 사진 순서대로 [container]에 채운다. 사진을 누르면 이 덩어리(본문 또는 댓글 하나)의
-	 * 사진들을 전체화면으로 넘겨볼 수 있다. 사진을 못 불러오면(인터넷 끊김 등) 그 자리는 숨긴다.
+	 * [markdown]을 글 · 사진 순서대로 [container]에 채운다.
+	 * 이어서 붙어 있는 사진들은 사용 가이드처럼 한 줄에 두 장씩(좁은 화면은 한 장씩) 같은 크기 칸에 놓고,
+	 * 설명(alt)이 있으면 사진 아래에 작게 보여준다. 사진을 누르면 이 덩어리(본문 또는 댓글 하나)의 사진들을
+	 * 전체화면으로 넘겨볼 수 있다. 사진을 못 불러오면(인터넷 끊김 등) 그 칸은 숨긴다.
+	 *
+	 * [horizontalInsetDp]: 화면 폭에서 이 덩어리 양옆으로 빠지는 여백의 합. 사진 칸 너비 계산에 쓴다.
 	 */
 	private fun renderBlocks(
 		container: LinearLayout,
 		markdown: String,
 		textSizeSp: Float,
-		lineSpacing: Float
+		lineSpacing: Float,
+		horizontalInsetDp: Int
 	) {
 		container.removeAllViews()
-		val density = resources.displayMetrics.density
 		val blocks = NoticeFormatter.toBlocks(markdown)
 		val imageUrls = blocks.filterIsInstance<NoticeBlock.Image>().map { it.url }
 
-		blocks.forEachIndexed { index, block ->
-			val topMargin = if (index == 0) 0 else (10 * density).toInt()
-			when (block) {
+		// 가이드(UserGuideItemDetailActivity)와 같은 규칙: 칸 너비를 고정 픽셀로 계산해서,
+		// 사진이 한 장뿐이어도 칸 하나 크기만 차지하게 한다(사진마다 크기가 들쭉날쭉하지 않게).
+		val columns = if (resources.configuration.smallestScreenWidthDp < 360) 1 else 2
+		val gapPx = dp(10)
+		val columnWidthPx =
+			(resources.displayMetrics.widthPixels - dp(horizontalInsetDp) - gapPx * (columns - 1)) / columns
+
+		// 간격: 글 ↔ 사진이 바뀌는 곳은 한 줄 정도(22dp) 띄우고, 사진 줄끼리는 가이드처럼 10dp.
+		val textImageGapPx = dp(22)
+		val imageRowGapPx = dp(10)
+
+		var imageIndex = 0
+		var i = 0
+		while (i < blocks.size) {
+			val topMargin = if (container.childCount == 0) 0 else textImageGapPx
+			when (val block = blocks[i]) {
 				is NoticeBlock.Text -> {
 					val textView = TextView(this).apply {
 						textSize = textSizeSp
@@ -200,13 +225,45 @@ class NoticeDetailActivity : AppCompatActivity() {
 					textView.text = withHangingIndent(block.text, textView)
 					LinkifyHelper.applySmartLinks(textView)
 					container.addView(textView)
+					i++
 				}
 
-				is NoticeBlock.Image -> container.addView(
-					buildImageView(block.url, topMargin) {
-						PhotoViewerActivity.start(this, imageUrls, imageUrls.indexOf(block.url))
+				is NoticeBlock.Image -> {
+					// 글 없이 이어진 사진들을 한 묶음으로 모은다.
+					val run = mutableListOf<NoticeBlock.Image>()
+					while (i < blocks.size && blocks[i] is NoticeBlock.Image) {
+						run.add(blocks[i] as NoticeBlock.Image)
+						i++
 					}
-				)
+					run.chunked(columns).forEachIndexed { rowIndex, rowImages ->
+						val row = LinearLayout(this).apply {
+							orientation = LinearLayout.HORIZONTAL
+							layoutParams = LinearLayout.LayoutParams(
+								LinearLayout.LayoutParams.MATCH_PARENT,
+								LinearLayout.LayoutParams.WRAP_CONTENT
+							).apply {
+								// 묶음의 첫 줄은 위 글과의 간격, 그다음 줄부터는 사진 줄 사이 간격.
+								this.topMargin = when {
+									container.childCount == 0 -> 0
+									rowIndex == 0 -> textImageGapPx
+									else -> imageRowGapPx
+								}
+							}
+						}
+						rowImages.forEachIndexed { offsetInRow, image ->
+							val startIndex = imageIndex
+							val cell = buildImageCell(image) {
+								PhotoViewerActivity.start(this, imageUrls, startIndex)
+							}
+							cell.layoutParams = LinearLayout.LayoutParams(
+								columnWidthPx, LinearLayout.LayoutParams.WRAP_CONTENT
+							).apply { if (offsetInRow > 0) marginStart = gapPx }
+							row.addView(cell)
+							imageIndex++
+						}
+						container.addView(row)
+					}
+				}
 			}
 		}
 	}
@@ -234,37 +291,51 @@ class NoticeDetailActivity : AppCompatActivity() {
 		return spannable
 	}
 
-	/** 본문 속 사진 한 장. 불러오는 동안은 회색 자리만 잡아두고, 다 불러오면 원래 비율대로 보여준다. */
-	private fun buildImageView(url: String, topMargin: Int, onClick: () -> Unit): ImageView {
-		val density = resources.displayMetrics.density
-		val placeholderHeight = (180 * density).toInt()
-		return ImageView(this).apply {
+	/**
+	 * 사진 한 칸: 가이드 사진처럼 테두리 박스 안의 사진 + (있으면) 아래 작은 설명.
+	 * 불러오는 동안은 빈 칸 높이만 잡아두고, 다 불러오면 원래 비율대로 보여준다.
+	 */
+	private fun buildImageCell(image: NoticeBlock.Image, onClick: () -> Unit): LinearLayout {
+		val cell = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+		val imageView = ImageView(this).apply {
 			layoutParams = LinearLayout.LayoutParams(
 				LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
-			).apply { this.topMargin = topMargin }
+			)
 			adjustViewBounds = true
 			scaleType = ImageView.ScaleType.FIT_CENTER
-			// 세로로 아주 긴 캡처도 화면을 다 덮지 않도록 높이를 제한한다(전체는 눌러서 크게 보기).
-			maxHeight = (520 * density).toInt()
-			minimumHeight = placeholderHeight
-			setBackgroundColor(
-				ContextCompat.getColor(this@NoticeDetailActivity, R.color.divider_light)
-			)
-			contentDescription = "알림 사진"
+			background =
+				ContextCompat.getDrawable(this@NoticeDetailActivity, R.drawable.bg_book_button)
+			setPadding(dp(4), dp(4), dp(4), dp(4))
+			minimumHeight = dp(160)
+			contentDescription = image.caption ?: "알림 사진"
+			isClickable = true
+			isFocusable = true
 			setOnClickListener { onClick() }
-			load(url) {
+			load(image.url) {
 				crossfade(true)
-				transformations(RoundedCornersTransformation(8 * density))
 				listener(
-					onSuccess = { _, _ ->
-						minimumHeight = 0
-						background = null
-					},
-					onError = { _, _ -> visibility = View.GONE }
+					onSuccess = { _, _ -> minimumHeight = 0 },
+					onError = { _, _ -> cell.visibility = View.GONE }
 				)
 			}
 		}
+		cell.addView(imageView)
+
+		if (image.caption != null) {
+			cell.addView(TextView(this).apply {
+				text = image.caption
+				textSize = 12f
+				gravity = android.view.Gravity.CENTER
+				setTextColor(ContextCompat.getColor(this@NoticeDetailActivity, R.color.text_hint))
+				layoutParams = LinearLayout.LayoutParams(
+					LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
+				).apply { topMargin = dp(4) }
+			})
+		}
+		return cell
 	}
+
+	private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
 
 	private fun confirmDelete(notice: Notice) {
 		MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_BNOTE_Dialog)

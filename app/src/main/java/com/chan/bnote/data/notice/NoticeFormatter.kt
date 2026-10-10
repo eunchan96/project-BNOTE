@@ -1,14 +1,15 @@
 package com.chan.bnote.data.notice
 
 import com.chan.bnote.data.notice.NoticeFormatter.toDisplayText
+import com.chan.bnote.ui.mypage.guide.UserGuideContent
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 
-/** 알림 본문을 화면에 그릴 때의 한 덩어리 — 글 또는 사진. */
+/** 알림 본문을 화면에 그릴 때의 한 덩어리 — 글 또는 사진. [Image.caption]은 사진 아래 작은 설명(없으면 null). */
 sealed class NoticeBlock {
 	data class Text(val text: String) : NoticeBlock()
-	data class Image(val url: String) : NoticeBlock()
+	data class Image(val url: String, val caption: String?) : NoticeBlock()
 }
 
 /** 알림 본문(GitHub 이슈 마크다운)과 날짜를 화면에 보이기 좋게 다듬는다. */
@@ -16,12 +17,35 @@ object NoticeFormatter {
 
 	/**
 	 * 본문 속 사진. GitHub에 사진을 끌어다 놓으면 들어가는 `<img ... src="주소">` 태그와
-	 * 마크다운 `![설명](주소)` 둘 다 알아본다. 주소는 group 1(img 태그) 또는 group 2(마크다운).
+	 * 마크다운 `![설명](주소)` 둘 다 알아본다.
+	 * group 1 = img 태그의 주소, group 2 = 마크다운의 설명, group 3 = 마크다운의 주소.
 	 */
 	private val IMAGE = Regex(
-		"<img\\b[^>]*?\\bsrc\\s*=\\s*[\"']([^\"']+)[\"'][^>]*>|!\\[[^\\]]*]\\((https?://[^)\\s]+)[^)]*\\)",
+		"<img\\b[^>]*?\\bsrc\\s*=\\s*[\"']([^\"']+)[\"'][^>]*>|!\\[([^\\]]*)]\\((https?://[^)\\s]+)[^)]*\\)",
 		RegexOption.IGNORE_CASE
 	)
+
+	/** img 태그 안의 alt="설명". */
+	private val IMG_ALT = Regex("\\balt\\s*=\\s*[\"']([^\"']*)[\"']", RegexOption.IGNORE_CASE)
+
+	/**
+	 * GitHub에 사진을 끌어다 놓으면 alt에 파일 이름이 자동으로 들어간다(예: "image", "Screenshot_20261010",
+	 * "guide_bible_search"). 띄어쓰기 없이 영문 · 숫자 · _ . - 로만 된 글자면 파일 이름으로 본다.
+	 */
+	private val FILE_NAME_LIKE = Regex("^[A-Za-z0-9_.\\-]+$")
+
+	/**
+	 * 사진 아래 설명:
+	 * - alt가 한글 등 사람이 쓴 설명이면 그대로.
+	 * - alt가 사용 가이드 사진 파일 이름(guide_...)이면 가이드에 적어둔 그 사진의 설명을 자동으로 붙인다.
+	 * - 그 밖의 파일 이름("image" 등)이나 빈 값이면 설명 없음.
+	 */
+	private fun captionOf(raw: String?): String? {
+		val text = raw?.trim().orEmpty()
+		if (text.isEmpty()) return null
+		if (!FILE_NAME_LIKE.matches(text)) return text
+		return UserGuideContent.captionFor(text.substringBeforeLast('.'))
+	}
 
 	private val MARKDOWN_LINK = Regex("\\[([^\\]]+)]\\((https?://[^)\\s]+)\\)")
 	private val HTML_COMMENT = Regex("<!--.*?-->", RegexOption.DOT_MATCHES_ALL)
@@ -63,9 +87,13 @@ object NoticeFormatter {
 		var last = 0
 		for (match in IMAGE.findAll(markdown)) {
 			addText(markdown.substring(last, match.range.first))
-			val url = match.groupValues[1].ifBlank { match.groupValues[2] }.trim()
+			val isImgTag = match.groupValues[1].isNotBlank()
+			val url = (if (isImgTag) match.groupValues[1] else match.groupValues[3]).trim()
+			val caption = captionOf(
+				if (isImgTag) IMG_ALT.find(match.value)?.groupValues?.get(1) else match.groupValues[2]
+			)
 			if (url.startsWith("http://") || url.startsWith("https://")) {
-				blocks.add(NoticeBlock.Image(url))
+				blocks.add(NoticeBlock.Image(url, caption))
 			}
 			last = match.range.last + 1
 		}
