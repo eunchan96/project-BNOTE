@@ -6,21 +6,28 @@ import android.os.Bundle
 import android.text.Spannable
 import android.text.SpannableString
 import android.text.style.UnderlineSpan
+import android.view.View
+import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.ItemTouchHelper
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.chan.bnote.R
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.DateUtils
 import com.chan.bnote.data.mypage.gratitude.GratitudeEntry
 import com.chan.bnote.data.mypage.gratitude.GratitudeNote
+import com.chan.bnote.ui.common.DragReorderHelper
 import com.chan.bnote.ui.common.KeyboardBar
 import com.chan.bnote.ui.common.UnsavedChangesDialog
 import kotlinx.coroutines.launch
@@ -57,6 +64,13 @@ class AddGratitudeActivity : AppCompatActivity() {
 
 	private lateinit var btnPickDate: TextView
 	private lateinit var containerEntries: LinearLayout
+	private lateinit var btnAddEntry: TextView
+	private lateinit var btnReorder: TextView
+	private lateinit var recyclerReorder: RecyclerView
+
+	// "순서 변경" 모드일 때만 값이 있다. 이 모드에서는 입력칸 대신 recyclerReorder 목록이 보인다.
+	private var reorderAdapter: GratitudeReorderAdapter? = null
+	private var reorderTouchHelper: ItemTouchHelper? = null
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
@@ -90,11 +104,18 @@ class AddGratitudeActivity : AppCompatActivity() {
 
 		btnPickDate = findViewById(R.id.btn_pick_date)
 		containerEntries = findViewById(R.id.container_gratitude_entries)
+		btnAddEntry = findViewById(R.id.btn_add_gratitude_entry)
+		btnReorder = findViewById(R.id.btn_reorder_gratitude)
+		recyclerReorder = findViewById(R.id.recycler_gratitude_reorder)
+		recyclerReorder.layoutManager = LinearLayoutManager(this)
 
 		updateDateText()
 		btnPickDate.setOnClickListener { showDatePicker() }
 
-		findViewById<TextView>(R.id.btn_add_gratitude_entry).setOnClickListener { addEntryRow("") }
+		btnAddEntry.setOnClickListener { addEntryRow("") }
+		btnReorder.setOnClickListener {
+			if (reorderAdapter == null) startReorder() else finishReorder()
+		}
 		findViewById<TextView>(R.id.btn_save_gratitude).setOnClickListener { save() }
 
 		onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
@@ -233,7 +254,71 @@ class AddGratitudeActivity : AppCompatActivity() {
 		return currentNonBlank != originalNonBlank || selectedDateMillis != originalDateMillis
 	}
 
+	/**
+	 * "순서 변경" 모드로 들어간다. 내용이 있는 항목만 ≡ 손잡이가 붙은 목록으로 보여주고(빈 칸은 순서가
+	 * 의미 없으니 빼고), 입력칸과 "+ 항목 추가"는 잠시 숨긴다. 버튼 글자는 "완료"로 바뀐다.
+	 */
+	private fun startReorder() {
+		val filled = currentEntryTexts().filter { it.isNotBlank() }
+		if (filled.size < 2) {
+			Toast.makeText(this, "순서를 바꾸려면 내용이 있는 항목이 2개 이상 있어야 해요", Toast.LENGTH_SHORT).show()
+			return
+		}
+
+		// 키보드가 떠 있으면 내려서 목록이 넓게 보이게 한다.
+		currentFocus?.let { focused ->
+			focused.clearFocus()
+			(getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager)
+				.hideSoftInputFromWindow(focused.windowToken, 0)
+		}
+
+		var touchHelper: ItemTouchHelper? = null
+		val adapter = GratitudeReorderAdapter(filled) { holder -> touchHelper?.startDrag(holder) }
+		val helper = ItemTouchHelper(
+			DragReorderHelper(onMove = { from, to -> adapter.moveItem(from, to) })
+		)
+		touchHelper = helper
+		helper.attachToRecyclerView(recyclerReorder)
+		recyclerReorder.adapter = adapter
+		reorderAdapter = adapter
+		reorderTouchHelper = helper
+
+		containerEntries.visibility = View.GONE
+		btnAddEntry.visibility = View.GONE
+		recyclerReorder.visibility = View.VISIBLE
+		btnReorder.text = "완료"
+	}
+
+	/**
+	 * "순서 변경" 모드를 끝내고, 바뀐 순서대로 입력칸을 다시 만든다. 원래 있던 빈 칸 개수만큼은 맨 아래에
+	 * 그대로 다시 붙여서, 이어서 쓰던 칸이 사라지지 않게 한다. 저장은 하지 않는다(저장하기를 눌러야 저장).
+	 */
+	private fun finishReorder() {
+		val adapter = reorderAdapter ?: return
+		val reordered = adapter.currentTexts()
+		val blankCount = currentEntryTexts().count { it.isBlank() }
+
+		reorderTouchHelper?.attachToRecyclerView(null)
+		recyclerReorder.adapter = null
+		reorderAdapter = null
+		reorderTouchHelper = null
+
+		containerEntries.removeAllViews()
+		reordered.forEach { addEntryRow(it) }
+		repeat(blankCount) { addEntryRow("") }
+
+		recyclerReorder.visibility = View.GONE
+		containerEntries.visibility = View.VISIBLE
+		btnAddEntry.visibility = View.VISIBLE
+		btnReorder.text = "순서 변경"
+	}
+
 	private fun handleBackPress() {
+		// 순서 변경 중이면 뒤로가기는 먼저 순서 변경 모드만 끝낸다(바뀐 순서는 그대로 유지).
+		if (reorderAdapter != null) {
+			finishReorder()
+			return
+		}
 		if (!hasUnsavedContent()) {
 			finish()
 			return
@@ -245,6 +330,8 @@ class AddGratitudeActivity : AppCompatActivity() {
 	}
 
 	private fun save() {
+		// 순서 변경 중에 바로 저장하기를 눌러도, 지금 보이는 순서 그대로 저장되게 먼저 반영한다.
+		if (reorderAdapter != null) finishReorder()
 		val texts = currentEntryTexts().filter { it.isNotBlank() }
 
 		lifecycleScope.launch {

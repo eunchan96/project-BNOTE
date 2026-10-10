@@ -349,7 +349,11 @@ class SermonDetailActivity : AppCompatActivity() {
 			btnApplication.setOnClickListener {
 				startActivity(
 					com.chan.bnote.ui.application.addapplication.AddApplicationActivity
-						.createIntentForSermon(this@SermonDetailActivity, sermon.id)
+						.createIntentForSermon(
+							this@SermonDetailActivity,
+							sermon.id,
+							sermon.sermonDate
+						)
 				)
 			}
 		}
