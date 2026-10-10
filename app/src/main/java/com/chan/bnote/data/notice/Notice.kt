@@ -1,5 +1,8 @@
 package com.chan.bnote.data.notice
 
+import androidx.annotation.ColorRes
+import com.chan.bnote.R
+
 /**
  * 앱 안 알림(공지사항) 하나. GitHub 저장소의 이슈 하나가 공지 하나다(이슈 번호 = [id]).
  *
@@ -29,13 +32,26 @@ data class Notice(
 	val readSignature: String get() = "$commentCount:$isResolved"
 }
 
-/** 알림 타입. [label]은 GitHub 이슈에 붙이는 라벨 이름(없으면 기본 "안내"). */
-enum class NoticeType(val label: String?, val displayName: String, val colorHex: String) {
-	UPDATE("업데이트", "업데이트", "#795548"),
-	BIBLE_TEXT_ERROR("본문 오류", "성경 본문 오류", "#C62828"),
-	BUG("기능 오류", "기능 오류", "#EF6C00"),
-	TIP("사용 팁", "사용 팁", "#2E7D32"),
-	GENERAL(null, "안내", "#546E7A");
+/**
+ * 알림 타입. [label]은 GitHub 이슈에 붙이는 라벨 이름(없으면 기본 "안내").
+ * 종류 표시는 파스텔 배경 + 같은 계열의 진한 글자(다크모드는 어두운 배경 + 밝은 글자, values-night에서).
+ */
+enum class NoticeType(
+	val label: String?,
+	val displayName: String,
+	@ColorRes val backgroundColorRes: Int,
+	@ColorRes val textColorRes: Int
+) {
+	UPDATE("업데이트", "업데이트", R.color.notice_type_update_bg, R.color.notice_type_update_text),
+	BIBLE_TEXT_ERROR(
+		"본문 오류",
+		"성경 본문 오류",
+		R.color.notice_type_bible_bg,
+		R.color.notice_type_bible_text
+	),
+	BUG("기능 오류", "기능 오류", R.color.notice_type_bug_bg, R.color.notice_type_bug_text),
+	TIP("사용 팁", "사용 팁", R.color.notice_type_tip_bg, R.color.notice_type_tip_text),
+	GENERAL(null, "안내", R.color.notice_type_general_bg, R.color.notice_type_general_text);
 
 	companion object {
 		fun fromLabels(labels: Collection<String>): NoticeType =

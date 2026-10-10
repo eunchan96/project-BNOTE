@@ -36,4 +36,14 @@
 
     <color name="notice_dot">#EF5350</color>
     <color name="notice_unread_background">#262220</color>
+    <color name="notice_type_update_bg">#3A302B</color>
+    <color name="notice_type_update_text">#D7C2B6</color>
+    <color name="notice_type_bible_bg">#3E2A2A</color>
+    <color name="notice_type_bible_text">#E8A9A6</color>
+    <color name="notice_type_bug_bg">#3D3226</color>
+    <color name="notice_type_bug_text">#E6BE92</color>
+    <color name="notice_type_tip_bg">#2A3A2C</color>
+    <color name="notice_type_tip_text">#A8CFA9</color>
+    <color name="notice_type_general_bg">#2C3338</color>
+    <color name="notice_type_general_text">#B3C1CB</color>
 </resources>

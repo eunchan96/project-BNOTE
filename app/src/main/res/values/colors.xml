@@ -55,4 +55,16 @@
     <!-- 알림(공지사항): 안 읽은 알림 빨간 점, 안 읽은 항목 배경 -->
     <color name="notice_dot">#E53935</color>
     <color name="notice_unread_background">#FBF6F2</color>
+
+    <!-- 알림 종류 표시(파스텔): 배경 / 글자 -->
+    <color name="notice_type_update_bg">#EFE7E1</color>
+    <color name="notice_type_update_text">#6D4C41</color>
+    <color name="notice_type_bible_bg">#F8E1E1</color>
+    <color name="notice_type_bible_text">#B5524F</color>
+    <color name="notice_type_bug_bg">#FBEBD9</color>
+    <color name="notice_type_bug_text">#B26A2E</color>
+    <color name="notice_type_tip_bg">#E3F0E3</color>
+    <color name="notice_type_tip_text">#4E7D52</color>
+    <color name="notice_type_general_bg">#E6EBEF</color>
+    <color name="notice_type_general_text">#57656F</color>
 </resources>
