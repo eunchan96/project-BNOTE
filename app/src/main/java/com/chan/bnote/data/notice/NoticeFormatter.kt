@@ -1,11 +1,27 @@
 package com.chan.bnote.data.notice
 
+import com.chan.bnote.data.notice.NoticeFormatter.toDisplayText
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 
+/** 알림 본문을 화면에 그릴 때의 한 덩어리 — 글 또는 사진. */
+sealed class NoticeBlock {
+	data class Text(val text: String) : NoticeBlock()
+	data class Image(val url: String) : NoticeBlock()
+}
+
 /** 알림 본문(GitHub 이슈 마크다운)과 날짜를 화면에 보이기 좋게 다듬는다. */
 object NoticeFormatter {
+
+	/**
+	 * 본문 속 사진. GitHub에 사진을 끌어다 놓으면 들어가는 `<img ... src="주소">` 태그와
+	 * 마크다운 `![설명](주소)` 둘 다 알아본다. 주소는 group 1(img 태그) 또는 group 2(마크다운).
+	 */
+	private val IMAGE = Regex(
+		"<img\\b[^>]*?\\bsrc\\s*=\\s*[\"']([^\"']+)[\"'][^>]*>|!\\[[^\\]]*]\\((https?://[^)\\s]+)[^)]*\\)",
+		RegexOption.IGNORE_CASE
+	)
 
 	private val MARKDOWN_LINK = Regex("\\[([^\\]]+)]\\((https?://[^)\\s]+)\\)")
 	private val HTML_COMMENT = Regex("<!--.*?-->", RegexOption.DOT_MATCHES_ALL)
@@ -33,9 +49,36 @@ object NoticeFormatter {
 		return lines.joinToString("\n").replace(Regex("\n{3,}"), "\n\n").trim()
 	}
 
-	/** 목록 미리보기용 — 줄바꿈 없이 한 덩어리로. */
-	fun preview(markdown: String): String =
-		toDisplayText(markdown).lines().filter { it.isNotBlank() }.joinToString(" ")
+	/**
+	 * 상세 화면용 — 본문을 사진 자리에서 나눠 글과 사진 순서대로 돌려준다. 글 조각은 [toDisplayText]로
+	 * 다듬고, 다듬은 뒤 비어 있는 조각(사진 사이의 빈 줄 등)은 뺀다.
+	 */
+	fun toBlocks(markdown: String): List<NoticeBlock> {
+		val blocks = mutableListOf<NoticeBlock>()
+		fun addText(raw: String) {
+			val text = toDisplayText(raw)
+			if (text.isNotBlank()) blocks.add(NoticeBlock.Text(text))
+		}
+
+		var last = 0
+		for (match in IMAGE.findAll(markdown)) {
+			addText(markdown.substring(last, match.range.first))
+			val url = match.groupValues[1].ifBlank { match.groupValues[2] }.trim()
+			if (url.startsWith("http://") || url.startsWith("https://")) {
+				blocks.add(NoticeBlock.Image(url))
+			}
+			last = match.range.last + 1
+		}
+		addText(markdown.substring(last))
+		return blocks
+	}
+
+	/** 목록 미리보기용 — 사진은 빼고 줄바꿈 없이 한 덩어리로. 사진만 있는 공지면 "📷 사진". */
+	fun preview(markdown: String): String {
+		val text = toDisplayText(markdown.replace(IMAGE, "\n"))
+			.lines().filter { it.isNotBlank() }.joinToString(" ")
+		return if (text.isBlank() && IMAGE.containsMatchIn(markdown)) "📷 사진" else text
+	}
 
 	/** 목록의 날짜 — 오늘이면 "오후 3:20", 올해면 "10월 9일", 그 전이면 "2025.12.3". */
 	fun listDate(millis: Long, now: Long = System.currentTimeMillis()): String {

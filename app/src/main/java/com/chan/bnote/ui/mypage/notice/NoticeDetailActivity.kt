@@ -13,20 +13,25 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
+import coil.load
+import coil.transform.RoundedCornersTransformation
 import com.chan.bnote.R
 import com.chan.bnote.data.notice.Notice
+import com.chan.bnote.data.notice.NoticeBlock
 import com.chan.bnote.data.notice.NoticeComment
 import com.chan.bnote.data.notice.NoticeFormatter
 import com.chan.bnote.data.notice.NoticeRepository
 import com.chan.bnote.data.notice.NoticeType
 import com.chan.bnote.ui.common.LinkifyHelper
 import com.chan.bnote.ui.mypage.settings.UpdateDialog
+import com.chan.bnote.ui.sermon.addsermon.PhotoViewerActivity
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 
 /**
  * 알림(공지사항) 상세. 열면 읽음 처리된다.
  * - 본문의 링크는 눌러서 열 수 있다.
+ * - 본문에 사진(<img> 태그나 ![](주소))이 있으면 그 자리에 사진으로 보여주고, 누르면 크게 본다.
  * - 업데이트 알림이면 아래에 "새 버전 받기" 버튼(설치 파일이 있는 구글 드라이브로 연결).
  * - 개발자가 이 공지(GitHub 이슈)에 댓글을 달았으면 "추가 안내"로 아래에 보여준다(인터넷이 필요).
  * - 상단 삭제 버튼: 이 기기에서만 지운다.
@@ -79,9 +84,12 @@ class NoticeDetailActivity : AppCompatActivity() {
 		}
 		findViewById<TextView>(R.id.text_notice_date).text = dateText
 
-		val body = findViewById<TextView>(R.id.text_notice_body)
-		body.text = NoticeFormatter.toDisplayText(notice.body)
-		LinkifyHelper.applySmartLinks(body)
+		renderBlocks(
+			findViewById(R.id.container_notice_body),
+			notice.body,
+			textSizeSp = 15f,
+			lineSpacing = 1.4f
+		)
 
 		val download = findViewById<View>(R.id.btn_notice_download)
 		download.visibility = if (notice.type == NoticeType.UPDATE) View.VISIBLE else View.GONE
@@ -131,18 +139,91 @@ class NoticeDetailActivity : AppCompatActivity() {
 			textSize = 12f
 			setTextColor(ContextCompat.getColor(this@NoticeDetailActivity, R.color.text_hint))
 		})
-		val body = TextView(this).apply {
-			text = NoticeFormatter.toDisplayText(comment.body)
-			textSize = 14f
-			setLineSpacing(0f, 1.35f)
-			setTextColor(ContextCompat.getColor(this@NoticeDetailActivity, R.color.text_primary))
+		val body = LinearLayout(this).apply {
+			orientation = LinearLayout.VERTICAL
 			layoutParams = LinearLayout.LayoutParams(
 				LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
 			).apply { topMargin = (4 * density).toInt() }
 		}
-		LinkifyHelper.applySmartLinks(body)
+		renderBlocks(body, comment.body, textSizeSp = 14f, lineSpacing = 1.35f)
 		box.addView(body)
 		return box
+	}
+
+	/**
+	 * [markdown]을 글 · 사진 순서대로 [container]에 채운다. 사진을 누르면 이 덩어리(본문 또는 댓글 하나)의
+	 * 사진들을 전체화면으로 넘겨볼 수 있다. 사진을 못 불러오면(인터넷 끊김 등) 그 자리는 숨긴다.
+	 */
+	private fun renderBlocks(
+		container: LinearLayout,
+		markdown: String,
+		textSizeSp: Float,
+		lineSpacing: Float
+	) {
+		container.removeAllViews()
+		val density = resources.displayMetrics.density
+		val blocks = NoticeFormatter.toBlocks(markdown)
+		val imageUrls = blocks.filterIsInstance<NoticeBlock.Image>().map { it.url }
+
+		blocks.forEachIndexed { index, block ->
+			val topMargin = if (index == 0) 0 else (10 * density).toInt()
+			when (block) {
+				is NoticeBlock.Text -> {
+					val textView = TextView(this).apply {
+						text = block.text
+						textSize = textSizeSp
+						setLineSpacing(0f, lineSpacing)
+						setTextColor(
+							ContextCompat.getColor(this@NoticeDetailActivity, R.color.text_primary)
+						)
+						layoutParams = LinearLayout.LayoutParams(
+							LinearLayout.LayoutParams.MATCH_PARENT,
+							LinearLayout.LayoutParams.WRAP_CONTENT
+						).apply { this.topMargin = topMargin }
+					}
+					LinkifyHelper.applySmartLinks(textView)
+					container.addView(textView)
+				}
+
+				is NoticeBlock.Image -> container.addView(
+					buildImageView(block.url, topMargin) {
+						PhotoViewerActivity.start(this, imageUrls, imageUrls.indexOf(block.url))
+					}
+				)
+			}
+		}
+	}
+
+	/** 본문 속 사진 한 장. 불러오는 동안은 회색 자리만 잡아두고, 다 불러오면 원래 비율대로 보여준다. */
+	private fun buildImageView(url: String, topMargin: Int, onClick: () -> Unit): ImageView {
+		val density = resources.displayMetrics.density
+		val placeholderHeight = (180 * density).toInt()
+		return ImageView(this).apply {
+			layoutParams = LinearLayout.LayoutParams(
+				LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
+			).apply { this.topMargin = topMargin }
+			adjustViewBounds = true
+			scaleType = ImageView.ScaleType.FIT_CENTER
+			// 세로로 아주 긴 캡처도 화면을 다 덮지 않도록 높이를 제한한다(전체는 눌러서 크게 보기).
+			maxHeight = (520 * density).toInt()
+			minimumHeight = placeholderHeight
+			setBackgroundColor(
+				ContextCompat.getColor(this@NoticeDetailActivity, R.color.divider_light)
+			)
+			contentDescription = "알림 사진"
+			setOnClickListener { onClick() }
+			load(url) {
+				crossfade(true)
+				transformations(RoundedCornersTransformation(8 * density))
+				listener(
+					onSuccess = { _, _ ->
+						minimumHeight = 0
+						background = null
+					},
+					onError = { _, _ -> visibility = View.GONE }
+				)
+			}
+		}
 	}
 
 	private fun confirmDelete(notice: Notice) {
