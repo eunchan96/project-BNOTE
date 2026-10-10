@@ -33,4 +33,7 @@
     <!-- 절 선택(드래그) 배경. 밝은 회색이면 다크모드의 밝은 글자가 묻혀서 어두운 회색으로 -->
     <color name="verse_selection_background">#5A5A5A</color>
     <color name="field_underline">#AAAAAA</color>
+
+    <color name="notice_dot">#EF5350</color>
+    <color name="notice_unread_background">#262220</color>
 </resources>

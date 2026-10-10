@@ -116,7 +116,8 @@ object UpdateChecker {
 		prefs(context).edit().putString(KEY_NOTIFIED_TAG, release.tag).apply()
 	}
 
-	private fun compareVersions(a: String, b: String): Int {
+	/** "1.9" < "1.10"처럼 숫자 단위로 버전을 비교한다(a가 크면 양수). 알림의 버전 조건에서도 쓴다. */
+	fun compareVersions(a: String, b: String): Int {
 		val pa = a.split('.').map { it.trim().toIntOrNull() ?: 0 }
 		val pb = b.split('.').map { it.trim().toIntOrNull() ?: 0 }
 		for (i in 0 until maxOf(pa.size, pb.size)) {

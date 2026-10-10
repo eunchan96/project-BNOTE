@@ -23,6 +23,7 @@ import com.chan.bnote.ui.BibleNavigationHost
 import com.chan.bnote.ui.TopBarActionHandler
 import com.chan.bnote.ui.TopBarConfig
 import com.chan.bnote.ui.mypage.memorization.MemorizationVerseListActivity
+import com.chan.bnote.ui.mypage.notice.NoticeListActivity
 import com.chan.bnote.ui.mypage.prayer.PrayerRequestActivity
 import com.chan.bnote.ui.mypage.profile.ProfileActivity
 import com.chan.bnote.ui.mypage.profile.loadProfilePhoto
@@ -318,10 +319,15 @@ class MyPageFragment : Fragment(), TopBarActionHandler {
 	override fun getTopBarConfig() = TopBarConfig(
 		title = "마이페이지",
 		showMenu = true,
-		menuIconRes = R.drawable.ic_settings
+		menuIconRes = R.drawable.ic_settings,
+		showNotice = true
 	)
 
 	override fun onMenuClicked() {
 		startActivity(Intent(requireContext(), SettingsActivity::class.java))
+	}
+
+	override fun onNoticeClicked() {
+		startActivity(Intent(requireContext(), NoticeListActivity::class.java))
 	}
 }

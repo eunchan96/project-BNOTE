@@ -51,4 +51,8 @@
 
     <!-- bg_field_underline 에서 사용되는 색상. 다크모드에서 흰색으로 전환 -->
     <color name="field_underline">#757575</color>
+
+    <!-- 알림(공지사항): 안 읽은 알림 빨간 점, 안 읽은 항목 배경 -->
+    <color name="notice_dot">#E53935</color>
+    <color name="notice_unread_background">#FBF6F2</color>
 </resources>

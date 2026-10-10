@@ -101,4 +101,5 @@ dependencies {
 	implementation(libs.coil)
 	implementation(libs.androidx.work.runtime.ktx)
 	implementation(libs.photoview)
+	implementation(libs.androidx.swiperefreshlayout)
 }

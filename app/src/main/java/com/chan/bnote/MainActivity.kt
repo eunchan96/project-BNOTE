@@ -58,6 +58,10 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 	private lateinit var btnSearch: ImageView
 	private lateinit var btnBookmarks: ImageView
 	private lateinit var btnMenu: ImageView
+	private lateinit var btnNoticeContainer: android.view.View
+	private lateinit var btnNotice: ImageView
+	private lateinit var dotNoticeTopBar: android.view.View
+	private lateinit var dotNoticeNavMyPage: android.view.View
 	private lateinit var btnPrevChapter: ImageView
 	private lateinit var btnNextChapter: ImageView
 
@@ -153,6 +157,29 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 		// 백업 확인 창이 이번에 떴으면 새 버전 안내는 다음 기회로 미룬다(창 두 개가 겹치지 않게).
 		val backupPromptShown = checkAutoBackupPrompt()
 		if (!backupPromptShown) checkForUpdate()
+
+		// 알림 화면에서 읽고 돌아왔을 수도 있으니 빨간 점을 다시 맞추고, 30분이 지났으면 새 알림도 확인한다.
+		refreshNoticeDots()
+		refreshNoticesIfDue()
+	}
+
+	// --- 알림(공지사항) ---
+
+	/** 안 읽은 알림이 있으면 마이페이지 상단바 알림 아이콘과 하단바 마이페이지 아이콘에 빨간 점을 띄운다. */
+	private fun refreshNoticeDots() {
+		if (!::dotNoticeTopBar.isInitialized || !::dotNoticeNavMyPage.isInitialized) return
+		val hasUnread = com.chan.bnote.data.notice.NoticeRepository.hasUnread(this)
+		dotNoticeTopBar.visibility = visible(hasUnread)
+		dotNoticeNavMyPage.visibility = visible(hasUnread)
+	}
+
+	/** 앱을 열 때 GitHub에서 새 알림을 가져온다(30분에 한 번까지). 인터넷이 안 되면 조용히 넘어간다. */
+	private fun refreshNoticesIfDue() {
+		val repository = com.chan.bnote.data.notice.NoticeRepository
+		if (!repository.shouldAutoFetch(this)) return
+		lifecycleScope.launch {
+			if (repository.refresh(this@MainActivity)) refreshNoticeDots()
+		}
 	}
 
 	// --- 새 버전 확인 ---
@@ -313,6 +340,9 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 		btnSearch = findViewById(R.id.btn_search)
 		btnBookmarks = findViewById(R.id.btn_bookmarks)
 		btnMenu = findViewById(R.id.btn_menu)
+		btnNoticeContainer = findViewById(R.id.btn_notice_container)
+		btnNotice = findViewById(R.id.btn_notice)
+		dotNoticeTopBar = findViewById(R.id.dot_notice_top_bar)
 		btnAutoScroll = findViewById(R.id.btn_auto_scroll)
 		iconReadingPlanCheck = findViewById(R.id.icon_reading_plan_check)
 		iconSermonIndicator = findViewById(R.id.icon_sermon_indicator)
@@ -334,6 +364,7 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 		navSermon = findViewById(R.id.nav_sermon)
 		navBible = findViewById(R.id.nav_bible)
 		navMyPage = findViewById(R.id.nav_mypage)
+		dotNoticeNavMyPage = findViewById(R.id.dot_notice_nav_mypage)
 	}
 
 	private fun setupTopBarActions() {
@@ -342,6 +373,7 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 		btnSearch.setOnClickListener { currentHandler()?.onSearchClicked() }
 		btnBookmarks.setOnClickListener { currentHandler()?.onBookmarksClicked() }
 		btnMenu.setOnClickListener { currentHandler()?.onMenuClicked() }
+		btnNotice.setOnClickListener { currentHandler()?.onNoticeClicked() }
 		btnAutoScroll.setOnClickListener { currentHandler()?.onAutoScrollButtonClicked() }
 		iconReadingPlanCheck.setOnClickListener { currentHandler()?.onReadingPlanCheckClicked() }
 		iconSermonIndicator.setOnClickListener { currentHandler()?.onSermonIconClicked() }
@@ -434,6 +466,9 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 		btnAutoScroll.setImageResource(if (config.isAutoScrolling) R.drawable.ic_pause else R.drawable.ic_play)
 
 		iconSermonIndicator.visibility = visible(config.showSermonIcon)
+
+		btnNoticeContainer.visibility = visible(config.showNotice)
+		refreshNoticeDots()
 
 		adjustTopBarSpacer()
 	}

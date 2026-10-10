@@ -41,6 +41,8 @@ class UpdateCheckWorker(
 
 	override suspend fun doWork(): Result {
 		val context = applicationContext
+		// 알림(공지사항)도 하루 한 번 같이 받아둔다 — 알림을 보내지는 않고, 앱을 열면 마이페이지에 빨간 점이 바로 뜨게만 한다.
+		com.chan.bnote.data.notice.NoticeRepository.refresh(context)
 		// 앱을 열 때의 자동 확인(하루 한 번)과는 따로 센다 — 여기서 기록을 남기면 앱을 열었을 때 안내 창이 안 뜰 수 있다.
 		val release = UpdateChecker.fetchLatest(context, recordCheck = false)
 			?: return Result.success()
