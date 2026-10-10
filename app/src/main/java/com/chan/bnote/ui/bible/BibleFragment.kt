@@ -1235,6 +1235,18 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 			selectedVerses.add(verseNum)
 		}
 		resolveCurrentVerseAdapter()?.updateSelection(selectedVerses.toSet())
+
+		// 절을 골라 "하이라이트"를 눌러 색 툴바가 떠 있는 상태에서도 절을 더 고르거나 뺄 수 있다.
+		if (highlightColorToolbar.visibility == View.VISIBLE && pendingHighlightVerses != null) {
+			if (selectedVerses.isEmpty()) {
+				clearSelection()
+			} else {
+				pendingHighlightVerses = selectedVerses.toList()
+				view?.findViewById<TextView>(R.id.btn_remove_highlight)?.visibility =
+					if (hasExistingHighlightForPending()) View.VISIBLE else View.GONE
+			}
+			return
+		}
 		updateToolbarVisibility()
 	}
 
