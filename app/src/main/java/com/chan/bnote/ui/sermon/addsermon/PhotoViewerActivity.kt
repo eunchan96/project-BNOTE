@@ -12,7 +12,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.updateLayoutParams
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
 import coil.load
@@ -80,20 +79,13 @@ class PhotoViewerActivity : AppCompatActivity() {
 		val counter = findViewById<TextView>(R.id.text_photo_viewer_counter)
 		val closeButton = findViewById<ImageView>(R.id.btn_close_photo_viewer)
 
-		// enableEdgeToEdge()로 사진이 상태바 뒤까지 꽉 차게 보이는 건 그대로 두되(사진 뷰어라
-		// 오히려 몰입감이 좋다), 그 위에 떠 있는 카운터·닫기 버튼은 상태바(와이파이·시계 아이콘
-		// 줄)와 겹치지 않도록 상태바 높이만큼 위쪽 여백을 더해준다. 두 뷰 모두 xml에 이미 기본
-		// 여백(카운터 17dp, 닫기 버튼 12dp)이 있으므로, 거기에 상태바 높이를 더하는 방식으로 처리한다.
-		val counterBaseMarginTop = (counter.layoutParams as ViewGroup.MarginLayoutParams).topMargin
-		val closeBaseMargin = (closeButton.layoutParams as ViewGroup.MarginLayoutParams).topMargin
-		ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.photo_viewer_root)) { _, insets ->
+		// 가이드 사진 뷰어(UserGuideImageViewerActivity)와 같이 사진도 상태바 아래로 내려서, 상태바
+		// 자리는 항상 배경(검정)만 보이게 한다. 예전엔 사진이 상태바 뒤까지 깔려서 공지 사진처럼 위쪽에
+		// 글자가 있는 사진은 시계 · 와이파이 아이콘과 겹쳐 보였다. 화면 전체(루트)에 위쪽 패딩을 주면
+		// 그 안의 사진 · 카운터 · 닫기 버튼이 전부 같이 내려온다.
+		ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.photo_viewer_root)) { v, insets ->
 			val statusBarTop = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top
-			counter.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-				topMargin = counterBaseMarginTop + statusBarTop
-			}
-			closeButton.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-				topMargin = closeBaseMargin + statusBarTop
-			}
+			v.setPadding(v.paddingLeft, statusBarTop, v.paddingRight, v.paddingBottom)
 			insets
 		}
 
