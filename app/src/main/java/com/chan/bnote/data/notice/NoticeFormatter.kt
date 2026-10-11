@@ -1,14 +1,19 @@
 package com.chan.bnote.data.notice
 
-import com.chan.bnote.data.notice.NoticeFormatter.toDisplayText
+import android.graphics.Typeface
+import android.text.Spannable
+import android.text.SpannableStringBuilder
+import android.text.style.StyleSpan
+import com.chan.bnote.data.notice.NoticeFormatter.toDisplaySpanned
 import com.chan.bnote.ui.mypage.guide.UserGuideContent
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 
-/** 알림 본문을 화면에 그릴 때의 한 덩어리 — 글 또는 사진. [Image.caption]은 사진 아래 작은 설명(없으면 null). */
+/** 알림 본문을 화면에 그릴 때의 한 덩어리 — 글 또는 사진. [Text.text]에는 굵게(소제목 · **굵게**)가 입혀져 있다.
+ * [Image.caption]은 사진 아래 작은 설명(없으면 null). */
 sealed class NoticeBlock {
-	data class Text(val text: String) : NoticeBlock()
+	data class Text(val text: CharSequence) : NoticeBlock()
 	data class Image(val url: String, val caption: String?) : NoticeBlock()
 }
 
@@ -49,6 +54,12 @@ object NoticeFormatter {
 
 	private val MARKDOWN_LINK = Regex("\\[([^\\]]+)]\\((https?://[^)\\s]+)\\)")
 	private val HTML_COMMENT = Regex("<!--.*?-->", RegexOption.DOT_MATCHES_ALL)
+	private val HEADING = Regex("^\\s*#{1,6}\\s+")
+	private val LIST_BULLET = Regex("^(\\s*)[-*]\\s+")
+	private val BOLD = Regex("\\*\\*(.+?)\\*\\*|__(.+?)__")
+
+	/** 업데이트 공지 본문의 "## 업데이트 방법" 소제목 줄. */
+	private val UPDATE_GUIDE_HEADING = Regex("^\\s*#{1,6}\\s+(\\*\\*)?\\s*업데이트 방법")
 
 	/**
 	 * 이슈 템플릿에 들어 있는 작성 안내(<!-- ... -->, 여러 줄 가능)를 지운다. GitHub 화면에서도 안 보이는
@@ -57,30 +68,78 @@ object NoticeFormatter {
 	fun stripHtmlComments(text: String): String =
 		text.replace("\r\n", "\n").replace(HTML_COMMENT, "")
 
+	/** 마크다운을 굵게 표시 없이 일반 텍스트로(목록 미리보기용). 규칙은 [toDisplaySpanned]와 같다. */
+	fun toDisplayText(markdown: String): String = toDisplaySpanned(markdown).toString()
+
 	/**
-	 * 마크다운을 읽기 좋은 일반 텍스트로: "## 제목" → "제목", "- 항목" → "・ 항목", "**굵게**" → "굵게",
+	 * 마크다운을 읽기 좋은 글로: "## 제목" → 굵은 "제목", "**굵게**" → 굵은 "굵게", "- 항목" → "・ 항목",
 	 * "[글자](주소)" → "글자 (주소)"(주소는 화면에서 링크로 눌린다), 빈 줄이 여러 개면 한 줄로.
 	 */
-	fun toDisplayText(markdown: String): String {
-		val lines = markdown.replace("\r\n", "\n").lines().map { raw ->
+	fun toDisplaySpanned(markdown: String): CharSequence {
+		val out = SpannableStringBuilder()
+		var pendingBlank = false
+		for (raw in markdown.replace("\r\n", "\n").lines()) {
 			var line = raw.trimEnd()
-			line = line.replace(Regex("^\\s*#{1,6}\\s+"), "")
-			line = line.replace(Regex("^(\\s*)[-*]\\s+"), "$1・ ")
-			line = line.replace("**", "").replace("__", "")
+			if (line.isBlank()) {
+				// 맨 앞의 빈 줄은 버리고, 글 사이의 빈 줄은 몇 개든 한 줄로 합친다.
+				if (out.isNotEmpty()) pendingBlank = true
+				continue
+			}
+			val isHeading = HEADING.containsMatchIn(line)
+			line = line.replace(HEADING, "")
+			line = line.replace(LIST_BULLET, "$1・ ")
 			line = MARKDOWN_LINK.replace(line) { "${it.groupValues[1]} (${it.groupValues[2]})" }
-			line
+
+			if (out.isNotEmpty()) out.append(if (pendingBlank) "\n\n" else "\n")
+			pendingBlank = false
+
+			val lineStart = out.length
+			var last = 0
+			for (match in BOLD.findAll(line)) {
+				out.append(withoutBoldMarkers(line.substring(last, match.range.first)))
+				val boldStart = out.length
+				out.append(match.groupValues[1].ifEmpty { match.groupValues[2] })
+				out.setBold(boldStart, out.length)
+				last = match.range.last + 1
+			}
+			out.append(withoutBoldMarkers(line.substring(last)))
+			// 소제목은 한 줄 전체를 굵게(크기는 본문과 같게).
+			if (isHeading) out.setBold(lineStart, out.length)
 		}
-		return lines.joinToString("\n").replace(Regex("\n{3,}"), "\n\n").trim()
+		return out
+	}
+
+	/** 짝이 안 맞아 남은 ** · __ 는 그냥 지운다. */
+	private fun withoutBoldMarkers(text: String) = text.replace("**", "").replace("__", "")
+
+	private fun SpannableStringBuilder.setBold(start: Int, end: Int) {
+		if (end > start) {
+			setSpan(StyleSpan(Typeface.BOLD), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+		}
 	}
 
 	/**
-	 * 상세 화면용 — 본문을 사진 자리에서 나눠 글과 사진 순서대로 돌려준다. 글 조각은 [toDisplayText]로
+	 * 업데이트 공지 본문에서 "## 업데이트 방법" 소제목부터 다음 소제목 전까지(없으면 끝까지)를 뺀다.
+	 * 1.14부터는 이 안내를 앱이 "새 버전 받기" 버튼 위 박스로 항상 보여주므로 본문에서는 겹치지 않게 지운다.
+	 * (1.13 앱은 이 코드가 없어서 본문의 안내를 그대로 보여준다.)
+	 */
+	fun removeUpdateGuide(markdown: String): String {
+		val lines = markdown.replace("\r\n", "\n").lines()
+		val start = lines.indexOfFirst { UPDATE_GUIDE_HEADING.containsMatchIn(it) }
+		if (start < 0) return markdown
+		val end = (start + 1 until lines.size).firstOrNull { HEADING.containsMatchIn(lines[it]) }
+			?: lines.size
+		return (lines.subList(0, start) + lines.subList(end, lines.size)).joinToString("\n")
+	}
+
+	/**
+	 * 상세 화면용 — 본문을 사진 자리에서 나눠 글과 사진 순서대로 돌려준다. 글 조각은 [toDisplaySpanned]로
 	 * 다듬고, 다듬은 뒤 비어 있는 조각(사진 사이의 빈 줄 등)은 뺀다.
 	 */
 	fun toBlocks(markdown: String): List<NoticeBlock> {
 		val blocks = mutableListOf<NoticeBlock>()
 		fun addText(raw: String) {
-			val text = toDisplayText(raw)
+			val text = toDisplaySpanned(raw)
 			if (text.isNotBlank()) blocks.add(NoticeBlock.Text(text))
 		}
 

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 알림 상세의 안내 박스(노션 callout처럼 옅은 배경으로 본문과 구분). 업데이트 공지의 "업데이트 방법"에 쓴다. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/notice_type_update_bg" />
+    <corners android:radius="10dp" />
+</shape>
