@@ -3,11 +3,11 @@ package com.chan.bnote.ui.mypage.memorization
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
@@ -74,24 +74,10 @@ class MemorizationVerseDetailActivity : AppCompatActivity() {
 			findViewById<TextView>(R.id.text_verse_ref).text = item.toDisplayLabel()
 			findViewById<TextView>(R.id.text_verse_content).text = item.verseText
 
+			// 메모가 없으면 빈 메모 상자 대신 상자 자체를 숨긴다.
 			val noteView = findViewById<TextView>(R.id.text_verse_note)
-			if (item.note.isNotBlank()) {
-				noteView.text = item.note
-				noteView.setTextColor(
-					ContextCompat.getColor(
-						this@MemorizationVerseDetailActivity,
-						R.color.text_primary
-					)
-				)
-			} else {
-				noteView.text = "메모가 없어요"
-				noteView.setTextColor(
-					ContextCompat.getColor(
-						this@MemorizationVerseDetailActivity,
-						R.color.text_hint
-					)
-				)
-			}
+			noteView.text = item.note
+			noteView.visibility = if (item.note.isNotBlank()) View.VISIBLE else View.GONE
 		}
 	}
 
