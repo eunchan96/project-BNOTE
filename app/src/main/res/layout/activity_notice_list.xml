@@ -7,7 +7,7 @@
     android:orientation="vertical"
     android:background="@color/surface_background">
 
-    <!-- 상단바: 평소엔 [뒤로] 알림 [모두 읽음][편집], 선택 모드에선 [X] n개 선택 [전체 선택] -->
+    <!-- 상단바: 평소엔 [뒤로] 알림 [모두 읽음][관리], 선택 모드에선 [뒤로] n개 선택 [전체 선택][완료]. -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -56,17 +56,6 @@
             android:focusable="true" />
 
         <TextView
-            android:id="@+id/btn_notice_edit"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:padding="12dp"
-            android:text="편집"
-            android:textSize="14sp"
-            android:textColor="@color/white"
-            android:clickable="true"
-            android:focusable="true" />
-
-        <TextView
             android:id="@+id/btn_notice_select_all"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -77,6 +66,17 @@
             android:clickable="true"
             android:focusable="true"
             android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/btn_notice_manage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="12dp"
+            android:text="관리"
+            android:textSize="14sp"
+            android:textColor="@color/white"
+            android:clickable="true"
+            android:focusable="true" />
     </LinearLayout>
 
     <!-- 종류별 필터 칩(전체 / 안 읽음 / 업데이트 / 성경 본문 오류 / ...) — 코드에서 채운다 -->
