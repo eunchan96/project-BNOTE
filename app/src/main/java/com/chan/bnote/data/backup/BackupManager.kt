@@ -524,6 +524,12 @@ object BackupManager {
 					)
 				)
 		}
+		// 백업의 복사 형식을 그대로 가져왔으니, 나중에 선택 창을 열 때 기본 형식이 또 심겨
+		// 두 번씩 생기지 않도록 표시한다(새로 설치한 기기에서 불러오기를 먼저 했을 때 생기던 문제).
+		com.chan.bnote.data.mypage.CopyFormatDefaults.onRestored(
+			context,
+			backupHadPresets = root.has("copyFormatPresets")
+		)
 	}
 
 	private fun Int?.orZero() = this ?: 0
