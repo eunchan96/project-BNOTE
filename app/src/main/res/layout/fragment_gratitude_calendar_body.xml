@@ -72,75 +72,88 @@
                 android:focusable="true" />
         </com.chan.bnote.ui.common.ResponsiveHeaderLayout>
 
-        <LinearLayout
+        <!-- 요일 줄 + 달력: 좌우로 밀면 이전 · 다음 달 (GratitudeActivity) -->
+        <com.chan.bnote.ui.common.HorizontalSwipeInterceptLayout
+            android:id="@+id/swipe_intercept_calendar"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:paddingBottom="4dp">
+            android:layout_height="wrap_content">
 
-            <TextView
-                android:layout_width="0dp"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:gravity="center"
-                android:text="일"
-                android:textColor="#E53935"
-                android:textSize="12sp" />
+                android:orientation="vertical">
 
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:gravity="center"
-                android:text="월"
-                android:textSize="12sp" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:paddingBottom="4dp">
 
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:gravity="center"
-                android:text="화"
-                android:textSize="12sp" />
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:text="일"
+                        android:textColor="#E53935"
+                        android:textSize="12sp" />
 
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:gravity="center"
-                android:text="수"
-                android:textSize="12sp" />
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:text="월"
+                        android:textSize="12sp" />
 
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:gravity="center"
-                android:text="목"
-                android:textSize="12sp" />
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:text="화"
+                        android:textSize="12sp" />
 
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:gravity="center"
-                android:text="금"
-                android:textSize="12sp" />
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:text="수"
+                        android:textSize="12sp" />
 
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:gravity="center"
-                android:text="토"
-                android:textColor="#1E88E5"
-                android:textSize="12sp" />
-        </LinearLayout>
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:text="목"
+                        android:textSize="12sp" />
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recycler_calendar_grid"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:text="금"
+                        android:textSize="12sp" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:text="토"
+                        android:textColor="#1E88E5"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/recycler_calendar_grid"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+        </com.chan.bnote.ui.common.HorizontalSwipeInterceptLayout>
 
         <View
             android:layout_width="match_parent"
@@ -148,21 +161,35 @@
             android:layout_marginTop="8dp"
             android:background="@color/divider_light" />
 
-        <TextView
-            android:id="@+id/text_empty_gratitude_calendar"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:padding="24dp"
-            android:gravity="center"
-            android:text="이 날짜에 작성한 감사 노트가 없어요"
-            android:textColor="@color/text_hint" />
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recycler_gratitude_by_date"
+        <!-- 아래 목록: 좌우로 밀면 이전 · 다음 날짜 (GratitudeActivity) -->
+        <com.chan.bnote.ui.common.HorizontalSwipeInterceptLayout
+            android:id="@+id/swipe_intercept_list"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="1"
-            android:visibility="gone" />
+            android:layout_weight="1">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/text_empty_gratitude_calendar"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="24dp"
+                    android:gravity="center"
+                    android:text="이 날짜에 작성한 감사 노트가 없어요"
+                    android:textColor="@color/text_hint" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/recycler_gratitude_by_date"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:visibility="gone" />
+            </LinearLayout>
+        </com.chan.bnote.ui.common.HorizontalSwipeInterceptLayout>
     </LinearLayout>
 
     <TextView

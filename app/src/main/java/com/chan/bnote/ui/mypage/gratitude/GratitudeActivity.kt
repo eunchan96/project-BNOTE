@@ -18,6 +18,7 @@ import com.chan.bnote.R
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.DateUtils
 import com.chan.bnote.data.mypage.gratitude.GratitudeNote
+import com.chan.bnote.ui.common.HorizontalSwipeInterceptLayout
 import com.chan.bnote.ui.sermon.bycalendar.CalendarDayCell
 import com.chan.bnote.ui.sermon.bycalendar.CalendarGridAdapter
 import com.chan.bnote.ui.sermon.bycalendar.MonthYearPickerBottomSheet
@@ -108,38 +109,47 @@ class GratitudeActivity : AppCompatActivity() {
 			picker.show(supportFragmentManager, "month_year_picker")
 		}
 
-		findViewById<TextView>(R.id.btn_month_prev).setOnClickListener {
-			currentMonth0 -= 1
-			if (currentMonth0 < 0) {
-				currentMonth0 = 11; currentYear -= 1
-			}
-			loadCalendarGrid()
-		}
+		findViewById<TextView>(R.id.btn_month_prev).setOnClickListener { moveMonth(-1) }
 		findViewById<TextView>(R.id.btn_calendar_today).setOnClickListener {
-			val cal = Calendar.getInstance()
-			currentYear = cal.get(Calendar.YEAR)
-			currentMonth0 = cal.get(Calendar.MONTH)
-			selectedDate = DateUtils.normalizeToDayStart(cal.timeInMillis)
-			loadCalendarGrid()
-			loadNotesForSelectedDate()
+			// (기존 그대로)
 		}
-		findViewById<TextView>(R.id.btn_month_next).setOnClickListener {
-			currentMonth0 += 1
-			if (currentMonth0 > 11) {
-				currentMonth0 = 0; currentYear += 1
-			}
-			loadCalendarGrid()
+		findViewById<TextView>(R.id.btn_month_next).setOnClickListener { moveMonth(1) }
+
+		// 설교 캘린더처럼 달력을 좌우로 밀면 이전 · 다음 달, 아래 목록을 밀면 이전 · 다음 날짜로 이동한다.
+		findViewById<HorizontalSwipeInterceptLayout>(R.id.swipe_intercept_calendar).apply {
+			onSwipeRight = { moveMonth(-1) }
+			onSwipeLeft = { moveMonth(1) }
+		}
+		findViewById<HorizontalSwipeInterceptLayout>(R.id.swipe_intercept_list).apply {
+			onSwipeRight = { moveDay(-1) }
+			onSwipeLeft = { moveDay(1) }
 		}
 
-		findViewById<TextView>(R.id.fab_add_gratitude).setOnClickListener {
-			addLauncher.launch(
-				AddGratitudeActivity.createIntent(
-					this,
-					initialDateMillis = selectedDate
-				)
-			)
-		}
+		loadCalendarGrid()
+		loadNotesForSelectedDate()
+	}
 
+	/** 보고 있는 달을 [delta]만큼 옮긴다(선택한 날짜는 그대로). */
+	private fun moveMonth(delta: Int) {
+		val cal = Calendar.getInstance().apply {
+			clear()
+			set(currentYear, currentMonth0, 1)
+			add(Calendar.MONTH, delta)
+		}
+		currentYear = cal.get(Calendar.YEAR)
+		currentMonth0 = cal.get(Calendar.MONTH)
+		loadCalendarGrid()
+	}
+
+	/** 선택한 날짜를 [delta]일만큼 옮기고, 그 날짜가 들어 있는 달을 보여준다. */
+	private fun moveDay(delta: Int) {
+		val cal = Calendar.getInstance().apply {
+			timeInMillis = selectedDate
+			add(Calendar.DAY_OF_MONTH, delta)
+		}
+		selectedDate = DateUtils.normalizeToDayStart(cal.timeInMillis)
+		currentYear = cal.get(Calendar.YEAR)
+		currentMonth0 = cal.get(Calendar.MONTH)
 		loadCalendarGrid()
 		loadNotesForSelectedDate()
 	}
