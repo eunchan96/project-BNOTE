@@ -34,7 +34,8 @@ import kotlinx.coroutines.launch
  * 알림(공지사항) 상세. 열면 읽음 처리된다.
  * - 본문의 링크는 눌러서 열 수 있다.
  * - 본문에 사진(<img> 태그나 ![](주소))이 있으면 그 자리에 사진으로 보여주고, 누르면 크게 본다.
- * - 업데이트 알림이면 아래에 "새 버전 받기" 버튼(설치 파일이 있는 구글 드라이브로 연결).
+ * - 업데이트 알림이면 아래에 "업데이트 방법" 안내 박스와 "새 버전 받기" 버튼(설치 파일이 있는 구글 드라이브로 연결).
+ *   안내는 매번 같은 내용이라 앱이 직접 보여주고, 본문에 "## 업데이트 방법"이 있으면 겹치지 않게 본문에서 뺀다.
  * - 개발자가 이 공지(GitHub 이슈)에 댓글을 달았으면 "추가 안내"로 아래에 보여준다(인터넷이 필요).
  * - 상단 삭제 버튼: 이 기기에서만 지운다.
  */
@@ -46,8 +47,20 @@ class NoticeDetailActivity : AppCompatActivity() {
 		fun createIntent(context: Context, noticeId: Long): Intent =
 			Intent(context, NoticeDetailActivity::class.java).putExtra(EXTRA_NOTICE_ID, noticeId)
 
-		/** 목록 줄의 앞부분: (들여쓰기) + "・ " 또는 "1. " 같은 번호. */
-		private val LIST_PREFIX = Regex("^\\s*(・|\\d+\\.)\\s+")
+		/** 목록 줄의 앞부분: (들여쓰기) + "・ ", "※ " 또는 "1. " 같은 번호. */
+		private val LIST_PREFIX = Regex("^\\s*(・|※|\\d+\\.)\\s+")
+
+		/** 업데이트 공지의 "새 버전 받기" 버튼 위 안내 박스 내용. 버튼은 항상 가장 최신 APK를 연다. */
+		private val UPDATE_GUIDE_TEXT = """
+			1. 아래 "새 버전 받기"를 눌러 설치 파일(APK)을 내려받아요.
+			2. 내려받은 파일을 열고 "업데이트"를 눌러요.
+			3. 마이페이지 > 설정 > 앱 정보에 새 버전 번호가 보이면 완료예요.
+
+			※ "새 버전 받기"는 언제 눌러도 가장 최신 버전을 받아요. 예전 업데이트 공지에서 눌러도 최신 버전이 설치돼요.
+			※ 기존 기록(설교노트, 메모 등)은 그대로 남아 있어요.
+			※ 혹시 모르니 업데이트 전에 설정 > 데이터 내보내기로 백업해 두시면 더 안전해요.
+			※ 처음 설치할 때 "출처를 알 수 없는 앱" 허용을 물어보면 허용해 주세요.
+		""".trimIndent()
 	}
 
 	override fun onCreate(savedInstanceState: Bundle?) {
@@ -99,17 +112,26 @@ class NoticeDetailActivity : AppCompatActivity() {
 		}
 		findViewById<TextView>(R.id.text_notice_date).text = dateText
 
+		val isUpdate = notice.type == NoticeType.UPDATE
+
 		// 본문은 화면 양옆 16dp씩 여백 안에 있다.
 		renderBlocks(
 			findViewById(R.id.container_notice_body),
-			notice.body,
+			if (isUpdate) NoticeFormatter.removeUpdateGuide(notice.body) else notice.body,
 			textSizeSp = 15f,
 			lineSpacing = 1.4f,
 			horizontalInsetDp = 32
 		)
 
+		findViewById<View>(R.id.box_notice_update_guide).visibility =
+			if (isUpdate) View.VISIBLE else View.GONE
+		if (isUpdate) {
+			val guideText = findViewById<TextView>(R.id.text_notice_update_guide)
+			guideText.text = withHangingIndent(UPDATE_GUIDE_TEXT, guideText)
+		}
+
 		val download = findViewById<View>(R.id.btn_notice_download)
-		download.visibility = if (notice.type == NoticeType.UPDATE) View.VISIBLE else View.GONE
+		download.visibility = if (isUpdate) View.VISIBLE else View.GONE
 		download.setOnClickListener { UpdateDialog.openDownload(this) }
 	}
 
@@ -272,7 +294,7 @@ class NoticeDetailActivity : AppCompatActivity() {
 	 * "・ 항목"이나 "1. 항목"처럼 시작하는 줄이 길어서 두 줄 이상이 되면, 둘째 줄부터 기호가 아니라
 	 * 글자 시작 위치에 맞춰 들여쓴다(업데이트 내역과 같은 방식). 앞에 들여쓰기 공백이 있으면 그것까지 포함한다.
 	 */
-	private fun withHangingIndent(text: String, textView: TextView): CharSequence {
+	private fun withHangingIndent(text: CharSequence, textView: TextView): CharSequence {
 		val spannable = SpannableString(text)
 		var lineStart = 0
 		for (line in text.split('\n')) {
