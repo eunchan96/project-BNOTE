@@ -33,7 +33,7 @@ import kotlinx.coroutines.launch
  * 알림(공지사항) 목록. 마이페이지 상단바의 알림 아이콘으로 들어온다.
  *
  * - 위쪽 칩으로 전체 / 안 읽음 / 종류별로 걸러 볼 수 있다. 종류 칩은 업데이트만 항상 보이고, 나머지 종류는 그 종류의 알림이 하나라도 있을 때만 보인다.
- * - 항목을 누르면 상세 화면(읽음 처리됨), 길게 누르거나 "편집"을 누르면 선택 모드.
+ * - 항목을 누르면 상세 화면(읽음 처리됨), 길게 누르거나 "관리"를 누르면 선택 모드. 선택 모드에선 같은 자리 버튼이 "완료"로 바뀐다.
  * - 선택 모드: 전체 선택, 고른 것 읽음 처리, 고른 것 삭제(이 기기에서만).
  * - "모두 읽음"으로 한 번에 읽음 처리, 아래로 당기면 새로고침.
  * - 열 때마다 저장된 목록을 먼저 보여주고, 바로 GitHub에서 새로 가져와 갱신한다.
@@ -62,7 +62,7 @@ class NoticeListActivity : AppCompatActivity() {
 	private lateinit var titleText: TextView
 	private lateinit var backButton: ImageView
 	private lateinit var btnReadAll: TextView
-	private lateinit var btnEdit: TextView
+	private lateinit var btnManage: TextView
 	private lateinit var btnSelectAll: TextView
 	private lateinit var selectionBar: View
 	private lateinit var filterContainer: LinearLayout
@@ -85,7 +85,7 @@ class NoticeListActivity : AppCompatActivity() {
 		titleText = findViewById(R.id.text_top_bar_title)
 		backButton = findViewById(R.id.btn_top_bar_back)
 		btnReadAll = findViewById(R.id.btn_notice_read_all)
-		btnEdit = findViewById(R.id.btn_notice_edit)
+		btnManage = findViewById(R.id.btn_notice_manage)
 		btnSelectAll = findViewById(R.id.btn_notice_select_all)
 		selectionBar = findViewById(R.id.bar_notice_selection_actions)
 		filterContainer = findViewById(R.id.container_notice_filters)
@@ -107,7 +107,7 @@ class NoticeListActivity : AppCompatActivity() {
 			NoticeRepository.markAllRead(this)
 			render()
 		}
-		btnEdit.setOnClickListener { setSelectionMode(true) }
+		btnManage.setOnClickListener { setSelectionMode(!isSelectionMode) }
 		btnSelectAll.setOnClickListener {
 			val visibleIds = filteredNotices().map { it.id }
 			if (visibleIds.isNotEmpty() && selectedIds.containsAll(visibleIds)) {
@@ -203,21 +203,20 @@ class NoticeListActivity : AppCompatActivity() {
 
 		if (isSelectionMode) {
 			titleText.text = "${selectedIds.size}개 선택"
-			backButton.setImageResource(R.drawable.ic_close)
-			backButton.contentDescription = "선택 취소"
 			btnReadAll.visibility = View.GONE
-			btnEdit.visibility = View.GONE
+			// 다른 화면들처럼 "관리" 자리에 그대로 "완료"를 보여준다(눌러서 선택 모드를 끝낸다).
+			btnManage.visibility = View.VISIBLE
+			btnManage.text = "완료"
 			btnSelectAll.visibility = View.VISIBLE
 			val allSelected = list.isNotEmpty() && selectedIds.containsAll(list.map { it.id })
 			btnSelectAll.text = if (allSelected) "선택 해제" else "전체 선택"
 			selectionBar.visibility = View.VISIBLE
 		} else {
 			titleText.text = "알림"
-			backButton.setImageResource(R.drawable.ic_chevron_left)
-			backButton.contentDescription = "뒤로가기"
 			val hasUnread = allNotices.any { !NoticeRepository.isRead(this, it) }
 			btnReadAll.visibility = if (hasUnread) View.VISIBLE else View.GONE
-			btnEdit.visibility = if (allNotices.isNotEmpty()) View.VISIBLE else View.GONE
+			btnManage.visibility = if (allNotices.isNotEmpty()) View.VISIBLE else View.GONE
+			btnManage.text = "관리"
 			btnSelectAll.visibility = View.GONE
 			selectionBar.visibility = View.GONE
 		}

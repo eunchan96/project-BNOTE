@@ -3,6 +3,7 @@ package com.chan.bnote.ui.mypage.verseofyear
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
@@ -84,24 +85,10 @@ class VerseOfYearDetailActivity : AppCompatActivity() {
 			findViewById<TextView>(R.id.text_verse_content).text =
 				refs.joinToString("\n") { it.verseText }
 
+			// 메모가 없으면 빈 메모 상자 대신 상자 자체를 숨긴다.
 			val noteView = findViewById<TextView>(R.id.text_verse_note)
-			if (entry.note.isNotBlank()) {
-				noteView.text = entry.note
-				noteView.setTextColor(
-					androidx.core.content.ContextCompat.getColor(
-						this@VerseOfYearDetailActivity,
-						R.color.text_primary
-					)
-				)
-			} else {
-				noteView.text = "메모가 없어요"
-				noteView.setTextColor(
-					androidx.core.content.ContextCompat.getColor(
-						this@VerseOfYearDetailActivity,
-						R.color.text_hint
-					)
-				)
-			}
+			noteView.text = entry.note
+			noteView.visibility = if (entry.note.isNotBlank()) View.VISIBLE else View.GONE
 		}
 	}
 

@@ -12,7 +12,7 @@ import com.chan.bnote.R
 import com.chan.bnote.data.AppSettings
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.bible.BibleVerse
-import com.chan.bnote.data.mypage.CopyFormatConfig
+import com.chan.bnote.data.mypage.CopyFormatDefaults
 import com.chan.bnote.data.mypage.CopyFormatPreset
 import com.chan.bnote.data.mypage.CopyFormatter
 import com.chan.bnote.ui.FixedBottomSheetDialogFragment
@@ -72,7 +72,7 @@ class CopyFormatPickerBottomSheet : FixedBottomSheetDialogFragment() {
 	private fun loadPresets() {
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(requireContext().applicationContext)
-			seedDefaultPresetsIfNeeded(db)
+			CopyFormatDefaults.seedIfNeeded(requireContext(), db)
 			val presets = db.copyFormatPresetDao().getAll()
 			val activeConfigJson = AppSettings.getActiveCopyFormat(requireContext()).toJson()
 
@@ -134,68 +134,4 @@ class CopyFormatPickerBottomSheet : FixedBottomSheetDialogFragment() {
 			CopyFormatEditorActivity.createIntent(requireContext(), existingPresetId)
 		)
 	}
-
-	/** 기본으로 제공하는 형식 3개. 처음 한 번만 심고, 그 뒤로는 자유롭게 수정 · 삭제할 수 있는 그냥
-	 * 평범한 프리셋이다(다시 자동으로 채워지지 않는다). */
-	private suspend fun seedDefaultPresetsIfNeeded(db: BibleDatabase) {
-		val prefs = requireContext().getSharedPreferences(
-			"copy_format_prefs",
-			android.content.Context.MODE_PRIVATE
-		)
-
-		if (!prefs.getBoolean("default_presets_seeded", false)) {
-			for ((name, cfg) in defaultPresetConfigs()) {
-				db.copyFormatPresetDao()
-					.insert(CopyFormatPreset(name = name, configJson = cfg.toJson()))
-			}
-			prefs.edit()
-				.putBoolean("default_presets_seeded", true)
-				.putBoolean("default_presets_renamed_v2", true)
-				.apply()
-			return
-		}
-
-		// 이미 예전에 "기본1/기본2/기본3"으로 한 번 심어졌던 기기라면, 이번 개편에 맞춰 이름과
-		// 설정을 딱 한 번만 새로 바꿔준다. 그 사이 사용자가 이름을 직접 바꿨거나 지운 프리셋은
-		// (이름이 더 이상 "기본1" 등이 아니므로) 건드리지 않는다.
-		if (prefs.getBoolean("default_presets_renamed_v2", false)) return
-		val renameMap = mapOf(
-			"기본1" to defaultPresetConfigs()[0],
-			"기본2" to defaultPresetConfigs()[1],
-			"기본3" to defaultPresetConfigs()[2]
-		)
-		for (preset in db.copyFormatPresetDao().getAll()) {
-			val replacement = renameMap[preset.name] ?: continue
-			db.copyFormatPresetDao().update(
-				preset.copy(name = replacement.first, configJson = replacement.second.toJson())
-			)
-		}
-		prefs.edit().putBoolean("default_presets_renamed_v2", true).apply()
-	}
-
-	/** "묵상용" / "짧게 (창 1:1)" / "길게 (창세기 1장 1절)" 세 기본 형식의 이름과 설정.
-	 * - 묵상용: 참조를 괄호 없이 구절 위에 얹고, 절 번호를 붙여 여러 절을 죽 읽기 좋게 만든다.
-	 * - 짧게: "(창 1:1) 본문"처럼 참조를 짧게 줄여 구절 앞에 붙인다.
-	 * - 길게: 짧게와 같은 모양이되, 참조만 "창세기 1장 1절"처럼 풀어 쓴다. */
-	private fun defaultPresetConfigs(): List<Pair<String, CopyFormatConfig>> = listOf(
-		"묵상용" to CopyFormatConfig.meditationDefault(),
-		"짧게 (창 1:1)" to CopyFormatConfig(
-			refVerseSeparator = CopyFormatConfig.Separator.SPACE,
-			multiVerseSeparator = CopyFormatConfig.Separator.SPACE,
-			refPosition = CopyFormatConfig.RefPosition.BEFORE,
-			refLength = CopyFormatConfig.RefLength.SHORT,
-			refSpacing = true,
-			refBracket = CopyFormatConfig.RefBracket.PAREN,
-			showVerseNumberWhenMulti = false
-		),
-		"길게 (창세기 1장 1절)" to CopyFormatConfig(
-			refVerseSeparator = CopyFormatConfig.Separator.SPACE,
-			multiVerseSeparator = CopyFormatConfig.Separator.SPACE,
-			refPosition = CopyFormatConfig.RefPosition.BEFORE,
-			refLength = CopyFormatConfig.RefLength.LONG,
-			refSpacing = true,
-			refBracket = CopyFormatConfig.RefBracket.PAREN,
-			showVerseNumberWhenMulti = false
-		)
-	)
 }
