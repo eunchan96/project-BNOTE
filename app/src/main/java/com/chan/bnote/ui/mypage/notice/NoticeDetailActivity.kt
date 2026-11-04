@@ -25,6 +25,7 @@ import com.chan.bnote.data.notice.NoticeFormatter
 import com.chan.bnote.data.notice.NoticeRepository
 import com.chan.bnote.data.notice.NoticeType
 import com.chan.bnote.ui.common.LinkifyHelper
+import com.chan.bnote.ui.mypage.settings.ContactDialog
 import com.chan.bnote.ui.mypage.settings.UpdateDialog
 import com.chan.bnote.ui.sermon.addsermon.PhotoViewerActivity
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -38,6 +39,7 @@ import kotlinx.coroutines.launch
  *   안내는 매번 같은 내용이라 앱이 직접 보여주고, 본문에 "## 업데이트 방법"이 있으면 겹치지 않게 본문에서 뺀다.
  * - 개발자가 이 공지(GitHub 이슈)에 댓글을 달았으면 "추가 안내"로 아래에 보여준다(인터넷이 필요).
  * - 상단 삭제 버튼: 이 기기에서만 지운다.
+ * - 본문에 "문의하기"가 나오면 아래에 "문의하기" 버튼(문의하기 창을 바로 연다).
  */
 class NoticeDetailActivity : AppCompatActivity() {
 
@@ -163,6 +165,11 @@ class NoticeDetailActivity : AppCompatActivity() {
 			horizontalInsetDp = 32
 		)
 
+		// 본문에서 "문의하기"를 안내하면(오류 공지 등) 그 자리에서 바로 문의할 수 있게 버튼을 붙인다.
+		findViewById<View>(R.id.btn_notice_contact).apply {
+			visibility = if (notice.body.contains("문의하기")) View.VISIBLE else View.GONE
+			setOnClickListener { ContactDialog.show(this@NoticeDetailActivity) }
+		}
 		findViewById<View>(R.id.box_notice_update_guide).visibility =
 			if (isUpdate) View.VISIBLE else View.GONE
 		if (isUpdate) {
