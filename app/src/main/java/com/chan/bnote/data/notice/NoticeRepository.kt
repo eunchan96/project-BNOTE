@@ -19,8 +19,10 @@ import java.util.TimeZone
  * - 가져오기: "공지" 라벨이 붙은 열린 이슈 중 저장소 주인(또는 협업자)이 연 것만. PR은 뺀다.
  * - 저장: 마지막으로 가져온 목록(오프라인에서도 보이게), 읽은 알림, 이 기기에서 삭제한 알림.
  *   기기마다의 기록이라 데이터 내보내기(백업)와 상관없는 별도 SharedPreferences에 둔다(update_check와 같은 이유).
- * - 자동 확인은 앱을 열 때 30분에 한 번까지(GitHub API는 로그인 없이 IP당 시간당 60회까지라 넉넉하다),
- *   그리고 하루 한 번 백그라운드(UpdateCheckWorker)에서. 알림 목록 화면을 열거나 당겨서 새로고침하면 바로 가져온다.
+ * - 자동 확인: 앱을 새로 켤 때마다 바로 가져오고, 켜 둔 채 잠깐 나갔다 돌아올 때는 5분에 한 번까지
+ *   (GitHub API는 로그인 없이 IP당 시간당 60회까지라 넉넉하다). 하루 한 번 백그라운드(UpdateCheckWorker)에서도
+ *   받아 두는데, 이건 앱을 열 때의 확인 시각으로 치지 않는다 — 백그라운드가 막 돌았다고 앱을 열었을 때 건너뛰지 않게.
+ *   알림 목록 화면을 열거나 당겨서 새로고침하면 바로 가져온다.
  * - 인터넷이 안 되면 조용히 넘어가고, 저장해 둔 목록을 그대로 보여준다.
  */
 object NoticeRepository {
@@ -36,7 +38,7 @@ object NoticeRepository {
 	private const val KEY_HIDDEN = "hidden_ids"
 	private const val KEY_LAST_FETCH_AT = "last_fetch_at"
 
-	private const val AUTO_FETCH_INTERVAL_MS = 30 * 60 * 1000L
+	private const val AUTO_FETCH_INTERVAL_MS = 5 * 60 * 1000L
 	private const val TIMEOUT_MS = 5000
 
 	/** 저장소 주인·멤버·협업자가 쓴 것만 공지로 인정한다(누구나 이슈·댓글을 달 수 있어서). */
@@ -56,32 +58,46 @@ object NoticeRepository {
 
 	// --- 가져오기 ---
 
-	fun shouldAutoFetch(context: Context): Boolean =
-		System.currentTimeMillis() - prefs(context).getLong(
+	/** 이번에 앱을 켠 뒤로 앱 화면에서 한 번이라도 받아왔는지. 앱(프로세스)을 새로 켜면 false로 돌아간다. */
+	@Volatile
+	private var fetchedSinceLaunch = false
+
+	/** 앱을 새로 켰으면 바로, 아니면 마지막으로 받아온 지 5분이 지났으면 true. */
+	fun shouldAutoFetch(context: Context): Boolean {
+		if (!fetchedSinceLaunch) return true
+		return System.currentTimeMillis() - prefs(context).getLong(
 			KEY_LAST_FETCH_AT,
 			0L
 		) >= AUTO_FETCH_INTERVAL_MS
-
-	/** GitHub에서 공지를 다시 가져와 저장한다. 성공하면 true, 인터넷 문제 등으로 실패하면 false(저장된 목록은 그대로). */
-	suspend fun refresh(context: Context): Boolean = withContext(Dispatchers.IO) {
-		val label = URLEncoder.encode(NOTICE_LABEL, "UTF-8")
-		val url = "$ISSUES_API?labels=$label&state=open&per_page=50&sort=created&direction=desc"
-		val body = httpGet(url) ?: return@withContext false
-		try {
-			val array = JSONArray(body)
-			val notices = mutableListOf<Notice>()
-			for (i in 0 until array.length()) {
-				parseIssue(array.getJSONObject(i))?.let { notices.add(it) }
-			}
-			prefs(context).edit()
-				.putString(KEY_CACHE, JSONArray(notices.map { it.toJson() }).toString())
-				.putLong(KEY_LAST_FETCH_AT, System.currentTimeMillis())
-				.apply()
-			true
-		} catch (e: Exception) {
-			false
-		}
 	}
+
+	/**
+	 * GitHub에서 공지를 다시 가져와 저장한다. 성공하면 true, 인터넷 문제 등으로 실패하면 false(저장된 목록은 그대로).
+	 * [recordFetch]가 false면(백그라운드 확인) 앱을 열 때의 자동 확인 시각으로 치지 않는다.
+	 */
+	suspend fun refresh(context: Context, recordFetch: Boolean = true): Boolean =
+		withContext(Dispatchers.IO) {
+			val label = URLEncoder.encode(NOTICE_LABEL, "UTF-8")
+			val url = "$ISSUES_API?labels=$label&state=open&per_page=50&sort=created&direction=desc"
+			val body = httpGet(url) ?: return@withContext false
+			try {
+				val array = JSONArray(body)
+				val notices = mutableListOf<Notice>()
+				for (i in 0 until array.length()) {
+					parseIssue(array.getJSONObject(i))?.let { notices.add(it) }
+				}
+				val editor = prefs(context).edit()
+					.putString(KEY_CACHE, JSONArray(notices.map { it.toJson() }).toString())
+				if (recordFetch) {
+					editor.putLong(KEY_LAST_FETCH_AT, System.currentTimeMillis())
+					fetchedSinceLaunch = true
+				}
+				editor.apply()
+				true
+			} catch (e: Exception) {
+				false
+			}
+		}
 
 	/** 상세 화면의 "추가 안내" — 그 이슈에 저장소 주인이 단 댓글들(오래된 순). 실패하면 null. */
 	suspend fun fetchComments(noticeId: Long): List<NoticeComment>? = withContext(Dispatchers.IO) {
