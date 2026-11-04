@@ -261,10 +261,19 @@
                     android:clickable="true"
                     android:focusable="true">
 
+                    <ImageView
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:rotation="180"
+                        android:src="@drawable/ic_chevron_down"
+                        app:tint="@color/text_secondary"
+                        android:contentDescription="@null" />
+
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="︿ 이전 알림"
+                        android:layout_marginStart="4dp"
+                        android:text="이전 알림"
                         android:textSize="13sp"
                         android:textColor="@color/text_secondary" />
 
@@ -299,10 +308,18 @@
                     android:clickable="true"
                     android:focusable="true">
 
+                    <ImageView
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:src="@drawable/ic_chevron_down"
+                        app:tint="@color/text_secondary"
+                        android:contentDescription="@null" />
+
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="﹀ 다음 알림"
+                        android:layout_marginStart="4dp"
+                        android:text="다음 알림"
                         android:textSize="13sp"
                         android:textColor="@color/text_secondary" />
 
