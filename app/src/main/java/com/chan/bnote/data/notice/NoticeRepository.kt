@@ -44,6 +44,13 @@ object NoticeRepository {
 
 	private val TARGET_LINE = Regex("^\\s*대상\\s*[:：]\\s*(.+)$")
 
+	/**
+	 * 고친 버전 표시. 보통 `<!-- 해결: 1.16 -->`처럼 HTML 주석 안에 써서 GitHub에서도, 옛 버전 앱에서도
+	 * 안 보이게 한다. 주석 없이 "해결: 1.16" 한 줄로 써도 읽고, 그 줄은 화면에서 뺀다.
+	 */
+	private val FIXED_COMMENT = Regex("<!--\\s*해결\\s*[:：]\\s*(\\d+(?:\\.\\d+)*)\\s*-->")
+	private val FIXED_LINE = Regex("^\\s*해결\\s*[:：]\\s*(\\d+(?:\\.\\d+)*)\\s*$")
+
 	private fun prefs(context: Context) =
 		context.applicationContext.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
 
@@ -125,6 +132,12 @@ object NoticeRepository {
 		var minVersion: String? = null
 		var maxVersion: String? = null
 		val bodyLines = mutableListOf<String>()
+		// 고친 버전은 주석 안에 있어도 읽어야 하므로, 주석을 지우기 전 원문에서 찾는다. 주석 하나가 통째로
+		// "해결: 버전"이거나 한 줄이 통째로 "해결: 버전"일 때만 인정한다(템플릿 작성 안내 같은 글 속 단어는 무시).
+		val originalBody = obj.optString("body").replace("\r\n", "\n")
+		val fixedVersion = FIXED_COMMENT.find(originalBody)?.groupValues?.get(1)
+			?: originalBody.lines()
+				.firstNotNullOfOrNull { FIXED_LINE.find(it)?.groupValues?.get(1) }
 		// 이슈 템플릿의 작성 안내(<!-- -->)는 GitHub에서도 안 보이므로 앱에서도 뺀다.
 		val rawBody = NoticeFormatter.stripHtmlComments(obj.optString("body"))
 		for (line in rawBody.lines()) {
@@ -133,7 +146,7 @@ object NoticeRepository {
 				val (min, max) = parseTarget(match.groupValues[1])
 				minVersion = min
 				maxVersion = max
-			} else {
+			} else if (!FIXED_LINE.matches(line)) {
 				bodyLines.add(line)
 			}
 		}
@@ -149,7 +162,8 @@ object NoticeRepository {
 			updatedAt = parseIsoTime(obj.optString("updated_at")),
 			commentCount = obj.optInt("comments"),
 			minVersion = minVersion,
-			maxVersion = maxVersion
+			maxVersion = maxVersion,
+			fixedVersion = fixedVersion
 		)
 	}
 
@@ -253,6 +267,7 @@ object NoticeRepository {
 		put("createdAt", createdAt); put("updatedAt", updatedAt); put("comments", commentCount)
 		minVersion?.let { put("minVersion", it) }
 		maxVersion?.let { put("maxVersion", it) }
+		fixedVersion?.let { put("fixedVersion", it) }
 	}
 
 	private fun noticeFromJson(o: JSONObject) = Notice(
@@ -266,6 +281,7 @@ object NoticeRepository {
 		updatedAt = o.optLong("updatedAt"),
 		commentCount = o.optInt("comments"),
 		minVersion = o.optString("minVersion").takeIf { it.isNotBlank() },
-		maxVersion = o.optString("maxVersion").takeIf { it.isNotBlank() }
+		maxVersion = o.optString("maxVersion").takeIf { it.isNotBlank() },
+		fixedVersion = o.optString("fixedVersion").takeIf { it.isNotBlank() }
 	)
 }
