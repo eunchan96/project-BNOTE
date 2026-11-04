@@ -185,7 +185,9 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 				notifyTopBarChanged()
 				return
 			}
-			recyclerView.smoothScrollBy(0, 2 + scrollSpeed) // 속도 1~5 -> 3~7px씩
+			// smoothScrollBy를 쓰면 목록이 계속 "스크롤 중" 상태라, 절을 탭해도 목록이 스크롤을 멈추는 데만
+			// 터치를 써버려서 절이 선택되지 않았다. 바로 움직이는 scrollBy로 바꿔서 자동 스크롤 중에도 절을 탭할 수 있다.
+			recyclerView.scrollBy(0, 2 + scrollSpeed) // 속도 1~5 -> 3~7px씩
 			autoScrollHandler.postDelayed(this, 60L - (scrollSpeed * 8)) // 속도 1~5 -> 52~20ms 간격
 		}
 	}
@@ -1302,6 +1304,13 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 	}
 
 	private fun toggleVerseSelection(verseNum: Int) {
+		// 자동 스크롤 중에 절을 고르면, 고른 절이 화면 밖으로 흘러가지 않도록 자동 스크롤을 멈춘다(재생 아이콘으로 다시 시작).
+		if (isAutoScrolling) {
+			isAutoScrolling = false
+			stopAutoScroll()
+			notifyTopBarChanged()
+		}
+
 		if (selectedVerses.contains(verseNum)) {
 			selectedVerses.remove(verseNum)
 		} else {
