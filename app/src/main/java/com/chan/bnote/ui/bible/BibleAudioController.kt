@@ -120,6 +120,23 @@ class BibleAudioController(
 		return true
 	}
 
+	/**
+	 * 지금 장을 듣다가 멈춰 둔 상태(플레이어가 그 자리에 남아 있음)면 이어서 재생한다. 하단바 성경 탭 아이콘을
+	 * 다시 눌렀을 때 쓴다 — 재생 툴바를 닫아 둔 상태여도 한 번 누르면 멈춘 곳부터 다시 들을 수 있다.
+	 */
+	fun resumeIfPausedOnCurrentChapter(): Boolean {
+		if (isListening || player == null || playerChapter != currentChapter()) return false
+		toggle()
+		return true
+	}
+
+	/** 멈춰 둔 플레이어를 정리한다(재생 중이면 그대로 둔다). 다른 화면에 갔다 오면 "이 장을 듣던 중" 상태를 초기화한다. */
+	fun releaseIfPaused() {
+		if (isListening || player == null) return
+		releasePlayer()
+		onStateChanged()
+	}
+
 	fun onChapterChanged(bookId: Int, chapter: Int) {
 		if (playerChapter == bookId to chapter) return
 		if (isListening) {

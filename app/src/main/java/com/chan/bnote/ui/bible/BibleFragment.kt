@@ -845,8 +845,17 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 	 * 여기서 다시 확인해서 반영한다. hide()/show() 방식의 탭 전환은 onResume이 아니라 이 콜백을 탄다. */
 	override fun onHiddenChanged(hidden: Boolean) {
 		super.onHiddenChanged(hidden)
-		if (hidden) hideAudioToolbar()
+		if (hidden) {
+			hideAudioToolbar()
+			audioController?.releaseIfPaused()
+		}
 		if (!hidden) refreshOnReturnToTab()
+	}
+
+	override fun onStop() {
+		super.onStop()
+		// 다른 화면(메모 목록, 설정 등)이나 홈으로 나갔다 오면 멈춰 둔 재생 위치는 잊는다. 재생 중이면 그대로 둔다.
+		audioController?.releaseIfPaused()
 	}
 
 	override fun onResume() {
@@ -1040,6 +1049,7 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 	/**
 	 * 성경 탭을 보고 있을 때 하단바 성경 아이콘을 다시 누른 경우.
 	 * - 재생 중이면: 일시정지하고 재생 툴바를 띄운다.
+	 * - 이 장을 듣다가 멈춰 둔 상태면: 툴바가 닫혀 있어도 이어서 재생한다(다른 탭 · 화면에 갔다 오면 이 상태는 초기화).
 	 * - 재생 툴바가 떠 있고 멈춰 있으면: 다시 재생한다(툴바의 재생 버튼과 같은 동작 — 다른 장으로 넘어가 있으면 그 장부터).
 	 * - 그 밖에는 처리하지 않는다(false → 평소대로 탭 전환).
 	 */
@@ -1047,6 +1057,11 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		val controller = audioController ?: return false
 		if (controller.pauseIfListening()) {
 			if (audioToolbar.visibility != View.VISIBLE) showAudioToolbar() else updateAudioToolbar()
+			return true
+		}
+		// 이 장을 듣다가 멈춰 둔 상태면 툴바가 닫혀 있어도 한 번 누르면 이어서 재생한다.
+		if (controller.resumeIfPausedOnCurrentChapter()) {
+			if (audioToolbar.visibility == View.VISIBLE) updateAudioToolbar()
 			return true
 		}
 		if (audioToolbar.visibility == View.VISIBLE && controller.isAvailable) {
