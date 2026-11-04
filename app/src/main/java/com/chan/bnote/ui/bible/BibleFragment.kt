@@ -11,6 +11,7 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
 import com.chan.bnote.R
@@ -570,11 +571,9 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		val innerRecyclerView = viewPager.getChildAt(0) as? RecyclerView
 		val holder =
 			innerRecyclerView?.findViewHolderForAdapterPosition(position) as? BiblePageAdapter.PageViewHolder
-		// 아래 코루틴에서 절 스크롤을 시도해도 되는지 판단하는 플래그. holder를 못 찾으면
-		// recyclerView 필드가 이 페이지 것으로 갱신 안 됐다는 뜻이라, 그 상태로 스크롤하면 엉뚱한
-		// (이전 장의) 목록이 움직여버릴 위험이 있어서 이 경우엔 스크롤을 건너뛴다(bind() 쪽
-		// 코루틴이 나중에 정상적으로 처리해줄 것이다).
-		val recyclerViewIsFreshForThisPage = holder?.currentRecyclerView()?.let { rv ->
+		// 뷰홀더를 찾았으면 recyclerView/adapter 필드를 이 페이지 것으로 맞춰 둔다(절 스크롤은 아래 코루틴의
+		// applyPendingScrollWhenPageReady가 페이지가 준비됐는지 직접 확인하고 처리한다).
+		holder?.currentRecyclerView()?.let { rv ->
 			recyclerView = rv
 			(rv.adapter as? androidx.recyclerview.widget.ConcatAdapter)
 				?.adapters
@@ -586,24 +585,14 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 					// 지금 진짜 selectedVerses로 강제 동기화해서 선택 배경색이 어긋나지 않게 한다.
 					adapter.updateSelection(selectedVerses.toSet())
 				}
-			true
-		} ?: false
+		}
 
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(requireContext().applicationContext)
 			currentVerses = db.bibleDao().getVerses(primaryTranslation.code, bookId, chapter)
 
-			// consumePendingMemoOpen과 같은 이유(ViewPager2 prefetch로 bind()가 다시 안 불릴 수
-			// 있음)로, 절 스크롤 요청도 여기서 같이 확인해서 처리한다. recyclerView가 아직 이 페이지
-			// 것으로 안 갱신됐으면(=holder를 못 찾음) 여기서 미리 소비해버리지 않는다 — 그러면 값이
-			// 지워진 채로 정작 스크롤은 못 한 상태가 돼서, 나중에 bind()가 정상적으로 불려도 이미
-			// 늦어버린다. 그럴 땐 그냥 안 건드리고 bind() 쪽 코루틴이 처리하게 둔다.
-			if (recyclerViewIsFreshForThisPage) {
-				consumePendingScrollVerse(bookId, chapter)?.let { verseNum ->
-					val index = currentVerses.indexOfFirst { it.verse == verseNum }
-					if (index >= 0) recyclerView.scrollToPosition(index)
-				}
-			}
+			// 전에 열어둔 페이지라 bind()가 다시 안 불려도 요청한 절로 가도록, 여기서도 처리한다.
+			applyPendingScrollWhenPageReady(bookId, chapter)
 
 			currentSecondaryMap = secondaryTranslation?.let { sec ->
 				db.bibleDao().getVerses(sec.code, bookId, chapter)
@@ -715,6 +704,48 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 
 	fun registerPageFooter(bookId: Int, chapter: Int, footer: BibleReadingFooterAdapter) {
 		pageFooters[bookId to chapter] = footer
+	}
+
+	/**
+	 * "그 장에 도착하면 이 절로 스크롤" 요청을, 그 장 페이지가 실제로 화면에 붙고 본문까지 채워진 뒤에 처리한다.
+	 *
+	 * 전에 한 번 열어서 ViewPager2가 들고 있던 페이지로 이동하면 BiblePageAdapter.bind()가 다시 불리지 않아서
+	 * 그쪽에서 요청을 처리하지 못하고, 이동 직후엔 뷰홀더를 바로 못 찾는 경우도 있었다. 그래서 장 선택 · 하이라이트
+	 * 절 이동처럼 특정 절로 가야 하는 경우에도 그 페이지가 마지막으로 보던 위치에 그대로 머물렀다.
+	 * 이제 페이지가 준비될 때까지 잠깐씩(최대 [attemptsLeft]번) 다시 확인해서 처리한다. 이전 · 다음 장 이동은
+	 * 요청 자체를 만들지 않으므로 지금처럼 그 장을 마지막으로 보던 위치가 유지된다.
+	 */
+	private fun applyPendingScrollWhenPageReady(bookId: Int, chapter: Int, attemptsLeft: Int = 10) {
+		if (pendingScrollBookId != bookId || pendingScrollChapter != chapter) return // 이미 처리됨(bind 쪽 등)
+		if (!::viewPager.isInitialized || view == null) return
+
+		val holder = resolveCurrentPageViewHolder()
+		val pageRecyclerView = holder?.currentRecyclerView()
+		val ready =
+			holder != null && holder.boundBookId == bookId && holder.boundChapter == chapter &&
+					pageRecyclerView?.adapter != null
+		if (!ready) {
+			if (attemptsLeft > 0) {
+				viewPager.postDelayed({
+					applyPendingScrollWhenPageReady(
+						bookId,
+						chapter,
+						attemptsLeft - 1
+					)
+				}, 50)
+			}
+			return
+		}
+
+		val verseNum = consumePendingScrollVerse(bookId, chapter) ?: return
+		val index = currentVerses.indexOfFirst { it.verse == verseNum }.coerceAtLeast(0)
+		recyclerView = pageRecyclerView!!
+		// scrollToPosition은 아래쪽 절로 갈 때 그 절을 화면 맨 아래에 맞추므로, 맨 위에 오도록 offset 0으로 맞춘다.
+		(pageRecyclerView.layoutManager as? LinearLayoutManager)?.scrollToPositionWithOffset(
+			index,
+			0
+		)
+			?: pageRecyclerView.scrollToPosition(index)
 	}
 
 	/** loadChapter(bookId, chapter, scrollToVerse)로 요청해둔 "그 장에 도착하면 이 절로 스크롤"
@@ -922,7 +953,13 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 				// 참조를 쓰면 스크롤이 안 먹혔다). 매번 지금 진짜 보이는 페이지에서 다시 찾는다.
 				val liveRecyclerView = resolveCurrentPageViewHolder()?.currentRecyclerView()
 				if (liveRecyclerView != null) recyclerView = liveRecyclerView
-				if (index >= 0 && ::recyclerView.isInitialized) recyclerView.scrollToPosition(index)
+				if (index >= 0 && ::recyclerView.isInitialized) {
+					(recyclerView.layoutManager as? LinearLayoutManager)?.scrollToPositionWithOffset(
+						index,
+						0
+					)
+						?: recyclerView.scrollToPosition(index)
+				}
 			}
 			// 이미 보고 있는 장이면 페이지가 다시 만들어지지 않아서(BiblePageAdapter.bind()가 다시 안 불림)
 			// consumePendingMemoOpen이 호출될 기회가 없었다 — 여기서 바로 소비해준다.
@@ -930,9 +967,11 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 			return
 		}
 
+		// 장 선택 · 하이라이트 · 위젯 등으로 특정 장에 "찾아가는" 이동이라, 절을 따로 안 정했으면 1절부터 보여준다
+		// (전에 보던 페이지라도 마지막으로 보던 위치가 아니라). 이전 · 다음 장 버튼/스와이프는 이 함수를 안 거친다.
 		pendingScrollBookId = bookId
 		pendingScrollChapter = chapter
-		pendingScrollVerse = scrollToVerse
+		pendingScrollVerse = scrollToVerse ?: 1
 		viewPager.setCurrentItem(BibleChapterIndex.positionOf(bookId, chapter), false)
 	}
 
