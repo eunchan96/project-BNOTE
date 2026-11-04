@@ -17,7 +17,6 @@ import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.LinearLayout
-import android.widget.PopupMenu
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
@@ -34,6 +33,7 @@ import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.DateUtils
 import com.chan.bnote.data.sermon.Sermon
 import com.chan.bnote.data.sermon.SermonBibleRef
+import com.chan.bnote.data.sermon.SermonLinks
 import com.chan.bnote.data.sermon.sermonphoto.SermonPhoto
 import com.chan.bnote.data.sermon.sermonphoto.SermonPhotoStorage
 import com.chan.bnote.ui.bible.picker.BibleRangePickerBottomSheet
@@ -119,7 +119,12 @@ class AddSermonActivity : AppCompatActivity() {
 	private lateinit var photoContainer: LinearLayout
 	private lateinit var editMemo: EditText
 	private lateinit var editTitle: EditText
-	private lateinit var editLink: EditText
+	private lateinit var btnAddLink: TextView
+	private lateinit var linkContainer: LinearLayout
+
+	/** 설교 링크(여러 개). 저장할 땐 줄바꿈으로 이어서 Sermon.link 한 칸에 넣는다(SermonLinks). */
+	private val links = mutableListOf<String>()
+
 	private lateinit var keyboardBar: KeyboardBar
 
 	private val pickPhotosLauncher = registerForActivityResult(
@@ -166,7 +171,7 @@ class AddSermonActivity : AppCompatActivity() {
 		if (title.isNotEmpty() && preacherId != null && hasUnsavedContent()) {
 			autoSaveJob?.cancel()
 			lifecycleScope.launch {
-				persistSermon(title, editMemo.text, editLink.text.toString().trim(), preacherId)
+				persistSermon(title, editMemo.text, linkValue(), preacherId)
 			}
 		}
 	}
@@ -282,7 +287,9 @@ class AddSermonActivity : AppCompatActivity() {
 
 			override fun onDestroyActionMode(mode: android.view.ActionMode?) {}
 		}
-		editLink = findViewById(R.id.edit_sermon_link)
+		btnAddLink = findViewById(R.id.btn_add_link)
+		linkContainer = findViewById(R.id.container_sermon_links)
+		btnAddLink.setOnClickListener { showAddLinkDialog() }
 
 		val autoSaveWatcher = object : android.text.TextWatcher {
 			override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
@@ -293,7 +300,6 @@ class AddSermonActivity : AppCompatActivity() {
 		}
 		editTitle.addTextChangedListener(autoSaveWatcher)
 		editMemo.addTextChangedListener(autoSaveWatcher)
-		editLink.addTextChangedListener(autoSaveWatcher)
 		btnDate = findViewById(R.id.btn_pick_date)
 		btnPickPreacher = findViewById(R.id.btn_pick_preacher)
 		btnPickCategory = findViewById(R.id.btn_pick_category)
@@ -341,10 +347,10 @@ class AddSermonActivity : AppCompatActivity() {
 			picker.show(supportFragmentManager, "category_picker")
 		}
 
-		btnAddPhoto.setOnClickListener { showPhotoSourceMenu(it) }
+		btnAddPhoto.setOnClickListener { showPhotoSourceMenu() }
 
 		findViewById<TextView>(R.id.btn_save_sermon).setOnClickListener {
-			save(editTitle.text.toString().trim(), editMemo.text, editLink.text.toString().trim())
+			save(editTitle.text.toString().trim(), editMemo.text, linkValue())
 		}
 
 		lifecycleScope.launch {
@@ -356,7 +362,9 @@ class AddSermonActivity : AppCompatActivity() {
 				if (sermon != null) {
 					editTitle.setText(sermon.title)
 					editMemo.setText(RichTextUtils.toEditable(sermon.memo))
-					editLink.setText(sermon.link ?: "")
+					links.clear()
+					links.addAll(SermonLinks.split(sermon.link))
+					renderLinks()
 					selectedDateMillis = sermon.sermonDate
 					selectedCategoryId = sermon.categoryId
 					selectedPreacherId = sermon.preacherId
@@ -372,7 +380,7 @@ class AddSermonActivity : AppCompatActivity() {
 					// 뒤로가기 시 "진짜로 뭔가 바뀌었는지" 비교하기 위한 원본 스냅샷.
 					originalTitle = sermon.title
 					originalMemo = sermon.memo
-					originalLink = sermon.link ?: ""
+					originalLink = linkValue()
 					originalDateMillis = sermon.sermonDate
 					originalCategoryId = sermon.categoryId
 					originalPreacherId = sermon.preacherId
@@ -405,27 +413,109 @@ class AddSermonActivity : AppCompatActivity() {
 		existingSermon?.let { outState.putLong(KEY_SAVED_SERMON_ID, it.id) }
 	}
 
-	private fun showPhotoSourceMenu(anchor: View) {
+	/** "사진 추가"를 누르면 갤러리/카메라 중에서 고르는 창을 띄운다(링크 추가 창과 같은 모양). */
+	private fun showPhotoSourceMenu() {
 		if (photoPaths.size >= MAX_PHOTOS) {
 			Toast.makeText(this, "사진은 최대 ${MAX_PHOTOS}장까지 추가할 수 있어요", Toast.LENGTH_SHORT).show()
 			return
 		}
-		val popup = PopupMenu(this, anchor)
-		popup.menu.add(0, 0, 0, "갤러리에서 선택")
-		popup.menu.add(0, 1, 1, "카메라로 촬영")
-		popup.setOnMenuItemClickListener { item ->
-			when (item.itemId) {
-				0 -> pickPhotosLauncher.launch(
-					androidx.activity.result.PickVisualMediaRequest(
-						ActivityResultContracts.PickVisualMedia.ImageOnly
+		MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_BNOTE_Dialog)
+			.setTitle("사진 추가 (${photoPaths.size}/$MAX_PHOTOS)")
+			.setItems(arrayOf("갤러리에서 선택", "카메라로 촬영")) { _, which ->
+				when (which) {
+					0 -> pickPhotosLauncher.launch(
+						androidx.activity.result.PickVisualMediaRequest(
+							ActivityResultContracts.PickVisualMedia.ImageOnly
+						)
 					)
-				)
 
-				1 -> requestCameraAndLaunch()
+					1 -> requestCameraAndLaunch()
+				}
 			}
-			true
+			.setNegativeButton("취소", null)
+			.show()
+	}
+
+	private fun linkValue(): String = SermonLinks.join(links).orEmpty()
+
+	/** "링크 추가"를 누르면 주소를 붙여넣는 창을 띄운다. 여러 번 눌러서 링크를 여러 개 넣을 수 있다. */
+	private fun showAddLinkDialog() {
+		val density = resources.displayMetrics.density
+		val input = EditText(this).apply {
+			hint = "https://"
+			inputType =
+				android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_URI
+			maxLines = 1
+			isSingleLine = true
 		}
-		popup.show()
+		val box = android.widget.FrameLayout(this).apply {
+			val side = (20 * density).toInt()
+			setPadding(side, (8 * density).toInt(), side, 0)
+			addView(input)
+		}
+		val dialog = MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_BNOTE_Dialog)
+			.setTitle("링크 추가")
+			.setMessage("유튜브 링크는 설교 상세 화면에서 바로 재생돼요.")
+			.setView(box)
+			.setPositiveButton("추가", null)
+			.setNegativeButton("취소", null)
+			.show()
+		// "추가"를 눌러도 주소가 비어 있으면 창을 닫지 않는다.
+		dialog.getButton(android.content.DialogInterface.BUTTON_POSITIVE).setOnClickListener {
+			val link = SermonLinks.normalize(input.text.toString())
+			when {
+				link.isEmpty() -> input.error = "링크를 붙여넣어 주세요"
+				link in links -> input.error = "이미 넣은 링크예요"
+				else -> {
+					links.add(link)
+					renderLinks()
+					scheduleAutoSave()
+					dialog.dismiss()
+				}
+			}
+		}
+		input.requestFocus()
+		dialog.window?.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE)
+	}
+
+	/** 넣은 링크를 한 줄에 하나씩 보여주고, 오른쪽 ✕로 뺄 수 있게 한다. */
+	private fun renderLinks() {
+		btnAddLink.text = "링크 추가 (${links.size})"
+		linkContainer.removeAllViews()
+		linkContainer.visibility = if (links.isEmpty()) View.GONE else View.VISIBLE
+		val density = resources.displayMetrics.density
+		for (link in links.toList()) {
+			val row = LinearLayout(this).apply {
+				orientation = LinearLayout.HORIZONTAL
+				gravity = android.view.Gravity.CENTER_VERTICAL
+				layoutParams = LinearLayout.LayoutParams(
+					LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
+				).apply { topMargin = (4 * density).toInt() }
+			}
+			row.addView(TextView(this).apply {
+				text = "🔗 $link"
+				textSize = 14f
+				maxLines = 1
+				ellipsize = android.text.TextUtils.TruncateAt.END
+				setTextColor(ContextCompat.getColor(this@AddSermonActivity, R.color.text_secondary))
+				layoutParams =
+					LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+			})
+			row.addView(TextView(this).apply {
+				text = "✕"
+				textSize = 15f
+				val pad = (10 * density).toInt()
+				setPadding(pad, pad / 2, pad, pad / 2)
+				setTextColor(ContextCompat.getColor(this@AddSermonActivity, R.color.text_hint))
+				contentDescription = "링크 빼기"
+				setOnClickListener {
+					links.remove(link)
+					renderLinks()
+					scheduleAutoSave()
+				}
+			})
+			linkContainer.addView(row)
+		}
 	}
 
 	private fun requestCameraAndLaunch() {
@@ -753,7 +843,7 @@ class AddSermonActivity : AppCompatActivity() {
 		if (existingSermon == null) {
 			return editTitle.text.toString().isNotBlank() ||
 					editMemo.text.toString().isNotBlank() ||
-					editLink.text.toString().isNotBlank() ||
+					links.isNotEmpty() ||
 					bibleRefs.isNotEmpty() ||
 					photoPaths.isNotEmpty() ||
 					selectedCategoryId != null ||
@@ -762,7 +852,7 @@ class AddSermonActivity : AppCompatActivity() {
 		// 원본(또는 마지막 자동 저장 시점)과 실제로 달라진 게 있을 때만 "저장 안 된 변경사항"으로 본다.
 		return editTitle.text.toString().trim() != originalTitle ||
 				RichTextUtils.toStorageString(editMemo.text) != originalMemo ||
-				editLink.text.toString().trim() != originalLink ||
+				linkValue() != originalLink ||
 				selectedDateMillis != originalDateMillis ||
 				selectedCategoryId != originalCategoryId ||
 				selectedPreacherId != originalPreacherId ||
@@ -910,7 +1000,7 @@ class AddSermonActivity : AppCompatActivity() {
 			val preacherId = selectedPreacherId
 			if (title.isEmpty() || preacherId == null) return@launch
 			if (!hasUnsavedContent()) return@launch
-			persistSermon(title, editMemo.text, editLink.text.toString().trim(), preacherId)
+			persistSermon(title, editMemo.text, linkValue(), preacherId)
 		}
 	}
 
@@ -924,7 +1014,7 @@ class AddSermonActivity : AppCompatActivity() {
 			save(
 				editTitle.text.toString().trim(),
 				editMemo.text,
-				editLink.text.toString().trim(),
+				linkValue(),
 				exitAfterSave = false
 			)
 			return true
