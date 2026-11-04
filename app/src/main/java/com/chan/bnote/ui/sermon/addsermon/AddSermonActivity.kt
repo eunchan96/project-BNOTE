@@ -37,8 +37,10 @@ import com.chan.bnote.data.sermon.SermonLinks
 import com.chan.bnote.data.sermon.sermonphoto.SermonPhoto
 import com.chan.bnote.data.sermon.sermonphoto.SermonPhotoStorage
 import com.chan.bnote.ui.bible.picker.BibleRangePickerBottomSheet
+import com.chan.bnote.ui.common.DialogStyle
 import com.chan.bnote.ui.common.KeyboardBar
 import com.chan.bnote.ui.common.KeyboardFormatHandler
+import com.chan.bnote.ui.common.OptionDialog
 import com.chan.bnote.ui.sermon.detail.SermonDetailActivity
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
@@ -412,27 +414,30 @@ class AddSermonActivity : AppCompatActivity() {
 		existingSermon?.let { outState.putLong(KEY_SAVED_SERMON_ID, it.id) }
 	}
 
-	/** "사진 추가"를 누르면 갤러리/카메라 중에서 고르는 창을 띄운다(링크 창과 같은 모양). */
+	/** "사진 추가"를 누르면 갤러리/카메라 중에서 고르는 창을 띄운다(문의하기 창과 같은 모양). */
 	private fun showPhotoSourceMenu() {
 		if (photoPaths.size >= MAX_PHOTOS) {
 			Toast.makeText(this, "사진은 최대 ${MAX_PHOTOS}장까지 추가할 수 있어요", Toast.LENGTH_SHORT).show()
 			return
 		}
-		MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_BNOTE_Dialog)
-			.setTitle("사진 추가 ${photoPaths.size}/$MAX_PHOTOS")
-			.setItems(arrayOf("갤러리에서 선택", "카메라로 촬영")) { _, which ->
-				when (which) {
-					0 -> pickPhotosLauncher.launch(
-						androidx.activity.result.PickVisualMediaRequest(
-							ActivityResultContracts.PickVisualMedia.ImageOnly
-						)
+		OptionDialog.show(
+			this,
+			"사진 추가 ${photoPaths.size}/$MAX_PHOTOS",
+			listOf(
+				OptionDialog.Option("갤러리에서 선택", "여러 장을 한 번에 고를 수 있어요."),
+				OptionDialog.Option("카메라로 촬영", "바로 찍어서 첨부해요.")
+			)
+		) { which ->
+			when (which) {
+				0 -> pickPhotosLauncher.launch(
+					androidx.activity.result.PickVisualMediaRequest(
+						ActivityResultContracts.PickVisualMedia.ImageOnly
 					)
+				)
 
-					1 -> requestCameraAndLaunch()
-				}
+				1 -> requestCameraAndLaunch()
 			}
-			.setNegativeButton("취소", null)
-			.show()
+		}
 	}
 
 	private fun linkValue(): String = SermonLinks.join(links).orEmpty()
@@ -446,14 +451,11 @@ class AddSermonActivity : AppCompatActivity() {
 			showLinkEditDialog(null)
 			return
 		}
-		val items = (links + "＋ 새 링크 추가").toTypedArray()
-		MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_BNOTE_Dialog)
-			.setTitle("링크 ${links.size}")
-			.setItems(items) { _, which ->
-				showLinkEditDialog(if (which < links.size) which else null)
-			}
-			.setNegativeButton("닫기", null)
-			.show()
+		val options = links.map { OptionDialog.Option(it, "눌러서 수정 · 삭제") } +
+				OptionDialog.Option("＋ 새 링크 추가")
+		OptionDialog.show(this, "링크 ${links.size}", options, negativeText = "닫기") { which ->
+			showLinkEditDialog(if (which < links.size) which else null)
+		}
 	}
 
 	/**
@@ -461,23 +463,16 @@ class AddSermonActivity : AppCompatActivity() {
 	 * 저장 · 삭제한 뒤에는 링크 목록 창으로 돌아가서 이어서 고칠 수 있게 한다.
 	 */
 	private fun showLinkEditDialog(index: Int?) {
-		val density = resources.displayMetrics.density
-		val input = EditText(this).apply {
-			hint = "https://"
-			inputType =
-				android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_URI
-			maxLines = 1
-			isSingleLine = true
-			if (index != null) {
-				setText(links[index])
+		// 다른 이름 입력 창(설교자 · 그룹 등)과 같은 테두리 입력칸(DialogStyle).
+		val input =
+			DialogStyle.buildEditText(this, "https://", index?.let { links[it] }.orEmpty()).apply {
+				inputType =
+					android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_URI
+				maxLines = 1
+				isSingleLine = true
 				setSelection(text.length)
 			}
-		}
-		val box = android.widget.FrameLayout(this).apply {
-			val side = (20 * density).toInt()
-			setPadding(side, (8 * density).toInt(), side, 0)
-			addView(input)
-		}
+		val box = DialogStyle.wrapInDialogContainer(this, input)
 		val builder = MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_BNOTE_Dialog)
 			.setTitle(if (index == null) "새 링크 추가" else "링크 수정")
 			.setMessage("유튜브 링크는 설교 상세 화면에서 바로 재생돼요.")
