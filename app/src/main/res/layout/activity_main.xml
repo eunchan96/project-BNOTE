@@ -69,6 +69,20 @@
                 android:focusable="true"
                 android:background="?attr/selectableItemBackgroundBorderless" />
 
+            <!-- 지금 장에 성경 본문 오류 안내(공지)가 있을 때만 보인다. 누르면 그 공지가 열린다. -->
+            <ImageView
+                android:id="@+id/icon_errata_indicator"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:layout_marginStart="6dp"
+                android:src="@drawable/ic_warning"
+                app:tint="#FFD54F"
+                android:visibility="gone"
+                android:contentDescription="이 장의 본문 오류 안내 보기"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackgroundBorderless" />
+
             <ImageView
                 android:id="@+id/icon_reading_plan_check"
                 android:layout_width="18dp"

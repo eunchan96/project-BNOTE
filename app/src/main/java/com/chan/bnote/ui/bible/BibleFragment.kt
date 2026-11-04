@@ -133,6 +133,9 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 	private var isAutoScrolling = false
 	private var hasSermonForChapter = false
 
+	/** 지금 장에 해당하는 성경 본문 오류 공지(없으면 null). 있으면 상단바에 경고 아이콘을 띄운다. */
+	private var errataNotice: com.chan.bnote.data.notice.Notice? = null
+
 	private val selectedVerses = mutableSetOf<Int>()
 	private lateinit var selectionToolbar: View
 
@@ -351,7 +354,8 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		isChapterRead = isChapterRead,
 		showAutoScrollButton = isAutoScrollEnabled,
 		isAutoScrolling = isAutoScrolling,
-		showSermonIcon = hasSermonForChapter
+		showSermonIcon = hasSermonForChapter,
+		showErrataIcon = errataNotice != null
 	)
 
 	override fun onLocationClicked() {
@@ -615,6 +619,7 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 					.groupBy { it.verse }
 			isChapterRead = db.readingProgressDao().get(bookId, chapter) != null
 			hasSermonForChapter = db.sermonDao().getByBookChapter(bookId, chapter).isNotEmpty()
+			refreshErrataNotice()
 			db.recentChapterViewDao().upsert(RecentChapterView(bookId = bookId, chapter = chapter))
 
 			notifyTopBarChanged()
@@ -861,12 +866,32 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 			val db = BibleDatabase.getInstance(requireContext().applicationContext)
 			hasSermonForChapter =
 				db.sermonDao().getByBookChapter(currentBookId, currentChapter).isNotEmpty()
+			// 그 사이 새 공지를 받았거나(알림 화면에서 새로고침 등) 번역본을 바꿨을 수 있어서 다시 확인한다.
+			refreshErrataNotice()
 			notifyTopBarChanged()
 		}
 	}
 
 	override fun onSermonIconClicked() {
 		ChapterSermonsActivity.start(requireContext(), currentBookId, currentChapter)
+	}
+
+	/** 지금 장 · 번역본에 맞는 성경 본문 오류 공지를 찾아둔다(저장된 공지 목록에서 찾으므로 인터넷은 필요 없다). */
+	private fun refreshErrataNotice() {
+		val context = context ?: return
+		errataNotice = com.chan.bnote.data.notice.BibleErrataNotices.findFor(
+			context, currentBookId, currentChapter, primaryTranslation, secondaryTranslation
+		)
+	}
+
+	override fun onErrataIconClicked() {
+		val notice = errataNotice ?: return
+		startActivity(
+			com.chan.bnote.ui.mypage.notice.NoticeDetailActivity.createIntent(
+				requireContext(),
+				notice.id
+			)
+		)
 	}
 
 	/** 탭을 새로 만들지 않고 기존 인스턴스에서 특정 장으로 이동할 때 (MainActivity에서 호출). */

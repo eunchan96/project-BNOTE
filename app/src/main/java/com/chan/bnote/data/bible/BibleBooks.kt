@@ -21,6 +21,18 @@ object BibleBooks {
 
 	fun nameOf(bookId: Int): String = names.getOrElse(bookId - 1) { "알 수 없음" }
 
+	/** 책 이름("예레미야")으로 책 번호를 찾는다. 없으면 null. */
+	fun nameToId(name: String): Int? {
+		val index = names.indexOf(name)
+		return if (index == -1) null else index + 1
+	}
+
+	/** 66권 전체 이름(창세기 … 요한계시록). 글에서 책 이름을 찾을 때 쓴다. */
+	val allNames: List<String> get() = names
+
+	/** 66권 전체 약어(창 … 계). */
+	val allShortNames: List<String> get() = shortNames
+
 	/** 책 선택 그리드처럼 좁은 칸에 표시할 때 쓰는 이름. "데살로니가전서"·"데살로니가후서"는
 	 * 유독 길어서 좁은 화면에서는 줄이 넘칠 수 있는데, 자동 줄바꿈에 맡기면 위치가 어색하게 끊길 수 있다.
 	 * 그렇다고 무조건 \n으로 강제 줄바꿈하면 화면이 넓어서 원래 한 줄에 다 들어가는 기기에서도 불필요하게 2줄이 돼버린다.
