@@ -19,6 +19,7 @@ import androidx.activity.addCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
@@ -29,6 +30,7 @@ import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.DateUtils
 import com.chan.bnote.data.sermon.CitationParser
 import com.chan.bnote.data.sermon.Sermon
+import com.chan.bnote.data.sermon.SermonLinks
 import com.chan.bnote.data.sermon.SermonView
 import com.chan.bnote.data.sermon.sermonphoto.SermonPhotoStorage
 import com.chan.bnote.ui.sermon.addsermon.AddSermonActivity
@@ -303,36 +305,8 @@ class SermonDetailActivity : AppCompatActivity() {
 			photoContainer.addView(thumb)
 		}
 
-		// 링크 (유튜브면 바로 임베드, 아니면 눌러서 브라우저로 열기)
-		val webView = findViewById<android.webkit.WebView>(R.id.webview_sermon_link)
-		val plainLinkView = findViewById<TextView>(R.id.text_sermon_link_plain)
-		val link = sermon.link
-		if (link.isNullOrBlank()) {
-			webView.visibility = View.GONE
-			plainLinkView.visibility = View.GONE
-		} else {
-			val videoId = extractYoutubeId(link)
-			if (videoId != null) {
-				webView.visibility = View.VISIBLE
-				plainLinkView.visibility = View.GONE
-				webView.settings.javaScriptEnabled = true
-				val embedOrigin = "https://bnote.app"
-				val html = """
-					<html><body style="margin:0;padding:0;">
-					<iframe width="100%" height="100%"
-						src="https://www.youtube.com/embed/$videoId?playsinline=1&origin=$embedOrigin"
-						frameborder="0" allowfullscreen></iframe>
-					</body></html>
-				""".trimIndent()
-				webView.loadDataWithBaseURL(embedOrigin, html, "text/html", "utf-8", null)
-			} else {
-				webView.visibility = View.GONE
-				plainLinkView.visibility = View.VISIBLE
-				plainLinkView.setOnClickListener {
-					startActivity(Intent(Intent.ACTION_VIEW, android.net.Uri.parse(link)))
-				}
-			}
-		}
+		// 링크(여러 개) — 유튜브면 바로 임베드, 아니면 눌러서 브라우저로 열기
+		renderLinks(SermonLinks.split(sermon.link))
 
 		// 이 설교에 이미 연결된 적용이 있으면 "적용 보러 가기", 없으면 "적용하러 가기".
 		val existingApplication = db.applicationDao().getFirstBySermonId(sermon.id)
@@ -379,6 +353,78 @@ class SermonDetailActivity : AppCompatActivity() {
 			getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
 		clipboard.setPrimaryClip(android.content.ClipData.newPlainText("sermon", text))
 		android.widget.Toast.makeText(this, "복사했어요", android.widget.Toast.LENGTH_SHORT).show()
+	}
+
+	/**
+	 * 설교 링크를 순서대로 보여준다. 유튜브 링크는 그 자리에서 바로 재생되는 화면(200dp)으로,
+	 * 그 밖의 링크는 "🔗 주소" 줄로 보여주고 누르면 브라우저로 연다.
+	 */
+	private fun renderLinks(links: List<String>) {
+		val container = findViewById<LinearLayout>(R.id.container_sermon_links)
+		container.removeAllViews()
+		container.visibility = if (links.isEmpty()) View.GONE else View.VISIBLE
+		val density = resources.displayMetrics.density
+		val embedOrigin = "https://bnote.app"
+
+		for (link in links) {
+			val topMargin = (if (container.childCount == 0) 16 else 8) * density
+			val videoId = extractYoutubeId(link)
+			val view = if (videoId != null) {
+				android.webkit.WebView(this).apply {
+					layoutParams = LinearLayout.LayoutParams(
+						LinearLayout.LayoutParams.MATCH_PARENT, (200 * density).toInt()
+					).apply { this.topMargin = topMargin.toInt() }
+					settings.javaScriptEnabled = true
+					val html = """
+						<html><body style="margin:0;padding:0;">
+						<iframe width="100%" height="100%"
+							src="https://www.youtube.com/embed/$videoId?playsinline=1&origin=$embedOrigin"
+							frameborder="0" allowfullscreen></iframe>
+						</body></html>
+					""".trimIndent()
+					loadDataWithBaseURL(embedOrigin, html, "text/html", "utf-8", null)
+				}
+			} else {
+				TextView(this).apply {
+					layoutParams = LinearLayout.LayoutParams(
+						LinearLayout.LayoutParams.MATCH_PARENT,
+						LinearLayout.LayoutParams.WRAP_CONTENT
+					).apply { this.topMargin = topMargin.toInt() }
+					val pad = (12 * density).toInt()
+					setPadding(pad, pad, pad, pad)
+					// 링크가 여러 개면 어떤 링크인지 알 수 있게 주소를 보여준다.
+					text = if (links.size == 1) "🔗 링크 열기" else "🔗 $link"
+					textSize = 14f
+					maxLines = 1
+					ellipsize = android.text.TextUtils.TruncateAt.END
+					setTextColor(
+						ContextCompat.getColor(
+							this@SermonDetailActivity,
+							R.color.brown_text
+						)
+					)
+					background =
+						ContextCompat.getDrawable(
+							this@SermonDetailActivity,
+							R.drawable.bg_book_button
+						)
+					isClickable = true
+					isFocusable = true
+					setOnClickListener {
+						try {
+							startActivity(Intent(Intent.ACTION_VIEW, android.net.Uri.parse(link)))
+						} catch (e: Exception) {
+							android.widget.Toast.makeText(
+								this@SermonDetailActivity,
+								"링크를 열 수 없어요",
+								android.widget.Toast.LENGTH_SHORT
+							).show()
+						}
+					}
+				}
+			}
+			container.addView(view)
+		}
 	}
 
 	/** youtube.com/watch?v=ID, youtu.be/ID, youtube.com/live/ID, youtube.com/shorts/ID 형식 모두 지원. */

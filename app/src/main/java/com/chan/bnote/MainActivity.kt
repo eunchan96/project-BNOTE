@@ -72,6 +72,7 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 	private lateinit var btnAutoScroll: ImageView
 	private lateinit var iconReadingPlanCheck: ImageView
 	private lateinit var iconSermonIndicator: ImageView
+	private lateinit var iconErrataIndicator: ImageView
 
 	private lateinit var topBarScroll: android.widget.HorizontalScrollView
 	private lateinit var topBar: android.widget.LinearLayout
@@ -346,6 +347,7 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 		btnAutoScroll = findViewById(R.id.btn_auto_scroll)
 		iconReadingPlanCheck = findViewById(R.id.icon_reading_plan_check)
 		iconSermonIndicator = findViewById(R.id.icon_sermon_indicator)
+		iconErrataIndicator = findViewById(R.id.icon_errata_indicator)
 		topBarScroll = findViewById(R.id.top_bar_scroll)
 		topBar = findViewById(R.id.top_bar)
 		topBarSpacer = findViewById(R.id.view_top_bar_spacer)
@@ -377,6 +379,7 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 		btnAutoScroll.setOnClickListener { currentHandler()?.onAutoScrollButtonClicked() }
 		iconReadingPlanCheck.setOnClickListener { currentHandler()?.onReadingPlanCheckClicked() }
 		iconSermonIndicator.setOnClickListener { currentHandler()?.onSermonIconClicked() }
+		iconErrataIndicator.setOnClickListener { currentHandler()?.onErrataIconClicked() }
 	}
 
 	private fun setupBottomNavActions() {
@@ -466,6 +469,7 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 		btnAutoScroll.setImageResource(if (config.isAutoScrolling) R.drawable.ic_pause else R.drawable.ic_play)
 
 		iconSermonIndicator.visibility = visible(config.showSermonIcon)
+		iconErrataIndicator.visibility = visible(config.showErrataIcon)
 
 		btnNoticeContainer.visibility = visible(config.showNotice)
 		refreshNoticeDots()

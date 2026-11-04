@@ -15,6 +15,7 @@ import com.chan.bnote.R
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.mypage.profile.ProfilePhotoStorage
 import com.chan.bnote.data.mypage.profile.UserProfile
+import com.chan.bnote.ui.common.OptionDialog
 import kotlinx.coroutines.launch
 
 class ProfileEditActivity : AppCompatActivity() {
@@ -94,28 +95,24 @@ class ProfileEditActivity : AppCompatActivity() {
 		}
 	}
 
+	/** 프로필 사진을 누르면 뜨는 창(문의하기 창과 같은 모양). 사진을 넣어 둔 상태면 "기본 이미지로 변경"도 보인다. */
 	private fun showPhotoOptionsDialog() {
-		val options = mutableListOf("갤러리에서 선택")
-		if (!existingPhotoPath.isNullOrBlank() || pendingPhotoPath?.isNotEmpty() == true) {
-			options.add("기본 이미지로 변경")
-		}
-		com.google.android.material.dialog.MaterialAlertDialogBuilder(
-			this, R.style.ThemeOverlay_BNOTE_Dialog
-		)
-			.setItems(options.toTypedArray()) { _, index ->
-				when (options[index]) {
-					"갤러리에서 선택" -> pickPhotoLauncher.launch(
-						PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-					)
+		val hasPhoto = !existingPhotoPath.isNullOrBlank() || pendingPhotoPath?.isNotEmpty() == true
+		val options = mutableListOf(OptionDialog.Option("갤러리에서 선택"))
+		if (hasPhoto) options.add(OptionDialog.Option("기본 이미지로 변경"))
+		OptionDialog.show(this, "프로필 사진", options) { index ->
+			when (index) {
+				0 -> pickPhotoLauncher.launch(
+					PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+				)
 
-					"기본 이미지로 변경" -> {
-						// 빈 문자열을 "기본으로 재설정"의 표식으로 쓴다(null은 "안 바꿈"이라는 뜻이라서).
-						pendingPhotoPath = ""
-						imgPhoto.loadProfilePhoto(null)
-					}
+				1 -> {
+					// 빈 문자열을 "기본으로 재설정"의 표식으로 쓴다(null은 "안 바꿈"이라는 뜻이라서).
+					pendingPhotoPath = ""
+					imgPhoto.loadProfilePhoto(null)
 				}
 			}
-			.show()
+		}
 	}
 
 	private fun saveProfile() {

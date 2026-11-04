@@ -8,6 +8,7 @@ import android.text.Spanned
 import android.text.style.ForegroundColorSpan
 import android.text.style.StyleSpan
 import android.text.style.UnderlineSpan
+import android.view.inputmethod.BaseInputConnection
 import androidx.core.text.HtmlCompat
 
 /**
@@ -53,9 +54,25 @@ object RichTextUtils {
 
 	/** 편집기의 텍스트를 저장용 문자열로 바꾼다. 서식이 없으면 순수 텍스트 그대로. */
 	fun toStorageString(input: CharSequence): String {
-		if (input !is Spanned || !hasRichSpans(input)) return input.toString()
-		val padded = SpannableStringBuilder(input).append(SENTINEL)
+		if (input !is Spanned) return input.toString()
+		val cleaned = withoutComposingSpans(input)
+		if (!hasRichSpans(cleaned)) return cleaned.toString()
+		val padded = cleaned.append(SENTINEL)
 		return HtmlCompat.toHtml(padded, HtmlCompat.TO_HTML_PARAGRAPH_LINES_CONSECUTIVE)
+	}
+
+	/**
+	 * 키보드가 "지금 입력 중인 단어"에 임시로 긋는 밑줄(조합 중 표시)을 뺀 사본.
+	 * 단어를 치는 도중에 저장을 누르면 이 임시 밑줄도 진짜 밑줄 서식처럼 같이 저장돼서, 마지막 단어에
+	 * 밑줄이 남던 문제가 있었다. 키보드가 붙인 표시는 SPAN_COMPOSING 플래그가 있어서 그걸로 골라낸다.
+	 */
+	private fun withoutComposingSpans(input: Spanned): SpannableStringBuilder {
+		val copy = SpannableStringBuilder(input)
+		BaseInputConnection.removeComposingSpans(copy)
+		for (span in copy.getSpans(0, copy.length, Any::class.java)) {
+			if (copy.getSpanFlags(span) and Spanned.SPAN_COMPOSING != 0) copy.removeSpan(span)
+		}
+		return copy
 	}
 
 	private fun looksLikeHtml(text: String): Boolean = htmlLikeRegex.containsMatchIn(text)

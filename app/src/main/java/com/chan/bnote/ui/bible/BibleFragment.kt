@@ -11,6 +11,7 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
 import com.chan.bnote.R
@@ -133,6 +134,9 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 	private var isAutoScrolling = false
 	private var hasSermonForChapter = false
 
+	/** 지금 장에 해당하는 성경 본문 오류 공지(없으면 null). 있으면 상단바에 경고 아이콘을 띄운다. */
+	private var errataNotice: com.chan.bnote.data.notice.Notice? = null
+
 	private val selectedVerses = mutableSetOf<Int>()
 	private lateinit var selectionToolbar: View
 
@@ -173,18 +177,46 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 	}
 
 	private val autoScrollHandler = android.os.Handler(android.os.Looper.getMainLooper())
-	private val autoScrollRunnable = object : Runnable {
-		override fun run() {
+
+	/**
+	 * 자동 스크롤. 화면이 그려지는 매 프레임마다(Choreographer) 지난 프레임 이후 흐른 시간만큼만 내려서
+	 * 부드럽게 움직인다. 소수점 아래로 남은 픽셀은 모아 뒀다가 1px이 되면 함께 움직인다.
+	 *
+	 * 예전엔 smoothScrollBy를 일정 간격으로 불렀는데, 그러면 목록이 계속 "스크롤 중" 상태라 절을 탭해도
+	 * 스크롤을 멈추는 데만 터치가 쓰여서 절이 선택되지 않았다. 그래서 scrollBy(바로 이동)로 바꿨더니
+	 * 20~50ms마다 3~7px씩 뚝뚝 끊겨 보였다 — 이제 같은 속도를 프레임 단위로 잘게 나눠서 부드럽게 한다.
+	 */
+	private val choreographer: android.view.Choreographer by lazy { android.view.Choreographer.getInstance() }
+	private var lastAutoScrollFrameNanos = 0L
+	private var autoScrollRemainderPx = 0f
+
+	private val autoScrollFrameCallback = object : android.view.Choreographer.FrameCallback {
+		override fun doFrame(frameTimeNanos: Long) {
+			if (!::recyclerView.isInitialized) return
 			// 장의 맨 끝(하단 여백까지)에 닿으면 더 내려갈 곳이 없으니 자동 스크롤을 멈추고, 상단바 버튼도 재생 아이콘으로 되돌린다.
 			if (!recyclerView.canScrollVertically(1)) {
 				isAutoScrolling = false
 				notifyTopBarChanged()
 				return
 			}
-			recyclerView.smoothScrollBy(0, 2 + scrollSpeed) // 속도 1~5 -> 3~7px씩
-			autoScrollHandler.postDelayed(this, 60L - (scrollSpeed * 8)) // 속도 1~5 -> 52~20ms 간격
+			if (lastAutoScrollFrameNanos != 0L) {
+				// 앱이 잠깐 멈췄다 돌아온 경우 한 번에 크게 튀지 않도록 프레임 간격은 최대 50ms로 본다.
+				val elapsedMs =
+					((frameTimeNanos - lastAutoScrollFrameNanos) / 1_000_000f).coerceIn(0f, 50f)
+				autoScrollRemainderPx += autoScrollPxPerMs() * elapsedMs
+				val dy = autoScrollRemainderPx.toInt()
+				if (dy > 0) {
+					recyclerView.scrollBy(0, dy)
+					autoScrollRemainderPx -= dy
+				}
+			}
+			lastAutoScrollFrameNanos = frameTimeNanos
+			choreographer.postFrameCallback(this)
 		}
 	}
+
+	/** 예전과 같은 빠르기: 속도 1~5 → 52~20ms마다 3~7px. */
+	private fun autoScrollPxPerMs(): Float = (2 + scrollSpeed).toFloat() / (60 - scrollSpeed * 8)
 
 	private val scrapLauncher = registerForActivityResult(
 		androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()
@@ -351,7 +383,8 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		isChapterRead = isChapterRead,
 		showAutoScrollButton = isAutoScrollEnabled,
 		isAutoScrolling = isAutoScrolling,
-		showSermonIcon = hasSermonForChapter
+		showSermonIcon = hasSermonForChapter,
+		showErrataIcon = errataNotice != null
 	)
 
 	override fun onLocationClicked() {
@@ -566,11 +599,9 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		val innerRecyclerView = viewPager.getChildAt(0) as? RecyclerView
 		val holder =
 			innerRecyclerView?.findViewHolderForAdapterPosition(position) as? BiblePageAdapter.PageViewHolder
-		// 아래 코루틴에서 절 스크롤을 시도해도 되는지 판단하는 플래그. holder를 못 찾으면
-		// recyclerView 필드가 이 페이지 것으로 갱신 안 됐다는 뜻이라, 그 상태로 스크롤하면 엉뚱한
-		// (이전 장의) 목록이 움직여버릴 위험이 있어서 이 경우엔 스크롤을 건너뛴다(bind() 쪽
-		// 코루틴이 나중에 정상적으로 처리해줄 것이다).
-		val recyclerViewIsFreshForThisPage = holder?.currentRecyclerView()?.let { rv ->
+		// 뷰홀더를 찾았으면 recyclerView/adapter 필드를 이 페이지 것으로 맞춰 둔다(절 스크롤은 아래 코루틴의
+		// applyPendingScrollWhenPageReady가 페이지가 준비됐는지 직접 확인하고 처리한다).
+		holder?.currentRecyclerView()?.let { rv ->
 			recyclerView = rv
 			(rv.adapter as? androidx.recyclerview.widget.ConcatAdapter)
 				?.adapters
@@ -582,24 +613,14 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 					// 지금 진짜 selectedVerses로 강제 동기화해서 선택 배경색이 어긋나지 않게 한다.
 					adapter.updateSelection(selectedVerses.toSet())
 				}
-			true
-		} ?: false
+		}
 
 		lifecycleScope.launch {
 			val db = BibleDatabase.getInstance(requireContext().applicationContext)
 			currentVerses = db.bibleDao().getVerses(primaryTranslation.code, bookId, chapter)
 
-			// consumePendingMemoOpen과 같은 이유(ViewPager2 prefetch로 bind()가 다시 안 불릴 수
-			// 있음)로, 절 스크롤 요청도 여기서 같이 확인해서 처리한다. recyclerView가 아직 이 페이지
-			// 것으로 안 갱신됐으면(=holder를 못 찾음) 여기서 미리 소비해버리지 않는다 — 그러면 값이
-			// 지워진 채로 정작 스크롤은 못 한 상태가 돼서, 나중에 bind()가 정상적으로 불려도 이미
-			// 늦어버린다. 그럴 땐 그냥 안 건드리고 bind() 쪽 코루틴이 처리하게 둔다.
-			if (recyclerViewIsFreshForThisPage) {
-				consumePendingScrollVerse(bookId, chapter)?.let { verseNum ->
-					val index = currentVerses.indexOfFirst { it.verse == verseNum }
-					if (index >= 0) recyclerView.scrollToPosition(index)
-				}
-			}
+			// 전에 열어둔 페이지라 bind()가 다시 안 불려도 요청한 절로 가도록, 여기서도 처리한다.
+			applyPendingScrollWhenPageReady(bookId, chapter)
 
 			currentSecondaryMap = secondaryTranslation?.let { sec ->
 				db.bibleDao().getVerses(sec.code, bookId, chapter)
@@ -615,6 +636,7 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 					.groupBy { it.verse }
 			isChapterRead = db.readingProgressDao().get(bookId, chapter) != null
 			hasSermonForChapter = db.sermonDao().getByBookChapter(bookId, chapter).isNotEmpty()
+			refreshErrataNotice()
 			db.recentChapterViewDao().upsert(RecentChapterView(bookId = bookId, chapter = chapter))
 
 			notifyTopBarChanged()
@@ -712,6 +734,48 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		pageFooters[bookId to chapter] = footer
 	}
 
+	/**
+	 * "그 장에 도착하면 이 절로 스크롤" 요청을, 그 장 페이지가 실제로 화면에 붙고 본문까지 채워진 뒤에 처리한다.
+	 *
+	 * 전에 한 번 열어서 ViewPager2가 들고 있던 페이지로 이동하면 BiblePageAdapter.bind()가 다시 불리지 않아서
+	 * 그쪽에서 요청을 처리하지 못하고, 이동 직후엔 뷰홀더를 바로 못 찾는 경우도 있었다. 그래서 장 선택 · 하이라이트
+	 * 절 이동처럼 특정 절로 가야 하는 경우에도 그 페이지가 마지막으로 보던 위치에 그대로 머물렀다.
+	 * 이제 페이지가 준비될 때까지 잠깐씩(최대 [attemptsLeft]번) 다시 확인해서 처리한다. 이전 · 다음 장 이동은
+	 * 요청 자체를 만들지 않으므로 지금처럼 그 장을 마지막으로 보던 위치가 유지된다.
+	 */
+	private fun applyPendingScrollWhenPageReady(bookId: Int, chapter: Int, attemptsLeft: Int = 10) {
+		if (pendingScrollBookId != bookId || pendingScrollChapter != chapter) return // 이미 처리됨(bind 쪽 등)
+		if (!::viewPager.isInitialized || view == null) return
+
+		val holder = resolveCurrentPageViewHolder()
+		val pageRecyclerView = holder?.currentRecyclerView()
+		val ready =
+			holder != null && holder.boundBookId == bookId && holder.boundChapter == chapter &&
+					pageRecyclerView?.adapter != null
+		if (!ready) {
+			if (attemptsLeft > 0) {
+				viewPager.postDelayed({
+					applyPendingScrollWhenPageReady(
+						bookId,
+						chapter,
+						attemptsLeft - 1
+					)
+				}, 50)
+			}
+			return
+		}
+
+		val verseNum = consumePendingScrollVerse(bookId, chapter) ?: return
+		val index = currentVerses.indexOfFirst { it.verse == verseNum }.coerceAtLeast(0)
+		recyclerView = pageRecyclerView!!
+		// scrollToPosition은 아래쪽 절로 갈 때 그 절을 화면 맨 아래에 맞추므로, 맨 위에 오도록 offset 0으로 맞춘다.
+		(pageRecyclerView.layoutManager as? LinearLayoutManager)?.scrollToPositionWithOffset(
+			index,
+			0
+		)
+			?: pageRecyclerView.scrollToPosition(index)
+	}
+
 	/** loadChapter(bookId, chapter, scrollToVerse)로 요청해둔 "그 장에 도착하면 이 절로 스크롤"
 	 * 요청을 페이지가 로드될 때 한 번만 꺼내 쓴다. */
 	fun consumePendingScrollVerse(bookId: Int, chapter: Int): Int? {
@@ -807,8 +871,17 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 	 * 여기서 다시 확인해서 반영한다. hide()/show() 방식의 탭 전환은 onResume이 아니라 이 콜백을 탄다. */
 	override fun onHiddenChanged(hidden: Boolean) {
 		super.onHiddenChanged(hidden)
-		if (hidden) hideAudioToolbar()
+		if (hidden) {
+			hideAudioToolbar()
+			audioController?.releaseIfPaused()
+		}
 		if (!hidden) refreshOnReturnToTab()
+	}
+
+	override fun onStop() {
+		super.onStop()
+		// 다른 화면(메모 목록, 설정 등)이나 홈으로 나갔다 오면 멈춰 둔 재생 위치는 잊는다. 재생 중이면 그대로 둔다.
+		audioController?.releaseIfPaused()
 	}
 
 	override fun onResume() {
@@ -861,12 +934,32 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 			val db = BibleDatabase.getInstance(requireContext().applicationContext)
 			hasSermonForChapter =
 				db.sermonDao().getByBookChapter(currentBookId, currentChapter).isNotEmpty()
+			// 그 사이 새 공지를 받았거나(알림 화면에서 새로고침 등) 번역본을 바꿨을 수 있어서 다시 확인한다.
+			refreshErrataNotice()
 			notifyTopBarChanged()
 		}
 	}
 
 	override fun onSermonIconClicked() {
 		ChapterSermonsActivity.start(requireContext(), currentBookId, currentChapter)
+	}
+
+	/** 지금 장 · 번역본에 맞는 성경 본문 오류 공지를 찾아둔다(저장된 공지 목록에서 찾으므로 인터넷은 필요 없다). */
+	private fun refreshErrataNotice() {
+		val context = context ?: return
+		errataNotice = com.chan.bnote.data.notice.BibleErrataNotices.findFor(
+			context, currentBookId, currentChapter, primaryTranslation, secondaryTranslation
+		)
+	}
+
+	override fun onErrataIconClicked() {
+		val notice = errataNotice ?: return
+		startActivity(
+			com.chan.bnote.ui.mypage.notice.NoticeDetailActivity.createIntent(
+				requireContext(),
+				notice.id
+			)
+		)
 	}
 
 	/** 탭을 새로 만들지 않고 기존 인스턴스에서 특정 장으로 이동할 때 (MainActivity에서 호출). */
@@ -897,7 +990,13 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 				// 참조를 쓰면 스크롤이 안 먹혔다). 매번 지금 진짜 보이는 페이지에서 다시 찾는다.
 				val liveRecyclerView = resolveCurrentPageViewHolder()?.currentRecyclerView()
 				if (liveRecyclerView != null) recyclerView = liveRecyclerView
-				if (index >= 0 && ::recyclerView.isInitialized) recyclerView.scrollToPosition(index)
+				if (index >= 0 && ::recyclerView.isInitialized) {
+					(recyclerView.layoutManager as? LinearLayoutManager)?.scrollToPositionWithOffset(
+						index,
+						0
+					)
+						?: recyclerView.scrollToPosition(index)
+				}
 			}
 			// 이미 보고 있는 장이면 페이지가 다시 만들어지지 않아서(BiblePageAdapter.bind()가 다시 안 불림)
 			// consumePendingMemoOpen이 호출될 기회가 없었다 — 여기서 바로 소비해준다.
@@ -905,9 +1004,11 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 			return
 		}
 
+		// 장 선택 · 하이라이트 · 위젯 등으로 특정 장에 "찾아가는" 이동이라, 절을 따로 안 정했으면 1절부터 보여준다
+		// (전에 보던 페이지라도 마지막으로 보던 위치가 아니라). 이전 · 다음 장 버튼/스와이프는 이 함수를 안 거친다.
 		pendingScrollBookId = bookId
 		pendingScrollChapter = chapter
-		pendingScrollVerse = scrollToVerse
+		pendingScrollVerse = scrollToVerse ?: 1
 		viewPager.setCurrentItem(BibleChapterIndex.positionOf(bookId, chapter), false)
 	}
 
@@ -945,12 +1046,14 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 	}
 
 	private fun startAutoScroll() {
-		autoScrollHandler.removeCallbacks(autoScrollRunnable)
-		autoScrollHandler.post(autoScrollRunnable)
+		choreographer.removeFrameCallback(autoScrollFrameCallback)
+		lastAutoScrollFrameNanos = 0L
+		autoScrollRemainderPx = 0f
+		choreographer.postFrameCallback(autoScrollFrameCallback)
 	}
 
 	private fun stopAutoScroll() {
-		autoScrollHandler.removeCallbacks(autoScrollRunnable)
+		choreographer.removeFrameCallback(autoScrollFrameCallback)
 	}
 
 	override fun onDestroyView() {
@@ -974,6 +1077,7 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 	/**
 	 * 성경 탭을 보고 있을 때 하단바 성경 아이콘을 다시 누른 경우.
 	 * - 재생 중이면: 일시정지하고 재생 툴바를 띄운다.
+	 * - 이 장을 듣다가 멈춰 둔 상태면: 툴바가 닫혀 있어도 이어서 재생한다(다른 탭 · 화면에 갔다 오면 이 상태는 초기화).
 	 * - 재생 툴바가 떠 있고 멈춰 있으면: 다시 재생한다(툴바의 재생 버튼과 같은 동작 — 다른 장으로 넘어가 있으면 그 장부터).
 	 * - 그 밖에는 처리하지 않는다(false → 평소대로 탭 전환).
 	 */
@@ -981,6 +1085,11 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		val controller = audioController ?: return false
 		if (controller.pauseIfListening()) {
 			if (audioToolbar.visibility != View.VISIBLE) showAudioToolbar() else updateAudioToolbar()
+			return true
+		}
+		// 이 장을 듣다가 멈춰 둔 상태면 툴바가 닫혀 있어도 한 번 누르면 이어서 재생한다.
+		if (controller.resumeIfPausedOnCurrentChapter()) {
+			if (audioToolbar.visibility == View.VISIBLE) updateAudioToolbar()
 			return true
 		}
 		if (audioToolbar.visibility == View.VISIBLE && controller.isAvailable) {
@@ -1238,6 +1347,13 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 	}
 
 	private fun toggleVerseSelection(verseNum: Int) {
+		// 자동 스크롤 중에 절을 고르면, 고른 절이 화면 밖으로 흘러가지 않도록 자동 스크롤을 멈춘다(재생 아이콘으로 다시 시작).
+		if (isAutoScrolling) {
+			isAutoScrolling = false
+			stopAutoScroll()
+			notifyTopBarChanged()
+		}
+
 		if (selectedVerses.contains(verseNum)) {
 			selectedVerses.remove(verseNum)
 		} else {

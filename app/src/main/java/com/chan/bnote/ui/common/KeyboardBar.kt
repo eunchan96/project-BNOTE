@@ -3,11 +3,13 @@ package com.chan.bnote.ui.common
 import android.app.Activity
 import android.graphics.Paint
 import android.view.View
+import android.view.ViewGroup
 import android.view.ViewTreeObserver
 import android.widget.EditText
 import android.widget.TextView
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
+import androidx.core.view.updateLayoutParams
 import com.chan.bnote.R
 import com.chan.bnote.data.AppSettings
 
@@ -96,9 +98,17 @@ class KeyboardBar(
 		applyCollapsed(collapsed)
 	}
 
+	/**
+	 * 접으면 오른쪽의 작은 "편집 도구" 탭만 남는다. 이때 바가 한 줄(탭 높이)을 통째로 차지하면 탭 왼쪽이
+	 * 빈 띠로 남아 글이 가려지므로, 바를 탭 높이만큼 위로 끌어올려(음수 위 여백) 위의 글 위에 겹쳐 놓는다.
+	 * 바 자체는 배경 · 클릭이 없어서 탭 왼쪽은 투명하고, 그 자리를 누르면 아래 글(입력칸)이 그대로 눌린다.
+	 */
 	private fun applyCollapsed(collapsed: Boolean) {
 		body.isVisible = !collapsed
 		expandTab.isVisible = collapsed
+		bar.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+			topMargin = if (collapsed) -expandTab.layoutParams.height else 0
+		}
 	}
 
 	fun onInsetsChanged(insets: WindowInsetsCompat) {
