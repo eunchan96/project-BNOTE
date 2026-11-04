@@ -120,7 +120,6 @@ class AddSermonActivity : AppCompatActivity() {
 	private lateinit var editMemo: EditText
 	private lateinit var editTitle: EditText
 	private lateinit var btnAddLink: TextView
-	private lateinit var linkContainer: LinearLayout
 
 	/** 설교 링크(여러 개). 저장할 땐 줄바꿈으로 이어서 Sermon.link 한 칸에 넣는다(SermonLinks). */
 	private val links = mutableListOf<String>()
@@ -288,8 +287,8 @@ class AddSermonActivity : AppCompatActivity() {
 			override fun onDestroyActionMode(mode: android.view.ActionMode?) {}
 		}
 		btnAddLink = findViewById(R.id.btn_add_link)
-		linkContainer = findViewById(R.id.container_sermon_links)
-		btnAddLink.setOnClickListener { showAddLinkDialog() }
+		btnAddLink.setOnClickListener { showLinksDialog() }
+		updateLinkButton()
 
 		val autoSaveWatcher = object : android.text.TextWatcher {
 			override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
@@ -364,7 +363,7 @@ class AddSermonActivity : AppCompatActivity() {
 					editMemo.setText(RichTextUtils.toEditable(sermon.memo))
 					links.clear()
 					links.addAll(SermonLinks.split(sermon.link))
-					renderLinks()
+					updateLinkButton()
 					selectedDateMillis = sermon.sermonDate
 					selectedCategoryId = sermon.categoryId
 					selectedPreacherId = sermon.preacherId
@@ -413,14 +412,14 @@ class AddSermonActivity : AppCompatActivity() {
 		existingSermon?.let { outState.putLong(KEY_SAVED_SERMON_ID, it.id) }
 	}
 
-	/** "사진 추가"를 누르면 갤러리/카메라 중에서 고르는 창을 띄운다(링크 추가 창과 같은 모양). */
+	/** "사진 추가"를 누르면 갤러리/카메라 중에서 고르는 창을 띄운다(링크 창과 같은 모양). */
 	private fun showPhotoSourceMenu() {
 		if (photoPaths.size >= MAX_PHOTOS) {
 			Toast.makeText(this, "사진은 최대 ${MAX_PHOTOS}장까지 추가할 수 있어요", Toast.LENGTH_SHORT).show()
 			return
 		}
 		MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_BNOTE_Dialog)
-			.setTitle("사진 추가 (${photoPaths.size}/$MAX_PHOTOS)")
+			.setTitle("사진 추가 ${photoPaths.size}/$MAX_PHOTOS")
 			.setItems(arrayOf("갤러리에서 선택", "카메라로 촬영")) { _, which ->
 				when (which) {
 					0 -> pickPhotosLauncher.launch(
@@ -438,8 +437,30 @@ class AddSermonActivity : AppCompatActivity() {
 
 	private fun linkValue(): String = SermonLinks.join(links).orEmpty()
 
-	/** "링크 추가"를 누르면 주소를 붙여넣는 창을 띄운다. 여러 번 눌러서 링크를 여러 개 넣을 수 있다. */
-	private fun showAddLinkDialog() {
+	/**
+	 * "링크 추가"를 누르면 넣어 둔 링크 목록 창을 띄운다. 링크를 누르면 고치거나 지울 수 있고,
+	 * 맨 아래 "새 링크 추가"로 더 넣을 수 있다. 아직 링크가 없으면 바로 새 링크 입력 창을 띄운다.
+	 */
+	private fun showLinksDialog() {
+		if (links.isEmpty()) {
+			showLinkEditDialog(null)
+			return
+		}
+		val items = (links + "＋ 새 링크 추가").toTypedArray()
+		MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_BNOTE_Dialog)
+			.setTitle("링크 ${links.size}")
+			.setItems(items) { _, which ->
+				showLinkEditDialog(if (which < links.size) which else null)
+			}
+			.setNegativeButton("닫기", null)
+			.show()
+	}
+
+	/**
+	 * 링크 하나를 넣거나([index]가 null) 고치는 창. 고칠 때는 "삭제"도 있다.
+	 * 저장 · 삭제한 뒤에는 링크 목록 창으로 돌아가서 이어서 고칠 수 있게 한다.
+	 */
+	private fun showLinkEditDialog(index: Int?) {
 		val density = resources.displayMetrics.density
 		val input = EditText(this).apply {
 			hint = "https://"
@@ -447,30 +468,43 @@ class AddSermonActivity : AppCompatActivity() {
 				android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_URI
 			maxLines = 1
 			isSingleLine = true
+			if (index != null) {
+				setText(links[index])
+				setSelection(text.length)
+			}
 		}
 		val box = android.widget.FrameLayout(this).apply {
 			val side = (20 * density).toInt()
 			setPadding(side, (8 * density).toInt(), side, 0)
 			addView(input)
 		}
-		val dialog = MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_BNOTE_Dialog)
-			.setTitle("링크 추가")
+		val builder = MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_BNOTE_Dialog)
+			.setTitle(if (index == null) "새 링크 추가" else "링크 수정")
 			.setMessage("유튜브 링크는 설교 상세 화면에서 바로 재생돼요.")
 			.setView(box)
-			.setPositiveButton("추가", null)
+			.setPositiveButton(if (index == null) "추가" else "저장", null)
 			.setNegativeButton("취소", null)
-			.show()
-		// "추가"를 눌러도 주소가 비어 있으면 창을 닫지 않는다.
+		if (index != null) {
+			builder.setNeutralButton("삭제") { _, _ ->
+				links.removeAt(index)
+				onLinksChanged()
+				if (links.isNotEmpty()) showLinksDialog()
+			}
+		}
+		val dialog = builder.show()
+		// "추가/저장"을 눌러도 주소가 비어 있거나 이미 있는 링크면 창을 닫지 않는다.
 		dialog.getButton(android.content.DialogInterface.BUTTON_POSITIVE).setOnClickListener {
 			val link = SermonLinks.normalize(input.text.toString())
+			val duplicate =
+				links.withIndex().any { (i, existing) -> existing == link && i != index }
 			when {
 				link.isEmpty() -> input.error = "링크를 붙여넣어 주세요"
-				link in links -> input.error = "이미 넣은 링크예요"
+				duplicate -> input.error = "이미 넣은 링크예요"
 				else -> {
-					links.add(link)
-					renderLinks()
-					scheduleAutoSave()
+					if (index == null) links.add(link) else links[index] = link
+					onLinksChanged()
 					dialog.dismiss()
+					showLinksDialog()
 				}
 			}
 		}
@@ -478,44 +512,37 @@ class AddSermonActivity : AppCompatActivity() {
 		dialog.window?.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE)
 	}
 
-	/** 넣은 링크를 한 줄에 하나씩 보여주고, 오른쪽 ✕로 뺄 수 있게 한다. */
-	private fun renderLinks() {
-		btnAddLink.text = "링크 추가 (${links.size})"
-		linkContainer.removeAllViews()
-		linkContainer.visibility = if (links.isEmpty()) View.GONE else View.VISIBLE
-		val density = resources.displayMetrics.density
-		for (link in links.toList()) {
-			val row = LinearLayout(this).apply {
-				orientation = LinearLayout.HORIZONTAL
-				gravity = android.view.Gravity.CENTER_VERTICAL
-				layoutParams = LinearLayout.LayoutParams(
-					LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
-				).apply { topMargin = (4 * density).toInt() }
-			}
-			row.addView(TextView(this).apply {
-				text = "🔗 $link"
-				textSize = 14f
-				maxLines = 1
-				ellipsize = android.text.TextUtils.TruncateAt.END
-				setTextColor(ContextCompat.getColor(this@AddSermonActivity, R.color.text_secondary))
-				layoutParams =
-					LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
-			})
-			row.addView(TextView(this).apply {
-				text = "✕"
-				textSize = 15f
-				val pad = (10 * density).toInt()
-				setPadding(pad, pad / 2, pad, pad / 2)
-				setTextColor(ContextCompat.getColor(this@AddSermonActivity, R.color.text_hint))
-				contentDescription = "링크 빼기"
-				setOnClickListener {
-					links.remove(link)
-					renderLinks()
-					scheduleAutoSave()
-				}
-			})
-			linkContainer.addView(row)
-		}
+	private fun onLinksChanged() {
+		updateLinkButton()
+		scheduleAutoSave()
+	}
+
+	private fun updateLinkButton() {
+		btnAddLink.text = addButtonLabel("링크 추가", "${links.size}")
+	}
+
+	/** "사진 추가 0/5"처럼 버튼 글자는 갈색, 개수는 짙은 회색으로. */
+	private fun addButtonLabel(label: String, count: String): CharSequence {
+		val text = android.text.SpannableString("$label  $count")
+		text.setSpan(
+			android.text.style.ForegroundColorSpan(
+				ContextCompat.getColor(
+					this,
+					R.color.brown_text
+				)
+			),
+			0, label.length, android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+		)
+		text.setSpan(
+			android.text.style.ForegroundColorSpan(
+				ContextCompat.getColor(
+					this,
+					R.color.text_secondary
+				)
+			),
+			label.length, text.length, android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+		)
+		return text
 	}
 
 	private fun requestCameraAndLaunch() {
@@ -536,7 +563,7 @@ class AddSermonActivity : AppCompatActivity() {
 	}
 
 	private fun renderPhotoThumbnails() {
-		btnAddPhoto.text = "사진 추가 (${photoPaths.size}/$MAX_PHOTOS)"
+		btnAddPhoto.text = addButtonLabel("사진 추가", "${photoPaths.size}/$MAX_PHOTOS")
 		photoContainer.removeAllViews()
 		scrollPhotos.visibility = if (photoPaths.isEmpty()) View.GONE else View.VISIBLE
 

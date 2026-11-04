@@ -72,25 +72,23 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical" />
 
-            <!-- 항목 추가 · 순서 변경: 글자 크기만큼의 작은 버튼 두 개를 가운데에 나란히. 순서 변경 중엔 오른쪽이 "완료"가 되고 왼쪽은 잠긴다. -->
+            <!-- 항목 추가 · 순서 변경: 설교 작성 화면의 사진 · 링크 추가 버튼과 같은 모양(반반 나눈 갈색 글자 버튼). 순서 변경 중엔 오른쪽이 "완료"가 되고 왼쪽은 잠긴다. -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
-                android:orientation="horizontal"
-                android:gravity="start">
+                android:orientation="horizontal">
 
                 <TextView
                     android:id="@+id/btn_add_gratitude_entry"
-                    android:layout_width="wrap_content"
-                    android:layout_height="34dp"
-                    android:minWidth="88dp"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
                     android:layout_marginEnd="4dp"
-                    android:paddingStart="16dp"
-                    android:paddingEnd="16dp"
+                    android:padding="12dp"
                     android:gravity="center"
                     android:text="항목 추가"
-                    android:textSize="13sp"
+                    android:textSize="15sp"
                     android:textColor="@color/brown_text"
                     android:background="@drawable/bg_book_button"
                     android:clickable="true"
@@ -98,15 +96,14 @@
 
                 <TextView
                     android:id="@+id/btn_reorder_gratitude"
-                    android:layout_width="wrap_content"
-                    android:layout_height="34dp"
-                    android:minWidth="88dp"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
                     android:layout_marginStart="4dp"
-                    android:paddingStart="16dp"
-                    android:paddingEnd="16dp"
+                    android:padding="12dp"
                     android:gravity="center"
                     android:text="순서 변경"
-                    android:textSize="13sp"
+                    android:textSize="15sp"
                     android:textColor="@color/brown_text"
                     android:background="@drawable/bg_book_button"
                     android:clickable="true"
