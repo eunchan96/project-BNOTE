@@ -177,20 +177,46 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 	}
 
 	private val autoScrollHandler = android.os.Handler(android.os.Looper.getMainLooper())
-	private val autoScrollRunnable = object : Runnable {
-		override fun run() {
+
+	/**
+	 * 자동 스크롤. 화면이 그려지는 매 프레임마다(Choreographer) 지난 프레임 이후 흐른 시간만큼만 내려서
+	 * 부드럽게 움직인다. 소수점 아래로 남은 픽셀은 모아 뒀다가 1px이 되면 함께 움직인다.
+	 *
+	 * 예전엔 smoothScrollBy를 일정 간격으로 불렀는데, 그러면 목록이 계속 "스크롤 중" 상태라 절을 탭해도
+	 * 스크롤을 멈추는 데만 터치가 쓰여서 절이 선택되지 않았다. 그래서 scrollBy(바로 이동)로 바꿨더니
+	 * 20~50ms마다 3~7px씩 뚝뚝 끊겨 보였다 — 이제 같은 속도를 프레임 단위로 잘게 나눠서 부드럽게 한다.
+	 */
+	private val choreographer: android.view.Choreographer by lazy { android.view.Choreographer.getInstance() }
+	private var lastAutoScrollFrameNanos = 0L
+	private var autoScrollRemainderPx = 0f
+
+	private val autoScrollFrameCallback = object : android.view.Choreographer.FrameCallback {
+		override fun doFrame(frameTimeNanos: Long) {
+			if (!::recyclerView.isInitialized) return
 			// 장의 맨 끝(하단 여백까지)에 닿으면 더 내려갈 곳이 없으니 자동 스크롤을 멈추고, 상단바 버튼도 재생 아이콘으로 되돌린다.
 			if (!recyclerView.canScrollVertically(1)) {
 				isAutoScrolling = false
 				notifyTopBarChanged()
 				return
 			}
-			// smoothScrollBy를 쓰면 목록이 계속 "스크롤 중" 상태라, 절을 탭해도 목록이 스크롤을 멈추는 데만
-			// 터치를 써버려서 절이 선택되지 않았다. 바로 움직이는 scrollBy로 바꿔서 자동 스크롤 중에도 절을 탭할 수 있다.
-			recyclerView.scrollBy(0, 2 + scrollSpeed) // 속도 1~5 -> 3~7px씩
-			autoScrollHandler.postDelayed(this, 60L - (scrollSpeed * 8)) // 속도 1~5 -> 52~20ms 간격
+			if (lastAutoScrollFrameNanos != 0L) {
+				// 앱이 잠깐 멈췄다 돌아온 경우 한 번에 크게 튀지 않도록 프레임 간격은 최대 50ms로 본다.
+				val elapsedMs =
+					((frameTimeNanos - lastAutoScrollFrameNanos) / 1_000_000f).coerceIn(0f, 50f)
+				autoScrollRemainderPx += autoScrollPxPerMs() * elapsedMs
+				val dy = autoScrollRemainderPx.toInt()
+				if (dy > 0) {
+					recyclerView.scrollBy(0, dy)
+					autoScrollRemainderPx -= dy
+				}
+			}
+			lastAutoScrollFrameNanos = frameTimeNanos
+			choreographer.postFrameCallback(this)
 		}
 	}
+
+	/** 예전과 같은 빠르기: 속도 1~5 → 52~20ms마다 3~7px. */
+	private fun autoScrollPxPerMs(): Float = (2 + scrollSpeed).toFloat() / (60 - scrollSpeed * 8)
 
 	private val scrapLauncher = registerForActivityResult(
 		androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()
@@ -1020,12 +1046,14 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 	}
 
 	private fun startAutoScroll() {
-		autoScrollHandler.removeCallbacks(autoScrollRunnable)
-		autoScrollHandler.post(autoScrollRunnable)
+		choreographer.removeFrameCallback(autoScrollFrameCallback)
+		lastAutoScrollFrameNanos = 0L
+		autoScrollRemainderPx = 0f
+		choreographer.postFrameCallback(autoScrollFrameCallback)
 	}
 
 	private fun stopAutoScroll() {
-		autoScrollHandler.removeCallbacks(autoScrollRunnable)
+		choreographer.removeFrameCallback(autoScrollFrameCallback)
 	}
 
 	override fun onDestroyView() {
