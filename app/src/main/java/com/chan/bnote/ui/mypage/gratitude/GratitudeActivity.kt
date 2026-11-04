@@ -111,7 +111,12 @@ class GratitudeActivity : AppCompatActivity() {
 
 		findViewById<TextView>(R.id.btn_month_prev).setOnClickListener { moveMonth(-1) }
 		findViewById<TextView>(R.id.btn_calendar_today).setOnClickListener {
-			// (기존 그대로)
+			val cal = Calendar.getInstance()
+			currentYear = cal.get(Calendar.YEAR)
+			currentMonth0 = cal.get(Calendar.MONTH)
+			selectedDate = DateUtils.normalizeToDayStart(cal.timeInMillis)
+			loadCalendarGrid()
+			loadNotesForSelectedDate()
 		}
 		findViewById<TextView>(R.id.btn_month_next).setOnClickListener { moveMonth(1) }
 
@@ -123,6 +128,15 @@ class GratitudeActivity : AppCompatActivity() {
 		findViewById<HorizontalSwipeInterceptLayout>(R.id.swipe_intercept_list).apply {
 			onSwipeRight = { moveDay(-1) }
 			onSwipeLeft = { moveDay(1) }
+		}
+
+		findViewById<TextView>(R.id.fab_add_gratitude).setOnClickListener {
+			addLauncher.launch(
+				AddGratitudeActivity.createIntent(
+					this,
+					initialDateMillis = selectedDate
+				)
+			)
 		}
 
 		loadCalendarGrid()

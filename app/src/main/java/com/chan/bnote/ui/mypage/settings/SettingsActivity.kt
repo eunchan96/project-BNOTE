@@ -25,6 +25,7 @@ import com.chan.bnote.data.AppSettings
 import com.chan.bnote.data.backup.AutoBackupManager
 import com.chan.bnote.data.backup.BackupManager
 import com.chan.bnote.notification.NotificationScheduler
+import com.chan.bnote.ui.common.OptionDialog
 import com.chan.bnote.ui.mypage.guide.UserGuideActivity
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
@@ -293,21 +294,15 @@ class SettingsActivity : AppCompatActivity() {
 		}
 
 		btnInterval.setOnClickListener {
-			val labels = autoBackupIntervalOptions.map { it.second }.toTypedArray()
 			val currentDays = AppSettings.getAutoBackupIntervalDays(this)
-			val currentIndex = autoBackupIntervalOptions.indexOfFirst { it.first == currentDays }
-				.coerceAtLeast(0)
-
-			MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_BNOTE_Dialog)
-				.setTitle("자동 내보내기 주기")
-				.setSingleChoiceItems(labels, currentIndex) { dialog, which ->
-					val chosenDays = autoBackupIntervalOptions[which].first
-					AppSettings.setAutoBackupIntervalDays(this, chosenDays)
-					updateIntervalLabel()
-					dialog.dismiss()
-				}
-				.setNegativeButton("취소", null)
-				.show()
+			// 문의하기 창과 같은 모양의 선택 창 — 지금 주기는 체크 표시와 갈색 굵은 글씨로 보인다.
+			val options = autoBackupIntervalOptions.map { (days, label) ->
+				OptionDialog.Option(label, selected = days == currentDays)
+			}
+			OptionDialog.show(this, "자동 내보내기 주기", options) { which ->
+				AppSettings.setAutoBackupIntervalDays(this, autoBackupIntervalOptions[which].first)
+				updateIntervalLabel()
+			}
 		}
 	}
 

@@ -5,11 +5,10 @@ import com.chan.bnote.data.mypage.readingplan.ReadingGoal
 import com.chan.bnote.data.mypage.readingplan.ReadingProgress
 import java.text.SimpleDateFormat
 import java.util.Locale
-import kotlin.math.abs
 import kotlin.math.roundToInt
 
 /**
- * 성경읽기표 상단의 진행률·하루 분량·계획 대비 문구를 읽기 목표 기준으로 계산한다.
+ * 성경읽기표 상단의 진행률·하루 분량 문구를 읽기 목표 기준으로 계산한다.
  */
 object ReadingPace {
 
@@ -98,18 +97,6 @@ object ReadingPace {
 				val pace = remaining.toDouble() / daysLeft
 				lines.add("$period · 남은 날짜 ${daysLeft}일")
 				lines.add("다 읽으려면 하루 ${oneDecimal(pace)}장씩")
-
-				val baseline = inGoal.count { it.readAt < goal.startMillis }
-				val daysDone = daysInclusive(goal.startMillis, today) - 1 // 어제까지 지난 날 수
-				val expected = baseline + (total - baseline) * daysDone.toDouble() / totalDays
-				val diff = (read - expected).roundToInt()
-				lines.add(
-					when {
-						diff > 0 -> "계획보다 ${diff}장 앞서 있어요"
-						diff < 0 -> "계획보다 ${abs(diff)}장 뒤처져 있어요"
-						else -> "계획대로 읽고 있어요"
-					}
-				)
 			}
 		}
 

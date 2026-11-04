@@ -15,6 +15,8 @@ data class TopBarConfig(
 	val showAutoScrollButton: Boolean = false,
 	val isAutoScrolling: Boolean = false,
 	val showSermonIcon: Boolean = false,
+	/** 성경 탭: 지금 장에 성경 본문 오류 공지가 있으면 켠다(누르면 그 공지). */
+	val showErrataIcon: Boolean = false,
 	/** 알림(공지사항) 아이콘 — 마이페이지 탭에서만 켠다. 빨간 점은 MainActivity가 직접 관리한다. */
 	val showNotice: Boolean = false
 )
@@ -31,6 +33,7 @@ interface TopBarActionHandler {
 	fun onAutoScrollButtonClicked() {}
 	fun onReadingPlanCheckClicked() {}
 	fun onSermonIconClicked() {}
+	fun onErrataIconClicked() {}
 	fun onNoticeClicked() {}
 
 	/** 하단바에서 지금 보고 있는 탭 아이콘을 길게 눌렀을 때. 처리했으면 true(탭 전환 클릭은 안 일어남). */
