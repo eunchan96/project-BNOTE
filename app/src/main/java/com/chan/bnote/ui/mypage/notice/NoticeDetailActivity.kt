@@ -43,9 +43,16 @@ class NoticeDetailActivity : AppCompatActivity() {
 
 	companion object {
 		private const val EXTRA_NOTICE_ID = "extra_notice_id"
+		private const val EXTRA_ORDER_IDS = "extra_order_ids"
 
-		fun createIntent(context: Context, noticeId: Long): Intent =
-			Intent(context, NoticeDetailActivity::class.java).putExtra(EXTRA_NOTICE_ID, noticeId)
+		/**
+		 * [orderIds]: 이전 · 다음 알림으로 넘어갈 순서(목록에서 보던 순서, 필터 포함).
+		 * 없으면 전체 알림 목록 순서를 쓴다.
+		 */
+		fun createIntent(context: Context, noticeId: Long, orderIds: LongArray? = null): Intent =
+			Intent(context, NoticeDetailActivity::class.java)
+				.putExtra(EXTRA_NOTICE_ID, noticeId)
+				.apply { if (orderIds != null) putExtra(EXTRA_ORDER_IDS, orderIds) }
 
 		/** 목록 줄의 앞부분: (들여쓰기) + "・ ", "※ " 또는 "1. " 같은 번호. */
 		private val LIST_PREFIX = Regex("^\\s*(・|※|\\d+\\.)\\s+")
@@ -94,8 +101,41 @@ class NoticeDetailActivity : AppCompatActivity() {
 
 		NoticeRepository.markRead(this, listOf(notice))
 		bind(notice)
+		bindPrevNext(notice)
 		findViewById<ImageView>(R.id.btn_notice_delete).setOnClickListener { confirmDelete(notice) }
 		if (notice.commentCount > 0) loadComments(notice)
+	}
+
+	/**
+	 * 맨 아래 "이전 알림 / 다음 알림". 목록에서 위 · 아래에 있던 알림으로 넘어간다(목록이 최신순이라 이전 = 더 최근).
+	 * 넘어갈 때는 지금 화면을 닫고 새로 열어서, 뒤로가기를 누르면 바로 목록으로 돌아가게 한다.
+	 */
+	private fun bindPrevNext(notice: Notice) {
+		val order = (intent.getLongArrayExtra(EXTRA_ORDER_IDS)?.toList()
+			?: NoticeRepository.visibleNotices(this).map { it.id })
+			.mapNotNull { NoticeRepository.find(this, it) }
+		val index = order.indexOfFirst { it.id == notice.id }
+		val prev = if (index > 0) order[index - 1] else null
+		val next = if (index >= 0 && index < order.lastIndex) order[index + 1] else null
+
+		findViewById<View>(R.id.section_notice_nav).visibility =
+			if (prev != null || next != null) View.VISIBLE else View.GONE
+		findViewById<View>(R.id.divider_notice_nav).visibility =
+			if (prev != null && next != null) View.VISIBLE else View.GONE
+
+		val orderIds = order.map { it.id }.toLongArray()
+		fun bindRow(rowId: Int, titleId: Int, target: Notice?) {
+			val row = findViewById<View>(rowId)
+			row.visibility = if (target != null) View.VISIBLE else View.GONE
+			if (target == null) return
+			findViewById<TextView>(titleId).text = target.title
+			row.setOnClickListener {
+				startActivity(createIntent(this, target.id, orderIds))
+				finish()
+			}
+		}
+		bindRow(R.id.btn_notice_prev, R.id.text_notice_prev_title, prev)
+		bindRow(R.id.btn_notice_next, R.id.text_notice_next_title, next)
 	}
 
 	private fun bind(notice: Notice) {

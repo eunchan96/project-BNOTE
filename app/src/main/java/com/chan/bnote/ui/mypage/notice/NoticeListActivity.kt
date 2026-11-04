@@ -279,7 +279,9 @@ class NoticeListActivity : AppCompatActivity() {
 			if (!selectedIds.add(notice.id)) selectedIds.remove(notice.id)
 			render()
 		} else {
-			startActivity(NoticeDetailActivity.createIntent(this, notice.id))
+			// 상세에서 이전 · 다음 알림으로 넘어갈 순서 = 지금 목록에 보이는 순서(필터 포함).
+			val orderIds = filteredNotices().map { it.id }.toLongArray()
+			startActivity(NoticeDetailActivity.createIntent(this, notice.id, orderIds))
 		}
 	}
 
