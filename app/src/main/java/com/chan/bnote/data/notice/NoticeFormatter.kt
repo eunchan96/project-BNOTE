@@ -6,7 +6,6 @@ import android.text.SpannableStringBuilder
 import android.text.style.RelativeSizeSpan
 import android.text.style.StyleSpan
 import com.chan.bnote.data.notice.NoticeFormatter.toDisplaySpanned
-import com.chan.bnote.ui.common.ListText
 import com.chan.bnote.ui.mypage.guide.UserGuideContent
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -117,7 +116,7 @@ object NoticeFormatter {
 					)
 					// 알림 상세(ListText)가 소제목 위는 넓게, 아래 내용과는 붙게 간격을 정할 때 쓴다.
 					out.setSpan(
-						ListText.HeadingMarkSpan(),
+						NoticeHeadingSpan(),
 						lineStart,
 						out.length,
 						Spannable.SPAN_EXCLUSIVE_EXCLUSIVE

@@ -20,10 +20,12 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import com.chan.bnote.MainActivity
 import com.chan.bnote.R
+import com.chan.bnote.data.AppSettings
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.bible.BibleBooks
 import com.chan.bnote.data.bible.BibleVerse
 import com.chan.bnote.data.bible.partialhighlight.PartialHighlight
+import com.chan.bnote.ui.common.ListRows
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
@@ -189,9 +191,7 @@ class HighlightBookDetailActivity : AppCompatActivity() {
 			setPadding(dp(16), dp(16), dp(16), dp(6))
 			isClickable = true
 			isFocusable = true
-			background = ContextCompat.getDrawable(
-				this@HighlightBookDetailActivity, android.R.drawable.list_selector_background
-			)
+			background = ListRows.rippleBackground(this@HighlightBookDetailActivity)
 			addView(headerLabel)
 			addView(chevron)
 		}
@@ -214,10 +214,8 @@ class HighlightBookDetailActivity : AppCompatActivity() {
 		val row = LinearLayout(this).apply {
 			orientation = LinearLayout.HORIZONTAL
 			gravity = Gravity.CENTER_VERTICAL
-			setPadding(dp(16), dp(10), dp(16), dp(10))
-			background = ContextCompat.getDrawable(
-				this@HighlightBookDetailActivity, android.R.drawable.list_selector_background
-			)
+			setPadding(dp(16), dp(12), dp(16), dp(12))
+			background = ListRows.rippleBackground(this@HighlightBookDetailActivity)
 			isClickable = true
 			isFocusable = true
 		}
@@ -232,7 +230,9 @@ class HighlightBookDetailActivity : AppCompatActivity() {
 
 		val text = TextView(this).apply {
 			text = label
-			textSize = 14f
+			// 설정의 글자 크기를 따르는 목록 크기보다 2 작게(기본 14sp) — 한 화면에 여러 절이 보이게.
+			textSize = AppSettings.getListPreviewFontSize(this@HighlightBookDetailActivity) - 2f
+			setLineSpacing(0f, 1.25f)
 			setTextColor(
 				ContextCompat.getColor(
 					this@HighlightBookDetailActivity,

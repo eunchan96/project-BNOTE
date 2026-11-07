@@ -9,7 +9,7 @@ import android.text.style.LeadingMarginSpan
 import android.text.style.LineHeightSpan
 import android.text.style.ReplacementSpan
 import android.widget.TextView
-import com.chan.bnote.ui.common.ListText.style
+import com.chan.bnote.data.notice.NoticeHeadingSpan
 import kotlin.math.roundToInt
 
 /**
@@ -22,7 +22,7 @@ import kotlin.math.roundToInt
  * - [paragraphGapEm]을 주면, 줄바꿈으로 나뉜 줄(항목 · 문단)마다 아래에 그만큼(글자 크기 배수) 간격을 둔다.
  *   그러면 TextView의 줄 간격은 좁게 둬도 — 한 항목 안에서 넘어간 줄끼리는 촘촘하고 — 항목 사이는 떨어져 보인다.
  *   빈 줄(문단 구분)은 한 줄 높이 대신 [blankLineEm]만큼만 차지한다.
- * - 소제목 줄([HeadingMarkSpan]이 붙은 줄)은 위쪽을 [headingTopEm]만큼 더 띄우고, 아래 내용과는
+ * - 소제목 줄([NoticeHeadingSpan]이 붙은 줄)은 위쪽을 [headingTopEm]만큼 더 띄우고, 아래 내용과는
  *   [headingBottomEm]만큼만 띄운다 — 소제목이 앞 구역과는 떨어지고 자기 내용과는 붙어 보이게.
  *
  * textSize를 먼저 정한 TextView를 넘겨야 paint로 기호 폭을 정확히 잰다.
@@ -67,7 +67,8 @@ object ListText {
 			}
 
 			val isHeading = lineEnd > lineStart &&
-					spannable.getSpans(lineStart, lineEnd, HeadingMarkSpan::class.java).isNotEmpty()
+					spannable.getSpans(lineStart, lineEnd, NoticeHeadingSpan::class.java)
+						.isNotEmpty()
 			if (paragraphGapEm != null && isHeading && lineStart > 0) {
 				spannable.setSpan(
 					TopGapSpan((textSizePx * headingTopEm).roundToInt()),
@@ -146,9 +147,6 @@ object ListText {
 			const val DOT_CENTER_EM = 0.36f
 		}
 	}
-
-	/** 소제목 줄 표시. 모양은 바꾸지 않고, [style]이 소제목 위 · 아래 간격을 정할 때 알아보는 용도다(NoticeFormatter가 붙임). */
-	class HeadingMarkSpan
 
 	/** 이 span이 시작하는 줄(소제목의 첫 줄) 위에만 [gapPx]만큼 간격을 더한다. */
 	private class TopGapSpan(private val gapPx: Int) : LineHeightSpan {
