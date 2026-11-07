@@ -264,15 +264,15 @@ class NoticeListActivity : AppCompatActivity() {
 			}
 			// 종류 칩은 typeFilters의 같은 객체를 쓰므로 그대로 비교하면 된다.
 			val selected = filter == currentFilter
-			// 테두리 없이 선택된 칩만 갈색으로 채운다(칩이 여러 개여도 한 줄이 무겁지 않게).
+			// 테두리 없이 연한 갈색 바탕, 선택된 칩만 진한 갈색으로 채운다(칩이 여러 개여도 한 줄이 무겁지 않게).
 			chip.background = ContextCompat.getDrawable(
 				this,
 				if (selected) R.drawable.bg_notice_filter_chip_selected
-				else R.drawable.bg_book_button
+				else R.drawable.bg_chip_soft
 			)
 			chip.setTextColor(
 				if (selected) ContextCompat.getColor(this, R.color.surface_background)
-				else ContextCompat.getColor(this, R.color.text_primary)
+				else ContextCompat.getColor(this, R.color.chip_soft_text)
 			)
 			filterContainer.addView(chip)
 		}

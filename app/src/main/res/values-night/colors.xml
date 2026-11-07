@@ -47,4 +47,6 @@
     <color name="notice_type_general_bg">#2C3338</color>
     <color name="notice_type_general_text">#B3C1CB</color>
     <color name="red_letter">#C97B6E</color>
+    <color name="chip_soft_bg">#332A26</color>
+    <color name="chip_soft_text">#D7C2B6</color>
 </resources>
