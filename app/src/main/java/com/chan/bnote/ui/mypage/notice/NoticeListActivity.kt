@@ -268,7 +268,7 @@ class NoticeListActivity : AppCompatActivity() {
 			chip.background = ContextCompat.getDrawable(
 				this,
 				if (selected) R.drawable.bg_notice_filter_chip_selected
-				else R.drawable.bg_notice_filter_chip
+				else R.drawable.bg_book_button
 			)
 			chip.setTextColor(
 				if (selected) ContextCompat.getColor(this, R.color.surface_background)

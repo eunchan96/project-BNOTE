@@ -15,6 +15,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import coil.load
 import com.chan.bnote.R
+import com.chan.bnote.data.AppSettings
 import com.chan.bnote.data.notice.Notice
 import com.chan.bnote.data.notice.NoticeBlock
 import com.chan.bnote.data.notice.NoticeComment
@@ -40,6 +41,10 @@ import kotlinx.coroutines.launch
  * - 본문에 "문의하기"가 나오면 아래에 "문의하기" 버튼(문의하기 창을 바로 연다).
  */
 class NoticeDetailActivity : AppCompatActivity() {
+
+	/** 본문 글자 크기(sp). 설정의 글자 크기를 따르는 목록 화면(스크랩 · 북마크 등)과 같은 값. */
+	private val bodyTextSp: Float by lazy { AppSettings.getListPreviewFontSize(this).toFloat() }
+
 
 	companion object {
 		private const val EXTRA_NOTICE_ID = "extra_notice_id"
@@ -138,7 +143,15 @@ class NoticeDetailActivity : AppCompatActivity() {
 
 	private fun bind(notice: Notice) {
 		NoticeBadges.fill(findViewById(R.id.container_notice_badges), notice)
-		findViewById<TextView>(R.id.text_notice_title).text = notice.title
+		// 글자 크기는 스크랩 · 북마크 목록과 같은 규칙(설정의 글자 크기 − 2, 기본 16sp)을 따르고,
+		// 제목 · 날짜 · 추가 안내는 본문과의 차이를 유지한 채 같이 커지고 작아진다.
+		findViewById<TextView>(R.id.text_notice_title).apply {
+			text = notice.title
+			textSize = bodyTextSp + 4f
+		}
+		// 날짜는 글자를 아주 작게 설정해도 11sp 밑으로는 줄이지 않는다.
+		findViewById<TextView>(R.id.text_notice_date).textSize =
+			(bodyTextSp - 3f).coerceAtLeast(11f)
 
 		val dateText = buildString {
 			append(NoticeFormatter.fullDate(notice.createdAt))
@@ -156,7 +169,7 @@ class NoticeDetailActivity : AppCompatActivity() {
 		renderBlocks(
 			findViewById(R.id.container_notice_body),
 			if (isUpdate) NoticeFormatter.removeUpdateGuide(notice.body) else notice.body,
-			textSizeSp = 16f,
+			textSizeSp = bodyTextSp,
 			lineSpacing = 1.3f,
 			paragraphGapEm = 0.6f,
 			horizontalInsetDp = 40
@@ -171,6 +184,8 @@ class NoticeDetailActivity : AppCompatActivity() {
 			if (isUpdate) View.VISIBLE else View.GONE
 		if (isUpdate) {
 			val guideText = findViewById<TextView>(R.id.text_notice_update_guide)
+			// 글자 크기를 먼저 정해야 ListText가 "1. " 폭을 정확히 잰다.
+			guideText.textSize = bodyTextSp - 1f
 			guideText.text = ListText.style(UPDATE_GUIDE_TEXT, guideText, paragraphGapEm = 0.4f)
 		}
 
@@ -232,7 +247,7 @@ class NoticeDetailActivity : AppCompatActivity() {
 		renderBlocks(
 			body,
 			comment.body,
-			textSizeSp = 15f,
+			textSizeSp = bodyTextSp - 1f,
 			lineSpacing = 1.3f,
 			paragraphGapEm = 0.5f,
 			horizontalInsetDp = 72

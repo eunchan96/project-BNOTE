@@ -12,6 +12,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.chan.bnote.R
+import com.chan.bnote.data.AppSettings
 
 /** 가이드 항목 하나(GuideItem)만 따로 보여주는 화면. 예전에는 카테고리 안 항목을 전부 한 화면에
  * 이어 붙여서 보여줬는데, 사진이 붙으면서 한 카테고리에 20장 넘게 쌓여 너무 길고 복잡해졌다.
@@ -61,7 +62,8 @@ class UserGuideItemDetailActivity : AppCompatActivity() {
 		// (예전엔 배경 위에 글자만 덩그러니 있어서 눈에 잘 안 들어왔다).
 		val descView = TextView(this).apply {
 			text = item.description
-			textSize = 15.5f
+			// 스크랩 · 북마크 목록과 같은 규칙(설정의 글자 크기 − 2)에서 0.5 작게(기본 15.5sp, 예전과 같음).
+			textSize = AppSettings.getListPreviewFontSize(this@UserGuideItemDetailActivity) - 0.5f
 			setTextColor(
 				ContextCompat.getColor(
 					this@UserGuideItemDetailActivity,

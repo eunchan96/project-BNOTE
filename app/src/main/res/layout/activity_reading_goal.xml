@@ -197,8 +197,8 @@
                     android:paddingTop="6dp"
                     android:paddingBottom="6dp"
                     android:textSize="13sp"
-                    android:textColor="@color/brown_text"
-                    android:background="@drawable/bg_chip_outline"
+                    android:textColor="@color/text_primary"
+                    android:background="@drawable/bg_book_button"
                     android:clickable="true"
                     android:focusable="true"
                     android:text="전체" />
@@ -213,8 +213,8 @@
                     android:paddingTop="6dp"
                     android:paddingBottom="6dp"
                     android:textSize="13sp"
-                    android:textColor="@color/brown_text"
-                    android:background="@drawable/bg_chip_outline"
+                    android:textColor="@color/text_primary"
+                    android:background="@drawable/bg_book_button"
                     android:clickable="true"
                     android:focusable="true"
                     android:text="구약" />
@@ -229,8 +229,8 @@
                     android:paddingTop="6dp"
                     android:paddingBottom="6dp"
                     android:textSize="13sp"
-                    android:textColor="@color/brown_text"
-                    android:background="@drawable/bg_chip_outline"
+                    android:textColor="@color/text_primary"
+                    android:background="@drawable/bg_book_button"
                     android:clickable="true"
                     android:focusable="true"
                     android:text="신약" />
@@ -245,8 +245,8 @@
                     android:paddingTop="6dp"
                     android:paddingBottom="6dp"
                     android:textSize="13sp"
-                    android:textColor="@color/brown_text"
-                    android:background="@drawable/bg_chip_outline"
+                    android:textColor="@color/text_primary"
+                    android:background="@drawable/bg_book_button"
                     android:clickable="true"
                     android:focusable="true"
                     android:text="모두 해제" />
