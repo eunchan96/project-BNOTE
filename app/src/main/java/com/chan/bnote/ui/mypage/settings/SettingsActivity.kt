@@ -201,6 +201,16 @@ class SettingsActivity : AppCompatActivity() {
 			switchBibleScrollbar.isChecked = !switchBibleScrollbar.isChecked
 		}
 
+		val switchRedLetter = findViewById<Switch>(R.id.switch_red_letter).apply {
+			isChecked = AppSettings.isRedLetterEnabled(this@SettingsActivity)
+			setOnCheckedChangeListener { _, checked ->
+				AppSettings.setRedLetterEnabled(this@SettingsActivity, checked)
+			}
+		}
+		findViewById<View>(R.id.row_red_letter_toggle).setOnClickListener {
+			switchRedLetter.isChecked = !switchRedLetter.isChecked
+		}
+
 		val switchReadingCheckPosition =
 			findViewById<Switch>(R.id.switch_reading_check_position).apply {
 				isChecked = AppSettings.isReadingCheckBottomButtonMode(this@SettingsActivity)

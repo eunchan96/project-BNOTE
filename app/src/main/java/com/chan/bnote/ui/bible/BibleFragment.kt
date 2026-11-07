@@ -126,6 +126,7 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 	private var secondaryTranslation: Translation? = null
 	private var currentFontSize: Int = 16
 	private var currentScrollbarVisible = true
+	private var currentRedLetterEnabled = true
 	private var scrollSpeed = AppSettings.DEFAULT_SCROLL_SPEED
 
 	private var isReadingPlanEnabled = false
@@ -285,6 +286,7 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 
 		currentFontSize = AppSettings.getFontSize(requireContext())
 		currentScrollbarVisible = AppSettings.isBibleScrollbarVisible(requireContext())
+		currentRedLetterEnabled = AppSettings.isRedLetterEnabled(requireContext())
 		isReadingPlanEnabled = AppSettings.isReadingPlanEnabled(requireContext())
 		isAutoScrollEnabled = AppSettings.isAutoScrollEnabled(requireContext())
 		scrollSpeed = AppSettings.getScrollSpeed(requireContext())
@@ -688,6 +690,7 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 			highlightsByVerse = highlights,
 			verseMemos = verseMemos,
 			wordMemosByVerse = wordMemos,
+			showRedLetter = currentRedLetterEnabled,
 			onVerseTap = { verseNum -> toggleVerseSelection(verseNum) },
 			onVerseMemoView = { verseNum, memo -> showVerseMemoDialog(verseNum, memo) },
 			onHighlightRequested = { verseNum, start, end, segment ->
@@ -924,6 +927,18 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 			}
 		}
 
+		val newRedLetterEnabled = AppSettings.isRedLetterEnabled(requireContext())
+		if (newRedLetterEnabled != currentRedLetterEnabled) {
+			currentRedLetterEnabled = newRedLetterEnabled
+			// 지금 보이는 장은 바로 다시 그리고, 미리 만들어 둔 앞뒤 장은 다시 그려야 함으로 표시한다(스크롤바와 같은 방식).
+			resolveCurrentVerseAdapter()?.updateRedLetter(newRedLetterEnabled)
+			if (::viewPager.isInitialized && ::pageAdapter.isInitialized) {
+				val position = viewPager.currentItem
+				if (position > 0) pageAdapter.notifyItemRangeChanged(0, position)
+				val afterCount = pageAdapter.itemCount - position - 1
+				if (afterCount > 0) pageAdapter.notifyItemRangeChanged(position + 1, afterCount)
+			}
+		}
 		scrollSpeed = AppSettings.getScrollSpeed(requireContext())
 		updateReadingCheckBottomButton()
 		if (::viewPager.isInitialized) {

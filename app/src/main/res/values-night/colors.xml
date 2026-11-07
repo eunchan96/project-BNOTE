@@ -46,4 +46,5 @@
     <color name="notice_type_tip_text">#A8CFA9</color>
     <color name="notice_type_general_bg">#2C3338</color>
     <color name="notice_type_general_text">#B3C1CB</color>
+    <color name="red_letter">#C97B6E</color>
 </resources>

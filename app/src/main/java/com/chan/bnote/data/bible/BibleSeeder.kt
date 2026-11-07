@@ -14,7 +14,7 @@ object BibleSeeder {
 
 	// 성경 본문 assets(JSON)를 고칠 때마다 이 숫자를 1씩 올린다.
 	// 그러면 이미 앱을 쓰고 있던 사용자도 다음 실행 시 그 번역본만 자동으로 다시 심어진다.
-	private const val SEED_VERSION = 13
+	private const val SEED_VERSION = 14 // 14: 예수님 말씀(jesus) 구간을 읽기 시작
 
 	// 배포 전 오탈자 등을 계속 확인하는 동안엔 true로 두면 매번(앱 실행마다) 무조건 다시 심는다.
 	// 실제 배포 전에는 반드시 false로 바꿔서, 위 SEED_VERSION 번호로만 재시딩되게 할 것.
@@ -252,17 +252,34 @@ object BibleSeeder {
 		val verses = ArrayList<BibleVerse>(array.length())
 		for (i in 0 until array.length()) {
 			val obj = array.getJSONObject(i)
+			val bookId = obj.getInt("book")
+			val chapter = obj.getInt("chapter")
+			val verse = obj.getInt("verse")
+			val text = obj.getString("text")
+			// 절 중간에 소제목이 오는 극소수 예외 구절(예: 창 35:22)에서만 쓰인다.
+			val text2 =
+				if (obj.has("text_2") && !obj.isNull("text_2")) obj.getString("text_2") else null
 			verses.add(
 				BibleVerse(
 					translation = translationCode,
-					bookId = obj.getInt("book"),
-					chapter = obj.getInt("chapter"),
-					verse = obj.getInt("verse"),
-					text = obj.getString("text"),
+					bookId = bookId,
+					chapter = chapter,
+					verse = verse,
+					text = text,
 					title = if (obj.has("title") && !obj.isNull("title")) obj.getString("title") else null,
-					// 절 중간에 소제목이 오는 극소수 예외 구절(예: 창 35:22)에서만 쓰인다.
 					title2 = if (obj.has("title_2") && !obj.isNull("title_2")) obj.getString("title_2") else null,
-					text2 = if (obj.has("text_2") && !obj.isNull("text_2")) obj.getString("text_2") else null
+					text2 = text2,
+					redLetter = RedLetter.resolve(
+						obj.optJSONObject("jesus"),
+						text,
+						text2
+					) { missing ->
+						// JSON에 적은 단어를 본문에서 못 찾으면 그 구간만 빼고 넘어간다(Logcat에서 "BibleSeeder"로 확인).
+						Log.w(
+							TAG,
+							"예수님 말씀 구간을 못 찾음: $translationCode $bookId:$chapter:$verse $missing"
+						)
+					}
 				)
 			)
 		}

@@ -27,6 +27,8 @@
     <color name="category_none">#D6D6D6</color>
     <color name="input_background">#F5F5F5</color>
     <color name="highlight_yellow">#FFF9C4</color>
+    <!-- 성경 본문의 예수님 말씀(붉은 글씨). 다크모드에선 검은 바탕에서 잘 보이게 조금 밝게(values-night) -->
+    <color name="red_letter">#8E3A2E</color>
 
     <!-- 마이페이지 성경 읽기 진행률 그리드 -->
     <color name="book_progress_none_bg">#F5F5F5</color>

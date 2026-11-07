@@ -1,6 +1,7 @@
 package com.chan.bnote.ui.common
 
 import android.graphics.Color
+import com.chan.bnote.ui.common.HighlightColors.contrastTextColor
 
 object HighlightColors {
 	val palette = listOf(
@@ -29,4 +30,13 @@ object HighlightColors {
 		val luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
 		return if (luminance > 0.6) Color.parseColor("#212121") else Color.parseColor("#F5F5F5")
 	}
+
+	/**
+	 * 하이라이트 위에 놓이는 예수님 말씀(붉은 글씨) 색. 하이라이트 배경은 다크모드에서도 같은 파스텔이라
+	 * 화면 모드가 아니라 배경 밝기를 보고 고른다 — 밝은 배경엔 짙은 붉은색(라이트모드 red_letter와 같은 색),
+	 * 어두운 배경엔 밝은 붉은색. [contrastTextColor]와 같은 기준이라 일반 글자와 붉은 글씨가 같이 바뀐다.
+	 */
+	fun redLetterColor(colorHex: String): Int =
+		if (contrastTextColor(colorHex) == Color.parseColor("#212121")) Color.parseColor("#8E3A2E")
+		else Color.parseColor("#F0B3A8")
 }

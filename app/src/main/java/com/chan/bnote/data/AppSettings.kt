@@ -42,6 +42,7 @@ object AppSettings {
 	private const val KEY_KEYBOARD_BAR_COLLAPSED = "keyboard_bar_collapsed"
 	private const val KEY_CHAPTER_SWIPE_ENABLED = "chapter_swipe_enabled"
 	private const val KEY_BIBLE_SCROLLBAR_ENABLED = "bible_scrollbar_enabled"
+	private const val KEY_RED_LETTER_ENABLED = "red_letter_enabled"
 	private const val KEY_READING_CHECK_BOTTOM_BUTTON = "reading_check_bottom_button"
 	private const val KEY_COPY_INCLUDE_SECONDARY = "copy_include_secondary"
 	private const val KEY_ACTIVE_COPY_FORMAT = "active_copy_format_json"
@@ -289,6 +290,17 @@ object AppSettings {
 	fun setBibleScrollbarVisible(context: Context, enabled: Boolean) {
 		context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
 			.edit().putBoolean(KEY_BIBLE_SCROLLBAR_ENABLED, enabled).apply()
+	}
+
+	/** 성경 본문의 예수님 말씀을 붉은 글씨로 보여줄지. 기본은 켜짐, 끄면 다른 글자와 같은 색으로 나온다. */
+	fun isRedLetterEnabled(context: Context): Boolean {
+		return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.getBoolean(KEY_RED_LETTER_ENABLED, true)
+	}
+
+	fun setRedLetterEnabled(context: Context, enabled: Boolean) {
+		context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.edit().putBoolean(KEY_RED_LETTER_ENABLED, enabled).apply()
 	}
 
 	/** 기본은 상단바 체크 아이콘, 켜면 성경 탭 하단 버튼으로 표시한다. */
