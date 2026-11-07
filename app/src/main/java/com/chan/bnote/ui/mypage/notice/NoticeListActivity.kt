@@ -291,6 +291,10 @@ class NoticeListActivity : AppCompatActivity() {
 		render()
 	}
 
+	private companion object {
+		val TITLE_UNREAD: Typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
+	}
+
 	private inner class NoticeAdapter : RecyclerView.Adapter<NoticeAdapter.ViewHolder>() {
 
 		private var items: List<Notice> = emptyList()
@@ -326,7 +330,8 @@ class NoticeListActivity : AppCompatActivity() {
 			NoticeBadges.fill(holder.badges, notice)
 			holder.date.text = NoticeFormatter.listDate(notice.createdAt)
 			holder.title.text = notice.title
-			holder.title.setTypeface(null, if (unread) Typeface.BOLD else Typeface.NORMAL)
+			// 안 읽은 알림은 아주 굵게(BOLD) 대신 중간 굵기로 — 목록이 덜 무거워 보인다.
+			holder.title.typeface = if (unread) TITLE_UNREAD else Typeface.DEFAULT
 			val preview = NoticeFormatter.preview(notice.body)
 			holder.preview.text = preview
 			holder.preview.visibility = if (preview.isBlank()) View.GONE else View.VISIBLE

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 알림 상세의 보조 버튼("문의하기"): 옅은 배경 + 갈색 글자의 둥근 버튼 -->
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="@color/ripple_brown">
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/input_background" />
+            <corners android:radius="12dp" />
+        </shape>
+    </item>
+</ripple>

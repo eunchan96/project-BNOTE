@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 알림 상세의 주 버튼("새 버전 받기"): 갈색으로 채운 둥근 버튼 -->
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="@color/ripple_brown">
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/brown_primary" />
+            <corners android:radius="12dp" />
+        </shape>
+    </item>
+</ripple>

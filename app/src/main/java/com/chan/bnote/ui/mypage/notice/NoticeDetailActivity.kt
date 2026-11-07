@@ -156,13 +156,13 @@ class NoticeDetailActivity : AppCompatActivity() {
 
 		val isUpdate = notice.type == NoticeType.UPDATE
 
-		// 본문은 화면 양옆 16dp씩 여백 안에 있다.
+		// 본문은 화면 양옆 20dp씩 여백 안에 있다.
 		renderBlocks(
 			findViewById(R.id.container_notice_body),
 			if (isUpdate) NoticeFormatter.removeUpdateGuide(notice.body) else notice.body,
-			textSizeSp = 15f,
-			lineSpacing = 1.4f,
-			horizontalInsetDp = 32
+			textSizeSp = 16f,
+			lineSpacing = 1.55f,
+			horizontalInsetDp = 40
 		)
 
 		// 본문에서 "문의하기"를 안내하면(오류 공지 등) 그 자리에서 바로 문의할 수 있게 버튼을 붙인다.
@@ -209,16 +209,16 @@ class NoticeDetailActivity : AppCompatActivity() {
 		val box = LinearLayout(this).apply {
 			orientation = LinearLayout.VERTICAL
 			background =
-				ContextCompat.getDrawable(this@NoticeDetailActivity, R.drawable.bg_book_button)
+				ContextCompat.getDrawable(this@NoticeDetailActivity, R.drawable.bg_notice_comment)
 			setPadding(
+				(16 * density).toInt(),
 				(12 * density).toInt(),
-				(10 * density).toInt(),
-				(12 * density).toInt(),
-				(12 * density).toInt()
+				(16 * density).toInt(),
+				(14 * density).toInt()
 			)
 			layoutParams = LinearLayout.LayoutParams(
 				LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
-			).apply { topMargin = (8 * density).toInt() }
+			).apply { topMargin = (10 * density).toInt() }
 		}
 		box.addView(TextView(this).apply {
 			text = NoticeFormatter.fullDate(comment.createdAt)
@@ -229,15 +229,15 @@ class NoticeDetailActivity : AppCompatActivity() {
 			orientation = LinearLayout.VERTICAL
 			layoutParams = LinearLayout.LayoutParams(
 				LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
-			).apply { topMargin = (4 * density).toInt() }
+			).apply { topMargin = (6 * density).toInt() }
 		}
-		// 추가 안내는 화면 여백(16dp × 2)에 박스 안쪽 여백(12dp × 2)과 테두리가 더해진다.
+		// 추가 안내는 화면 여백(20dp × 2)에 박스 안쪽 여백(16dp × 2)이 더해진다.
 		renderBlocks(
 			body,
 			comment.body,
-			textSizeSp = 14f,
-			lineSpacing = 1.35f,
-			horizontalInsetDp = 58
+			textSizeSp = 15f,
+			lineSpacing = 1.5f,
+			horizontalInsetDp = 72
 		)
 		box.addView(body)
 		return box
