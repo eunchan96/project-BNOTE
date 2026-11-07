@@ -25,7 +25,7 @@ import com.chan.bnote.ui.common.ListText
  * - 첫 줄: 한 줄 요약(굵게)
  * - "1. " · "・ "로 시작하는 줄: 단계 · 항목(알림 상세와 같은 ListText로 들여쓰기 · 간격)
  * - "💡 "로 시작하는 줄: 단계 아래의 옅은 참고 박스로 모은다
- * - 사진은 [UserGuideContent.GuideImage.afterStep]번째 단계 · 항목 바로 아래에, 지정이 없으면 맨 아래에
+ * - 사진은 맨 아래에 모아서(캡션이 있어서 어느 단계 사진인지 알 수 있다)
  * 설명이 한 줄(예전 문단 형식)이면 예전처럼 옅은 카드 안 문단 + 맨 아래 사진으로 그린다 —
  * 아직 단계형으로 옮기지 않은 항목도 그대로 보인다. */
 class UserGuideItemDetailActivity : AppCompatActivity() {
@@ -100,7 +100,7 @@ class UserGuideItemDetailActivity : AppCompatActivity() {
 		})
 	}
 
-	/** 단계형: 요약 → 단계 · 항목(중간중간 사진) → 참고 박스 → 위치를 안 정한 사진. */
+	/** 단계형: 요약 → 단계 · 항목 → 참고 박스 → 사진. */
 	private fun renderSteps(
 		container: LinearLayout,
 		description: String,
@@ -118,34 +118,10 @@ class UserGuideItemDetailActivity : AppCompatActivity() {
 			setLineSpacing(0f, 1.3f)
 		})
 
-		val tips = mutableListOf<String>()
-		val buffer = mutableListOf<String>()
-		var stepCount = 0
-		fun flush() {
-			if (buffer.isEmpty()) return
-			addStepText(container, buffer.joinToString("\n"))
-			buffer.clear()
-		}
-		for (line in lines.drop(1)) {
-			if (line.startsWith(TIP_PREFIX)) {
-				tips += line
-				continue
-			}
-			buffer += line
-			stepCount++
-			val imagesHere = validImages.filter { it.afterStep == stepCount }
-			if (imagesHere.isNotEmpty()) {
-				flush()
-				renderImageGrid(container, imagesHere, validImages)
-			}
-		}
-		flush()
-
+		val (tips, steps) = lines.drop(1).partition { it.startsWith(TIP_PREFIX) }
+		if (steps.isNotEmpty()) addStepText(container, steps.joinToString("\n"))
 		if (tips.isNotEmpty()) addTipBox(container, tips)
-
-		// 위치를 안 정했거나, 단계 수보다 큰 번호를 적은 사진은 맨 아래에 모은다.
-		val rest = validImages.filter { it.afterStep == null || it.afterStep > stepCount }
-		renderImageGrid(container, rest, validImages)
+		renderImageGrid(container, validImages, validImages)
 	}
 
 	private fun addStepText(container: LinearLayout, text: String) {

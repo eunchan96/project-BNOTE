@@ -5,15 +5,7 @@ package com.chan.bnote.ui.mypage.guide
  */
 object UserGuideContent {
 
-	/**
-	 * [afterStep]: 설명의 몇 번째 단계 · 항목("1. " · "・ " 줄, 요약 · 💡 줄은 안 셈) 바로 아래에 보여줄지.
-	 * null이면 맨 아래에 모아서 보여준다(UserGuideItemDetailActivity).
-	 */
-	data class GuideImage(
-		val resName: String,
-		val caption: String? = null,
-		val afterStep: Int? = null
-	)
+	data class GuideImage(val resName: String, val caption: String? = null)
 
 	/**
 	 * [description] 형식: 한 줄짜리 문단(예전 형식)이거나, 줄바꿈으로 나눈 단계형
@@ -40,8 +32,8 @@ object UserGuideContent {
 							"3. 장을 고르면 \"절\" 탭으로 넘어가요.\n" +
 							"💡 위쪽 탭을 다시 누르면 언제든 이전 단계로 돌아갈 수 있어요.",
 					images = listOf(
-						GuideImage("guide_bible_goto_chapter_book", "성경 탭 — 책 고르기", afterStep = 2),
-						GuideImage("guide_bible_goto_chapter_grid", "장 탭 — 장 고르기", afterStep = 3)
+						GuideImage("guide_bible_goto_chapter_book", "성경 탭 — 책 고르기"),
+						GuideImage("guide_bible_goto_chapter_grid", "장 탭 — 장 고르기")
 					)
 				),
 				GuideItem(
@@ -50,7 +42,7 @@ object UserGuideContent {
 							"・ 화면 하단의 화살표 버튼을 누르면 지금 보는 장의 이전/다음 장으로 바로 넘어가요.\n" +
 							"・ 설정에서 \"스와이프로 장 이동\"을 켜두면, 화면을 좌우로 크게 밀어서도 넘어갈 수 있어요.",
 					images = listOf(
-						GuideImage("guide_bible_prev_next_chapter", "하단 화살표 버튼", afterStep = 1)
+						GuideImage("guide_bible_prev_next_chapter", "하단 화살표 버튼")
 					)
 				),
 				GuideItem(
@@ -62,8 +54,8 @@ object UserGuideContent {
 							"💡 이미 골라둔 항목에는 표시가 되어 있어서 지금 뭘 보고 있는지 바로 알 수 있어요.\n" +
 							"💡 개역개정에서는 예수님의 말씀이 붉은 글씨로 보여요(주성경에서만 보이고, 함께보기에서는 보통 글씨로 나와요). 붉은 글씨가 싫으면 설정에서 \"예수님 말씀 붉은 글씨\"를 끄면 돼요.",
 					images = listOf(
-						GuideImage("guide_bible_translation_main", "주성경 탭", afterStep = 2),
-						GuideImage("guide_bible_translation_secondary", "함께보기 탭", afterStep = 3)
+						GuideImage("guide_bible_translation_main", "주성경 탭"),
+						GuideImage("guide_bible_translation_secondary", "함께보기 탭")
 					)
 				),
 				GuideItem(
@@ -75,8 +67,8 @@ object UserGuideContent {
 							"・ 검색어 옆 X로 하나씩, \"전체 삭제\"로 한 번에 지울 수 있어요.\n" +
 							"💡 최근 검색어는 검색 결과를 골라 이동했거나 키보드의 \"검색\" 버튼을 눌렀을 때만 기록돼요(입력하는 중에 잠깐씩 보이는 결과는 기록되지 않아요).",
 					images = listOf(
-						GuideImage("guide_bible_search", "검색 화면", afterStep = 1),
-						GuideImage("guide_bible_search_recent", "최근 검색어", afterStep = 3)
+						GuideImage("guide_bible_search", "검색 화면"),
+						GuideImage("guide_bible_search_recent", "최근 검색어")
 					)
 				),
 				GuideItem(
@@ -84,7 +76,7 @@ object UserGuideContent {
 					"상단바의 책갈피 아이콘을 누르면 지금까지 북마크해둔 구절을 모아서 볼 수 있어요.\n" +
 							"・ 지우려면 \"관리\"를 누른 뒤 삭제 버튼을 누르고, 확인 창에서 \"삭제\"를 누르면 돼요.",
 					images = listOf(
-						GuideImage("guide_bible_bookmark", "북마크 목록", afterStep = 1)
+						GuideImage("guide_bible_bookmark", "북마크 목록")
 					)
 				),
 				GuideItem(
@@ -95,7 +87,7 @@ object UserGuideContent {
 							"・ 선택된 절을 다시 탭하면 선택이 풀려요.\n" +
 							"・ 툴바의 X를 누르면 선택이 전부 취소돼요.",
 					images = listOf(
-						GuideImage("guide_bible_select_verse", "구절 선택", afterStep = 2)
+						GuideImage("guide_bible_select_verse", "구절 선택")
 					)
 				),
 				GuideItem(
@@ -105,8 +97,8 @@ object UserGuideContent {
 							"2. 색상 목록에서 원하는 색을 누르면 선택한 절 전체가 그 색으로 칠해져요.\n" +
 							"・ 지우려면 칠한 구절을 다시 선택하고 형광펜 아이콘을 누른 다음, 색상 목록의 \"해제\"를 누르면 돼요.",
 					images = listOf(
-						GuideImage("guide_bible_highlight_apply", "칠하기", afterStep = 2),
-						GuideImage("guide_bible_highlight_remove", "지우기", afterStep = 3)
+						GuideImage("guide_bible_highlight_apply", "칠하기"),
+						GuideImage("guide_bible_highlight_remove", "지우기")
 					)
 				),
 				GuideItem(
@@ -116,7 +108,7 @@ object UserGuideContent {
 							"2. 선택한 글자 위에 뜨는 작은 메뉴에서 \"하이라이트\"나 \"메모\"를 골라요.\n" +
 							"💡 절을 탭해서 선택하는 것과는 별개의 방식이에요.",
 					images = listOf(
-						GuideImage("guide_bible_word_highlight_menu", "단어 선택 후 메뉴", afterStep = 2)
+						GuideImage("guide_bible_word_highlight_menu", "단어 선택 후 메뉴")
 					)
 				),
 				GuideItem(
@@ -126,7 +118,7 @@ object UserGuideContent {
 							"・ 북마크: 절을 하나만 선택했을 때 툴바에 나타나요. 누르면 \"창세기 1장 1절을 북마크에 추가할까요?\"처럼 한 번 확인한 뒤 추가돼요(이미 북마크된 절이면 해제할지 물어봐요).\n" +
 							"💡 스크랩 그룹은 메뉴(≡) > 스크랩 화면에서 새로 만들거나 관리할 수 있어요.",
 					images = listOf(
-						GuideImage("guide_bible_scrap_group_picker", "스크랩 그룹 고르기", afterStep = 1)
+						GuideImage("guide_bible_scrap_group_picker", "스크랩 그룹 고르기")
 					)
 				),
 				GuideItem(
@@ -137,7 +129,7 @@ object UserGuideContent {
 							"3. 고른 구절이 그 그룹에 추가되고, 바로 그 구절의 상세(메모) 화면으로 이동해요.\n" +
 							"💡 여러 절을 선택했으면 하나로 이어진 구간으로 추가돼요.",
 					images = listOf(
-						GuideImage("guide_bible_memorize_group_picker", "암송 그룹 고르기", afterStep = 2)
+						GuideImage("guide_bible_memorize_group_picker", "암송 그룹 고르기")
 					)
 				),
 				GuideItem(
@@ -150,8 +142,8 @@ object UserGuideContent {
 							"・ 메모 박스 아래쪽의 휴지통 아이콘을 누르면 확인 후 그 메모만 지워져요.\n" +
 							"💡 여러 절을 선택하면 메모 아이콘이 안 보여요. 절을 하나만 선택하거나, 단어만 부분 선택해서 메모를 남기면 돼요.",
 					images = listOf(
-						GuideImage("guide_bible_verse_memo_sheet", "메모 쓰기", afterStep = 2),
-						GuideImage("guide_bible_verse_memo_list", "메모 여러 개 · 삭제", afterStep = 5)
+						GuideImage("guide_bible_verse_memo_sheet", "메모 쓰기"),
+						GuideImage("guide_bible_verse_memo_list", "메모 여러 개 · 삭제")
 					)
 				),
 				GuideItem(
@@ -162,8 +154,8 @@ object UserGuideContent {
 							"3. 몇 개 구절에 추가될지 확인 창이 뜨고, \"추가\"를 누르면 그 구절들에도 같은 메모가 생겨요.\n" +
 							"💡 원래 구절의 메모는 그대로 남고, 복사된 메모 뒤에는 \"(from 창 1:1)\"처럼 어디서 왔는지가 자동으로 붙어요.",
 					images = listOf(
-						GuideImage("guide_bible_word_memo_sheet", "단어 메모 쓰기", afterStep = 1),
-						GuideImage("guide_bible_word_memo_propagate", "다른 구절에도 추가", afterStep = 3)
+						GuideImage("guide_bible_word_memo_sheet", "단어 메모 쓰기"),
+						GuideImage("guide_bible_word_memo_propagate", "다른 구절에도 추가")
 					)
 				),
 				GuideItem(
@@ -176,8 +168,8 @@ object UserGuideContent {
 							"・ 하이라이트가 많은 책은 장 제목을 눌러서 접고 펼 수 있어요.\n" +
 							"💡 한 절에 색이 다른 하이라이트가 여러 개 있으면 따로따로 나와요.",
 					images = listOf(
-						GuideImage("guide_bible_menu_panel", "메뉴 패널", afterStep = 1),
-						GuideImage("guide_bible_memo_list", "모아본 목록", afterStep = 2)
+						GuideImage("guide_bible_menu_panel", "메뉴 패널"),
+						GuideImage("guide_bible_memo_list", "모아본 목록")
 					)
 				),
 				GuideItem(
@@ -196,14 +188,10 @@ object UserGuideContent {
 							"2. 상단바에 체크 아이콘이 나타나요. 다 읽었으면 눌러서 읽음 표시를 남겨요.\n" +
 							"・ 설정에서 \"성경읽기표 체크를 하단 버튼으로 표시\"를 켜면, 상단 아이콘 대신 본문을 끝까지 내렸을 때 맨 아래에 버튼으로 나와요.",
 					images = listOf(
-						GuideImage("guide_bible_reading_plan_toggle", "성경읽기표 켜기", afterStep = 1),
-						GuideImage("guide_bible_reading_plan_check", "상단 체크 아이콘", afterStep = 2),
-						GuideImage(
-							"guide_bible_reading_plan_check_setting",
-							"설정에서 하단 버튼으로",
-							afterStep = 3
-						),
-						GuideImage("guide_bible_reading_plan_check_bottom", "하단 버튼", afterStep = 3)
+						GuideImage("guide_bible_reading_plan_toggle", "성경읽기표 켜기"),
+						GuideImage("guide_bible_reading_plan_check", "상단 체크 아이콘"),
+						GuideImage("guide_bible_reading_plan_check_setting", "설정에서 하단 버튼으로"),
+						GuideImage("guide_bible_reading_plan_check_bottom", "하단 버튼")
 					)
 				),
 				GuideItem(
@@ -214,8 +202,8 @@ object UserGuideContent {
 							"・ 내려가는 중에 절을 탭하면 그 절이 선택되면서 멈추고, 재생 아이콘을 누르면 다시 시작해요.\n" +
 							"💡 스크롤 속도는 설정 화면에서 1~10단계로 바꿀 수 있어요(기본 5, 숫자가 클수록 빨라요).",
 					images = listOf(
-						GuideImage("guide_bible_auto_scroll_toggle", "자동스크롤 켜기", afterStep = 1),
-						GuideImage("guide_bible_auto_scroll_play", "상단 재생 아이콘", afterStep = 2)
+						GuideImage("guide_bible_auto_scroll_toggle", "자동스크롤 켜기"),
+						GuideImage("guide_bible_auto_scroll_play", "상단 재생 아이콘")
 					)
 				),
 				GuideItem(
@@ -225,8 +213,8 @@ object UserGuideContent {
 							"2. 처음 한 번은 안드로이드의 \"방해금지 권한\"을 허용해야 해요. 설정 화면으로 자동으로 이동하니, 거기서 BNOTE를 찾아 허용해 주세요.\n" +
 							"3. 한 번 허용해두면 다음부턴 앱 안에서 스위치만으로 바로 켜고 끌 수 있어요.",
 					images = listOf(
-						GuideImage("guide_bible_dnd_mode_toggle", "방해금지 모드 켜기", afterStep = 1),
-						GuideImage("guide_bible_dnd_mode_permission", "방해금지 권한 허용", afterStep = 2)
+						GuideImage("guide_bible_dnd_mode_toggle", "방해금지 모드 켜기"),
+						GuideImage("guide_bible_dnd_mode_permission", "방해금지 권한 허용")
 					)
 				)
 			)
