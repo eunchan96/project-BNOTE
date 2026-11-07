@@ -16,6 +16,7 @@ import com.chan.bnote.MainActivity
 import com.chan.bnote.R
 import com.chan.bnote.data.knowledge.TimelineEvent
 import com.chan.bnote.data.knowledge.TimelineRepository
+import com.chan.bnote.ui.common.ListRows
 import kotlinx.coroutines.launch
 
 class TimelineListActivity : AppCompatActivity() {
@@ -71,9 +72,7 @@ class TimelineListActivity : AppCompatActivity() {
 		val row = LinearLayout(this).apply {
 			orientation = LinearLayout.VERTICAL
 			setPadding(dp(16), dp(10), dp(16), dp(10))
-			background = ContextCompat.getDrawable(
-				this@TimelineListActivity, android.R.drawable.list_selector_background
-			)
+			background = ListRows.rippleBackground(this@TimelineListActivity)
 			isClickable = true
 			isFocusable = true
 			setOnClickListener { navigateToBible(event.keyBookId, event.keyChapter) }

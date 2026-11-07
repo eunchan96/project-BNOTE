@@ -11,6 +11,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.chan.bnote.R
+import com.chan.bnote.ui.common.ListRows
 import com.chan.bnote.ui.common.ListText
 
 class VersionHistoryActivity : AppCompatActivity() {
@@ -69,10 +70,7 @@ class VersionHistoryActivity : AppCompatActivity() {
 			setPadding(dp(16), dp(16), dp(16), dp(16))
 			isClickable = true
 			isFocusable = true
-			background = ContextCompat.getDrawable(
-				this@VersionHistoryActivity,
-				android.R.drawable.list_selector_background
-			)
+			background = ListRows.rippleBackground(this@VersionHistoryActivity)
 		}
 
 		val versionView = TextView(this).apply {

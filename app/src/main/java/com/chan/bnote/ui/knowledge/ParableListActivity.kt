@@ -14,6 +14,7 @@ import androidx.lifecycle.lifecycleScope
 import com.chan.bnote.R
 import com.chan.bnote.data.knowledge.ParableOrMiracle
 import com.chan.bnote.data.knowledge.ParableRepository
+import com.chan.bnote.ui.common.ListRows
 import kotlinx.coroutines.launch
 
 class ParableListActivity : AppCompatActivity() {
@@ -69,9 +70,7 @@ class ParableListActivity : AppCompatActivity() {
 		val row = LinearLayout(this).apply {
 			orientation = LinearLayout.VERTICAL
 			setPadding(dp(16), dp(10), dp(16), dp(10))
-			background = ContextCompat.getDrawable(
-				this@ParableListActivity, android.R.drawable.list_selector_background
-			)
+			background = ListRows.rippleBackground(this@ParableListActivity)
 			isClickable = true
 			isFocusable = true
 			setOnClickListener {

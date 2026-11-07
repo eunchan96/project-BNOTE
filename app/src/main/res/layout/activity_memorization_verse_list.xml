@@ -20,7 +20,8 @@
             android:orientation="horizontal"
             android:gravity="center_vertical"
             android:background="@color/brown_primary"
-            android:paddingStart="4dp">
+            android:paddingStart="4dp"
+            android:paddingEnd="8dp">
 
             <ImageView
                 android:id="@+id/btn_back_from_list"
@@ -115,7 +116,8 @@
             android:orientation="horizontal"
             android:gravity="center_vertical"
             android:background="@color/brown_primary"
-            android:paddingStart="4dp">
+            android:paddingStart="4dp"
+            android:paddingEnd="8dp">
 
             <ImageView
                 android:id="@+id/btn_back_from_detail"

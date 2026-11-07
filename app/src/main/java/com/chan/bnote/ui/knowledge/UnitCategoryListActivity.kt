@@ -16,6 +16,7 @@ import androidx.lifecycle.lifecycleScope
 import com.chan.bnote.R
 import com.chan.bnote.data.knowledge.BibleUnit
 import com.chan.bnote.data.knowledge.UnitRepository
+import com.chan.bnote.ui.common.ListRows
 import kotlinx.coroutines.launch
 
 /** UnitListActivity(카테고리 허브)에서 카테고리 하나를 골랐을 때 그 카테고리의 단위들을 보여주는
@@ -142,9 +143,7 @@ class UnitCategoryListActivity : AppCompatActivity() {
 		val row = LinearLayout(this).apply {
 			orientation = LinearLayout.VERTICAL
 			setPadding(dp(16), dp(10), dp(16), dp(10))
-			background = ContextCompat.getDrawable(
-				this@UnitCategoryListActivity, android.R.drawable.list_selector_background
-			)
+			background = ListRows.rippleBackground(this@UnitCategoryListActivity)
 			isClickable = true
 			isFocusable = true
 			setOnClickListener {

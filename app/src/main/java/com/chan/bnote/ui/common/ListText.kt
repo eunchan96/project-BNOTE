@@ -143,7 +143,7 @@ object ListText {
 		}
 
 		private companion object {
-			const val DOT_RADIUS_EM = 0.085f
+			const val DOT_RADIUS_EM = 0.135f
 			const val DOT_CENTER_EM = 0.36f
 		}
 	}

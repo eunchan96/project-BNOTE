@@ -7,6 +7,7 @@ import android.widget.PopupWindow
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import com.chan.bnote.R
+import com.chan.bnote.ui.common.ListRows
 import kotlin.math.ceil
 
 /** 캘린더/성경별 탭 상단의 정렬 버튼(예: "카테고리순 ▾")을 눌렀을 때 작은 팝업으로 정렬을 고르게 한다. */
@@ -36,7 +37,7 @@ object SortButtonHelper {
 
 		val container = LinearLayout(context).apply {
 			orientation = LinearLayout.VERTICAL
-			background = ContextCompat.getDrawable(context, R.drawable.bg_popup_sort_menu)
+			ListRows.rippleBackground(context)
 			minimumWidth = dp(context, 110)
 		}
 
@@ -64,7 +65,7 @@ object SortButtonHelper {
 					)
 				)
 				background =
-					ContextCompat.getDrawable(context, android.R.drawable.list_selector_background)
+					ListRows.rippleBackground(context)
 				isClickable = true
 				isFocusable = true
 				setOnClickListener {

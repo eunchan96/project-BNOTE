@@ -16,6 +16,7 @@ import com.chan.bnote.R
 import com.chan.bnote.data.appendix.AppendixLoader
 import com.chan.bnote.data.appendix.TextVersion
 import com.chan.bnote.data.appendix.VersionedTextContent
+import com.chan.bnote.ui.common.ListRows
 
 enum class AppendixTextType {
 	LORDS_PRAYER,
@@ -80,9 +81,7 @@ class AppendixTextActivity : AppCompatActivity() {
 				layoutParams = LinearLayout.LayoutParams(
 					0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f
 				)
-				background = ContextCompat.getDrawable(
-					this@AppendixTextActivity, android.R.drawable.list_selector_background
-				)
+				background = ListRows.rippleBackground(this@AppendixTextActivity)
 				isClickable = true
 				isFocusable = true
 				setOnClickListener {
