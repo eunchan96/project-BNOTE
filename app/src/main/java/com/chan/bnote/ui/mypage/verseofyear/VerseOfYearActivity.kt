@@ -18,6 +18,7 @@ import com.chan.bnote.data.AppSettings
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.mypage.verseofyear.VerseOfYear
 import com.chan.bnote.data.mypage.verseofyear.VerseOfYearRef
+import com.chan.bnote.ui.common.InsetDividerDecoration
 import kotlinx.coroutines.launch
 import java.util.Calendar
 
@@ -45,6 +46,7 @@ class VerseOfYearActivity : AppCompatActivity() {
 
 		recyclerView = findViewById(R.id.recycler_verse_of_year)
 		recyclerView.layoutManager = LinearLayoutManager(this)
+		recyclerView.addItemDecoration(InsetDividerDecoration(this))
 		emptyText = findViewById(R.id.text_empty)
 	}
 

@@ -29,8 +29,8 @@ import kotlin.math.roundToInt
  */
 object ListText {
 
-	/** 목록 줄의 앞부분: (들여쓰기) + "・ ", "※ " 또는 "1. " 같은 번호. */
-	private val LIST_PREFIX = Regex("^\\s*(・|※|\\d+\\.)\\s+")
+	/** 목록 줄의 앞부분: (들여쓰기) + "・ ", "※ ", "💡 " 또는 "1. " 같은 번호. */
+	private val LIST_PREFIX = Regex("^\\s*(・|※|💡|\\d+\\.)\\s+")
 
 	fun style(
 		text: CharSequence,
