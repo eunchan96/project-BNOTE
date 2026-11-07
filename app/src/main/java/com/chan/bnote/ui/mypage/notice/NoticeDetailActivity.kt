@@ -3,9 +3,6 @@ package com.chan.bnote.ui.mypage.notice
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.text.Spannable
-import android.text.SpannableString
-import android.text.style.LeadingMarginSpan
 import android.view.View
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -25,6 +22,7 @@ import com.chan.bnote.data.notice.NoticeFormatter
 import com.chan.bnote.data.notice.NoticeRepository
 import com.chan.bnote.data.notice.NoticeType
 import com.chan.bnote.ui.common.LinkifyHelper
+import com.chan.bnote.ui.common.ListText
 import com.chan.bnote.ui.mypage.settings.ContactDialog
 import com.chan.bnote.ui.mypage.settings.UpdateDialog
 import com.chan.bnote.ui.sermon.addsermon.PhotoViewerActivity
@@ -56,8 +54,6 @@ class NoticeDetailActivity : AppCompatActivity() {
 				.putExtra(EXTRA_NOTICE_ID, noticeId)
 				.apply { if (orderIds != null) putExtra(EXTRA_ORDER_IDS, orderIds) }
 
-		/** 목록 줄의 앞부분: (들여쓰기) + "・ ", "※ " 또는 "1. " 같은 번호. */
-		private val LIST_PREFIX = Regex("^\\s*(・|※|\\d+\\.)\\s+")
 
 		/** 업데이트 공지의 "새 버전 받기" 버튼 위 안내 박스 내용. 버튼은 항상 가장 최신 APK를 연다. */
 		private val UPDATE_GUIDE_TEXT = """
@@ -161,7 +157,8 @@ class NoticeDetailActivity : AppCompatActivity() {
 			findViewById(R.id.container_notice_body),
 			if (isUpdate) NoticeFormatter.removeUpdateGuide(notice.body) else notice.body,
 			textSizeSp = 16f,
-			lineSpacing = 1.55f,
+			lineSpacing = 1.3f,
+			paragraphGapEm = 0.6f,
 			horizontalInsetDp = 40
 		)
 
@@ -174,7 +171,7 @@ class NoticeDetailActivity : AppCompatActivity() {
 			if (isUpdate) View.VISIBLE else View.GONE
 		if (isUpdate) {
 			val guideText = findViewById<TextView>(R.id.text_notice_update_guide)
-			guideText.text = withHangingIndent(UPDATE_GUIDE_TEXT, guideText)
+			guideText.text = ListText.style(UPDATE_GUIDE_TEXT, guideText, paragraphGapEm = 0.4f)
 		}
 
 		val download = findViewById<View>(R.id.btn_notice_download)
@@ -236,7 +233,8 @@ class NoticeDetailActivity : AppCompatActivity() {
 			body,
 			comment.body,
 			textSizeSp = 15f,
-			lineSpacing = 1.5f,
+			lineSpacing = 1.3f,
+			paragraphGapEm = 0.5f,
 			horizontalInsetDp = 72
 		)
 		box.addView(body)
@@ -249,6 +247,8 @@ class NoticeDetailActivity : AppCompatActivity() {
 	 * 설명(alt)이 있으면 사진 아래에 작게 보여준다. 사진을 누르면 이 덩어리(본문 또는 댓글 하나)의 사진들을
 	 * 전체화면으로 넘겨볼 수 있다. 사진을 못 불러오면(인터넷 끊김 등) 그 칸은 숨긴다.
 	 *
+	 * [lineSpacing]: 한 줄(항목)이 길어 넘어간 줄 사이의 간격 배수. [paragraphGapEm]: 줄바꿈으로 나뉜 항목 · 문단 사이에
+	 * 더 띄우는 간격(글자 크기 배수). 둘을 나눠서, 같은 항목 안은 촘촘하고 항목끼리는 떨어져 보이게 한다.
 	 * [horizontalInsetDp]: 화면 폭에서 이 덩어리 양옆으로 빠지는 여백의 합. 사진 칸 너비 계산에 쓴다.
 	 */
 	private fun renderBlocks(
@@ -256,6 +256,7 @@ class NoticeDetailActivity : AppCompatActivity() {
 		markdown: String,
 		textSizeSp: Float,
 		lineSpacing: Float,
+		paragraphGapEm: Float,
 		horizontalInsetDp: Int
 	) {
 		container.removeAllViews()
@@ -291,7 +292,9 @@ class NoticeDetailActivity : AppCompatActivity() {
 						).apply { this.topMargin = topMargin }
 					}
 					// textSize를 먼저 정해야 paint로 "・ " 폭을 정확히 잴 수 있다.
-					textView.text = withHangingIndent(block.text, textView)
+					// 줄 간격은 좁게(한 항목 안에서 넘어간 줄끼리 촘촘하게) 두고, 항목 · 문단 사이는 paragraphGapEm으로 띄운다.
+					textView.text =
+						ListText.style(block.text, textView, paragraphGapEm = paragraphGapEm)
 					LinkifyHelper.applySmartLinks(textView)
 					container.addView(textView)
 					i++
@@ -335,29 +338,6 @@ class NoticeDetailActivity : AppCompatActivity() {
 				}
 			}
 		}
-	}
-
-	/**
-	 * "・ 항목"이나 "1. 항목"처럼 시작하는 줄이 길어서 두 줄 이상이 되면, 둘째 줄부터 기호가 아니라
-	 * 글자 시작 위치에 맞춰 들여쓴다(업데이트 내역과 같은 방식). 앞에 들여쓰기 공백이 있으면 그것까지 포함한다.
-	 */
-	private fun withHangingIndent(text: CharSequence, textView: TextView): CharSequence {
-		val spannable = SpannableString(text)
-		var lineStart = 0
-		for (line in text.split('\n')) {
-			val prefix = LIST_PREFIX.find(line)?.value
-			if (prefix != null) {
-				val margin = textView.paint.measureText(prefix).toInt()
-				val end = (lineStart + line.length + 1).coerceAtMost(text.length)
-				spannable.setSpan(
-					LeadingMarginSpan.Standard(0, margin),
-					lineStart, end,
-					Spannable.SPAN_INCLUSIVE_EXCLUSIVE
-				)
-			}
-			lineStart += line.length + 1
-		}
-		return spannable
 	}
 
 	/**

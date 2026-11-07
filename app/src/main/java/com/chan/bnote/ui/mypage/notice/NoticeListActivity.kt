@@ -40,14 +40,23 @@ import kotlinx.coroutines.launch
  */
 class NoticeListActivity : AppCompatActivity() {
 
-	/** 필터 칩: null = 전체, UNREAD = 안 읽음, 그 외 = 해당 타입만. */
+	/** 필터 칩: 전체 / 안 읽음 / 종류 묶음(예: "오류" = 본문 오류 + 기능 오류). */
 	private sealed class Filter(val label: String) {
 		object All : Filter("전체")
 		object Unread : Filter("안 읽음")
-		class Type(val type: NoticeType) : Filter(type.displayName)
+		class Types(label: String, val types: Set<NoticeType>) : Filter(label)
 	}
 
-	/** 알림이 없어도 항상 보여줄 종류 칩. 나머지 종류는 알림이 있을 때만 보인다. */
+	/**
+	 * 종류 칩 묶음(보여주는 순서대로). 칩이 너무 많으면 복잡해 보여서 비슷한 종류는 하나로 묶는다.
+	 * 업데이트는 알림이 없어도 항상 보이고, 나머지는 해당 알림이 하나라도 있을 때만 보인다.
+	 */
+	private val typeFilters = listOf(
+		Filter.Types("업데이트", setOf(NoticeType.UPDATE)),
+		Filter.Types("오류", setOf(NoticeType.BIBLE_TEXT_ERROR, NoticeType.BUG)),
+		Filter.Types("안내", setOf(NoticeType.GENERAL)),
+		Filter.Types("사용 팁", setOf(NoticeType.TIP))
+	)
 	private val alwaysShownTypes = setOf(NoticeType.UPDATE)
 
 	private var currentFilter: Filter = Filter.All
@@ -105,6 +114,7 @@ class NoticeListActivity : AppCompatActivity() {
 		})
 		btnReadAll.setOnClickListener {
 			NoticeRepository.markAllRead(this)
+			renderFilters() // "안 읽음" 칩의 개수를 지운다
 			render()
 		}
 		btnManage.setOnClickListener { setSelectionMode(!isSelectionMode) }
@@ -146,19 +156,19 @@ class NoticeListActivity : AppCompatActivity() {
 		selectedIds.retainAll(allNotices.map { it.id }.toSet())
 		// 보고 있던 종류의 알림이 다 없어져서 그 칩이 사라지면 "전체"로 돌아간다.
 		val current = currentFilter
-		if (current is Filter.Type && current.type !in visibleTypes()) currentFilter = Filter.All
+		if (current is Filter.Types && current !in visibleTypeFilters()) currentFilter = Filter.All
 		renderFilters()
 		render()
 	}
 
-	/** 칩으로 보여줄 종류: 항상 보이는 종류 + 알림이 하나라도 있는 종류(정의된 순서대로). */
-	private fun visibleTypes(): List<NoticeType> {
+	/** 칩으로 보여줄 종류 묶음: 항상 보이는 종류가 들어 있거나, 알림이 하나라도 있는 묶음(정의된 순서대로). */
+	private fun visibleTypeFilters(): List<Filter.Types> {
 		val present = allNotices.map { it.type }.toSet()
-		return NoticeType.entries.filter { it in alwaysShownTypes || it in present }
+		return typeFilters.filter { f -> f.types.any { it in alwaysShownTypes || it in present } }
 	}
 
 	private fun visibleFilters(): List<Filter> =
-		listOf(Filter.All, Filter.Unread) + visibleTypes().map { Filter.Type(it) }
+		listOf(Filter.All, Filter.Unread) + visibleTypeFilters()
 
 	private fun refreshFromServer(showFailure: Boolean) {
 		swipeRefresh.isRefreshing = true
@@ -180,7 +190,7 @@ class NoticeListActivity : AppCompatActivity() {
 	private fun filteredNotices(): List<Notice> = when (val f = currentFilter) {
 		Filter.All -> allNotices
 		Filter.Unread -> allNotices.filter { !NoticeRepository.isRead(this, it) }
-		is Filter.Type -> allNotices.filter { it.type == f.type }
+		is Filter.Types -> allNotices.filter { it.type in f.types }
 	}
 
 	private fun setSelectionMode(enabled: Boolean) {
@@ -197,7 +207,7 @@ class NoticeListActivity : AppCompatActivity() {
 		emptyText.visibility = if (list.isEmpty()) View.VISIBLE else View.GONE
 		emptyText.text = when (currentFilter) {
 			Filter.Unread -> "안 읽은 알림이 없어요"
-			is Filter.Type -> "이 종류의 알림이 없어요"
+			is Filter.Types -> "이 종류의 알림이 없어요"
 			Filter.All -> "알림이 없어요"
 		}
 
@@ -225,14 +235,20 @@ class NoticeListActivity : AppCompatActivity() {
 	private fun renderFilters() {
 		filterContainer.removeAllViews()
 		val density = resources.displayMetrics.density
+		val unreadCount = allNotices.count { !NoticeRepository.isRead(this, it) }
 		for (filter in visibleFilters()) {
 			val chip = TextView(this).apply {
-				text = filter.label
+				// "안 읽음"에는 안 읽은 개수를 붙인다(없으면 이름만).
+				text = if (filter == Filter.Unread && unreadCount > 0) {
+					"${filter.label} $unreadCount"
+				} else {
+					filter.label
+				}
 				textSize = 13f
 				setPadding(
-					(14 * density).toInt(),
+					(12 * density).toInt(),
 					(6 * density).toInt(),
-					(14 * density).toInt(),
+					(12 * density).toInt(),
 					(6 * density).toInt()
 				)
 				layoutParams = LinearLayout.LayoutParams(
@@ -246,14 +262,17 @@ class NoticeListActivity : AppCompatActivity() {
 					render()
 				}
 			}
-			val selected = filter::class == currentFilter::class &&
-					(filter !is Filter.Type || filter.type == (currentFilter as Filter.Type).type)
+			// 종류 칩은 typeFilters의 같은 객체를 쓰므로 그대로 비교하면 된다.
+			val selected = filter == currentFilter
+			// 테두리 없이 선택된 칩만 갈색으로 채운다(칩이 여러 개여도 한 줄이 무겁지 않게).
 			chip.background = ContextCompat.getDrawable(
-				this, if (selected) R.drawable.bg_chip_filled else R.drawable.bg_chip_outline
+				this,
+				if (selected) R.drawable.bg_notice_filter_chip_selected
+				else R.drawable.bg_notice_filter_chip
 			)
 			chip.setTextColor(
 				if (selected) ContextCompat.getColor(this, R.color.surface_background)
-				else ContextCompat.getColor(this, R.color.brown_text)
+				else ContextCompat.getColor(this, R.color.text_primary)
 			)
 			filterContainer.addView(chip)
 		}
@@ -327,7 +346,8 @@ class NoticeListActivity : AppCompatActivity() {
 			val context = holder.itemView.context
 			val unread = !NoticeRepository.isRead(context, notice)
 
-			NoticeBadges.fill(holder.badges, notice)
+			// 목록 줄에서는 상자 모양 배지 대신 "업데이트 · 해결됨" 같은 글자로(상세 화면은 배지 그대로).
+			NoticeBadges.fillCompact(holder.badges, notice)
 			holder.date.text = NoticeFormatter.listDate(notice.createdAt)
 			holder.title.text = notice.title
 			// 안 읽은 알림은 아주 굵게(BOLD) 대신 중간 굵기로 — 목록이 덜 무거워 보인다.

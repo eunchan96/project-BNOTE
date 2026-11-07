@@ -2,7 +2,6 @@ package com.chan.bnote.ui.mypage.settings
 
 import android.graphics.Typeface
 import android.os.Bundle
-import android.text.SpannableString
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -12,6 +11,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.chan.bnote.R
+import com.chan.bnote.ui.common.ListText
 
 class VersionHistoryActivity : AppCompatActivity() {
 
@@ -110,18 +110,9 @@ class VersionHistoryActivity : AppCompatActivity() {
 				setPadding(0, dp(6), 0, 0)
 				setLineSpacing(dp(2).toFloat(), 1f)
 			}
-			// "・ " 뒤로 줄이 넘어가도(내용이 길어서 두 줄 이상이 되면) 둘째 줄부터 불릿이 아니라
-			// 글자 시작 위치에 맞춰 들여써지게 한다. textSize를 먼저 정한 뒤라야 changeView.paint로
-			// "・ "의 실제 렌더 폭을 정확히 잴 수 있다.
-			val bulletPrefix = "・ "
-			val marginPx = changeView.paint.measureText(bulletPrefix).toInt()
-			val text = SpannableString("$bulletPrefix$change")
-			text.setSpan(
-				android.text.style.LeadingMarginSpan.Standard(0, marginPx),
-				0, text.length,
-				android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-			)
-			changeView.text = text
+			// "・ " 뒤로 줄이 넘어가도 둘째 줄부터 글자 시작 위치에 맞춰 들여쓰고, 불릿 점은 조금 크게 그린다
+			// (알림 상세와 같은 ListText). textSize를 먼저 정한 뒤라야 "・ "의 실제 폭을 정확히 잴 수 있다.
+			changeView.text = ListText.style("・ $change", changeView)
 			changesContainer.addView(changeView)
 		}
 

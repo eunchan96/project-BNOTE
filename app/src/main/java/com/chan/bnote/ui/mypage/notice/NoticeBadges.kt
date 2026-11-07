@@ -2,7 +2,12 @@ package com.chan.bnote.ui.mypage.notice
 
 import android.content.Context
 import android.content.res.ColorStateList
+import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
+import android.text.Spannable
+import android.text.SpannableStringBuilder
+import android.text.style.ForegroundColorSpan
+import android.text.style.StyleSpan
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -38,6 +43,31 @@ object NoticeBadges {
 				)
 			)
 		}
+	}
+
+	/**
+	 * 알림 목록 한 줄용: 상자 없이 글자로만 "[📌] 업데이트 · 해결됨". 종류 이름만 그 종류 색으로 굵게,
+	 * 해결됨은 흐린 글자로. 목록에 상자가 줄마다 반복되면 복잡해 보여서 상세 화면과 따로 둔다.
+	 */
+	fun fillCompact(container: LinearLayout, notice: Notice) {
+		container.removeAllViews()
+		val context = container.context
+		if (notice.isPinned) container.addView(pinIcon(context))
+		val text = SpannableStringBuilder(notice.type.displayName).apply {
+			setSpan(
+				ForegroundColorSpan(ContextCompat.getColor(context, notice.type.textColorRes)),
+				0, length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+			)
+			setSpan(StyleSpan(Typeface.BOLD), 0, length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+			if (notice.isResolved) append(" · 해결됨")
+		}
+		container.addView(TextView(context).apply {
+			this.text = text
+			textSize = 12f
+			setTextColor(ContextCompat.getColor(context, R.color.text_hint))
+			maxLines = 1
+			ellipsize = android.text.TextUtils.TruncateAt.END
+		})
 	}
 
 	/** 고정된 알림 표시. 칩 글자 높이(11sp)에 맞춘 작은 핀 아이콘. */
