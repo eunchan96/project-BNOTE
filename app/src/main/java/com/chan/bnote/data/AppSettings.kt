@@ -30,7 +30,14 @@ object AppSettings {
 	const val MIN_FONT_SIZE = 12
 	const val MAX_FONT_SIZE = 28
 
-	private const val KEY_SCROLL_SPEED = "scroll_speed" // 1(느림)~5(빠름)
+	/**
+	 * 자동스크롤 속도 1(느림)~10(빠름). 1.16에서 5단계 → 10단계로 바꾸면서 전체를 훨씬 느리게 해서,
+	 * 예전 값("scroll_speed", 1~5)은 그대로 옮기지 않고 새 키로 기본값 5부터 시작한다.
+	 */
+	private const val KEY_SCROLL_SPEED = "scroll_speed_10"
+	const val MIN_SCROLL_SPEED = 1
+	const val MAX_SCROLL_SPEED = 10
+	const val DEFAULT_SCROLL_SPEED = 5
 	private const val KEY_KEEP_SCREEN_ON = "keep_screen_on"
 	private const val KEY_KEYBOARD_BAR_COLLAPSED = "keyboard_bar_collapsed"
 	private const val KEY_CHAPTER_SWIPE_ENABLED = "chapter_swipe_enabled"
@@ -232,12 +239,14 @@ object AppSettings {
 
 	fun getScrollSpeed(context: Context): Int {
 		return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
-			.getInt(KEY_SCROLL_SPEED, 2)
+			.getInt(KEY_SCROLL_SPEED, DEFAULT_SCROLL_SPEED)
+			.coerceIn(MIN_SCROLL_SPEED, MAX_SCROLL_SPEED)
 	}
 
 	fun setScrollSpeed(context: Context, speed: Int) {
 		context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
-			.edit().putInt(KEY_SCROLL_SPEED, speed.coerceIn(1, 5)).apply()
+			.edit().putInt(KEY_SCROLL_SPEED, speed.coerceIn(MIN_SCROLL_SPEED, MAX_SCROLL_SPEED))
+			.apply()
 	}
 
 	fun isKeepScreenOn(context: Context): Boolean {

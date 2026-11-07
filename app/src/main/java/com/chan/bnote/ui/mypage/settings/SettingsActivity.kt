@@ -36,7 +36,7 @@ class SettingsActivity : AppCompatActivity() {
 	private lateinit var fontSizeText: TextView
 	private lateinit var scrollSpeedText: TextView
 	private var currentFontSize = 16
-	private var currentScrollSpeed = 3
+	private var currentScrollSpeed = AppSettings.DEFAULT_SCROLL_SPEED
 
 	private lateinit var switchDailyVerseNoti: Switch
 	private lateinit var switchReadingReminder: Switch
@@ -145,12 +145,13 @@ class SettingsActivity : AppCompatActivity() {
 		}
 
 		findViewById<TextView>(R.id.btn_speed_minus).setOnClickListener {
-			currentScrollSpeed = (currentScrollSpeed - 1).coerceAtLeast(1)
+			currentScrollSpeed =
+				(currentScrollSpeed - 1).coerceAtLeast(AppSettings.MIN_SCROLL_SPEED)
 			scrollSpeedText.text = "$currentScrollSpeed"
 			AppSettings.setScrollSpeed(this, currentScrollSpeed)
 		}
 		findViewById<TextView>(R.id.btn_speed_plus).setOnClickListener {
-			currentScrollSpeed = (currentScrollSpeed + 1).coerceAtMost(5)
+			currentScrollSpeed = (currentScrollSpeed + 1).coerceAtMost(AppSettings.MAX_SCROLL_SPEED)
 			scrollSpeedText.text = "$currentScrollSpeed"
 			AppSettings.setScrollSpeed(this, currentScrollSpeed)
 		}
