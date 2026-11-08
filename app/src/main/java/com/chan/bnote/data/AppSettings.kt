@@ -30,11 +30,19 @@ object AppSettings {
 	const val MIN_FONT_SIZE = 12
 	const val MAX_FONT_SIZE = 28
 
-	private const val KEY_SCROLL_SPEED = "scroll_speed" // 1(느림)~5(빠름)
+	/**
+	 * 자동스크롤 속도 1(느림)~10(빠름). 1.16에서 5단계 → 10단계로 바꾸면서 전체를 훨씬 느리게 해서,
+	 * 예전 값("scroll_speed", 1~5)은 그대로 옮기지 않고 새 키로 기본값 5부터 시작한다.
+	 */
+	private const val KEY_SCROLL_SPEED = "scroll_speed_10"
+	const val MIN_SCROLL_SPEED = 1
+	const val MAX_SCROLL_SPEED = 10
+	const val DEFAULT_SCROLL_SPEED = 5
 	private const val KEY_KEEP_SCREEN_ON = "keep_screen_on"
 	private const val KEY_KEYBOARD_BAR_COLLAPSED = "keyboard_bar_collapsed"
 	private const val KEY_CHAPTER_SWIPE_ENABLED = "chapter_swipe_enabled"
 	private const val KEY_BIBLE_SCROLLBAR_ENABLED = "bible_scrollbar_enabled"
+	private const val KEY_RED_LETTER_ENABLED = "red_letter_enabled"
 	private const val KEY_READING_CHECK_BOTTOM_BUTTON = "reading_check_bottom_button"
 	private const val KEY_COPY_INCLUDE_SECONDARY = "copy_include_secondary"
 	private const val KEY_ACTIVE_COPY_FORMAT = "active_copy_format_json"
@@ -232,12 +240,14 @@ object AppSettings {
 
 	fun getScrollSpeed(context: Context): Int {
 		return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
-			.getInt(KEY_SCROLL_SPEED, 2)
+			.getInt(KEY_SCROLL_SPEED, DEFAULT_SCROLL_SPEED)
+			.coerceIn(MIN_SCROLL_SPEED, MAX_SCROLL_SPEED)
 	}
 
 	fun setScrollSpeed(context: Context, speed: Int) {
 		context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
-			.edit().putInt(KEY_SCROLL_SPEED, speed.coerceIn(1, 5)).apply()
+			.edit().putInt(KEY_SCROLL_SPEED, speed.coerceIn(MIN_SCROLL_SPEED, MAX_SCROLL_SPEED))
+			.apply()
 	}
 
 	fun isKeepScreenOn(context: Context): Boolean {
@@ -280,6 +290,17 @@ object AppSettings {
 	fun setBibleScrollbarVisible(context: Context, enabled: Boolean) {
 		context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
 			.edit().putBoolean(KEY_BIBLE_SCROLLBAR_ENABLED, enabled).apply()
+	}
+
+	/** 성경 본문의 예수님 말씀을 붉은 글씨로 보여줄지. 기본은 켜짐, 끄면 다른 글자와 같은 색으로 나온다. */
+	fun isRedLetterEnabled(context: Context): Boolean {
+		return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.getBoolean(KEY_RED_LETTER_ENABLED, true)
+	}
+
+	fun setRedLetterEnabled(context: Context, enabled: Boolean) {
+		context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+			.edit().putBoolean(KEY_RED_LETTER_ENABLED, enabled).apply()
 	}
 
 	/** 기본은 상단바 체크 아이콘, 켜면 성경 탭 하단 버튼으로 표시한다. */

@@ -9,6 +9,7 @@ import com.chan.bnote.R
  * - "공지" 라벨이 붙은 열린 이슈만 공지로 가져온다. 이슈를 닫으면 앱에서도 사라진다.
  * - 타입은 라벨로 정한다(NoticeType 참고). "고정" 라벨이면 목록 맨 위, "해결됨" 라벨이면 해결 표시.
  * - 본문 맨 위에 "대상: 1.13 이하"처럼 쓰면 그 버전 사용자에게만 보인다(그 줄은 화면에 안 나옴).
+ * - 본문에 "<!-- 해결: 1.16 -->"처럼 쓰면 그 버전에서 고쳤다는 뜻이다([fixedVersion]).
  */
 data class Notice(
 	val id: Long,
@@ -23,7 +24,12 @@ data class Notice(
 	/** 내가(저장소 주인) 단 댓글 수 — 상세 화면의 "추가 안내". GitHub가 주는 전체 댓글 수라 다른 사람 댓글이 섞일 수 있다. */
 	val commentCount: Int,
 	val minVersion: String?,
-	val maxVersion: String?
+	val maxVersion: String?,
+	/**
+	 * 본문 오류 · 기능 오류를 고친 버전. 본문에 `<!-- 해결: 1.16 -->`처럼 적는다(GitHub · 앱 화면엔 안 보임).
+	 * 성경 탭의 본문 오류 경고 아이콘은 앱 버전이 이보다 낮을 때만 보인다(BibleErrataNotices).
+	 */
+	val fixedVersion: String? = null
 ) {
 	/**
 	 * 읽음 여부를 판단하는 "내용 버전". 읽은 뒤에 추가 안내(댓글)가 달리거나 "해결됨"으로 바뀌면

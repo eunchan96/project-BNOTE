@@ -85,7 +85,7 @@ import kotlinx.coroutines.launch
 		ApplicationSermonLink::class, GratitudeNote::class, GratitudeEntry::class,
 		SermonView::class, ApplicationView::class
 	],
-	version = 32, // 31 -> 32 (sermon_views/application_views가 깨진 채로 남은 기기 복구용)
+	version = 33, // 32 -> 33 (bible_verses에 예수님 말씀 구간 redLetter 추가)
 	exportSchema = false
 )
 abstract class BibleDatabase : RoomDatabase() {

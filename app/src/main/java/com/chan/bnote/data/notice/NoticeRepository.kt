@@ -19,8 +19,10 @@ import java.util.TimeZone
  * - 가져오기: "공지" 라벨이 붙은 열린 이슈 중 저장소 주인(또는 협업자)이 연 것만. PR은 뺀다.
  * - 저장: 마지막으로 가져온 목록(오프라인에서도 보이게), 읽은 알림, 이 기기에서 삭제한 알림.
  *   기기마다의 기록이라 데이터 내보내기(백업)와 상관없는 별도 SharedPreferences에 둔다(update_check와 같은 이유).
- * - 자동 확인은 앱을 열 때 30분에 한 번까지(GitHub API는 로그인 없이 IP당 시간당 60회까지라 넉넉하다),
- *   그리고 하루 한 번 백그라운드(UpdateCheckWorker)에서. 알림 목록 화면을 열거나 당겨서 새로고침하면 바로 가져온다.
+ * - 자동 확인: 앱을 새로 켤 때마다 바로 가져오고, 켜 둔 채 잠깐 나갔다 돌아올 때는 5분에 한 번까지
+ *   (GitHub API는 로그인 없이 IP당 시간당 60회까지라 넉넉하다). 하루 한 번 백그라운드(UpdateCheckWorker)에서도
+ *   받아 두는데, 이건 앱을 열 때의 확인 시각으로 치지 않는다 — 백그라운드가 막 돌았다고 앱을 열었을 때 건너뛰지 않게.
+ *   알림 목록 화면을 열거나 당겨서 새로고침하면 바로 가져온다.
  * - 인터넷이 안 되면 조용히 넘어가고, 저장해 둔 목록을 그대로 보여준다.
  */
 object NoticeRepository {
@@ -36,7 +38,7 @@ object NoticeRepository {
 	private const val KEY_HIDDEN = "hidden_ids"
 	private const val KEY_LAST_FETCH_AT = "last_fetch_at"
 
-	private const val AUTO_FETCH_INTERVAL_MS = 30 * 60 * 1000L
+	private const val AUTO_FETCH_INTERVAL_MS = 5 * 60 * 1000L
 	private const val TIMEOUT_MS = 5000
 
 	/** 저장소 주인·멤버·협업자가 쓴 것만 공지로 인정한다(누구나 이슈·댓글을 달 수 있어서). */
@@ -44,37 +46,58 @@ object NoticeRepository {
 
 	private val TARGET_LINE = Regex("^\\s*대상\\s*[:：]\\s*(.+)$")
 
+	/**
+	 * 고친 버전 표시. 보통 `<!-- 해결: 1.16 -->`처럼 HTML 주석 안에 써서 GitHub에서도, 옛 버전 앱에서도
+	 * 안 보이게 한다. 주석 없이 "해결: 1.16" 한 줄로 써도 읽고, 그 줄은 화면에서 뺀다.
+	 */
+	private val FIXED_COMMENT = Regex("<!--\\s*해결\\s*[:：]\\s*(\\d+(?:\\.\\d+)*)\\s*-->")
+	private val FIXED_LINE = Regex("^\\s*해결\\s*[:：]\\s*(\\d+(?:\\.\\d+)*)\\s*$")
+
 	private fun prefs(context: Context) =
 		context.applicationContext.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
 
 	// --- 가져오기 ---
 
-	fun shouldAutoFetch(context: Context): Boolean =
-		System.currentTimeMillis() - prefs(context).getLong(
+	/** 이번에 앱을 켠 뒤로 앱 화면에서 한 번이라도 받아왔는지. 앱(프로세스)을 새로 켜면 false로 돌아간다. */
+	@Volatile
+	private var fetchedSinceLaunch = false
+
+	/** 앱을 새로 켰으면 바로, 아니면 마지막으로 받아온 지 5분이 지났으면 true. */
+	fun shouldAutoFetch(context: Context): Boolean {
+		if (!fetchedSinceLaunch) return true
+		return System.currentTimeMillis() - prefs(context).getLong(
 			KEY_LAST_FETCH_AT,
 			0L
 		) >= AUTO_FETCH_INTERVAL_MS
-
-	/** GitHub에서 공지를 다시 가져와 저장한다. 성공하면 true, 인터넷 문제 등으로 실패하면 false(저장된 목록은 그대로). */
-	suspend fun refresh(context: Context): Boolean = withContext(Dispatchers.IO) {
-		val label = URLEncoder.encode(NOTICE_LABEL, "UTF-8")
-		val url = "$ISSUES_API?labels=$label&state=open&per_page=50&sort=created&direction=desc"
-		val body = httpGet(url) ?: return@withContext false
-		try {
-			val array = JSONArray(body)
-			val notices = mutableListOf<Notice>()
-			for (i in 0 until array.length()) {
-				parseIssue(array.getJSONObject(i))?.let { notices.add(it) }
-			}
-			prefs(context).edit()
-				.putString(KEY_CACHE, JSONArray(notices.map { it.toJson() }).toString())
-				.putLong(KEY_LAST_FETCH_AT, System.currentTimeMillis())
-				.apply()
-			true
-		} catch (e: Exception) {
-			false
-		}
 	}
+
+	/**
+	 * GitHub에서 공지를 다시 가져와 저장한다. 성공하면 true, 인터넷 문제 등으로 실패하면 false(저장된 목록은 그대로).
+	 * [recordFetch]가 false면(백그라운드 확인) 앱을 열 때의 자동 확인 시각으로 치지 않는다.
+	 */
+	suspend fun refresh(context: Context, recordFetch: Boolean = true): Boolean =
+		withContext(Dispatchers.IO) {
+			val label = URLEncoder.encode(NOTICE_LABEL, "UTF-8")
+			val url = "$ISSUES_API?labels=$label&state=open&per_page=50&sort=created&direction=desc"
+			val body = httpGet(url) ?: return@withContext false
+			try {
+				val array = JSONArray(body)
+				val notices = mutableListOf<Notice>()
+				for (i in 0 until array.length()) {
+					parseIssue(array.getJSONObject(i))?.let { notices.add(it) }
+				}
+				val editor = prefs(context).edit()
+					.putString(KEY_CACHE, JSONArray(notices.map { it.toJson() }).toString())
+				if (recordFetch) {
+					editor.putLong(KEY_LAST_FETCH_AT, System.currentTimeMillis())
+					fetchedSinceLaunch = true
+				}
+				editor.apply()
+				true
+			} catch (e: Exception) {
+				false
+			}
+		}
 
 	/** 상세 화면의 "추가 안내" — 그 이슈에 저장소 주인이 단 댓글들(오래된 순). 실패하면 null. */
 	suspend fun fetchComments(noticeId: Long): List<NoticeComment>? = withContext(Dispatchers.IO) {
@@ -125,6 +148,12 @@ object NoticeRepository {
 		var minVersion: String? = null
 		var maxVersion: String? = null
 		val bodyLines = mutableListOf<String>()
+		// 고친 버전은 주석 안에 있어도 읽어야 하므로, 주석을 지우기 전 원문에서 찾는다. 주석 하나가 통째로
+		// "해결: 버전"이거나 한 줄이 통째로 "해결: 버전"일 때만 인정한다(템플릿 작성 안내 같은 글 속 단어는 무시).
+		val originalBody = obj.optString("body").replace("\r\n", "\n")
+		val fixedVersion = FIXED_COMMENT.find(originalBody)?.groupValues?.get(1)
+			?: originalBody.lines()
+				.firstNotNullOfOrNull { FIXED_LINE.find(it)?.groupValues?.get(1) }
 		// 이슈 템플릿의 작성 안내(<!-- -->)는 GitHub에서도 안 보이므로 앱에서도 뺀다.
 		val rawBody = NoticeFormatter.stripHtmlComments(obj.optString("body"))
 		for (line in rawBody.lines()) {
@@ -133,7 +162,7 @@ object NoticeRepository {
 				val (min, max) = parseTarget(match.groupValues[1])
 				minVersion = min
 				maxVersion = max
-			} else {
+			} else if (!FIXED_LINE.matches(line)) {
 				bodyLines.add(line)
 			}
 		}
@@ -149,7 +178,8 @@ object NoticeRepository {
 			updatedAt = parseIsoTime(obj.optString("updated_at")),
 			commentCount = obj.optInt("comments"),
 			minVersion = minVersion,
-			maxVersion = maxVersion
+			maxVersion = maxVersion,
+			fixedVersion = fixedVersion
 		)
 	}
 
@@ -253,6 +283,7 @@ object NoticeRepository {
 		put("createdAt", createdAt); put("updatedAt", updatedAt); put("comments", commentCount)
 		minVersion?.let { put("minVersion", it) }
 		maxVersion?.let { put("maxVersion", it) }
+		fixedVersion?.let { put("fixedVersion", it) }
 	}
 
 	private fun noticeFromJson(o: JSONObject) = Notice(
@@ -266,6 +297,7 @@ object NoticeRepository {
 		updatedAt = o.optLong("updatedAt"),
 		commentCount = o.optInt("comments"),
 		minVersion = o.optString("minVersion").takeIf { it.isNotBlank() },
-		maxVersion = o.optString("maxVersion").takeIf { it.isNotBlank() }
+		maxVersion = o.optString("maxVersion").takeIf { it.isNotBlank() },
+		fixedVersion = o.optString("fixedVersion").takeIf { it.isNotBlank() }
 	)
 }

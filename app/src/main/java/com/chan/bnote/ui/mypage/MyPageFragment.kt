@@ -294,9 +294,10 @@ class MyPageFragment : Fragment(), TopBarActionHandler {
 				textSize = 13f
 				maxLines = 1
 				maxWidth = maxWidthPx // 아래서 폭에 맞춰 미리 잘라 넣지만, 혹시 몰라 안전장치로 둔다.
-				setTextColor(ContextCompat.getColor(requireContext(), R.color.brown_text))
+				// 알림 목록 필터 칩과 같은 모양: 테두리 없이 연한 갈색 바탕 + 살짝 각진 모서리.
+				setTextColor(ContextCompat.getColor(requireContext(), R.color.chip_soft_text))
 				setPadding(dp(14), dp(10), dp(14), dp(10))
-				background = ContextCompat.getDrawable(requireContext(), R.drawable.bg_chip_outline)
+				background = ContextCompat.getDrawable(requireContext(), R.drawable.bg_chip_soft)
 				isClickable = true
 				isFocusable = true
 				layoutParams = LinearLayout.LayoutParams(

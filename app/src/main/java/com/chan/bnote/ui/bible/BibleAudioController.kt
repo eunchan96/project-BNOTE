@@ -18,7 +18,8 @@ import kotlinx.coroutines.launch
  * - toggle(): 지금 보는 장을 재생하거나, 재생 중이면 일시정지한다(같은 장이면 멈춘 위치부터 이어서).
  * - 재생 중에 다른 장으로 넘기면 그 장의 음성으로 바로 바뀐다.
  * - 한 장이 끝나면 다음 장으로 넘어가면서 이어서 재생한다(onChapterFinished).
- * - 일시정지한 뒤 다른 장으로 넘기면, 다음에 누를 때 새 장의 처음부터 재생한다.
+ * - 일시정지한 뒤 다른 장으로 넘기면, 다음에 누를 때 새 장의 처음부터 재생한다(원래 장으로 돌아와도 처음부터).
+ *   다른 탭 · 다른 앱에 잠깐 다녀오는 것만으로는 멈춘 위치를 잊지 않는다.
  * - 취침 타이머(setSleepTimer)를 걸어두면, 재생을 시작한 순간부터 정한 시간이 지난 뒤 그때 듣던 장이
  *   끝날 때 멈춘다. 틀어둔 채 잠들어도 요한계시록까지 계속 넘어가지 않게 하려는 것. 장 중간에서 뚝 끊지
  *   않아서, 다음에 들을 때 그 다음 장 처음부터 자연스럽게 이어 들을 수 있다. 고른 값은 재생 속도처럼
@@ -128,13 +129,6 @@ class BibleAudioController(
 		if (isListening || player == null || playerChapter != currentChapter()) return false
 		toggle()
 		return true
-	}
-
-	/** 멈춰 둔 플레이어를 정리한다(재생 중이면 그대로 둔다). 다른 화면에 갔다 오면 "이 장을 듣던 중" 상태를 초기화한다. */
-	fun releaseIfPaused() {
-		if (isListening || player == null) return
-		releasePlayer()
-		onStateChanged()
 	}
 
 	fun onChapterChanged(bookId: Int, chapter: Int) {

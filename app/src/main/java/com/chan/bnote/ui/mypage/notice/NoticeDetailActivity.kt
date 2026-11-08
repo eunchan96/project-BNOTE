@@ -3,9 +3,6 @@ package com.chan.bnote.ui.mypage.notice
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.text.Spannable
-import android.text.SpannableString
-import android.text.style.LeadingMarginSpan
 import android.view.View
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -18,6 +15,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import coil.load
 import com.chan.bnote.R
+import com.chan.bnote.data.AppSettings
 import com.chan.bnote.data.notice.Notice
 import com.chan.bnote.data.notice.NoticeBlock
 import com.chan.bnote.data.notice.NoticeComment
@@ -25,6 +23,7 @@ import com.chan.bnote.data.notice.NoticeFormatter
 import com.chan.bnote.data.notice.NoticeRepository
 import com.chan.bnote.data.notice.NoticeType
 import com.chan.bnote.ui.common.LinkifyHelper
+import com.chan.bnote.ui.common.ListText
 import com.chan.bnote.ui.mypage.settings.ContactDialog
 import com.chan.bnote.ui.mypage.settings.UpdateDialog
 import com.chan.bnote.ui.sermon.addsermon.PhotoViewerActivity
@@ -43,6 +42,10 @@ import kotlinx.coroutines.launch
  */
 class NoticeDetailActivity : AppCompatActivity() {
 
+	/** 본문 글자 크기(sp). 설정의 글자 크기를 따르는 목록 화면(스크랩 · 북마크 등)과 같은 값. */
+	private val bodyTextSp: Float by lazy { AppSettings.getListPreviewFontSize(this).toFloat() }
+
+
 	companion object {
 		private const val EXTRA_NOTICE_ID = "extra_notice_id"
 		private const val EXTRA_ORDER_IDS = "extra_order_ids"
@@ -56,8 +59,6 @@ class NoticeDetailActivity : AppCompatActivity() {
 				.putExtra(EXTRA_NOTICE_ID, noticeId)
 				.apply { if (orderIds != null) putExtra(EXTRA_ORDER_IDS, orderIds) }
 
-		/** 목록 줄의 앞부분: (들여쓰기) + "・ ", "※ " 또는 "1. " 같은 번호. */
-		private val LIST_PREFIX = Regex("^\\s*(・|※|\\d+\\.)\\s+")
 
 		/** 업데이트 공지의 "새 버전 받기" 버튼 위 안내 박스 내용. 버튼은 항상 가장 최신 APK를 연다. */
 		private val UPDATE_GUIDE_TEXT = """
@@ -142,7 +143,15 @@ class NoticeDetailActivity : AppCompatActivity() {
 
 	private fun bind(notice: Notice) {
 		NoticeBadges.fill(findViewById(R.id.container_notice_badges), notice)
-		findViewById<TextView>(R.id.text_notice_title).text = notice.title
+		// 글자 크기는 스크랩 · 북마크 목록과 같은 규칙(설정의 글자 크기 − 2, 기본 16sp)을 따르고,
+		// 제목 · 날짜 · 추가 안내는 본문과의 차이를 유지한 채 같이 커지고 작아진다.
+		findViewById<TextView>(R.id.text_notice_title).apply {
+			text = notice.title
+			textSize = bodyTextSp + 4f
+		}
+		// 날짜는 글자를 아주 작게 설정해도 11sp 밑으로는 줄이지 않는다.
+		findViewById<TextView>(R.id.text_notice_date).textSize =
+			(bodyTextSp - 3f).coerceAtLeast(11f)
 
 		val dateText = buildString {
 			append(NoticeFormatter.fullDate(notice.createdAt))
@@ -156,13 +165,14 @@ class NoticeDetailActivity : AppCompatActivity() {
 
 		val isUpdate = notice.type == NoticeType.UPDATE
 
-		// 본문은 화면 양옆 16dp씩 여백 안에 있다.
+		// 본문은 화면 양옆 20dp씩 여백 안에 있다.
 		renderBlocks(
 			findViewById(R.id.container_notice_body),
 			if (isUpdate) NoticeFormatter.removeUpdateGuide(notice.body) else notice.body,
-			textSizeSp = 15f,
-			lineSpacing = 1.4f,
-			horizontalInsetDp = 32
+			textSizeSp = bodyTextSp,
+			lineSpacing = 1.3f,
+			paragraphGapEm = 0.6f,
+			horizontalInsetDp = 40
 		)
 
 		// 본문에서 "문의하기"를 안내하면(오류 공지 등) 그 자리에서 바로 문의할 수 있게 버튼을 붙인다.
@@ -174,7 +184,9 @@ class NoticeDetailActivity : AppCompatActivity() {
 			if (isUpdate) View.VISIBLE else View.GONE
 		if (isUpdate) {
 			val guideText = findViewById<TextView>(R.id.text_notice_update_guide)
-			guideText.text = withHangingIndent(UPDATE_GUIDE_TEXT, guideText)
+			// 글자 크기를 먼저 정해야 ListText가 "1. " 폭을 정확히 잰다.
+			guideText.textSize = bodyTextSp - 1f
+			guideText.text = ListText.style(UPDATE_GUIDE_TEXT, guideText, paragraphGapEm = 0.4f)
 		}
 
 		val download = findViewById<View>(R.id.btn_notice_download)
@@ -209,16 +221,16 @@ class NoticeDetailActivity : AppCompatActivity() {
 		val box = LinearLayout(this).apply {
 			orientation = LinearLayout.VERTICAL
 			background =
-				ContextCompat.getDrawable(this@NoticeDetailActivity, R.drawable.bg_book_button)
+				ContextCompat.getDrawable(this@NoticeDetailActivity, R.drawable.bg_notice_comment)
 			setPadding(
+				(16 * density).toInt(),
 				(12 * density).toInt(),
-				(10 * density).toInt(),
-				(12 * density).toInt(),
-				(12 * density).toInt()
+				(16 * density).toInt(),
+				(14 * density).toInt()
 			)
 			layoutParams = LinearLayout.LayoutParams(
 				LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
-			).apply { topMargin = (8 * density).toInt() }
+			).apply { topMargin = (10 * density).toInt() }
 		}
 		box.addView(TextView(this).apply {
 			text = NoticeFormatter.fullDate(comment.createdAt)
@@ -229,15 +241,16 @@ class NoticeDetailActivity : AppCompatActivity() {
 			orientation = LinearLayout.VERTICAL
 			layoutParams = LinearLayout.LayoutParams(
 				LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
-			).apply { topMargin = (4 * density).toInt() }
+			).apply { topMargin = (6 * density).toInt() }
 		}
-		// 추가 안내는 화면 여백(16dp × 2)에 박스 안쪽 여백(12dp × 2)과 테두리가 더해진다.
+		// 추가 안내는 화면 여백(20dp × 2)에 박스 안쪽 여백(16dp × 2)이 더해진다.
 		renderBlocks(
 			body,
 			comment.body,
-			textSizeSp = 14f,
-			lineSpacing = 1.35f,
-			horizontalInsetDp = 58
+			textSizeSp = bodyTextSp - 1f,
+			lineSpacing = 1.3f,
+			paragraphGapEm = 0.5f,
+			horizontalInsetDp = 72
 		)
 		box.addView(body)
 		return box
@@ -249,6 +262,8 @@ class NoticeDetailActivity : AppCompatActivity() {
 	 * 설명(alt)이 있으면 사진 아래에 작게 보여준다. 사진을 누르면 이 덩어리(본문 또는 댓글 하나)의 사진들을
 	 * 전체화면으로 넘겨볼 수 있다. 사진을 못 불러오면(인터넷 끊김 등) 그 칸은 숨긴다.
 	 *
+	 * [lineSpacing]: 한 줄(항목)이 길어 넘어간 줄 사이의 간격 배수. [paragraphGapEm]: 줄바꿈으로 나뉜 항목 · 문단 사이에
+	 * 더 띄우는 간격(글자 크기 배수). 둘을 나눠서, 같은 항목 안은 촘촘하고 항목끼리는 떨어져 보이게 한다.
 	 * [horizontalInsetDp]: 화면 폭에서 이 덩어리 양옆으로 빠지는 여백의 합. 사진 칸 너비 계산에 쓴다.
 	 */
 	private fun renderBlocks(
@@ -256,6 +271,7 @@ class NoticeDetailActivity : AppCompatActivity() {
 		markdown: String,
 		textSizeSp: Float,
 		lineSpacing: Float,
+		paragraphGapEm: Float,
 		horizontalInsetDp: Int
 	) {
 		container.removeAllViews()
@@ -291,7 +307,9 @@ class NoticeDetailActivity : AppCompatActivity() {
 						).apply { this.topMargin = topMargin }
 					}
 					// textSize를 먼저 정해야 paint로 "・ " 폭을 정확히 잴 수 있다.
-					textView.text = withHangingIndent(block.text, textView)
+					// 줄 간격은 좁게(한 항목 안에서 넘어간 줄끼리 촘촘하게) 두고, 항목 · 문단 사이는 paragraphGapEm으로 띄운다.
+					textView.text =
+						ListText.style(block.text, textView, paragraphGapEm = paragraphGapEm)
 					LinkifyHelper.applySmartLinks(textView)
 					container.addView(textView)
 					i++
@@ -335,29 +353,6 @@ class NoticeDetailActivity : AppCompatActivity() {
 				}
 			}
 		}
-	}
-
-	/**
-	 * "・ 항목"이나 "1. 항목"처럼 시작하는 줄이 길어서 두 줄 이상이 되면, 둘째 줄부터 기호가 아니라
-	 * 글자 시작 위치에 맞춰 들여쓴다(업데이트 내역과 같은 방식). 앞에 들여쓰기 공백이 있으면 그것까지 포함한다.
-	 */
-	private fun withHangingIndent(text: CharSequence, textView: TextView): CharSequence {
-		val spannable = SpannableString(text)
-		var lineStart = 0
-		for (line in text.split('\n')) {
-			val prefix = LIST_PREFIX.find(line)?.value
-			if (prefix != null) {
-				val margin = textView.paint.measureText(prefix).toInt()
-				val end = (lineStart + line.length + 1).coerceAtMost(text.length)
-				spannable.setSpan(
-					LeadingMarginSpan.Standard(0, margin),
-					lineStart, end,
-					Spannable.SPAN_INCLUSIVE_EXCLUSIVE
-				)
-			}
-			lineStart += line.length + 1
-		}
-		return spannable
 	}
 
 	/**

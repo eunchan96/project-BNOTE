@@ -159,7 +159,7 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 		val backupPromptShown = checkAutoBackupPrompt()
 		if (!backupPromptShown) checkForUpdate()
 
-		// 알림 화면에서 읽고 돌아왔을 수도 있으니 빨간 점을 다시 맞추고, 30분이 지났으면 새 알림도 확인한다.
+		// 알림 화면에서 읽고 돌아왔을 수도 있으니 빨간 점을 다시 맞추고, 새 알림도 확인한다(앱을 새로 켰으면 바로, 아니면 5분에 한 번).
 		refreshNoticeDots()
 		refreshNoticesIfDue()
 	}
@@ -174,7 +174,7 @@ class MainActivity : AppCompatActivity(), TopBarConfigListener, BibleNavigationH
 		dotNoticeNavMyPage.visibility = visible(hasUnread)
 	}
 
-	/** 앱을 열 때 GitHub에서 새 알림을 가져온다(30분에 한 번까지). 인터넷이 안 되면 조용히 넘어간다. */
+	/** 앱을 열 때 GitHub에서 새 알림을 가져온다(새로 켜면 바로, 돌아올 때는 5분에 한 번까지). 인터넷이 안 되면 조용히 넘어간다. */
 	private fun refreshNoticesIfDue() {
 		val repository = com.chan.bnote.data.notice.NoticeRepository
 		if (!repository.shouldAutoFetch(this)) return

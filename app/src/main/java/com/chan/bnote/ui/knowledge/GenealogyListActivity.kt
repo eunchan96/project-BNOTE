@@ -14,6 +14,7 @@ import androidx.lifecycle.lifecycleScope
 import com.chan.bnote.R
 import com.chan.bnote.data.knowledge.GenealogyChart
 import com.chan.bnote.data.knowledge.GenealogyRepository
+import com.chan.bnote.ui.common.ListRows
 import kotlinx.coroutines.launch
 
 class GenealogyListActivity : AppCompatActivity() {
@@ -50,9 +51,7 @@ class GenealogyListActivity : AppCompatActivity() {
 		val row = LinearLayout(this).apply {
 			orientation = LinearLayout.VERTICAL
 			setPadding(dp(16), dp(14), dp(16), dp(14))
-			background = ContextCompat.getDrawable(
-				this@GenealogyListActivity, android.R.drawable.list_selector_background
-			)
+			background = ListRows.rippleBackground(this@GenealogyListActivity)
 			isClickable = true
 			isFocusable = true
 			setOnClickListener {

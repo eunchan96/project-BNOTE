@@ -3,6 +3,7 @@ package com.chan.bnote.data.notice
 import android.graphics.Typeface
 import android.text.Spannable
 import android.text.SpannableStringBuilder
+import android.text.style.RelativeSizeSpan
 import android.text.style.StyleSpan
 import com.chan.bnote.data.notice.NoticeFormatter.toDisplaySpanned
 import com.chan.bnote.ui.mypage.guide.UserGuideContent
@@ -103,8 +104,25 @@ object NoticeFormatter {
 				last = match.range.last + 1
 			}
 			out.append(withoutBoldMarkers(line.substring(last)))
-			// 소제목은 한 줄 전체를 굵게(크기는 본문과 같게).
-			if (isHeading) out.setBold(lineStart, out.length)
+			// 소제목은 한 줄 전체를 굵게, 본문보다 조금 크게(목록 미리보기는 글자만 쓰므로 영향 없음).
+			if (isHeading) {
+				out.setBold(lineStart, out.length)
+				if (out.length > lineStart) {
+					out.setSpan(
+						RelativeSizeSpan(1.1f),
+						lineStart,
+						out.length,
+						Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+					)
+					// 알림 상세(ListText)가 소제목 위는 넓게, 아래 내용과는 붙게 간격을 정할 때 쓴다.
+					out.setSpan(
+						NoticeHeadingSpan(),
+						lineStart,
+						out.length,
+						Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+					)
+				}
+			}
 		}
 		return out
 	}

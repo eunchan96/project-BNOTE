@@ -29,6 +29,7 @@ import com.chan.bnote.ui.bible.BookmarkListActivity
 import com.chan.bnote.ui.bible.HighlightListActivity
 import com.chan.bnote.ui.bible.memo.MemoListActivity
 import com.chan.bnote.ui.bible.scrap.ScrapActivity
+import com.chan.bnote.ui.common.ListRows
 import com.chan.bnote.ui.mypage.gratitude.GratitudeActivity
 import com.chan.bnote.ui.mypage.memorization.MemorizationVerseListActivity
 import com.chan.bnote.ui.mypage.prayer.PrayerRequestActivity
@@ -287,9 +288,7 @@ class ProfileActivity : AppCompatActivity() {
 			).apply { marginStart = dp(4); marginEnd = dp(4) }
 			isClickable = true
 			isFocusable = true
-			foreground = ContextCompat.getDrawable(
-				this@ProfileActivity, android.R.drawable.list_selector_background
-			)
+			foreground = ListRows.rippleBackground(this@ProfileActivity)
 			setOnClickListener { item.onClick() }
 		}
 

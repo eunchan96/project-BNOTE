@@ -20,5 +20,7 @@ data class BibleVerse(
 	// 아주 드물게 절 중간에 소제목이 끼어드는 경우(예: 창 35:22)에만 쓴다.
 	// title2가 있으면 text 다음에 소제목처럼 표시되고, 이어서 text2가 나온다. 같은 절 번호를 공유한다.
 	val title2: String? = null,
-	val text2: String? = null
+	val text2: String? = null,
+	// 예수님 말씀(붉은 글씨) 구간. 본문 JSON의 "jesus"를 심을 때 글자 위치로 바꿔 둔 것(형식은 RedLetter 참고).
+	val redLetter: String? = null
 )

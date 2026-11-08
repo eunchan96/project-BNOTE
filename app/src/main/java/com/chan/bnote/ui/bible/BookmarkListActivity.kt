@@ -20,6 +20,7 @@ import com.chan.bnote.data.AppSettings
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.bible.BibleBooks
 import com.chan.bnote.data.bible.bookmark.BookmarkedVerseRow
+import com.chan.bnote.ui.common.InsetDividerDecoration
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 
@@ -64,6 +65,7 @@ class BookmarkListActivity : AppCompatActivity() {
 		recyclerView = findViewById(R.id.recycler_bookmarks)
 		emptyText = findViewById(R.id.text_empty)
 		recyclerView.layoutManager = LinearLayoutManager(this)
+		recyclerView.addItemDecoration(InsetDividerDecoration(this))
 
 		loadBookmarks()
 	}

@@ -234,6 +234,12 @@ val MIGRATIONS: Array<Migration> = arrayOf(
 				"CREATE UNIQUE INDEX IF NOT EXISTS index_application_views_applicationId ON application_views (applicationId)"
 			)
 		}
+	},
+	object : Migration(32, 33) {
+		override fun migrate(db: SupportSQLiteDatabase) {
+			// 예수님 말씀(붉은 글씨) 구간. 값은 BibleSeeder의 SEED_VERSION이 올라가 본문을 다시 심을 때 채워진다.
+			db.execSQL("ALTER TABLE bible_verses ADD COLUMN redLetter TEXT")
+		}
 	}
 )
 

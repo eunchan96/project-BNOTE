@@ -27,6 +27,8 @@
     <color name="category_none">#D6D6D6</color>
     <color name="input_background">#F5F5F5</color>
     <color name="highlight_yellow">#FFF9C4</color>
+    <!-- 성경 본문의 예수님 말씀(붉은 글씨). 다크모드에선 검은 바탕에서 잘 보이게 조금 밝게(values-night) -->
+    <color name="red_letter">#8E3A2E</color>
 
     <!-- 마이페이지 성경 읽기 진행률 그리드 -->
     <color name="book_progress_none_bg">#F5F5F5</color>
@@ -55,6 +57,9 @@
     <!-- 알림(공지사항): 안 읽은 알림 빨간 점, 안 읽은 항목 배경 -->
     <color name="notice_dot">#E53935</color>
     <color name="notice_unread_background">#FBF6F2</color>
+    <!-- 연한 갈색 칩(알림 목록 필터 · 최근 활동 · 읽기 목표 빠른 선택): 바탕과 글자 -->
+    <color name="chip_soft_bg">#F3ECE7</color>
+    <color name="chip_soft_text">#5D4037</color>
 
     <!-- 알림 종류 표시(파스텔): 배경 / 글자 -->
     <color name="notice_type_update_bg">#EFE7E1</color>
