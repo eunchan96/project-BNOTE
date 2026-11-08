@@ -23,6 +23,7 @@ import com.chan.bnote.data.mypage.memorization.MemorizationGroup
 import com.chan.bnote.data.mypage.memorization.MemorizationVerse
 import com.chan.bnote.data.sermon.SermonBibleRef
 import com.chan.bnote.ui.bible.picker.BibleRangePickerBottomSheet
+import com.chan.bnote.ui.common.InsetDividerDecoration
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 
@@ -59,6 +60,7 @@ class MemorizationVerseListActivity : AppCompatActivity() {
 
 		groupRecycler.layoutManager = GridLayoutManager(this, 3)
 		verseRecycler.layoutManager = LinearLayoutManager(this)
+		verseRecycler.addItemDecoration(InsetDividerDecoration(this))
 
 		findViewById<ImageView>(R.id.btn_back_from_list).setOnClickListener { finish() }
 		findViewById<ImageView>(R.id.btn_back_from_detail).setOnClickListener { showGroupListScreen() }

@@ -14,6 +14,7 @@ import androidx.lifecycle.lifecycleScope
 import com.chan.bnote.R
 import com.chan.bnote.data.knowledge.CultureRepository
 import com.chan.bnote.data.knowledge.CultureTopic
+import com.chan.bnote.ui.common.ListRows
 import kotlinx.coroutines.launch
 
 class CultureListActivity : AppCompatActivity() {
@@ -70,9 +71,7 @@ class CultureListActivity : AppCompatActivity() {
 		val row = LinearLayout(this).apply {
 			orientation = LinearLayout.VERTICAL
 			setPadding(dp(16), dp(10), dp(16), dp(10))
-			background = ContextCompat.getDrawable(
-				this@CultureListActivity, android.R.drawable.list_selector_background
-			)
+			background = ListRows.rippleBackground(this@CultureListActivity)
 			isClickable = true
 			isFocusable = true
 			setOnClickListener {

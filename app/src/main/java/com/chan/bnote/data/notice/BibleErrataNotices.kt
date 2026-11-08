@@ -3,6 +3,7 @@ package com.chan.bnote.data.notice
 import android.content.Context
 import com.chan.bnote.data.bible.BibleBooks
 import com.chan.bnote.data.bible.Translation
+import com.chan.bnote.data.update.UpdateChecker
 
 /**
  * 성경 본문 오류 공지를 성경 탭에서 알려주기 위한 도우미. 지금 보고 있는 장에 오류 안내가 있으면
@@ -14,8 +15,13 @@ import com.chan.bnote.data.bible.Translation
  * - "예레미야 42장 14절 · 43장 13절"처럼 책 이름 없이 이어진 장은 바로 앞의 책으로 본다.
  *
  * 공지에 번역본 이름(예: "개역개정")이 나오면 그 번역본을 보고 있을 때만 표시하고, 없으면 모든 번역본에서 표시한다.
- * "해결됨" 공지는 표시하지 않는다. 단 "대상: 1.14 이하"처럼 버전을 정해 둔 공지는 그 버전 사용자에게만 보이는
- * 공지라(아직 안 고쳐진 버전), 해결됨이어도 표시한다.
+ * 공지에 번역본 이름(예: "개역개정")이 나오면 그 번역본을 보고 있을 때만 표시하고, 없으면 모든 번역본에서 표시한다.
+ *
+ * 언제까지 표시하나:
+ * - 본문에 고친 버전(`<!-- 해결: 1.16 -->`)이 있으면, 앱 버전이 그보다 낮을 때만 표시한다 — 아직 안 고쳐진
+ *   본문을 쓰는 사람에게만 계속 보이고, 업데이트하면 사라진다(해결됨 라벨과 상관없이).
+ * - 고친 버전이 없으면 예전처럼: "해결됨"이면 숨기고, "대상: 1.14 이하"처럼 버전을 정해 둔 공지는 그 버전
+ *   사용자에게만 보이는 공지라 해결됨이어도 표시한다.
  */
 object BibleErrataNotices {
 
@@ -44,12 +50,19 @@ object BibleErrataNotices {
 		secondary: Translation?
 	): Notice? {
 		val target = ChapterRef(bookId, chapter)
+		val currentVersion = UpdateChecker.currentVersionName(context)
 		return NoticeRepository.visibleNotices(context)
 			.filter { it.type == NoticeType.BIBLE_TEXT_ERROR }
-			.filter { !it.isResolved || it.minVersion != null || it.maxVersion != null }
+			.filter { isStillWrongOn(it, currentVersion) }
 			.filter { appliesToTranslation(it, primary, secondary) }
 			.filter { target in chapterRefs(it.title + "\n" + it.body) }
 			.maxByOrNull { it.createdAt }
+	}
+
+	/** 이 앱 버전에서 아직 본문이 틀린 채인지. */
+	private fun isStillWrongOn(notice: Notice, currentVersion: String): Boolean {
+		notice.fixedVersion?.let { return UpdateChecker.compareVersions(currentVersion, it) < 0 }
+		return !notice.isResolved || notice.minVersion != null || notice.maxVersion != null
 	}
 
 	private fun appliesToTranslation(

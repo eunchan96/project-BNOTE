@@ -13,6 +13,7 @@ import androidx.lifecycle.lifecycleScope
 import com.chan.bnote.R
 import com.chan.bnote.data.knowledge.TopicalVerseGroup
 import com.chan.bnote.data.knowledge.TopicalVerseRepository
+import com.chan.bnote.ui.common.ListRows
 import kotlinx.coroutines.launch
 
 class TopicListActivity : AppCompatActivity() {
@@ -46,9 +47,7 @@ class TopicListActivity : AppCompatActivity() {
 				textSize = 15f
 				setTextColor(ContextCompat.getColor(this@TopicListActivity, R.color.text_primary))
 				setPadding(dp(16), dp(16), dp(16), dp(16))
-				background = ContextCompat.getDrawable(
-					this@TopicListActivity, android.R.drawable.list_selector_background
-				)
+				background = ListRows.rippleBackground(this@TopicListActivity)
 				isClickable = true
 				isFocusable = true
 				setOnClickListener {

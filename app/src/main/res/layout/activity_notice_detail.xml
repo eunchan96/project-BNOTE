@@ -66,7 +66,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="16dp">
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:paddingTop="20dp">
 
             <LinearLayout
                 android:id="@+id/container_notice_badges"
@@ -79,8 +81,10 @@
                 android:id="@+id/text_notice_title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:textSize="19sp"
+                android:layout_marginTop="12dp"
+                android:lineSpacingMultiplier="1.2"
+                android:letterSpacing="-0.015"
+                android:textSize="22sp"
                 android:textStyle="bold"
                 android:textColor="@color/text_primary" />
 
@@ -88,15 +92,15 @@
                 android:id="@+id/text_notice_date"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:textSize="12sp"
+                android:layout_marginTop="8dp"
+                android:textSize="13sp"
                 android:textColor="@color/text_hint" />
 
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
-                android:layout_marginTop="14dp"
-                android:layout_marginBottom="14dp"
+                android:layout_marginTop="20dp"
+                android:layout_marginBottom="20dp"
                 android:background="@color/divider_light" />
 
             <!-- 본문: 글과 사진을 순서대로 채운다(NoticeDetailActivity.renderBlocks) -->
@@ -107,35 +111,25 @@
                 android:orientation="vertical" />
 
             <!-- 본문에 "문의하기"가 나오면: 문의하기 창(이메일 · 오픈채팅)을 바로 여는 버튼 -->
-            <LinearLayout
+            <TextView
                 android:id="@+id/btn_notice_contact"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:padding="14dp"
-                android:background="@drawable/bg_book_button"
+                android:layout_marginTop="28dp"
+                android:minHeight="52dp"
+                android:gravity="center"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:paddingTop="12dp"
+                android:paddingBottom="12dp"
+                android:text="문의하기"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:textColor="@color/brown_text"
+                android:background="@drawable/bg_notice_button_secondary"
                 android:clickable="true"
                 android:focusable="true"
-                android:visibility="gone">
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="문의하기"
-                    android:textSize="15sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/text_primary" />
-
-                <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:src="@drawable/ic_chevron_right"
-                    app:tint="@color/text_hint"
-                    android:contentDescription="@null" />
-            </LinearLayout>
+                android:visibility="gone" />
 
             <!-- 업데이트 알림일 때만: 업데이트 방법 안내 박스. 매번 같은 내용이라 공지 본문 대신 앱이 보여준다
             (본문에 "## 업데이트 방법"이 있으면 그 부분은 본문에서 빠진다 — NoticeFormatter.removeUpdateGuide) -->
@@ -143,12 +137,12 @@
                 android:id="@+id/box_notice_update_guide"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
+                android:layout_marginTop="28dp"
                 android:orientation="vertical"
-                android:paddingStart="14dp"
-                android:paddingEnd="14dp"
-                android:paddingTop="12dp"
-                android:paddingBottom="14dp"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:paddingTop="14dp"
+                android:paddingBottom="16dp"
                 android:background="@drawable/bg_notice_callout"
                 android:visibility="gone">
 
@@ -156,7 +150,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="💡 업데이트 방법"
-                    android:textSize="14sp"
+                    android:textSize="15sp"
                     android:textStyle="bold"
                     android:textColor="@color/notice_type_update_text" />
 
@@ -165,48 +159,38 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:lineSpacingMultiplier="1.35"
-                    android:textSize="14sp"
+                    android:lineSpacingMultiplier="1.3"
+                    android:textSize="15sp"
                     android:textColor="@color/text_primary" />
             </LinearLayout>
 
             <!-- 업데이트 알림일 때만: 새 버전 설치 파일(APK)이 있는 구글 드라이브 링크 열기 -->
-            <LinearLayout
+            <TextView
                 android:id="@+id/btn_notice_download"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:padding="14dp"
-                android:background="@drawable/bg_book_button"
+                android:layout_marginTop="12dp"
+                android:minHeight="52dp"
+                android:gravity="center"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:paddingTop="12dp"
+                android:paddingBottom="12dp"
+                android:text="새 버전 받기"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:textColor="@color/white"
+                android:background="@drawable/bg_notice_button_primary"
                 android:clickable="true"
                 android:focusable="true"
-                android:visibility="gone">
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="새 버전 받기"
-                    android:textSize="15sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/text_primary" />
-
-                <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:src="@drawable/ic_chevron_right"
-                    app:tint="@color/text_hint"
-                    android:contentDescription="@null" />
-            </LinearLayout>
+                android:visibility="gone" />
 
             <!-- 추가 안내: 이 공지(GitHub 이슈)에 개발자가 단 댓글들 -->
             <LinearLayout
                 android:id="@+id/section_notice_comments"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
+                android:layout_marginTop="32dp"
                 android:orientation="vertical"
                 android:visibility="gone">
 
@@ -214,9 +198,9 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="추가 안내"
-                    android:textSize="13sp"
+                    android:textSize="15sp"
                     android:textStyle="bold"
-                    android:textColor="@color/text_secondary" />
+                    android:textColor="@color/text_primary" />
 
                 <TextView
                     android:id="@+id/text_notice_comments_status"
@@ -239,7 +223,7 @@
                 android:id="@+id/section_notice_nav"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="28dp"
+                android:layout_marginTop="36dp"
                 android:orientation="vertical"
                 android:visibility="gone">
 

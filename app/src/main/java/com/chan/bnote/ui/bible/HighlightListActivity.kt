@@ -16,8 +16,10 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import com.chan.bnote.R
+import com.chan.bnote.data.AppSettings
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.bible.BibleBooks
+import com.chan.bnote.ui.common.ListRows
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
@@ -74,7 +76,9 @@ class HighlightListActivity : AppCompatActivity() {
 				.mapValues { (_, list) -> list.map { it.chapter to it.verse }.distinct().size }
 
 			container.removeAllViews()
-			for ((bookId, count) in countsByBook) {
+			countsByBook.entries.forEachIndexed { index, (bookId, count) ->
+				// 줄 사이에만 얇은 구분선(다른 목록과 같은 모양).
+				if (index > 0) container.addView(ListRows.insetDivider(this@HighlightListActivity))
 				addBookRow(bookId, count)
 			}
 		}
@@ -85,16 +89,15 @@ class HighlightListActivity : AppCompatActivity() {
 			orientation = LinearLayout.HORIZONTAL
 			gravity = Gravity.CENTER_VERTICAL
 			setPadding(dp(16), dp(14), dp(16), dp(14))
-			background = ContextCompat.getDrawable(
-				this@HighlightListActivity, android.R.drawable.list_selector_background
-			)
+			background = ListRows.rippleBackground(this@HighlightListActivity)
 			isClickable = true
 			isFocusable = true
 		}
 
 		val name = TextView(this).apply {
 			text = BibleBooks.nameOf(bookId)
-			textSize = 16f
+			// 설정의 글자 크기를 따르는 다른 목록(스크랩 · 북마크)과 같은 크기(기본 16sp).
+			textSize = AppSettings.getListPreviewFontSize(this@HighlightListActivity).toFloat()
 			setTextColor(ContextCompat.getColor(this@HighlightListActivity, R.color.text_primary))
 			ellipsize = TextUtils.TruncateAt.END
 			layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)

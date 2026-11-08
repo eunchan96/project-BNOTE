@@ -8,12 +8,12 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.Switch
 import android.widget.TextView
-import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import androidx.fragment.app.DialogFragment
 import com.chan.bnote.R
+import com.chan.bnote.ui.common.ListRows
 import com.chan.bnote.ui.common.RightPanelSize
 
 class BibleMenuDialogFragment(
@@ -98,9 +98,7 @@ class BibleMenuDialogFragment(
 				text = itemName
 				textSize = 15f
 				setPadding(dp(32), dp(14), dp(16), dp(14))
-				background = ContextCompat.getDrawable(
-					requireContext(), android.R.drawable.list_selector_background
-				)
+				background = ListRows.rippleBackground(requireContext())
 				isClickable = true
 				isFocusable = true
 				setOnClickListener {

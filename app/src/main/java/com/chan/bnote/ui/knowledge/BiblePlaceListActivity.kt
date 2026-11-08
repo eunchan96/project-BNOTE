@@ -18,6 +18,7 @@ import androidx.lifecycle.lifecycleScope
 import com.chan.bnote.R
 import com.chan.bnote.data.knowledge.BiblePlace
 import com.chan.bnote.data.knowledge.BiblePlaceRepository
+import com.chan.bnote.ui.common.ListRows
 import kotlinx.coroutines.launch
 
 class BiblePlaceListActivity : AppCompatActivity() {
@@ -107,9 +108,7 @@ class BiblePlaceListActivity : AppCompatActivity() {
 		val row = LinearLayout(this).apply {
 			orientation = LinearLayout.VERTICAL
 			setPadding(dp(16), dp(10), dp(16), dp(10))
-			background = ContextCompat.getDrawable(
-				this@BiblePlaceListActivity, android.R.drawable.list_selector_background
-			)
+			background = ListRows.rippleBackground(this@BiblePlaceListActivity)
 			isClickable = true
 			isFocusable = true
 			setOnClickListener {

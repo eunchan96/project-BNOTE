@@ -1,9 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 일시정지(❚❚). 재생 아이콘과 맞춰 모서리를 둥글린 모양(Material Icons Round) -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M6,19h4V5H6v14zM14,5v14h4V5h-4z" />
+    <!-- 둥근 모양은 모서리만큼 그림이 작아 보여서, 가운데(12,12)를 기준으로 1.2배 키워 그린다 -->
+    <group
+        android:pivotX="12"
+        android:pivotY="12"
+        android:scaleX="1.2"
+        android:scaleY="1.2">
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M8,19c1.1,0 2,-0.9 2,-2V7c0,-1.1 -0.9,-2 -2,-2s-2,0.9 -2,2v10c0,1.1 0.9,2 2,2zM14,7v10c0,1.1 0.9,2 2,2s2,-0.9 2,-2V7c0,-1.1 -0.9,-2 -2,-2s-2,0.9 -2,2z" />
+    </group>
 </vector>

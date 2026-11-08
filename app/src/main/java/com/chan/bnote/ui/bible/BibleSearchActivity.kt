@@ -23,6 +23,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.chan.bnote.R
 import com.chan.bnote.data.AppSettings
 import com.chan.bnote.data.BibleDatabase
+import com.chan.bnote.ui.common.InsetDividerDecoration
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -80,6 +81,7 @@ class BibleSearchActivity : AppCompatActivity() {
 		historyContainer = findViewById(R.id.container_search_history)
 		historyItemsContainer = findViewById(R.id.container_search_history_items)
 		recyclerView.layoutManager = LinearLayoutManager(this)
+		recyclerView.addItemDecoration(InsetDividerDecoration(this))
 
 		findViewById<TextView>(R.id.btn_clear_search_history).setOnClickListener {
 			com.google.android.material.dialog.MaterialAlertDialogBuilder(

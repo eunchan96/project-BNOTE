@@ -18,6 +18,11 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
+            <!-- 구역 제목: 성경 읽기 -->
+            <TextView
+                style="@style/SettingsSectionHeader"
+                android:text="성경 읽기" />
+
             <!-- 글자 크기 -->
             <LinearLayout
                 android:layout_width="match_parent"
@@ -26,7 +31,7 @@
                 android:gravity="center_vertical"
                 android:paddingStart="16dp"
                 android:paddingEnd="16dp"
-                android:paddingTop="16dp"
+                android:paddingTop="10dp"
                 android:paddingBottom="6dp">
 
                 <TextView
@@ -81,7 +86,7 @@
                 android:paddingStart="16dp"
                 android:paddingEnd="16dp"
                 android:paddingTop="6dp"
-                android:paddingBottom="16dp">
+                android:paddingBottom="4dp">
 
                 <TextView
                     android:layout_width="0dp"
@@ -126,73 +131,12 @@
                     android:focusable="true" />
             </LinearLayout>
 
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:background="@color/divider_light" />
-
-            <!-- 다크모드 -->
-            <LinearLayout
-                android:id="@+id/row_dark_mode_toggle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:minHeight="56dp"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:paddingStart="16dp"
-                android:paddingEnd="16dp"
-                android:background="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true">
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="다크모드"
-                    android:textSize="16sp"
-                    android:textColor="@color/text_primary" />
-
-                <Switch
-                    android:id="@+id/switch_dark_mode"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
-            </LinearLayout>
-
-            <!-- 화면 켜짐 유지 -->
-            <LinearLayout
-                android:id="@+id/row_keep_screen_on_toggle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:minHeight="56dp"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:paddingStart="16dp"
-                android:paddingEnd="16dp"
-                android:background="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true">
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="화면 켜짐 유지"
-                    android:textSize="16sp"
-                    android:textColor="@color/text_primary" />
-
-                <Switch
-                    android:id="@+id/switch_keep_screen_on"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
-            </LinearLayout>
-
             <!-- 스와이프로 장 이동 -->
             <LinearLayout
                 android:id="@+id/row_chapter_swipe_toggle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:minHeight="56dp"
+                android:minHeight="50dp"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
                 android:paddingStart="16dp"
@@ -220,7 +164,7 @@
                 android:id="@+id/row_bible_scrollbar_toggle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:minHeight="56dp"
+                android:minHeight="50dp"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
                 android:paddingStart="16dp"
@@ -243,12 +187,40 @@
                     android:layout_height="wrap_content" />
             </LinearLayout>
 
+            <!-- 예수님 말씀 붉은 글씨 -->
+            <LinearLayout
+                android:id="@+id/row_red_letter_toggle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="50dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="예수님 말씀 붉은 글씨"
+                    android:textSize="16sp"
+                    android:textColor="@color/text_primary" />
+
+                <Switch
+                    android:id="@+id/switch_red_letter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+
             <!-- 성경읽기표 체크 표시 방식 -->
             <LinearLayout
                 android:id="@+id/row_reading_check_position_toggle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:minHeight="56dp"
+                android:minHeight="50dp"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
                 android:paddingStart="16dp"
@@ -271,12 +243,90 @@
                     android:layout_height="wrap_content" />
             </LinearLayout>
 
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="4dp"
+                android:background="@color/divider_light" />
+
+            <!-- 구역 제목: 화면 -->
+            <TextView
+                style="@style/SettingsSectionHeader"
+                android:text="화면" />
+
+            <!-- 다크모드 -->
+            <LinearLayout
+                android:id="@+id/row_dark_mode_toggle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="50dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="다크모드"
+                    android:textSize="16sp"
+                    android:textColor="@color/text_primary" />
+
+                <Switch
+                    android:id="@+id/switch_dark_mode"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <!-- 화면 켜짐 유지 -->
+            <LinearLayout
+                android:id="@+id/row_keep_screen_on_toggle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="50dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="화면 켜짐 유지"
+                    android:textSize="16sp"
+                    android:textColor="@color/text_primary" />
+
+                <Switch
+                    android:id="@+id/switch_keep_screen_on"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="4dp"
+                android:background="@color/divider_light" />
+
+            <!-- 구역 제목: 복사 -->
+            <TextView
+                style="@style/SettingsSectionHeader"
+                android:text="복사" />
+
             <!-- 함께보기 포함 -->
             <LinearLayout
                 android:id="@+id/row_copy_secondary_toggle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:minHeight="56dp"
+                android:minHeight="50dp"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
                 android:paddingStart="16dp"
@@ -303,7 +353,7 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:minHeight="56dp"
+                android:minHeight="50dp"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
                 android:paddingStart="16dp"
@@ -332,14 +382,20 @@
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
+                android:layout_marginTop="4dp"
                 android:background="@color/divider_light" />
+
+            <!-- 구역 제목: 알림 -->
+            <TextView
+                style="@style/SettingsSectionHeader"
+                android:text="알림" />
 
             <!-- 알림 -->
             <LinearLayout
                 android:id="@+id/row_daily_verse_toggle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:minHeight="56dp"
+                android:minHeight="50dp"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
                 android:paddingStart="16dp"
@@ -382,7 +438,7 @@
                 android:id="@+id/row_reading_reminder_toggle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:minHeight="56dp"
+                android:minHeight="50dp"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
                 android:paddingStart="16dp"
@@ -421,17 +477,26 @@
                     android:layout_marginStart="4dp" />
             </LinearLayout>
 
-            <!-- 데이터 내보내기/불러오기 -->
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
+                android:layout_marginTop="4dp"
                 android:background="@color/divider_light" />
 
+            <!-- 구역 제목: 데이터 -->
+            <TextView
+                style="@style/SettingsSectionHeader"
+                android:text="데이터" />
+
+            <!-- 데이터 내보내기/불러오기 -->
             <TextView
                 android:id="@+id/btn_export_data"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:padding="16dp"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:paddingTop="13dp"
+                android:paddingBottom="13dp"
                 android:text="데이터 내보내기"
                 android:textSize="16sp"
                 android:textColor="@color/text_primary"
@@ -443,7 +508,10 @@
                 android:id="@+id/btn_import_data"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:padding="16dp"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:paddingTop="13dp"
+                android:paddingBottom="13dp"
                 android:text="데이터 불러오기"
                 android:textSize="16sp"
                 android:textColor="@color/text_primary"
@@ -456,7 +524,7 @@
                 android:id="@+id/row_auto_backup_toggle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:minHeight="56dp"
+                android:minHeight="50dp"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
                 android:paddingStart="16dp"
@@ -499,7 +567,7 @@
                 android:id="@+id/row_auto_backup_folder"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:minHeight="48dp"
+                android:minHeight="44dp"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
                 android:paddingStart="16dp"
@@ -533,13 +601,22 @@
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
+                android:layout_marginTop="4dp"
                 android:background="@color/divider_light" />
+
+            <!-- 구역 제목: 도움말 -->
+            <TextView
+                style="@style/SettingsSectionHeader"
+                android:text="도움말" />
 
             <TextView
                 android:id="@+id/menu_user_guide"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:padding="16dp"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:paddingTop="13dp"
+                android:paddingBottom="13dp"
                 android:text="사용 가이드"
                 android:textSize="16sp"
                 android:textColor="@color/text_primary"
@@ -551,7 +628,10 @@
                 android:id="@+id/menu_app_info"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:padding="16dp"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:paddingTop="13dp"
+                android:paddingBottom="13dp"
                 android:text="앱 정보"
                 android:textSize="16sp"
                 android:textColor="@color/text_primary"

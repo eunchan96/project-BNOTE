@@ -17,6 +17,7 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.chan.bnote.R
 import com.chan.bnote.data.bible.BibleVerse
+import com.chan.bnote.data.bible.RedLetter
 import com.chan.bnote.data.bible.SecondaryVerseText
 import com.chan.bnote.data.bible.bookmark.BibleBookmark
 import com.chan.bnote.data.bible.memo.VerseMemo
@@ -34,6 +35,8 @@ class VerseAdapter(
 	private var highlightsByVerse: Map<Int, List<PartialHighlight>>,
 	private var verseMemos: Map<Int, VerseMemo>,
 	private var wordMemosByVerse: Map<Int, List<WordMemo>>,
+	// 예수님 말씀 붉은 글씨 표시 여부(설정). 끄면 본문에 구간 정보가 있어도 칠하지 않는다.
+	private var showRedLetter: Boolean = true,
 	private val onVerseTap: (verse: Int) -> Unit,
 	private val onVerseMemoView: (verse: Int, memo: VerseMemo) -> Unit,
 	private val onHighlightRequested: (verse: Int, start: Int, end: Int, segment: Int) -> Unit,
@@ -185,11 +188,21 @@ class VerseAdapter(
 
 		val title2 = verseItem.title2
 		val text2 = verseItem.text2
+		val redLetters =
+			if (showRedLetter) RedLetter.decode(verseItem.redLetter) else emptyList()
+		val redSeg0 = redLetters.filter { it.segment == 0 }
+		val redSeg1 = redLetters.filter { it.segment == 1 }
 
 		if (!title2.isNullOrBlank()) {
 			// 실제로 소제목이 있는 절 → 소제목을 사이에 두고 두 블록으로 나눠서 보여준다.
 			holder.content.text =
-				buildAnnotatedSpannable(context, verseItem.text, highlightsSeg0, wordMemosSeg0)
+				buildAnnotatedSpannable(
+					context,
+					verseItem.text,
+					highlightsSeg0,
+					wordMemosSeg0,
+					redSeg0
+				)
 			bindInteractiveText(
 				holder,
 				holder.content,
@@ -202,7 +215,13 @@ class VerseAdapter(
 			holder.midTitle.visibility = View.VISIBLE
 			holder.contentRow2.visibility = View.VISIBLE
 			holder.content2.text =
-				buildAnnotatedSpannable(context, text2 ?: "", highlightsSeg1, wordMemosSeg1)
+				buildAnnotatedSpannable(
+					context,
+					text2 ?: "",
+					highlightsSeg1,
+					wordMemosSeg1,
+					redSeg1
+				)
 			bindInteractiveText(
 				holder,
 				holder.content2,
@@ -222,12 +241,20 @@ class VerseAdapter(
 				val boundary = verseItem.text.length + 1 // 띄어쓰기 한 칸 포함
 				val combinedText = "${verseItem.text} $text2"
 				val spannable = SpannableString(combinedText)
-				applyAnnotations(context, spannable, highlightsSeg0, wordMemosSeg0, offset = 0)
+				applyAnnotations(
+					context,
+					spannable,
+					highlightsSeg0,
+					wordMemosSeg0,
+					redSeg0,
+					offset = 0
+				)
 				applyAnnotations(
 					context,
 					spannable,
 					highlightsSeg1,
 					wordMemosSeg1,
+					redSeg1,
 					offset = boundary
 				)
 				holder.content.text = spannable
@@ -240,7 +267,13 @@ class VerseAdapter(
 				)
 			} else {
 				holder.content.text =
-					buildAnnotatedSpannable(context, verseItem.text, highlightsSeg0, wordMemosSeg0)
+					buildAnnotatedSpannable(
+						context,
+						verseItem.text,
+						highlightsSeg0,
+						wordMemosSeg0,
+						redSeg0
+					)
 				bindInteractiveText(
 					holder,
 					holder.content,
@@ -299,15 +332,16 @@ class VerseAdapter(
 		}
 	}
 
-	/** 하이라이트 배경 + 단어 메모 밑줄까지 입힌 SpannableString을 만든다. */
+	/** 예수님 말씀 붉은 글씨 + 하이라이트 배경 + 단어 메모 밑줄까지 입힌 SpannableString을 만든다. */
 	private fun buildAnnotatedSpannable(
 		context: android.content.Context,
 		text: String,
 		highlights: List<PartialHighlight>,
-		wordMemos: List<WordMemo>
+		wordMemos: List<WordMemo>,
+		redLetters: List<RedLetter.Range>
 	): SpannableString {
 		val spannable = SpannableString(text)
-		applyAnnotations(context, spannable, highlights, wordMemos, offset = 0)
+		applyAnnotations(context, spannable, highlights, wordMemos, redLetters, offset = 0)
 		return spannable
 	}
 
@@ -320,8 +354,26 @@ class VerseAdapter(
 		spannable: SpannableString,
 		highlights: List<PartialHighlight>,
 		wordMemos: List<WordMemo>,
+		redLetters: List<RedLetter.Range>,
 		offset: Int
 	) {
+		// 붉은 글씨를 먼저 입히고, 하이라이트(배경 + 대비 글자색)를 그 위에 칠한 뒤, 둘이 겹치는 곳에만
+		// 하이라이트 배경에 맞춘 붉은 글씨를 다시 입힌다(같은 종류의 span은 나중에 붙인 것이 우선).
+		if (redLetters.isNotEmpty()) {
+			val red = ContextCompat.getColor(context, R.color.red_letter)
+			for (r in redLetters) {
+				val start = (r.start + offset).coerceIn(0, spannable.length)
+				val end = (r.end + offset).coerceIn(start, spannable.length)
+				if (start < end) {
+					spannable.setSpan(
+						ForegroundColorSpan(red),
+						start,
+						end,
+						Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+					)
+				}
+			}
+		}
 		for (h in highlights) {
 			val start = (h.startOffset + offset).coerceIn(0, spannable.length)
 			val end = (h.endOffset + offset).coerceIn(start, spannable.length)
@@ -344,6 +396,20 @@ class VerseAdapter(
 					end,
 					Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
 				)
+				// 하이라이트 안의 예수님 말씀은 하이라이트 배경 위에서 잘 보이는 붉은 글씨로.
+				val redOnHighlight = HighlightColors.redLetterColor(h.colorHex)
+				for (r in redLetters) {
+					val overlapStart = maxOf(start, r.start + offset)
+					val overlapEnd = minOf(end, r.end + offset)
+					if (overlapStart < overlapEnd) {
+						spannable.setSpan(
+							ForegroundColorSpan(redOnHighlight),
+							overlapStart,
+							overlapEnd,
+							Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+						)
+					}
+				}
 			}
 		}
 		for (m in wordMemos) {
@@ -631,6 +697,12 @@ class VerseAdapter(
 
 	fun updateFontSize(newSize: Int) {
 		fontSize = newSize
+		notifyDataSetChanged()
+	}
+
+	fun updateRedLetter(enabled: Boolean) {
+		if (showRedLetter == enabled) return
+		showRedLetter = enabled
 		notifyDataSetChanged()
 	}
 

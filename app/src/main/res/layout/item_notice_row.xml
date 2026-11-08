@@ -12,10 +12,10 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:paddingStart="16dp"
-        android:paddingEnd="16dp"
-        android:paddingTop="14dp"
-        android:paddingBottom="14dp"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
+        android:paddingTop="16dp"
+        android:paddingBottom="16dp"
         android:foreground="?attr/selectableItemBackground">
 
         <!-- 선택 모드 체크박스. Material 기본 최소 크기(48dp)를 없애서 옆 여백을 줄인다
@@ -71,30 +71,37 @@
                     android:visibility="gone" />
             </LinearLayout>
 
+            <!-- 굵기는 코드에서: 안 읽음 = sans-serif-medium, 읽음 = 보통 -->
             <TextView
                 android:id="@+id/text_notice_title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
+                android:layout_marginTop="8dp"
                 android:maxLines="2"
                 android:ellipsize="end"
-                android:textSize="15sp"
+                android:lineSpacingMultiplier="1.15"
+                android:letterSpacing="-0.01"
+                android:textSize="16sp"
                 android:textColor="@color/text_primary" />
 
             <TextView
                 android:id="@+id/text_notice_preview"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="3dp"
+                android:layout_marginTop="4dp"
                 android:maxLines="2"
                 android:ellipsize="end"
+                android:lineSpacingMultiplier="1.25"
                 android:textSize="13sp"
                 android:textColor="@color/text_secondary" />
         </LinearLayout>
     </LinearLayout>
 
+    <!-- 구분선은 양옆 여백만큼 안쪽에서 시작 · 끝나게 해서 목록이 덜 답답해 보이게 한다 -->
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp"
         android:background="@color/divider_light" />
 </LinearLayout>

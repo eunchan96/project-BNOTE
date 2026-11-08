@@ -22,12 +22,14 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import com.chan.bnote.MainActivity
 import com.chan.bnote.R
+import com.chan.bnote.data.AppSettings
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.bible.BibleBooks
 import com.chan.bnote.data.bible.memo.VerseMemo
 import com.chan.bnote.data.bible.memo.WordMemo
 import com.chan.bnote.ui.bible.picker.PickerTab
 import com.chan.bnote.ui.bible.picker.renderPickerTabs
+import com.chan.bnote.ui.common.ListRows
 import kotlinx.coroutines.launch
 
 class MemoListActivity : AppCompatActivity() {
@@ -214,9 +216,7 @@ class MemoListActivity : AppCompatActivity() {
 		val row = LinearLayout(this).apply {
 			orientation = LinearLayout.HORIZONTAL
 			gravity = Gravity.CENTER_VERTICAL
-			background = ContextCompat.getDrawable(
-				this@MemoListActivity, android.R.drawable.list_selector_background
-			)
+			background = ListRows.rippleBackground(this@MemoListActivity)
 			isClickable = true
 			isFocusable = true
 			setOnClickListener { onClickEdit() }
@@ -224,11 +224,13 @@ class MemoListActivity : AppCompatActivity() {
 
 		val contentView = TextView(this).apply {
 			text = label
-			textSize = 14f
+			// 설정의 글자 크기를 따르는 목록 크기보다 2 작게(기본 14sp) — 하이라이트 모아보기와 같게.
+			textSize = AppSettings.getListPreviewFontSize(this@MemoListActivity) - 2f
+			setLineSpacing(0f, 1.25f)
 			setTextColor(ContextCompat.getColor(this@MemoListActivity, R.color.text_primary))
 			maxLines = 2
 			ellipsize = TextUtils.TruncateAt.END
-			setPadding(dp(16), dp(10), dp(16), dp(10))
+			setPadding(dp(16), dp(12), dp(16), dp(12))
 			layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
 		}
 

@@ -26,6 +26,7 @@ import androidx.lifecycle.lifecycleScope
 import coil.load
 import com.chan.bnote.MainActivity
 import com.chan.bnote.R
+import com.chan.bnote.data.AppSettings
 import com.chan.bnote.data.BibleDatabase
 import com.chan.bnote.data.DateUtils
 import com.chan.bnote.data.sermon.CitationParser
@@ -152,10 +153,14 @@ class SermonDetailActivity : AppCompatActivity() {
 		}
 	}
 
-	private suspend fun render(db: com.chan.bnote.data.BibleDatabase) {
+	private suspend fun render(db: BibleDatabase) {
 		findViewById<TextView>(R.id.text_top_bar_title).text = sermon.title
 
 		val memoView = findViewById<TextView>(R.id.text_sermon_memo)
+		// 글자 크기: 스크랩 · 북마크 목록과 같은 규칙(설정의 글자 크기 − 2)에서 1 작게(기본 15sp, 예전과 같음).
+		val detailTextSp = AppSettings.getListPreviewFontSize(this).toFloat() - 1f
+		memoView.textSize = detailTextSp
+		findViewById<TextView>(R.id.text_sermon_info).textSize = detailTextSp
 
 		val preacherName =
 			sermon.preacherId?.let { db.preacherDao().getById(it)?.name } ?: "설교자 미지정"
@@ -216,7 +221,7 @@ class SermonDetailActivity : AppCompatActivity() {
 
 					override fun updateDrawState(ds: android.text.TextPaint) {
 						super.updateDrawState(ds)
-						ds.color = androidx.core.content.ContextCompat.getColor(
+						ds.color = ContextCompat.getColor(
 							this@SermonDetailActivity, R.color.brown_text
 						)
 						ds.isUnderlineText = true
@@ -232,11 +237,11 @@ class SermonDetailActivity : AppCompatActivity() {
 		if (sermon.memo.isBlank()) {
 			memoView.text = "메모가 없어요"
 			memoView.setTextColor(
-				androidx.core.content.ContextCompat.getColor(this, R.color.text_hint)
+				ContextCompat.getColor(this, R.color.text_hint)
 			)
 		} else {
 			memoView.setTextColor(
-				androidx.core.content.ContextCompat.getColor(this, R.color.text_primary)
+				ContextCompat.getColor(this, R.color.text_primary)
 			)
 			val restored = RichTextUtils.toEditable(sermon.memo)
 			val plainText = restored.toString()
@@ -269,7 +274,7 @@ class SermonDetailActivity : AppCompatActivity() {
 				// 사용자가 직접 준 굵게/밑줄과 헷갈리지 않도록, 인용구는 밑줄이 아니라 강조색+굵게로 표시한다.
 				spannable.setSpan(
 					ForegroundColorSpan(
-						androidx.core.content.ContextCompat.getColor(
+						ContextCompat.getColor(
 							this,
 							R.color.brown_text
 						)

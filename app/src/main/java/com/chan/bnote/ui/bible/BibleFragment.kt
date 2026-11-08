@@ -126,7 +126,8 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 	private var secondaryTranslation: Translation? = null
 	private var currentFontSize: Int = 16
 	private var currentScrollbarVisible = true
-	private var scrollSpeed = 3
+	private var currentRedLetterEnabled = true
+	private var scrollSpeed = AppSettings.DEFAULT_SCROLL_SPEED
 
 	private var isReadingPlanEnabled = false
 	private var isChapterRead = false
@@ -215,8 +216,15 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 		}
 	}
 
-	/** 예전과 같은 빠르기: 속도 1~5 → 52~20ms마다 3~7px. */
-	private fun autoScrollPxPerMs(): Float = (2 + scrollSpeed).toFloat() / (60 - scrollSpeed * 8)
+	/**
+	 * 속도 1~10 → 초당 3~28.5dp(1단계 오를 때마다 약 2.8dp씩). 기본 5는 초당 약 14dp, 7은 초당 20dp.
+	 * dp로 정해서 화면 밀도가 다른 폰에서도 같은 빠르기로 보이게 한다.
+	 * (1.15까지의 가장 느린 1단계가 초당 약 20dp였다 — 그 빠르기를 7단계에 맞췄다.)
+	 */
+	private fun autoScrollPxPerMs(): Float {
+		val dpPerSecond = 3f + (scrollSpeed - 1) * (17f / 6f)
+		return dpPerSecond * resources.displayMetrics.density / 1000f
+	}
 
 	private val scrapLauncher = registerForActivityResult(
 		androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()
@@ -278,6 +286,7 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 
 		currentFontSize = AppSettings.getFontSize(requireContext())
 		currentScrollbarVisible = AppSettings.isBibleScrollbarVisible(requireContext())
+		currentRedLetterEnabled = AppSettings.isRedLetterEnabled(requireContext())
 		isReadingPlanEnabled = AppSettings.isReadingPlanEnabled(requireContext())
 		isAutoScrollEnabled = AppSettings.isAutoScrollEnabled(requireContext())
 		scrollSpeed = AppSettings.getScrollSpeed(requireContext())
@@ -681,6 +690,7 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 			highlightsByVerse = highlights,
 			verseMemos = verseMemos,
 			wordMemosByVerse = wordMemos,
+			showRedLetter = currentRedLetterEnabled,
 			onVerseTap = { verseNum -> toggleVerseSelection(verseNum) },
 			onVerseMemoView = { verseNum, memo -> showVerseMemoDialog(verseNum, memo) },
 			onHighlightRequested = { verseNum, start, end, segment ->
@@ -871,17 +881,10 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 	 * 여기서 다시 확인해서 반영한다. hide()/show() 방식의 탭 전환은 onResume이 아니라 이 콜백을 탄다. */
 	override fun onHiddenChanged(hidden: Boolean) {
 		super.onHiddenChanged(hidden)
-		if (hidden) {
-			hideAudioToolbar()
-			audioController?.releaseIfPaused()
-		}
+		// 다른 탭에 다녀와도 멈춰 둔 재생 위치는 그대로 둔다 — 같은 장으로 돌아오면 이어서 들을 수 있다.
+		// (다른 책이나 장으로 넘기면 그때 BibleAudioController.onChapterChanged가 위치를 잊는다.)
+		if (hidden) hideAudioToolbar()
 		if (!hidden) refreshOnReturnToTab()
-	}
-
-	override fun onStop() {
-		super.onStop()
-		// 다른 화면(메모 목록, 설정 등)이나 홈으로 나갔다 오면 멈춰 둔 재생 위치는 잊는다. 재생 중이면 그대로 둔다.
-		audioController?.releaseIfPaused()
 	}
 
 	override fun onResume() {
@@ -924,6 +927,18 @@ class BibleFragment : Fragment(), TopBarActionHandler {
 			}
 		}
 
+		val newRedLetterEnabled = AppSettings.isRedLetterEnabled(requireContext())
+		if (newRedLetterEnabled != currentRedLetterEnabled) {
+			currentRedLetterEnabled = newRedLetterEnabled
+			// 지금 보이는 장은 바로 다시 그리고, 미리 만들어 둔 앞뒤 장은 다시 그려야 함으로 표시한다(스크롤바와 같은 방식).
+			resolveCurrentVerseAdapter()?.updateRedLetter(newRedLetterEnabled)
+			if (::viewPager.isInitialized && ::pageAdapter.isInitialized) {
+				val position = viewPager.currentItem
+				if (position > 0) pageAdapter.notifyItemRangeChanged(0, position)
+				val afterCount = pageAdapter.itemCount - position - 1
+				if (afterCount > 0) pageAdapter.notifyItemRangeChanged(position + 1, afterCount)
+			}
+		}
 		scrollSpeed = AppSettings.getScrollSpeed(requireContext())
 		updateReadingCheckBottomButton()
 		if (::viewPager.isInitialized) {
